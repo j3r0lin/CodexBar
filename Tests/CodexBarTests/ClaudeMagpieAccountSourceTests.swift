@@ -216,7 +216,7 @@ struct ClaudeMagpieAccountSourceTests {
         let active = try #require(store.claudeAccountSource.activeAccount)
         let key = try #require(ClaudeAccountSource.widgetOwnerKey(for: active))
         #expect(!key.contains("@"))
-        #expect(ClaudeAccountSource.widgetLabel(for: active, in: store.claudeAccountSource.accounts) == "Account 1")
+        #expect(ClaudeAccountSource.widgetLabel(for: active, in: store.claudeAccountSource.accounts) == "Account 2")
     }
 
     // MARK: - Helpers
