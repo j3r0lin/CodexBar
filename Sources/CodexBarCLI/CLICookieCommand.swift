@@ -218,6 +218,7 @@ extension CodexBarCLI {
         browserDetection: BrowserDetection) async -> CookieRefreshResult
     {
         let provider = descriptor.id
+        // Provider-specific by design: magpie owns Claude accounts, so Claude browser cookies are never refreshed.
         if tokenContext.settingsSnapshot(for: provider, account: nil)?.claude?.magpieQuotasURL != nil {
             return CookieRefreshResult(
                 provider: descriptor.cli.name,
