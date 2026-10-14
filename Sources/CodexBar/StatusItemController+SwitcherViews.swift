@@ -141,7 +141,7 @@ final class ProviderSwitcherView: NSView {
             + self.rowSpacing * CGFloat(max(0, self.rowCount - 1))
         self.preferredWidth = width
         let singleRowSegmentWidth = (width - 12 - CGFloat(max(0, self.segments.count - 1))) / CGFloat(max(1, self.segments.count))
-        self.hidesUnselectedTitles = self.stackedIcons && self.rowCount == 1 && singleRowSegmentWidth < 40
+        self.hidesUnselectedTitles = self.stackedIcons && self.rowCount == 1 && singleRowSegmentWidth < 46
         super.init(frame: NSRect(x: 0, y: 0, width: width, height: height))
         Self.clearButtonWidthCache()
         self.wantsLayer = true
