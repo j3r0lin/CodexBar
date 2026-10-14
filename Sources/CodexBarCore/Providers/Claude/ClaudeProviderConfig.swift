@@ -30,4 +30,19 @@ extension ProviderConfig {
     public var sanitizedClaudeSwapExecutablePath: String? {
         SettingsValue.cleaned(self.claudeSwapExecutablePath)
     }
+
+    /// Machine-local on purpose: the magpie gateway runs on this Mac, so sync payloads never carry these keys.
+    public var claudeMagpieEnabled: Bool? {
+        get { self.extensionValue(forKey: "claudeMagpieEnabled") }
+        set { self.setExtensionValue(newValue, forKey: "claudeMagpieEnabled") }
+    }
+
+    public var claudeMagpieQuotasURL: String? {
+        get { self.extensionValue(forKey: "claudeMagpieQuotasURL") }
+        set { self.setExtensionValue(newValue, forKey: "claudeMagpieQuotasURL") }
+    }
+
+    public var sanitizedClaudeMagpieQuotasURL: String? {
+        SettingsValue.cleaned(self.claudeMagpieQuotasURL)
+    }
 }

@@ -27,7 +27,8 @@ struct ClaudeSwapSettingsPlacementTests {
         field.binding.wrappedValue = "/synthetic/bin/cswap"
         #expect(fixture.settings.claudeSwapExecutablePath == "/synthetic/bin/cswap")
         let otherFieldsAreEmpty = implementation.settingsToggles(context: context)
-            .filter { $0.id != toggle.id }.allSatisfy(\.inlineFields.isEmpty)
+            .filter { $0.id != toggle.id }
+            .allSatisfy { !$0.inlineFields.contains { $0.id == "claude-swap-executable-path" } }
         #expect(otherFieldsAreEmpty)
         #expect(!implementation.settingsFields(context: context).contains { $0.id == "claude-swap-executable-path" })
     }

@@ -329,6 +329,11 @@ extension UsageStore {
         }
 
         if provider == .claude {
+            guard !self.settings.claudeMagpieEnabled else {
+                // magpie owns Claude accounts: never run the ambient Claude Code credential fetch or claude-swap.
+                self.scheduleClaudeMagpieAccountRefresh(generation: generation)
+                return nil
+            }
             self.scheduleClaudeSwapAccountRefresh(generation: generation)
         }
 

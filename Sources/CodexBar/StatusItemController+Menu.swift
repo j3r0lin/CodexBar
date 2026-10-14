@@ -686,8 +686,8 @@ extension StatusItemController {
         // the stacked token-account branch below would return before rendering the adapter rows.
         if ClaudeSwapMenuPrecedence.prefersClaudeSwap(
             provider: context.currentProvider,
-            accountCount: self.store.claudeSwapAccountSnapshots.count,
-            showSingleAccount: self.settings.claudeSwapShowSingleAccount)
+            accountCount: self.store.claudeAccountSource.accounts.count,
+            showSingleAccount: self.store.claudeAccountSource.showSingleAccount)
         {
             self.addClaudeSwapMenuCards(to: menu, captureMenu: captureMenu ?? menu, context: context)
             self.addFleetAccountMenuCards(fleetProjection.additionalAccounts, to: menu, context: context)

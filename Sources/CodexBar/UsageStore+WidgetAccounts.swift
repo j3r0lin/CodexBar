@@ -9,9 +9,9 @@ extension UsageStore {
         for provider in self.enabledProviders().compactMap(\.firstPartyProvider).filter(Self.supportsWidgetUsage) {
             let count: Int
             // Match the account writer's source precedence without expanding its refresh or identity budget.
-            // Provider-specific by design: Claude Swap owns its inventory when it supplies account snapshots.
-            if provider == .claude, self.settings.claudeSwapEnabled, !self.claudeSwapAccountSnapshots.isEmpty {
-                count = self.claudeSwapAccountSnapshots.count
+            // Provider-specific by design: the Claude account source owns its inventory when it supplies accounts.
+            if provider == .claude, self.claudeAccountSourceEnabled, !self.claudeAccountSource.accounts.isEmpty {
+                count = self.claudeAccountSource.accounts.count
             } else if provider == .codex {
                 // Provider-specific by design: Codex publishes the reconciled visible account inventory.
                 count = self.settings.codexVisibleAccountProjectionForMenuDisplay?.visibleAccounts.count ?? 0
@@ -40,12 +40,11 @@ extension UsageStore {
     }
 
     private func widgetAccounts(for provider: UsageProvider, now: Date) -> [WidgetSnapshot.AccountEntry] {
-        // Provider-specific by design: Claude Swap owns its account polling and retained-owner guards.
-        if provider == .claude, self.settings.claudeSwapEnabled,
-           !self.claudeSwapAccountSnapshots.isEmpty
-        {
-            var accounts = Array(self.claudeSwapAccountSnapshots.prefix(Self.tokenAccountMenuSnapshotLimit))
-            if let active = self.claudeSwapAccountSnapshots.first(where: \.isActive),
+        // Provider-specific by design: the Claude account source owns its account polling and owner guards.
+        let claudeSource = self.claudeAccountSource
+        if provider == .claude, self.claudeAccountSourceEnabled, !claudeSource.accounts.isEmpty {
+            var accounts = Array(claudeSource.accounts.prefix(Self.tokenAccountMenuSnapshotLimit))
+            if let active = claudeSource.activeAccount,
                !accounts.contains(where: { $0.id == active.id })
             {
                 accounts.removeLast()
@@ -54,11 +53,11 @@ extension UsageStore {
             return accounts.compactMap { account in
                 // Slots can be reused. Bind the pin to the same opaque ownership guard as retained usage,
                 // without persisting the adapter's email, organization, or display label.
-                guard let owner = ClaudeSwapRetainedUsageStore.ownershipFingerprint(for: account) else { return nil }
+                guard let owner = ClaudeAccountSource.widgetOwnerKey(for: account) else { return nil }
                 return self.widgetAccountEntry(
                     provider: provider,
-                    id: "claude/swap:\(account.id.opaqueID):\(owner)",
-                    label: "Account \(account.id.opaqueID)",
+                    id: owner,
+                    label: ClaudeAccountSource.widgetLabel(for: account, in: claudeSource.accounts),
                     snapshot: account.snapshot,
                     now: now)
             }

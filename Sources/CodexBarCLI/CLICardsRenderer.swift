@@ -201,7 +201,7 @@ enum CLICardsRenderer {
                 provider: .claude,
                 snapshot: snapshot,
                 credits: nil,
-                source: ClaudeSwapAccountProjection.sourceLabel,
+                source: account.sourceLabel ?? ClaudeSwapAccountProjection.sourceLabel,
                 status: renderOptions.status,
                 notes: notes,
                 useColor: renderOptions.useColor,
@@ -234,7 +234,7 @@ enum CLICardsRenderer {
         return CLICardModel(
             provider: .claude,
             title: ProviderDescriptorRegistry.descriptor(for: .claude).metadata.displayName,
-            sourceLabel: ClaudeSwapAccountProjection.sourceLabel,
+            sourceLabel: account.sourceLabel ?? ClaudeSwapAccountProjection.sourceLabel,
             planBadge: nil,
             accountLine: label,
             isActive: account.isActive,

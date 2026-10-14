@@ -185,6 +185,7 @@ extension CodexBarCLI {
         // Provider-specific by design: only enabled Claude rows can expose claude-swap accounts.
         config.enabledProviders().compactMap(\.firstPartyProvider).contains(.claude)
             && config.providerConfig(for: .claude)?.claudeSwapEnabled == true
+            && config.providerConfig(for: .claude)?.claudeMagpieEnabled != true
     }
 
     static func runDashboard(_ values: ParsedValues) async {

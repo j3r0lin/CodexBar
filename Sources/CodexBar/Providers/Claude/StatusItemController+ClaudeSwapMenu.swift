@@ -7,7 +7,7 @@ extension StatusItemController {
         captureMenu: NSMenu,
         context: MenuCardContext)
     {
-        let accounts = self.store.claudeSwapAccountSnapshots
+        let accounts = self.store.claudeAccountSource.accounts
         let display = ClaudeSwapAccountMenuDisplay(
             accounts: accounts,
             layout: self.settings.multiAccountMenuLayout,
@@ -15,7 +15,11 @@ extension StatusItemController {
             errorAccountID: self.store.claudeSwapTransientState.lastErrorAccountID,
             inspectedAccountID: self.claudeSwapInspectedAccountID)
         if display.showsSwitcher {
-            let switcherHeading = NSMenuItem(title: L("Switch Claude Code account"), action: nil, keyEquivalent: "")
+            // Read-only sources (magpie) only inspect accounts, so do not promise a switch.
+            let headingTitle = accounts.contains(where: \.canActivate) || self.store.shouldFetchClaudeSwapAccounts()
+                ? L("Switch Claude Code account")
+                : L("Accounts")
+            let switcherHeading = NSMenuItem(title: headingTitle, action: nil, keyEquivalent: "")
             switcherHeading.isEnabled = false
             menu.addItem(switcherHeading)
             let item = NSMenuItem()
@@ -85,7 +89,7 @@ extension StatusItemController {
 
     func handleClaudeSwapAccountSelection(_ id: ProviderAccountIdentity, menu: NSMenu?) {
         guard self.store.claudeSwapTransientState.task == nil,
-              let account = self.store.claudeSwapAccountSnapshots.first(where: { $0.id == id })
+              let account = self.store.claudeAccountSource.accounts.first(where: { $0.id == id })
         else { return }
         if !ClaudeSwapAccountMenuDisplay.activatesAccount(account) {
             // Inspect sentinel diagnostics without asking the adapter to activate that slot.

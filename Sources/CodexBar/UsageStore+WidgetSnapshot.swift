@@ -123,7 +123,7 @@ extension UsageStore {
             }
         }
 
-        for accountSnapshot in self.claudeSwapAccountSnapshots {
+        for accountSnapshot in self.claudeAccountSource.accounts {
             guard let usage = accountSnapshot.snapshot else { continue }
             let identity = usage.identity?.accountID
                 ?? usage.identity?.accountEmail
@@ -161,7 +161,7 @@ extension UsageStore {
         }
         // Provider-specific by design: Claude swap subprocesses own extra IDs; Codex alone has scoped account info.
         if provider == .claude {
-            for accountSnapshot in self.claudeSwapAccountSnapshots {
+            for accountSnapshot in self.claudeAccountSource.accounts {
                 insert(accountSnapshot.snapshot?.identity?.accountID)
                 insert(accountSnapshot.snapshot?.identity?.accountEmail)
                 insert("\(accountSnapshot.id.source):\(accountSnapshot.id.opaqueID)")
@@ -236,18 +236,16 @@ extension UsageStore {
         previousEntry: WidgetSnapshot.ProviderEntry?) -> WidgetSnapshot.ProviderEntry?
     {
         // The ambient probe can still hold another account's quota while claude-swap owns the menu.
-        let swapOwnsClaude = self.settings.claudeSwapEnabled && ClaudeSwapMenuPrecedence.prefersClaudeSwap(
+        let claudeSource = self.claudeAccountSource
+        let swapOwnsClaude = self.claudeAccountSourceEnabled && ClaudeSwapMenuPrecedence.prefersClaudeSwap(
             provider: provider,
-            accountCount: self.claudeSwapAccountSnapshots.count,
-            showSingleAccount: self.settings.claudeSwapShowSingleAccount)
-        let activeSwapAccount = swapOwnsClaude ? self.claudeSwapAccountSnapshots.first(where: \.isActive) : nil
+            accountCount: claudeSource.accounts.count,
+            showSingleAccount: claudeSource.showSingleAccount)
+        let activeSwapAccount = swapOwnsClaude ? claudeSource.activeAccount : nil
         let snapshot = swapOwnsClaude ? activeSwapAccount?.snapshot : self.snapshots[provider.instanceID]
         let tokenSnapshot = self.tokenSnapshotForCurrentProviderConfig(for: provider)?.snapshot
         let claudeQuotaOwnerKey: String? = if swapOwnsClaude {
-            activeSwapAccount.flatMap { account in
-                ClaudeSwapRetainedUsageStore.ownershipFingerprint(for: account)
-                    .map { "claude/swap:\(account.id.opaqueID):\($0)" }
-            }
+            activeSwapAccount.flatMap(ClaudeAccountSource.widgetOwnerKey(for:))
         } else if provider == .claude {
             self.claudeWidgetQuotaOwnerKey()
         } else {

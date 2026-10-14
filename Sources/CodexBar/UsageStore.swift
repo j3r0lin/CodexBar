@@ -20,6 +20,7 @@ extension UsageStore {
         _ = self.claudeSwapAccountSnapshots
         _ = self.claudeSwapLastError
         _ = self.claudeSwapRevision
+        _ = (self.claudeMagpieAccountSnapshots, self.claudeMagpieLastError, self.claudeMagpieRevision)
         _ = self.tokenSnapshotPublications
         _ = self.tokenErrors
         _ = self.tokenRefreshInFlight
@@ -47,6 +48,7 @@ extension UsageStore {
         _ = self.snapshots
         _ = self.claudeSwapAccountSnapshots
         _ = self.claudeSwapRevision
+        _ = (self.claudeMagpieAccountSnapshots, self.claudeMagpieRevision)
         _ = self.errors
         _ = self.diagnostics
         _ = self.knownLimitsAvailabilityByProvider
@@ -171,6 +173,13 @@ final class UsageStore {
     var claudeSwapRevision: UInt64 = 0
     @ObservationIgnored var claudeSwapRefreshTask: Task<Void, Never>?
     @ObservationIgnored var claudeSwapTransientState = ClaudeSwapTransientState()
+    var claudeMagpieAccountSnapshots: [ProviderAccountUsageSnapshot] = []
+    var claudeMagpieLastRefreshAt: Date?
+    var claudeMagpieLastError: String?
+    var claudeMagpieRevision: UInt64 = 0
+    @ObservationIgnored var claudeMagpieRefreshTask: Task<Void, Never>?
+    @ObservationIgnored var claudeMagpieTransport: ClaudeMagpieAccountReader.Transport =
+        ClaudeMagpieAccountReader.urlSessionTransport
     var tokenSnapshotPublications: [ProviderInstanceID: TokenSnapshotPublication] = [:]
     var tokenSnapshotPublicationRevisions: [ProviderInstanceID: UInt64] = [:]
     var spendDashboardTokenPublications: [ProviderInstanceID: TokenSnapshotPublication] = [:]

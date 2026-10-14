@@ -47,8 +47,8 @@ extension StatusItemController {
         // with token-account cards or the segmented token-account switcher.
         if ClaudeSwapMenuPrecedence.prefersClaudeSwap(
             provider: provider,
-            accountCount: self.store.claudeSwapAccountSnapshots.count,
-            showSingleAccount: self.settings.claudeSwapShowSingleAccount)
+            accountCount: self.store.claudeAccountSource.accounts.count,
+            showSingleAccount: self.store.claudeAccountSource.showSingleAccount)
         {
             return nil
         }

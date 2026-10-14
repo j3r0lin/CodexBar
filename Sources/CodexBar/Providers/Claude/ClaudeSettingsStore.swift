@@ -82,6 +82,36 @@ extension SettingsStore {
                 value: newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "cleared" : "set")
         }
     }
+
+    /// While on, magpie owns Claude accounts: the ambient Claude Code credential fetch and claude-swap stay off.
+    var claudeMagpieEnabled: Bool {
+        get { self.configSnapshot.providerConfig(for: .claude)?.claudeMagpieEnabled ?? false }
+        set {
+            self.updateProviderConfig(provider: .claude) { entry in
+                entry.claudeMagpieEnabled = newValue
+            }
+            self.logProviderModeChange(provider: .claude, field: "claudeMagpieEnabled", value: String(newValue))
+        }
+    }
+
+    /// Empty means `ClaudeMagpieAccountReader.defaultQuotasURL`.
+    var claudeMagpieQuotasURL: String {
+        get { self.configSnapshot.providerConfig(for: .claude)?.sanitizedClaudeMagpieQuotasURL ?? "" }
+        set {
+            self.updateProviderConfig(provider: .claude) { entry in
+                entry.claudeMagpieQuotasURL = self.normalizedConfigValue(newValue)
+            }
+            self.logProviderModeChange(
+                provider: .claude,
+                field: "claudeMagpieQuotasURL",
+                value: newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "cleared" : "set")
+        }
+    }
+
+    /// claude-swap only runs while magpie does not own Claude accounts.
+    var claudeSwapEffectivelyEnabled: Bool {
+        self.claudeSwapEnabled && !self.claudeMagpieEnabled
+    }
 }
 
 extension SettingsStore {
