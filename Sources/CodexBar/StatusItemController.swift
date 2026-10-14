@@ -302,6 +302,8 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     }
 
     var claudeSwapInspectedAccountID: ProviderAccountIdentity?
+    /// One ring per magpie Claude account, outside the regular status-item vending.
+    var claudeAccountRingItems: [ProviderAccountIdentity: NSStatusItem] = [:]
     /// Compact multi-account layout: providers whose collapsed healthy tail is revealed this menu session.
     var compactAccountExpandedHealthyTailProviders: Set<ProviderInstanceID> = []
     /// Keeps detached merged-menu tab content reusable while the same menu remains open.
@@ -712,6 +714,7 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
         guard !self.isReleasedForTesting else { return }
         #endif
         MainThreadActivityBreadcrumb.push("updateIcons")
+        self.updateClaudeAccountRingItems()
         self.scheduleMenuBarCountdownRefreshIfNeeded()
         self.lastObservedStoreIconWorkSignature = precomputedStoreIconSignature ?? self.storeIconObservationSignature()
         self.beginIconPerfUpdatePass()

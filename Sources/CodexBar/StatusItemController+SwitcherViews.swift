@@ -8,10 +8,18 @@ enum ProviderSwitcherSelection: Hashable {
 }
 
 final class ProviderSwitcherView: NSView {
+    struct ClaudeAccountTab {
+        let id: ProviderAccountIdentity
+        let title: String
+        let usedPercent: Double?
+    }
+
     private struct Segment {
         let selection: ProviderSwitcherSelection
         let image: NSImage
         let title: String
+        /// Set on the per-account Claude tabs, which all share the Claude provider selection.
+        var claudeAccount: ClaudeAccountTab?
     }
 
     fileprivate struct QuotaIndicator {
@@ -23,6 +31,8 @@ final class ProviderSwitcherView: NSView {
 
     private let segments: [Segment]
     private let onSelect: (ProviderSwitcherSelection) -> Void
+    private let onSelectClaudeAccount: (ProviderAccountIdentity) -> Void
+    private var selectedClaudeAccountID: ProviderAccountIdentity?
     private let showsIcons: Bool
     private let weeklyRemainingProvider: (UsageProvider) -> Double?
     private var buttons: [NSButton] = []
@@ -55,19 +65,34 @@ final class ProviderSwitcherView: NSView {
         iconProvider: (UsageProvider) -> NSImage,
         pluginIconProvider: (UserProviderPlugin) -> NSImage = { _ in NSImage() },
         weeklyRemainingProvider: @escaping (UsageProvider) -> Double?,
+        claudeAccountTabs: [ClaudeAccountTab] = [],
+        selectedClaudeAccountID: ProviderAccountIdentity? = nil,
+        onSelectClaudeAccount: @escaping (ProviderAccountIdentity) -> Void = { _ in },
         onSelect: @escaping (ProviderSwitcherSelection) -> Void)
     {
         let minimumGap: CGFloat = 1
-        var segments = providers.map { provider in
+        var segments = providers.flatMap { provider -> [Segment] in
+            if provider == .claude, !claudeAccountTabs.isEmpty {
+                return claudeAccountTabs.map { tab in
+                    let icon = iconProvider(provider)
+                    icon.isTemplate = true
+                    icon.size = NSSize(width: 16, height: 16)
+                    return Segment(
+                        selection: .provider(provider.instanceID),
+                        image: icon,
+                        title: tab.title,
+                        claudeAccount: tab)
+                }
+            }
             let fullTitle = Self.switcherTitle(for: provider)
             let icon = iconProvider(provider)
             icon.isTemplate = true
             // Avoid any resampling: we ship exact 16pt/32px assets for crisp rendering.
             icon.size = NSSize(width: 16, height: 16)
-            return Segment(
+            return [Segment(
                 selection: .provider(provider.instanceID),
                 image: icon,
-                title: fullTitle)
+                title: fullTitle)]
         }
         segments.append(contentsOf: pluginProviders.map { plugin in
             Segment(
@@ -88,6 +113,8 @@ final class ProviderSwitcherView: NSView {
         }
         self.segments = segments
         self.onSelect = onSelect
+        self.onSelectClaudeAccount = onSelectClaudeAccount
+        self.selectedClaudeAccountID = selectedClaudeAccountID ?? claudeAccountTabs.first?.id
         self.showsIcons = showsIcons
         self.weeklyRemainingProvider = weeklyRemainingProvider
         self.stackedIcons = showsIcons && self.segments.count > 3
@@ -161,7 +188,7 @@ final class ProviderSwitcherView: NSView {
             button.alignment = .center
             button.wantsLayer = true
             button.layer?.cornerRadius = 6
-            button.state = (selected == segment.selection) ? .on : .off
+            button.state = self.segment(segment, matches: selected) ? .on : .off
             button.toolTip = nil
             button.translatesAutoresizingMaskIntoConstraints = false
             button.heightAnchor.constraint(equalToConstant: self.rowHeight).isActive = true
@@ -175,11 +202,10 @@ final class ProviderSwitcherView: NSView {
             self.addQuotaIndicator(
                 to: button,
                 selection: segment.selection,
-                remainingPercent: self.remainingPercent(for: segment.selection))
+                remainingPercent: self.remainingPercent(for: segment),
+                usedPercentColor: segment.claudeAccount?.usedPercent)
         }
-        self.selectedSegmentIndex = selected.flatMap { selected in
-            self.segments.firstIndex { $0.selection == selected }
-        }
+        self.selectedSegmentIndex = self.segments.firstIndex { self.segment($0, matches: selected) }
 
         let layoutCount = Self.layoutCount(for: self.segments.count, rows: self.rowCount)
         let requiredUniformWidth = self.stackedIcons
@@ -342,8 +368,18 @@ final class ProviderSwitcherView: NSView {
         return true
     }
 
+    private func segment(_ segment: Segment, matches selection: ProviderSwitcherSelection?) -> Bool {
+        guard segment.selection == selection else { return false }
+        guard let account = segment.claudeAccount else { return true }
+        return account.id == self.selectedClaudeAccountID
+    }
+
     private func applySelection(at index: Int) {
         let selection = self.segments[index].selection
+        if let account = self.segments[index].claudeAccount {
+            self.selectedClaudeAccountID = account.id
+            self.onSelectClaudeAccount(account.id)
+        }
         guard self.selectedSegmentIndex != index else {
             self.updateSelection(selection)
             return
@@ -631,7 +667,7 @@ final class ProviderSwitcherView: NSView {
     func updateSelection(_ selection: ProviderSwitcherSelection) {
         var selectedIndex: Int?
         for (index, button) in self.buttons.enumerated() {
-            let isSelected = self.segments.indices.contains(index) && self.segments[index].selection == selection
+            let isSelected = self.segments.indices.contains(index) && self.segment(self.segments[index], matches: selection)
             if isSelected {
                 selectedIndex = index
             }
@@ -649,7 +685,8 @@ final class ProviderSwitcherView: NSView {
         for (index, button) in self.buttons.enumerated() {
             guard self.segments.indices.contains(index) else { continue }
             let segment = self.segments[index]
-            let remaining = self.remainingPercent(for: segment.selection)
+            let remaining = self.remainingPercent(for: segment)
+            let usedPercentColor = segment.claudeAccount?.usedPercent
 
             let key = ObjectIdentifier(button)
             if let remaining {
@@ -659,17 +696,23 @@ final class ProviderSwitcherView: NSView {
                         Self.updateQuotaIndicatorFill(
                             indicator: &indicator,
                             remainingPercent: remaining,
-                            selection: segment.selection)
+                            selection: segment.selection,
+                            usedPercentColor: usedPercentColor)
                         self.quotaIndicators[key] = indicator
                     } else {
                         // The switcher view outlives a menu update, so refresh the color even when the
                         // ratio holds. A new accent color must not wait for usage to move.
                         indicator.fill.layer?.backgroundColor = Self.quotaIndicatorColor(
                             for: segment.selection,
-                            remainingPercent: remaining).cgColor
+                            remainingPercent: remaining,
+                            usedPercentColor: usedPercentColor).cgColor
                     }
                 } else {
-                    self.addQuotaIndicator(to: button, selection: segment.selection, remainingPercent: remaining)
+                    self.addQuotaIndicator(
+                        to: button,
+                        selection: segment.selection,
+                        remainingPercent: remaining,
+                        usedPercentColor: usedPercentColor)
                 }
             } else if let indicator = self.quotaIndicators.removeValue(forKey: key) {
                 indicator.track.removeFromSuperview()
@@ -679,8 +722,12 @@ final class ProviderSwitcherView: NSView {
         }
     }
 
-    private func remainingPercent(for selection: ProviderSwitcherSelection) -> Double? {
-        switch selection {
+    private func remainingPercent(for segment: Segment) -> Double? {
+        if let account = segment.claudeAccount {
+            // Fill shows what is left, matching the other tabs' default.
+            return account.usedPercent.map { 100 - $0 }
+        }
+        switch segment.selection {
         case let .provider(instanceID):
             instanceID.firstPartyProvider.flatMap(self.weeklyRemainingProvider)
         case .overview:
@@ -1071,7 +1118,12 @@ extension ProviderSwitcherView {
 #endif
 
 extension ProviderSwitcherView {
-    private func addQuotaIndicator(to view: NSView, selection: ProviderSwitcherSelection, remainingPercent: Double?) {
+    private func addQuotaIndicator(
+        to view: NSView,
+        selection: ProviderSwitcherSelection,
+        remainingPercent: Double?,
+        usedPercentColor: Double? = nil)
+    {
         guard let remainingPercent else { return }
 
         let track = NSView()
@@ -1086,7 +1138,8 @@ extension ProviderSwitcherView {
         fill.wantsLayer = true
         fill.layer?.backgroundColor = Self.quotaIndicatorColor(
             for: selection,
-            remainingPercent: remainingPercent).cgColor
+            remainingPercent: remainingPercent,
+            usedPercentColor: usedPercentColor).cgColor
         fill.layer?.cornerRadius = Self.quotaIndicatorHeight / 2
         fill.layer?.maskedCorners = [.layerMinXMinYCorner, .layerMinXMaxYCorner]
         fill.translatesAutoresizingMaskIntoConstraints = false
@@ -1131,7 +1184,8 @@ extension ProviderSwitcherView {
     fileprivate static func updateQuotaIndicatorFill(
         indicator: inout QuotaIndicator,
         remainingPercent: Double,
-        selection: ProviderSwitcherSelection)
+        selection: ProviderSwitcherSelection,
+        usedPercentColor: Double? = nil)
     {
         let ratio = Self.quotaIndicatorRatio(remainingPercent: remainingPercent)
         indicator.fillWidthConstraint.isActive = false
@@ -1144,7 +1198,8 @@ extension ProviderSwitcherView {
         indicator.fillRatio = ratio
         indicator.fill.layer?.backgroundColor = Self.quotaIndicatorColor(
             for: selection,
-            remainingPercent: remainingPercent).cgColor
+            remainingPercent: remainingPercent,
+            usedPercentColor: usedPercentColor).cgColor
         indicator.fill.layer?.cornerRadius = Self.quotaIndicatorHeight / 2
         indicator.fill.layer?.maskedCorners = [.layerMinXMinYCorner, .layerMinXMaxYCorner]
         indicator.track.isHidden = false
@@ -1153,8 +1208,12 @@ extension ProviderSwitcherView {
 
     fileprivate static func quotaIndicatorColor(
         for selection: ProviderSwitcherSelection,
-        remainingPercent _: Double) -> NSColor
+        remainingPercent _: Double,
+        usedPercentColor: Double? = nil) -> NSColor
     {
+        if let usedPercentColor {
+            return UsageSeverityPalette.color(usedPercent: usedPercentColor)
+        }
         switch selection {
         case let .provider(instanceID):
             guard let provider = instanceID.firstPartyProvider else { return NSColor.secondaryLabelColor }

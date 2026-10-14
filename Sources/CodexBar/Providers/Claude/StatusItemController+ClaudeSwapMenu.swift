@@ -8,6 +8,17 @@ extension StatusItemController {
         context: MenuCardContext)
     {
         let accounts = self.store.claudeAccountSource.accounts
+        if self.claudeAccountTabsEnabled {
+            // The top switcher already has one tab per account; show only the selected account's card.
+            if let account = self.selectedClaudeTabAccount {
+                self.addStackedClaudeSwapMenuCards(
+                    accounts: [account],
+                    to: menu,
+                    captureMenu: captureMenu,
+                    context: context)
+            }
+            return
+        }
         let display = ClaudeSwapAccountMenuDisplay(
             accounts: accounts,
             layout: self.settings.multiAccountMenuLayout,
@@ -153,7 +164,7 @@ extension StatusItemController {
     }
 
     private func claudeSwapCardModel(for account: ProviderAccountUsageSnapshot) -> UsageMenuCardView.Model? {
-        self.menuCardModel(
+        var model = self.menuCardModel(
             for: .claude,
             context: ClaudeSwapAccountMenuDisplay.cardContext(
                 for: account,
@@ -162,6 +173,10 @@ extension StatusItemController {
                 switchError: self.store.claudeSwapTransientState.lastErrorAccountID == account.id
                     ? self.store.claudeSwapTransientState.lastError
                     : nil))
+        if self.claudeAccountTabsEnabled {
+            model?.usageColoredProgress = true
+        }
+        return model
     }
 
     private func claudeSwapAccountActionLabel(_ account: ProviderAccountUsageSnapshot) -> String? {
@@ -183,5 +198,50 @@ extension StatusItemController {
             guard let self else { return }
             self.startClaudeSwapAccountSwitch(accountID, menu: menu)
         }
+    }
+
+    // MARK: - Per-account tabs and menu-bar rings (magpie only)
+
+    /// While magpie owns Claude, each magpie account gets its own switcher tab and menu-bar ring.
+    var claudeAccountTabsEnabled: Bool {
+        self.settings.claudeMagpieEnabled && !self.store.claudeAccountSource.accounts.isEmpty
+    }
+
+    var selectedClaudeTabAccount: ProviderAccountUsageSnapshot? {
+        let accounts = self.store.claudeAccountSource.accounts
+        if let id = self.claudeSwapInspectedAccountID, let account = accounts.first(where: { $0.id == id }) {
+            return account
+        }
+        return accounts.first(where: \.isActive) ?? accounts.first
+    }
+
+    func claudeAccountTabs() -> [ProviderSwitcherView.ClaudeAccountTab] {
+        guard self.claudeAccountTabsEnabled else { return [] }
+        let hidePersonalInfo = self.settings.hidePersonalInfo
+        return self.store.claudeAccountSource.accounts.map { account in
+            ProviderSwitcherView.ClaudeAccountTab(
+                id: account.id,
+                title: Self.claudeAccountShortName(account, hidePersonalInfo: hidePersonalInfo),
+                usedPercent: Self.claudeAccountUsedPercent(account))
+        }
+    }
+
+    func selectClaudeAccountTab(_ id: ProviderAccountIdentity) {
+        self.claudeSwapInspectedAccountID = id
+        // Every account shares the Claude selection, so a cached Claude page would show the previous account.
+        self.clearMergedSwitcherContentCaches()
+    }
+
+    static func claudeAccountShortName(_ account: ProviderAccountUsageSnapshot, hidePersonalInfo: Bool) -> String {
+        let label = ClaudeSwapAccountMenuDisplay.label(for: account, hidePersonalInfo: hidePersonalInfo)
+        guard !hidePersonalInfo else { return label }
+        // magpie labels are an alias, or an email when no alias is set; the local part is enough for a tab.
+        return label.split(separator: "@").first.map(String.init) ?? label
+    }
+
+    /// The tighter of the session and weekly windows, so a tab turns red as soon as either one runs out.
+    static func claudeAccountUsedPercent(_ account: ProviderAccountUsageSnapshot) -> Double? {
+        guard let snapshot = account.snapshot else { return nil }
+        return [snapshot.primary?.usedPercent, snapshot.secondary?.usedPercent].compactMap(\.self).max()
     }
 }

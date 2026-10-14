@@ -996,6 +996,11 @@ extension StatusItemController {
             weeklyRemainingProvider: { [weak self] provider in
                 self?.switcherWeeklyRemaining(for: provider)
             },
+            claudeAccountTabs: self.claudeAccountTabs(),
+            selectedClaudeAccountID: self.selectedClaudeTabAccount?.id,
+            onSelectClaudeAccount: { [weak self] id in
+                self?.selectClaudeAccountTab(id)
+            },
             onSelect: { [weak self, weak menu] selection in
                 guard let self, let menu else { return }
                 MenuSwitchFlickerProbe.debugLog("onSelect \(selection)")
