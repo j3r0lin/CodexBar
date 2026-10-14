@@ -459,6 +459,31 @@ The accepted multi-account design in
 - Multiple claude-swap accounts—and a single account when explicitly enabled—take precedence over Claude
   token-account presentation (stacked cards and the segmented switcher).
 
+## magpie accounts (opt-in)
+
+- Setup: Preferences → Providers → Claude → "Read accounts from magpie". The URL field beneath it defaults to the
+  local gateway, `http://127.0.0.1:3425/v1/magpie/quotas`; any other http(s) URL serving the same shape works. Both
+  settings are machine-local and are not part of cloud settings sync.
+- Exclusive ownership: while on, magpie is Claude's only usage source. The ambient Claude fetch (Claude Code
+  credentials file, Keychain, CLI, web) never runs, the ambient snapshot is cleared, claude-swap stops and its toggle is
+  disabled with a note, and the "Sign in with Claude Code" / Keychain-consent menu actions are hidden. Turning magpie off
+  restores the previous behavior and triggers a normal Claude refresh.
+- Behavior: on each Claude refresh CodexBar sends one unauthenticated `GET` to the URL (10 s timeout, 1 MiB cap) and
+  keeps only rows with `provider == "claude"`. Window names map as `5 hours` → session, `7 days` → weekly, and
+  `7 days · <Model>` → that model's scoped weekly lane; other names are dropped. `used` is the used percentage,
+  `resetsAt` is optional, and `readAt` is the measurement time. A malformed row is skipped without discarding the rest.
+- Accounts: every Claude row is a card, even when only one exists. The row marked `last: true` is active (it drives the
+  menu-bar icon and widgets); without one, the first row is active. Labels use `alias`, otherwise the email from
+  `user` (`<email> · <organization>`), with the organization appended when two rows share an email. magpie cards
+  cannot be switched from CodexBar.
+- Identity is `magpie` / `claude:<lowercased email>` (plus ` · <organization>` for shared emails). This intentionally
+  departs from the "never derive identity from email" rule used for claude-swap: magpie exposes no slot or other stable
+  row ID. Widgets persist only a SHA-256 of that identity and an `Account N` label.
+- Failures keep the last successful accounts and show the error in provider settings. `codexbar cards` reads the same
+  endpoint when magpie is enabled in the config file and reports a `Claude (magpie)` failure instead of falling back to
+  the ambient account. `codexbar dashboard` does not list magpie accounts yet; it only skips claude-swap while magpie is
+  on.
+
 Packaged synthetic proof (fake `cswap` executable, no real accounts or credentials):
 
 ![Stacked claude-swap account cards](screenshots/claude-swap-accounts-synthetic-proof.png)
