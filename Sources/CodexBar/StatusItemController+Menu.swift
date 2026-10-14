@@ -553,11 +553,20 @@ extension StatusItemController {
         // interaction closures must always reference the live menu they end up serving.
         let interactionMenu = captureMenu ?? menu
         let providerScopes = self.overviewProviderScopes(enabledProviders: enabledProviders)
-        let rows: [(provider: UsageProvider, model: UsageMenuCardView.Model)] = providerScopes.visible
-            .compactMap { provider in
-                guard let model = self.menuCardModel(for: provider) else { return nil }
-                guard !model.isOverviewErrorOnly else { return nil }
-                return (provider: provider, model: model)
+        let rows: [(provider: UsageProvider, model: UsageMenuCardView.Model, claudeAccountID: ProviderAccountIdentity?)] =
+            providerScopes.visible.flatMap { provider -> [(
+                provider: UsageProvider,
+                model: UsageMenuCardView.Model,
+                claudeAccountID: ProviderAccountIdentity?)] in
+                if provider == .claude, self.claudeAccountTabsEnabled {
+                    // Each magpie account is its own row; the provider-level Claude snapshot is not magpie's data.
+                    return self.claudeOverviewAccountRows().map {
+                        (provider: provider, model: $0.model, claudeAccountID: $0.id)
+                    }
+                }
+                guard let model = self.menuCardModel(for: provider) else { return [] }
+                guard !model.isOverviewErrorOnly else { return [] }
+                return [(provider: provider, model: model, claudeAccountID: nil)]
             }
         guard !rows.isEmpty else { return false }
 
@@ -601,11 +610,11 @@ extension StatusItemController {
 
         for (index, row) in rows.enumerated() {
             let identifier = "\(Self.overviewRowIdentifierPrefix)\(row.provider.rawValue)"
-            let storageText = self.store.storageFootprintText(for: row.provider)
-            let submenu = self.makeOverviewRowSubmenu(
-                provider: row.provider,
-                model: row.model,
-                width: menuWidth)
+                + (row.claudeAccountID.map { "#\($0.opaqueID)" } ?? "")
+            let storageText = row.claudeAccountID == nil ? self.store.storageFootprintText(for: row.provider) : nil
+            let submenu = row.claudeAccountID == nil
+                ? self.makeOverviewRowSubmenu(provider: row.provider, model: row.model, width: menuWidth)
+                : nil
             let item = self.makeMenuCardItem(
                 OverviewMenuCardRowView(
                     model: row.model,
@@ -614,7 +623,7 @@ extension StatusItemController {
                     layout: self.settings.mergedOverviewLayout),
                 id: identifier,
                 width: menuWidth,
-                heightCacheScope: row.provider.rawValue,
+                heightCacheScope: identifier,
                 heightCacheFingerprint: row.model.heightFingerprint(
                     section: "overview",
                     additional: [
@@ -626,6 +635,9 @@ extension StatusItemController {
                 usesGPUSelection: true,
                 onClick: { [weak self, weak interactionMenu] in
                     guard let self, let interactionMenu else { return }
+                    if let accountID = row.claudeAccountID {
+                        self.selectClaudeAccountTab(accountID)
+                    }
                     self.selectOverviewProvider(row.provider, menu: interactionMenu)
                 })
             if submenu == nil {

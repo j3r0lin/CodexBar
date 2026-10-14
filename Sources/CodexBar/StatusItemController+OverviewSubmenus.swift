@@ -40,7 +40,14 @@ extension StatusItemController {
         else {
             return
         }
-        let rawProvider = String(represented.dropFirst(Self.overviewRowIdentifierPrefix.count))
+        let parts = represented.dropFirst(Self.overviewRowIdentifierPrefix.count)
+            .split(separator: "#", maxSplits: 1)
+        let rawProvider = parts.first.map(String.init) ?? ""
+        if parts.count == 2,
+           let account = self.store.claudeAccountSource.accounts.first(where: { $0.id.opaqueID == parts[1] })
+        {
+            self.selectClaudeAccountTab(account.id)
+        }
         guard let provider = UsageProvider(rawValue: rawProvider),
               let menu = sender.menu
         else {

@@ -165,7 +165,7 @@ struct UsageMenuCardView: View {
         }
 
         let provider: UsageProvider
-        let providerName: String
+        var providerName: String
         let email: String
         var accountIdentityFingerprint: String?
         let subtitleText: String

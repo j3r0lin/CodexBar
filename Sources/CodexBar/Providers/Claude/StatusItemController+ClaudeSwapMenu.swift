@@ -163,7 +163,7 @@ extension StatusItemController {
             })
     }
 
-    private func claudeSwapCardModel(for account: ProviderAccountUsageSnapshot) -> UsageMenuCardView.Model? {
+    func claudeSwapCardModel(for account: ProviderAccountUsageSnapshot) -> UsageMenuCardView.Model? {
         var model = self.menuCardModel(
             for: .claude,
             context: ClaudeSwapAccountMenuDisplay.cardContext(
@@ -213,6 +213,15 @@ extension StatusItemController {
             return account
         }
         return accounts.first(where: \.isActive) ?? accounts.first
+    }
+
+    func claudeOverviewAccountRows() -> [(id: ProviderAccountIdentity, model: UsageMenuCardView.Model)] {
+        let hidePersonalInfo = self.settings.hidePersonalInfo
+        return self.store.claudeAccountSource.accounts.compactMap { account in
+            guard var model = self.claudeSwapCardModel(for: account) else { return nil }
+            model.providerName = "Claude · " + Self.claudeAccountShortName(account, hidePersonalInfo: hidePersonalInfo)
+            return (id: account.id, model: model)
+        }
     }
 
     func claudeAccountTabs() -> [ProviderSwitcherView.ClaudeAccountTab] {
