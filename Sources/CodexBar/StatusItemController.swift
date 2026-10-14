@@ -506,6 +506,7 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     private func wireBindings() {
         self.observeStoreChanges()
         self.observeStoreIconChanges()
+        self.observeClaudeAccountRings()
         self.observeIconPerfRefreshCycleChanges()
         self.observeDebugForceAnimation()
         self.observeSettingsChanges()

@@ -2,6 +2,21 @@ import AppKit
 import CodexBarCore
 
 extension StatusItemController {
+    /// The store-icon signature ignores magpie accounts, so the rings follow the account list on their own.
+    func observeClaudeAccountRings() {
+        withObservationTracking {
+            _ = self.store.claudeAccountSource.accounts
+            _ = self.settings.hidePersonalInfo
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.observeClaudeAccountRings()
+                self.updateClaudeAccountRingItems()
+            }
+        }
+        self.updateClaudeAccountRingItems()
+    }
+
     func updateClaudeAccountRingItems() {
         let accounts = self.claudeAccountTabsEnabled ? self.store.claudeAccountSource.accounts : []
         let liveIDs = Set(accounts.map(\.id))
