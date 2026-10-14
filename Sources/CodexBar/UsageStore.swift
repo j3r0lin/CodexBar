@@ -1094,13 +1094,13 @@ extension UsageStore {
                 if let apiKeyDebugContext {
                     return Self.apiKeyDebugLine(apiKeyDebugContext)
                 }
+                if let claudeMagpieDebugNote {
+                    return claudeMagpieDebugNote
+                }
                 switch provider {
                 case .codex:
                     return await codexFetcher.debugRawRateLimits()
                 case .claude:
-                    if let magpieNote = claudeMagpieDebugNote {
-                        return magpieNote
-                    }
                     guard let claudeDebugConfiguration else {
                         return "Claude debug log configuration unavailable"
                     }
