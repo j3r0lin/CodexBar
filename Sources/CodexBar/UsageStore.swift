@@ -1049,11 +1049,7 @@ extension UsageStore {
         let claudeUsageDataSource = self.settings.claudeUsageDataSource
         let claudeCookieSource = self.settings.claudeCookieSource
         let claudeCookieHeader = self.settings.claudeCookieHeader
-        // Provider-specific by design: magpie owns Claude, so its debug log must not probe credentials, the
-        // Keychain, browser cookies, or the Claude CLI.
-        let claudeMagpieDebugNote: String? = provider == .claude && self.settings.claudeMagpieEnabled
-            ? self.claudeMagpieDebugNote()
-            : nil
+        let claudeMagpieDebugNote = self.claudeMagpieDebugNote(for: provider)
         let claudeDebugConfiguration: ClaudeDebugLogConfiguration? = if provider == .claude {
             claudeMagpieDebugNote == nil
                 ? await self.makeClaudeDebugConfiguration(

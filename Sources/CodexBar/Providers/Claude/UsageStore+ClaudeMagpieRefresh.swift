@@ -65,7 +65,11 @@ extension UsageStore {
         self.settings.claudeMagpieEnabled || self.settings.claudeSwapEnabled
     }
 
-    func claudeMagpieDebugNote() -> String {
+    /// Replaces the Claude debug log while magpie owns Claude, so the log never probes credentials, the Keychain,
+    /// browser cookies, or the Claude CLI. Nil for other providers or when magpie is off.
+    func claudeMagpieDebugNote(for provider: UsageProvider) -> String? {
+        // Provider-specific by design: only Claude accounts can be owned by magpie.
+        guard provider == .claude, self.settings.claudeMagpieEnabled else { return nil }
         let url = self.settings.claudeMagpieQuotasURL.isEmpty
             ? ClaudeMagpieAccountReader.defaultQuotasURL
             : self.settings.claudeMagpieQuotasURL
