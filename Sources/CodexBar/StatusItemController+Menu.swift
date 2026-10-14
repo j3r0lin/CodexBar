@@ -1018,6 +1018,7 @@ extension StatusItemController {
             onSelect: { [weak self, weak menu] selection in
                 guard let self, let menu else { return }
                 MenuSwitchFlickerProbe.debugLog("onSelect \(selection)")
+                self.switcherFadeDeadline = Date().addingTimeInterval(0.4)
                 var provider: UsageProvider?
                 self.preservingMergedSwitcherContentCachesDuringInvalidation {
                     switch selection {

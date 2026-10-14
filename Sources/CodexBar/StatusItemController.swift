@@ -304,6 +304,11 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     var claudeSwapInspectedAccountID: ProviderAccountIdentity?
     /// One ring per magpie Claude account, outside the regular status-item vending.
     var claudeAccountRingItems: [ProviderAccountIdentity: NSStatusItem] = [:]
+    var claudeAccountRingHover: [ProviderAccountIdentity: ClaudeAccountRingHoverTracker] = [:]
+    var claudeAccountRefreshAnimation: ClaudeAccountRingRefreshAnimation?
+    let claudeAccountHoverPanel = ClaudeAccountHoverPanelController()
+    /// Cards built before this moment fade in, so a tab switch cross-fades instead of snapping.
+    var switcherFadeDeadline: Date?
     /// Compact multi-account layout: providers whose collapsed healthy tail is revealed this menu session.
     var compactAccountExpandedHealthyTailProviders: Set<ProviderInstanceID> = []
     /// Keeps detached merged-menu tab content reusable while the same menu remains open.

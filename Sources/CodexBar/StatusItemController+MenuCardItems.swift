@@ -100,6 +100,17 @@ extension StatusItemController {
             self.menuCardHeight(for: hosting, width: width)
         }
         hosting.applyMeasuredSize(width: width, height: height)
+        if let deadline = self.switcherFadeDeadline, deadline > Date() {
+            hosting.alphaValue = 0
+            DispatchQueue.main.async {
+                NSAnimationContext.runAnimationGroup { context in
+                    context.duration = 0.18
+                    hosting.animator().alphaValue = 1
+                }
+            }
+        } else {
+            hosting.alphaValue = 1
+        }
         let item = self.makeMenuCardNSMenuItem(
             hosting: hosting,
             id: id,

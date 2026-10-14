@@ -40,6 +40,13 @@ extension StatusItemController {
         menu: NSMenu? = nil)
     {
         guard self.shouldMergeIcons else { return }
+        // Step through the visible segments, so per-account Claude tabs are reachable from the keyboard.
+        let visibleMenu = menu ?? self.providerSwitcherShortcutMenuID.flatMap { self.openMenus[$0] }
+        if let switcherView = visibleMenu?.items.first?.view as? ProviderSwitcherView,
+           switcherView.selectAdjacentSegment(delta: direction == .next ? 1 : -1)
+        {
+            return
+        }
         let enabledProviders = self.store.enabledFirstPartyProvidersForDisplay()
         let switcherProviderIDs = self.switcherProviderIDs(enabledFirstPartyProviders: enabledProviders)
         guard switcherProviderIDs.count > 1 else { return }
