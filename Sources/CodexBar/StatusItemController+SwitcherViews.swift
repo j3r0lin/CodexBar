@@ -52,6 +52,9 @@ final class ProviderSwitcherView: NSView {
     private var pressedButtonTag: Int?
     private var selectedSegmentIndex: Int?
     private static let quotaIndicatorHeight: CGFloat = 2
+    private static let showsQuotaIndicators = false
+    /// Set when one row is too narrow for every label; only the selected tab then keeps its text.
+    private var hidesUnselectedTitles = false
     private static let quotaIndicatorBottomInset: CGFloat = 2
     private static let quotaIndicatorHorizontalInset: CGFloat = 8
 
@@ -137,6 +140,8 @@ final class ProviderSwitcherView: NSView {
         let height: CGFloat = self.rowHeight * CGFloat(self.rowCount)
             + self.rowSpacing * CGFloat(max(0, self.rowCount - 1))
         self.preferredWidth = width
+        let singleRowSegmentWidth = (width - 12 - CGFloat(max(0, self.segments.count - 1))) / CGFloat(max(1, self.segments.count))
+        self.hidesUnselectedTitles = self.stackedIcons && self.rowCount == 1 && singleRowSegmentWidth < 40
         super.init(frame: NSRect(x: 0, y: 0, width: width, height: height))
         Self.clearButtonWidthCache()
         self.wantsLayer = true
@@ -150,7 +155,7 @@ final class ProviderSwitcherView: NSView {
                     image: segment.image,
                     target: self,
                     action: #selector(self.handleSelection(_:)))
-                if self.rowCount >= 4 {
+                if self.rowCount >= 4 || self.segments.count >= 6 {
                     stacked.setTitleFontSize(NSFont.smallSystemFontSize - 3)
                 }
                 button = stacked
@@ -569,6 +574,8 @@ final class ProviderSwitcherView: NSView {
         stackedIcons: Bool) -> Int
     {
         guard count > 1 else { return 1 }
+        // Wrapping splits adjacent account tabs; a narrow single row reads better up to this many tabs.
+        if count <= 8 { return 1 }
         let maxRows = min(4, count)
         let fourRowThreshold = 15
         let minimumComfortableAverage: CGFloat = stackedIcons ? 50 : 54
@@ -730,6 +737,8 @@ final class ProviderSwitcherView: NSView {
     }
 
     private func remainingPercent(for segment: Segment) -> Double? {
+        // The switcher is navigation only; usage lives in the Overview rows and the menu-bar rings.
+        if Self.showsQuotaIndicators == false { return nil }
         if let account = segment.claudeAccount {
             // Fill shows what is left, matching the other tabs' default.
             return account.usedPercent.map { 100 - $0 }
@@ -756,6 +765,11 @@ final class ProviderSwitcherView: NSView {
         for button in self.buttons {
             let isSelected = button.state == .on
             let isHovered = self.hoveredButtonTag == button.tag
+            if self.hidesUnselectedTitles, self.segments.indices.contains(button.tag) {
+                let title = self.segments[button.tag].title
+                button.title = isSelected ? title : ""
+                button.toolTip = title
+            }
             button.contentTintColor = isSelected ? self.selectedTextColor : self.unselectedTextColor
             button.layer?.backgroundColor = if isSelected {
                 self.selectedBackground
