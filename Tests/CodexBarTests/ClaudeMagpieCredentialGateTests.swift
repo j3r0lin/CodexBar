@@ -3,8 +3,8 @@ import Testing
 @testable import CodexBarCLI
 @testable import CodexBarCore
 
-/// Under magpie, every Claude fetch path (CLI `usage`, `cards --account/--source`, dashboard, guard, hooks,
-/// diagnose, cookie refresh, and the app) resolves to the magpie strategy only, never a credential strategy.
+/// Claude settings snapshots carry magpie ownership from the config, and the Claude fetch pipeline then resolves
+/// only the magpie strategy regardless of source mode or selected token account.
 struct ClaudeMagpieCredentialGateTests {
     @Test
     func `CLI settings snapshot carries magpie ownership from the config`() throws {
@@ -64,6 +64,55 @@ struct ClaudeMagpieCredentialGateTests {
         #expect(result.usage.secondary?.usedPercent == 84)
         #expect(result.sourceLabel == "magpie")
         #expect(!strategy.shouldFallback(on: ClaudeMagpieAccountReaderError.httpStatus(500), context: context))
+    }
+
+    @Test
+    func `token accounts are not resolved for Claude under magpie`() throws {
+        for allAccounts in [false, true] {
+            let tokenContext = try TokenAccountCLIContext(
+                selection: TokenAccountCLISelection(label: nil, index: nil, allAccounts: allAccounts),
+                config: Self.configWithTwoTokenAccounts(),
+                verbose: false)
+            #expect(try tokenContext.resolvedAccounts(for: .claude).isEmpty)
+        }
+    }
+
+    @Test
+    func `serve does not expand Claude token accounts under magpie`() {
+        #expect(!CodexBarCLI.serveIncludesConfiguredAccounts(
+            provider: .claude,
+            config: Self.configWithTwoTokenAccounts(),
+            allAccounts: true))
+    }
+
+    @Test
+    func `cookie refresh is skipped for Claude under magpie`() async throws {
+        let tokenContext = try TokenAccountCLIContext(
+            selection: TokenAccountCLISelection(label: nil, index: nil, allAccounts: false),
+            config: Self.configWithTwoTokenAccounts(),
+            verbose: false)
+
+        let result = await CodexBarCLI.refreshCookie(
+            descriptor: ClaudeProviderDescriptor.descriptor,
+            tokenContext: tokenContext,
+            browserDetection: BrowserDetection(cacheTTL: 0))
+
+        #expect(result.status == .skipped)
+    }
+
+    private static func configWithTwoTokenAccounts() -> CodexBarConfig {
+        var claude = ProviderConfig(
+            id: .claude,
+            enabled: true,
+            tokenAccounts: ProviderTokenAccountData(
+                version: 1,
+                accounts: [
+                    ProviderTokenAccount(id: UUID(), label: "One", token: "sk-ant-oat-one", addedAt: 1, lastUsed: 2),
+                    ProviderTokenAccount(id: UUID(), label: "Two", token: "sk-ant-oat-two", addedAt: 1, lastUsed: 2),
+                ],
+                activeIndex: 0))
+        claude.claudeMagpieEnabled = true
+        return CodexBarConfig(providers: [claude])
     }
 
     private static func context(

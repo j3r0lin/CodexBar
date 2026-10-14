@@ -473,7 +473,10 @@ The accepted multi-account design in
   "Sign in with Claude Code" / Keychain-consent menu actions are hidden. Turning magpie off restores the previous
   behavior and triggers a normal Claude refresh.
 - Limits: an ambient fetch already in flight when magpie is switched on may finish one credential read; its result
-  is discarded. The Claude debug panel's manual probes still read credentials when used explicitly.
+  is discarded. The Claude debug log reports magpie ownership, URL and last error instead of probing credentials,
+  the Keychain, browser cookies or the Claude CLI. Claude token accounts are not resolved in the CLI, so `usage`,
+  `serve` and `dashboard` show one Claude row; `cookie refresh` skips Claude. Turning magpie on keeps the local-log
+  token cost.
 - Behavior: on each Claude refresh CodexBar sends one unauthenticated `GET` to the URL (10 s timeout, 1 MiB cap) and
   keeps only rows with `provider == "claude"`. Window names map as `5 hours` → session, `7 days` → weekly, and
   `7 days · <Model>` → that model's scoped weekly lane; other names are dropped. `used` is the used percentage,
@@ -482,11 +485,13 @@ The accepted multi-account design in
 - Accounts: every Claude row is a card, even when only one exists. The row marked `last: true` is active (it drives the
   menu-bar icon and widgets); without one, the first row is active. Labels use `alias`, otherwise the email from
   `user` (`<email> · <organization>`), with the organization appended when two rows share an email. Hide Personal Info
-  replaces the whole label with `Account N`, numbered in the gateway's own order. magpie cards cannot be switched from
+  replaces the whole label with `Account N`, numbered in the gateway's own order. Widgets and the menu-bar icon never
+  show last-known usage as current. magpie cards cannot be switched from
   CodexBar.
 - Identity is `magpie` / `claude:<lowercased email>` (plus ` · <organization>` for shared emails). This intentionally
   departs from the "never derive identity from email" rule used for claude-swap: magpie exposes no slot or other stable
-  row ID. A repeated email and organization keeps only the first row. Widgets persist only a SHA-256 of that identity
+  row ID. Rows are deduplicated first: the same email and organization (case-insensitive) keep only the first row,
+  while different organizations under one email stay separate accounts labeled with their organization. Widgets persist only a SHA-256 of that identity
   and an `Account N` label in gateway order.
 - Failures keep the last successful accounts as last-known usage with their age and the error on each card and in
   provider settings; the menu-bar icon stops showing them until the next successful read. `codexbar cards` lists every

@@ -87,7 +87,12 @@ extension CodexBarCLI {
     {
         guard allAccounts else { return false }
         // Provider-specific by design: Claude-swap supplies account rows; keep normal provider-level usage only.
-        if provider == .claude, dashboardClaudeSwapIsEligible(config: config) { return false }
+        if provider == .claude,
+           dashboardClaudeSwapIsEligible(config: config)
+           || config.providerConfig(for: .claude)?.claudeMagpieEnabled == true
+        {
+            return false
+        }
         return TokenAccountSupportCatalog.support(for: provider) != nil
             && config.providerConfig(for: provider.instanceID)?.tokenAccounts?.accounts.isEmpty == false
     }

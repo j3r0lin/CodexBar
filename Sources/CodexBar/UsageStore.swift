@@ -1049,7 +1049,13 @@ extension UsageStore {
         let claudeUsageDataSource = self.settings.claudeUsageDataSource
         let claudeCookieSource = self.settings.claudeCookieSource
         let claudeCookieHeader = self.settings.claudeCookieHeader
-        let claudeDebugConfiguration: ClaudeDebugLogConfiguration? = if provider == .claude {
+        // magpie owns Claude: the debug log must not probe credentials, the Keychain, browser cookies, or the CLI.
+        let claudeMagpieDebugNote: String? = provider == .claude && self.settings.claudeMagpieEnabled
+            ? self.claudeMagpieDebugNote()
+            : nil
+        let claudeDebugConfiguration: ClaudeDebugLogConfiguration? = if provider == .claude,
+                                                                       claudeMagpieDebugNote == nil
+        {
             await self.makeClaudeDebugConfiguration(
                 fallbackUsageDataSource: claudeUsageDataSource,
                 fallbackWebExtrasEnabled: claudeWebExtrasEnabled,
@@ -1091,6 +1097,9 @@ extension UsageStore {
                 case .codex:
                     return await codexFetcher.debugRawRateLimits()
                 case .claude:
+                    if let magpieNote = claudeMagpieDebugNote {
+                        return magpieNote
+                    }
                     guard let claudeDebugConfiguration else {
                         return "Claude debug log configuration unavailable"
                     }

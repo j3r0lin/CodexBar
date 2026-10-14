@@ -65,6 +65,17 @@ extension UsageStore {
         self.settings.claudeMagpieEnabled || self.settings.claudeSwapEnabled
     }
 
+    func claudeMagpieDebugNote() -> String {
+        let url = self.settings.claudeMagpieQuotasURL.isEmpty
+            ? ClaudeMagpieAccountReader.defaultQuotasURL
+            : self.settings.claudeMagpieQuotasURL
+        return [
+            "magpie owns Claude accounts; credential, Keychain, browser cookie and CLI probes are skipped.",
+            "magpie URL: \(url)",
+            "Last magpie error: \(self.claudeMagpieLastError ?? "none")",
+        ].joined(separator: "\n")
+    }
+
     func shouldFetchClaudeMagpieAccounts() -> Bool {
         self.isEnabled(.claude) && self.settings.claudeMagpieEnabled
     }
@@ -87,7 +98,7 @@ extension UsageStore {
     func clearClaudeAmbientUsageForMagpie() {
         let instanceID = UsageProvider.claude.instanceID
         // Same coverage as a credential swap, including widget usage preservation and token snapshots.
-        self.clearClaudeCredentialDerivedStateForCredentialSwap()
+        self.clearClaudeCredentialDerivedStateForCredentialSwap(keepsLocalTokenCost: true)
         self.diagnostics[instanceID] = nil
         self.lastFetchAttempts.removeValue(forKey: instanceID)
         self.accountSnapshots.removeValue(forKey: instanceID)

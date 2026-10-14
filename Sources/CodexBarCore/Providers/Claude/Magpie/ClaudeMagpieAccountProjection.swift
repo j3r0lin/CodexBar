@@ -50,17 +50,19 @@ public enum ClaudeMagpieAccountProjection {
 
     private static func accountSnapshots(from allRows: [Account], now: Date) -> [ProviderAccountUsageSnapshot] {
         // Rows without an email have no stable identity, so they are not shown.
-        let emailRows = allRows.filter { !$0.email.isEmpty }
-        let emailCounts = emailRows.reduce(into: [String: Int]()) { counts, row in
+        // Dedupe first: the same email and organization (compared case-insensitively) is the same account and
+        // keeps its first row. Distinct organizations under one email stay separate accounts.
+        var seenRows: Set<String> = []
+        let uniqueRows = allRows.filter { row in
+            !row.email.isEmpty &&
+                seenRows.insert("\(row.email.lowercased())\u{0}\(row.organization.lowercased())").inserted
+        }
+        let emailCounts = uniqueRows.reduce(into: [String: Int]()) { counts, row in
             counts[row.email.lowercased(), default: 0] += 1
         }
-        var seenKeys: Set<String> = []
-        let rows = emailRows.compactMap { row -> (row: Account, key: String, duplicated: Bool)? in
+        let rows = uniqueRows.map { row -> (row: Account, key: String, duplicated: Bool) in
             let duplicated = emailCounts[row.email.lowercased(), default: 0] > 1
-            let key = self.identityKey(for: row, duplicated: duplicated)
-            // A repeated email and organization cannot be told apart; keep the first row.
-            guard seenKeys.insert(key).inserted else { return nil }
-            return (row, key, duplicated)
+            return (row, self.identityKey(for: row, duplicated: duplicated), duplicated)
         }
         let activeIndex = rows.firstIndex(where: \.row.isLast) ?? (rows.isEmpty ? nil : 0)
         let projected = rows.enumerated().map { index, entry -> ProviderAccountUsageSnapshot in

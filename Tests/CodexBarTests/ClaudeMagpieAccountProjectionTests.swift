@@ -166,4 +166,28 @@ struct ClaudeMagpieRowRulesTests {
         #expect(snapshot.primary == nil)
         #expect(snapshot.secondary?.usedPercent == 130)
     }
+
+    @Test
+    func `the same email and organization keep one row and distinct organizations stay separate`() throws {
+        let json = """
+        {"data":[
+          {"provider":"claude","user":"a@example.com · Org A","windows":[{"name":"5 hours","used":1}]},
+          {"provider":"claude","user":"A@example.com · org a","windows":[{"name":"5 hours","used":2}]},
+          {"provider":"claude","user":"b@example.com · Org A","windows":[{"name":"5 hours","used":3}]}
+        ]}
+        """
+        let accounts = try ClaudeMagpieAccountProjection.accountSnapshots(from: Data(json.utf8))
+        #expect(accounts.count == 2)
+        #expect(accounts.first?.id.opaqueID == "claude:a@example.com")
+        #expect(accounts.first?.displayLabel == "a@example.com")
+
+        let split = """
+        {"data":[
+          {"provider":"claude","user":"a@example.com · Org A","windows":[{"name":"5 hours","used":1}]},
+          {"provider":"claude","user":"a@example.com · Org B","windows":[{"name":"5 hours","used":2}]}
+        ]}
+        """
+        let separate = try ClaudeMagpieAccountProjection.accountSnapshots(from: Data(split.utf8))
+        #expect(separate.map(\.displayLabel) == ["a@example.com · Org A", "a@example.com · Org B"])
+    }
 }

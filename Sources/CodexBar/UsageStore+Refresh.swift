@@ -1282,7 +1282,8 @@ extension UsageStore {
         }
     }
 
-    func clearClaudeCredentialDerivedStateForCredentialSwap() {
+    /// `keepsLocalTokenCost` keeps the cost snapshot scanned from local Claude logs, which no credential produced.
+    func clearClaudeCredentialDerivedStateForCredentialSwap(keepsLocalTokenCost: Bool = false) {
         // Provider-specific by design: retire Claude projections but preserve scoped warning episodes, including
         // unresolved accounts.
         self.widgetUsagePreservationBlockedProviders.insert(.claude)
@@ -1292,15 +1293,19 @@ extension UsageStore {
         self.knownLimitsAvailabilityByProvider.removeValue(forKey: .claude)
         self.lastSourceLabels.removeValue(forKey: .claude)
         self.claudeHistoryFallbackEligible = false
-        self.clearTokenSnapshot(for: .claude)
-        self.tokenErrors[.claude] = nil
+        if !keepsLocalTokenCost {
+            self.clearTokenSnapshot(for: .claude)
+            self.tokenErrors[.claude] = nil
+        }
         self.failureGates[.claude]?.reset()
         self.tokenFailureGates[.claude]?.reset()
         self.clearSessionQuotaTransitionState(provider: .claude)
         self.quotaWarningState = self.quotaWarningState.filter {
             $0.key.provider != .claude || $0.key.accountDiscriminator != nil
         }
-        self.lastTokenFetchAt.removeValue(forKey: .claude)
+        if !keepsLocalTokenCost {
+            self.lastTokenFetchAt.removeValue(forKey: .claude)
+        }
     }
 
     private func handleProviderFetchFailure(

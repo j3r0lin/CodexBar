@@ -95,13 +95,10 @@ struct ClaudeMagpieAccountSourceTests {
 
         store.settings.claudeMagpieEnabled = false
         runtime.settingsDidChange(context: context)
-        for _ in 0..<200 where await refreshed.providers.isEmpty {
-            await Task.yield()
-        }
 
         #expect(store.claudeMagpieAccountSnapshots.isEmpty)
         #expect(store.claudeMagpieLastRefreshAt == nil)
-        #expect(await refreshed.providers == [.claude])
+        #expect(await refreshed.firstProvider() == .claude)
     }
 
     @Test
@@ -152,6 +149,67 @@ struct ClaudeMagpieAccountSourceTests {
 
         #expect(store.claudeMagpieAccountSnapshots.isEmpty)
         #expect(store.claudeMagpieLastRefreshAt == nil)
+    }
+
+    @Test
+    func `debug log under magpie reports magpie ownership instead of probing credentials`() async {
+        let store = Self.makeStore(suite: "ClaudeMagpieAccountSourceTests-debug")
+        store.settings.claudeMagpieEnabled = true
+
+        let log = await store.debugLog(for: .claude)
+
+        #expect(log.contains("magpie owns Claude accounts"))
+        #expect(log.contains(ClaudeMagpieAccountReader.defaultQuotasURL))
+    }
+
+    @Test
+    func `widget does not show last known magpie usage as current`() async {
+        let store = Self.makeStore(suite: "ClaudeMagpieAccountSourceTests-widget-last-known")
+        store.settings.claudeMagpieEnabled = true
+        await store.refreshClaudeMagpieAccounts()
+        store.claudeMagpieTransport = ClaudeMagpieFixture.transport(status: 500)
+        await store.refreshClaudeMagpieAccounts()
+        var saved: WidgetSnapshot?
+        store._test_widgetSnapshotSaveOverride = { saved = $0 }
+        defer { store._test_widgetSnapshotSaveOverride = nil }
+
+        store.persistWidgetSnapshot(reason: "magpie-last-known")
+        await store.widgetSnapshotPersistTask?.value
+
+        let claude = saved?.entries.first { $0.provider == .claude }
+        #expect(claude?.secondary?.usedPercent != 84)
+    }
+
+    @Test
+    func `turning magpie on keeps the local log token cost`() {
+        let store = Self.makeStore(suite: "ClaudeMagpieAccountSourceTests-token-cost")
+        store._setTokenSnapshotForTesting(
+            CostUsageTokenSnapshot(
+                sessionTokens: 10,
+                sessionCostUSD: 1,
+                last30DaysTokens: 10,
+                last30DaysCostUSD: 1,
+                daily: []),
+            provider: .claude)
+
+        store.settings.claudeMagpieEnabled = true
+        ClaudeProviderRuntime().settingsDidChange(
+            context: ProviderRuntimeContext(provider: .claude, settings: store.settings, store: store))
+        store.claudeMagpieRefreshTask?.cancel()
+
+        #expect(store.tokenSnapshot(for: .claude) != nil)
+    }
+
+    @Test
+    func `app settings snapshot carries the magpie URL only while magpie is on`() {
+        let store = Self.makeStore(suite: "ClaudeMagpieAccountSourceTests-settings-snapshot")
+        #expect(store.settings.claudeSettingsSnapshot(tokenOverride: nil).magpieQuotasURL == nil)
+
+        store.settings.claudeMagpieEnabled = true
+        store.settings.claudeMagpieQuotasURL = "http://127.0.0.1:4000/v1/magpie/quotas"
+
+        #expect(store.settings.claudeSettingsSnapshot(tokenOverride: nil).magpieQuotasURL ==
+            "http://127.0.0.1:4000/v1/magpie/quotas")
     }
 
     @Test
@@ -305,9 +363,20 @@ private actor AmbientFetchRecorder {
 }
 
 private actor RefreshRecorder {
-    private(set) var providers: [UsageProvider] = []
+    private var first: UsageProvider?
+    private var waiters: [CheckedContinuation<UsageProvider, Never>] = []
 
     func record(_ provider: UsageProvider) {
-        self.providers.append(provider)
+        guard self.first == nil else { return }
+        self.first = provider
+        for waiter in self.waiters {
+            waiter.resume(returning: provider)
+        }
+        self.waiters = []
+    }
+
+    func firstProvider() async -> UsageProvider {
+        if let first { return first }
+        return await withCheckedContinuation { self.waiters.append($0) }
     }
 }

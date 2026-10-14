@@ -242,7 +242,9 @@ extension UsageStore {
             accountCount: claudeSource.accounts.count,
             showSingleAccount: claudeSource.showSingleAccount)
         let activeSwapAccount = swapOwnsClaude ? claudeSource.activeAccount : nil
-        let snapshot = swapOwnsClaude ? activeSwapAccount?.snapshot : self.snapshots[provider.instanceID]
+        // A last-known measurement has no age on the widget, so like the menu bar it is not shown as current.
+        let activeSwapUsage = activeSwapAccount?.usesLastKnownUsage == true ? nil : activeSwapAccount?.snapshot
+        let snapshot = swapOwnsClaude ? activeSwapUsage : self.snapshots[provider.instanceID]
         let tokenSnapshot = self.tokenSnapshotForCurrentProviderConfig(for: provider)?.snapshot
         let claudeQuotaOwnerKey: String? = if swapOwnsClaude {
             activeSwapAccount.flatMap(ClaudeAccountSource.widgetOwnerKey(for:))
