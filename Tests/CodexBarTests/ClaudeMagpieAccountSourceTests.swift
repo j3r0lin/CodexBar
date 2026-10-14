@@ -82,7 +82,7 @@ struct ClaudeMagpieAccountSourceTests {
     }
 
     @Test
-    func `turning magpie off clears its accounts and runs a normal Claude refresh`() async throws {
+    func `turning magpie off clears its accounts and runs a normal Claude refresh`() async {
         let store = Self.makeStore(suite: "ClaudeMagpieAccountSourceTests-off")
         let runtime = ClaudeProviderRuntime()
         let context = ProviderRuntimeContext(provider: .claude, settings: store.settings, store: store)
