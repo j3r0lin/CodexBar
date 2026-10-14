@@ -215,12 +215,14 @@ extension StatusItemController {
         return accounts.first(where: \.isActive) ?? accounts.first
     }
 
-    func claudeOverviewAccountRows() -> [(id: ProviderAccountIdentity, model: UsageMenuCardView.Model)] {
+    func claudeOverviewAccountRows()
+        -> [(id: ProviderAccountIdentity, model: UsageMenuCardView.Model, snapshot: UsageSnapshot?)]
+    {
         let hidePersonalInfo = self.settings.hidePersonalInfo
         return self.store.claudeAccountSource.accounts.compactMap { account in
             guard var model = self.claudeSwapCardModel(for: account) else { return nil }
             model.providerName = "Claude · " + Self.claudeAccountShortName(account, hidePersonalInfo: hidePersonalInfo)
-            return (id: account.id, model: model)
+            return (id: account.id, model: model, snapshot: account.snapshot)
         }
     }
 

@@ -553,20 +553,26 @@ extension StatusItemController {
         // interaction closures must always reference the live menu they end up serving.
         let interactionMenu = captureMenu ?? menu
         let providerScopes = self.overviewProviderScopes(enabledProviders: enabledProviders)
-        let rows: [(provider: UsageProvider, model: UsageMenuCardView.Model, claudeAccountID: ProviderAccountIdentity?)] =
-            providerScopes.visible.flatMap { provider -> [(
-                provider: UsageProvider,
-                model: UsageMenuCardView.Model,
-                claudeAccountID: ProviderAccountIdentity?)] in
+        typealias OverviewRow = (
+            provider: UsageProvider,
+            model: UsageMenuCardView.Model,
+            claudeAccountID: ProviderAccountIdentity?,
+            snapshot: UsageSnapshot?)
+        let rows: [OverviewRow] =
+            providerScopes.visible.flatMap { provider -> [OverviewRow] in
                 if provider == .claude, self.claudeAccountTabsEnabled {
                     // Each magpie account is its own row; the provider-level Claude snapshot is not magpie's data.
                     return self.claudeOverviewAccountRows().map {
-                        (provider: provider, model: $0.model, claudeAccountID: $0.id)
+                        (provider: provider, model: $0.model, claudeAccountID: $0.id, snapshot: $0.snapshot)
                     }
                 }
                 guard let model = self.menuCardModel(for: provider) else { return [] }
                 guard !model.isOverviewErrorOnly else { return [] }
-                return [(provider: provider, model: model, claudeAccountID: nil)]
+                return [(
+                    provider: provider,
+                    model: model,
+                    claudeAccountID: nil,
+                    snapshot: self.store.snapshot(for: provider.instanceID))]
             }
         guard !rows.isEmpty else { return false }
 
@@ -611,27 +617,22 @@ extension StatusItemController {
         for (index, row) in rows.enumerated() {
             let identifier = "\(Self.overviewRowIdentifierPrefix)\(row.provider.rawValue)"
                 + (row.claudeAccountID.map { "#\($0.opaqueID)" } ?? "")
-            let storageText = row.claudeAccountID == nil ? self.store.storageFootprintText(for: row.provider) : nil
             let submenu = row.claudeAccountID == nil
                 ? self.makeOverviewRowSubmenu(provider: row.provider, model: row.model, width: menuWidth)
                 : nil
+            let shortWindow = row.snapshot?.primary
+            let longWindow = row.snapshot?.secondary
             let item = self.makeMenuCardItem(
-                OverviewMenuCardRowView(
-                    model: row.model,
-                    storageText: storageText,
-                    width: menuWidth,
-                    layout: self.settings.mergedOverviewLayout),
+                OverviewCompactAccountRow(
+                    name: row.model.providerName,
+                    shortWindow: shortWindow,
+                    longWindow: longWindow,
+                    width: menuWidth),
                 id: identifier,
                 width: menuWidth,
-                heightCacheScope: identifier,
-                heightCacheFingerprint: row.model.heightFingerprint(
-                    section: "overview",
-                    additional: [
-                        UsageMenuCardView.Model.heightFingerprintField("storage", storageText),
-                        "layout=\(self.settings.mergedOverviewLayout.rawValue)",
-                    ]),
+                heightCacheScope: "overviewCompactRow",
+                heightCacheFingerprint: "compact",
                 submenu: submenu,
-                containsInteractiveControls: row.model.containsInteractiveControls,
                 usesGPUSelection: true,
                 onClick: { [weak self, weak interactionMenu] in
                     guard let self, let interactionMenu else { return }
@@ -645,10 +646,11 @@ extension StatusItemController {
                 item.target = self
                 item.action = #selector(self.selectOverviewProvider(_:))
             }
-            menu.addItem(item)
-            if index < rows.count - 1 {
+            // Compact rows of one provider read as a group; only a provider change gets a separator.
+            if index > 0, rows[index - 1].provider != row.provider {
                 menu.addItem(.separator())
             }
+            menu.addItem(item)
         }
         return true
     }
