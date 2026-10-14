@@ -727,7 +727,7 @@ final class ProviderSwitcherView: NSView {
             // Fill shows what is left, matching the other tabs' default.
             return account.usedPercent.map { 100 - $0 }
         }
-        switch segment.selection {
+        return switch segment.selection {
         case let .provider(instanceID):
             instanceID.firstPartyProvider.flatMap(self.weeklyRemainingProvider)
         case .overview:
