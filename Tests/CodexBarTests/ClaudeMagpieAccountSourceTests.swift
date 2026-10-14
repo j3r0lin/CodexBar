@@ -45,6 +45,123 @@ struct ClaudeMagpieAccountSourceTests {
 
         #expect(store.claudeMagpieAccountSnapshots.count == 3)
         #expect(store.claudeMagpieLastError != nil)
+        // Retained numbers are last-known: the age-less menu bar must not present them as current.
+        #expect(store.claudeMagpieAccountSnapshots.allSatisfy { $0.snapshot == nil || $0.usesLastKnownUsage })
+        #expect(store.claudeMagpieAccountSnapshots.allSatisfy { $0.error != nil })
+        #expect(store.menuBarSnapshot(for: UsageProvider.claude.instanceID) == nil)
+    }
+
+    @Test
+    func `hide personal info labels magpie accounts by gateway ordinal`() async throws {
+        let store = Self.makeStore(suite: "ClaudeMagpieAccountSourceTests-privacy")
+        store.settings.claudeMagpieEnabled = true
+        await store.refreshClaudeMagpieAccounts()
+
+        let aliased = try #require(store.claudeMagpieAccountSnapshots.first { $0.displayLabel == "main" })
+        #expect(ClaudeSwapAccountMenuDisplay.label(for: aliased, hidePersonalInfo: true) == "Account 1")
+        let help = ClaudeSwapAccountMenuDisplay.chipHelp(for: aliased, hidePersonalInfo: true)
+        #expect(!help.contains("main") && !help.contains("Example Org") && !help.contains("@"))
+        #expect(ClaudeSwapAccountMenuDisplay.label(for: aliased, hidePersonalInfo: false) == "main")
+    }
+
+    @Test
+    func `turning magpie on retires credential derived widget usage`() {
+        let store = Self.makeStore(suite: "ClaudeMagpieAccountSourceTests-widget-retire")
+        store._setSnapshotForTesting(Self.ambientSnapshot(), provider: .claude)
+        store.lastKnownResetSnapshots[.claude] = Self.ambientSnapshot()
+        store.widgetUsagePreservationBlockedProviders.remove(.claude)
+
+        store.settings.claudeMagpieEnabled = true
+        ClaudeProviderRuntime().settingsDidChange(
+            context: ProviderRuntimeContext(provider: .claude, settings: store.settings, store: store))
+        store.claudeMagpieRefreshTask?.cancel()
+
+        #expect(store.snapshot(for: .claude) == nil)
+        #expect(store.lastKnownResetSnapshots[.claude] == nil)
+        #expect(store.widgetUsagePreservationBlockedProviders.contains(.claude))
+    }
+
+    @Test
+    func `turning magpie off clears its accounts and runs a normal Claude refresh`() async throws {
+        let store = Self.makeStore(suite: "ClaudeMagpieAccountSourceTests-off")
+        let runtime = ClaudeProviderRuntime()
+        let context = ProviderRuntimeContext(provider: .claude, settings: store.settings, store: store)
+        store.settings.claudeMagpieEnabled = true
+        runtime.settingsDidChange(context: context)
+        await store.claudeMagpieRefreshTask?.value
+        #expect(store.claudeMagpieAccountSnapshots.count == 3)
+        let refreshed = RefreshRecorder()
+        store._test_providerRefreshOverride = { provider in await refreshed.record(provider) }
+
+        store.settings.claudeMagpieEnabled = false
+        runtime.settingsDidChange(context: context)
+        for _ in 0..<200 where await refreshed.providers.isEmpty {
+            await Task.yield()
+        }
+
+        #expect(store.claudeMagpieAccountSnapshots.isEmpty)
+        #expect(store.claudeMagpieLastRefreshAt == nil)
+        #expect(await refreshed.providers == [.claude])
+    }
+
+    @Test
+    func `starting with magpie on reads magpie without the ambient fetch`() async throws {
+        let store = Self.makeStore(suite: "ClaudeMagpieAccountSourceTests-start")
+        let recorder = AmbientFetchRecorder()
+        let baseSpec = try #require(store.providerSpecs[.claude])
+        store.providerSpecs[.claude] = Self.recordingSpec(baseSpec: baseSpec, recorder: recorder)
+        store.settings.claudeMagpieEnabled = true
+
+        ClaudeProviderRuntime().start(
+            context: ProviderRuntimeContext(provider: .claude, settings: store.settings, store: store))
+        await store.claudeMagpieRefreshTask?.value
+        await store.refreshProvider(.claude)
+        await store.claudeMagpieRefreshTask?.value
+
+        #expect(await recorder.count < 1)
+        #expect(store.claudeMagpieAccountSnapshots.count == 3)
+    }
+
+    @Test
+    func `Claude Code sign in and Keychain actions are hidden under magpie`() {
+        let store = Self.makeStore(suite: "ClaudeMagpieAccountSourceTests-login")
+        store.settings.claudeMagpieEnabled = true
+        for hasAccount in [false, true] {
+            let action = ClaudeProviderImplementation().loginMenuAction(context: ProviderMenuLoginContext(
+                provider: .claude,
+                store: store,
+                settings: store.settings,
+                account: AccountInfo(email: nil, plan: nil),
+                hasAccount: hasAccount))
+            #expect(action == nil)
+        }
+    }
+
+    @Test
+    func `a result for a replaced URL is discarded`() async {
+        let store = Self.makeStore(suite: "ClaudeMagpieAccountSourceTests-url")
+        store.settings.claudeMagpieEnabled = true
+        let settings = store.settings
+        let base = ClaudeMagpieFixture.transport()
+        store.claudeMagpieTransport = { request in
+            await MainActor.run { settings.claudeMagpieQuotasURL = "http://127.0.0.1:9/v1/magpie/quotas" }
+            return try await base(request)
+        }
+
+        await store.refreshClaudeMagpieAccounts()
+
+        #expect(store.claudeMagpieAccountSnapshots.isEmpty)
+        #expect(store.claudeMagpieLastRefreshAt == nil)
+    }
+
+    @Test
+    func `a result from a stale refresh generation is discarded`() async {
+        let store = Self.makeStore(suite: "ClaudeMagpieAccountSourceTests-generation")
+        store.settings.claudeMagpieEnabled = true
+
+        await store.refreshClaudeMagpieAccounts(generation: UInt64.max)
+
+        #expect(store.claudeMagpieAccountSnapshots.isEmpty)
     }
 
     @Test
@@ -139,6 +256,13 @@ struct ClaudeMagpieAccountSourceTests {
         return store
     }
 
+    private static func ambientSnapshot() -> UsageSnapshot {
+        UsageSnapshot(
+            primary: RateWindow(usedPercent: 99, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
+            secondary: nil,
+            updatedAt: Date())
+    }
+
     private static func swapAccount(number: Int) -> ProviderAccountUsageSnapshot {
         ProviderAccountUsageSnapshot(
             id: ProviderAccountIdentity(source: ClaudeSwapAccountProjection.sourceName, opaqueID: String(number)),
@@ -177,5 +301,13 @@ private actor AmbientFetchRecorder {
 
     func record() {
         self.count += 1
+    }
+}
+
+private actor RefreshRecorder {
+    private(set) var providers: [UsageProvider] = []
+
+    func record(_ provider: UsageProvider) {
+        self.providers.append(provider)
     }
 }

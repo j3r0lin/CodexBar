@@ -48,52 +48,47 @@ public enum ClaudeMagpieAccountProjection {
         return self.accountSnapshots(from: rows, now: now)
     }
 
-    private static func accountSnapshots(from rows: [Account], now: Date) -> [ProviderAccountUsageSnapshot] {
-        let activeIndex = rows.firstIndex(where: \.isLast) ?? (rows.isEmpty ? nil : 0)
-        let emailCounts = rows.reduce(into: [String: Int]()) { counts, row in
-            guard !row.email.isEmpty else { return }
+    private static func accountSnapshots(from allRows: [Account], now: Date) -> [ProviderAccountUsageSnapshot] {
+        // Rows without an email have no stable identity, so they are not shown.
+        let emailRows = allRows.filter { !$0.email.isEmpty }
+        let emailCounts = emailRows.reduce(into: [String: Int]()) { counts, row in
             counts[row.email.lowercased(), default: 0] += 1
         }
-        var usedIDs: Set<String> = []
-        let projected = rows.enumerated().map { index, row -> ProviderAccountUsageSnapshot in
+        var seenKeys: Set<String> = []
+        let rows = emailRows.compactMap { row -> (row: Account, key: String, duplicated: Bool)? in
             let duplicated = emailCounts[row.email.lowercased(), default: 0] > 1
-            let id = self.uniqueIdentity(for: row, duplicated: duplicated, ordinal: index + 1, used: &usedIDs)
-            let snapshot = self.usageSnapshot(for: row, accountID: id.opaqueID, now: now)
+            let key = self.identityKey(for: row, duplicated: duplicated)
+            // A repeated email and organization cannot be told apart; keep the first row.
+            guard seenKeys.insert(key).inserted else { return nil }
+            return (row, key, duplicated)
+        }
+        let activeIndex = rows.firstIndex(where: \.row.isLast) ?? (rows.isEmpty ? nil : 0)
+        let projected = rows.enumerated().map { index, entry -> ProviderAccountUsageSnapshot in
+            let id = ProviderAccountIdentity(source: self.sourceName, opaqueID: "claude:\(entry.key)")
+            let snapshot = self.usageSnapshot(for: entry.row, accountID: id.opaqueID, now: now)
             return ProviderAccountUsageSnapshot(
                 id: id,
                 provider: .claude,
-                displayLabel: self.displayLabel(for: row, duplicated: duplicated, ordinal: index + 1),
-                accountEmail: row.email.isEmpty ? nil : row.email,
+                displayLabel: self.displayLabel(for: entry.row, duplicated: entry.duplicated),
+                accountEmail: entry.row.email,
                 isActive: index == activeIndex,
                 canActivate: false,
                 snapshot: snapshot,
                 error: snapshot == nil ? "No usage windows reported." : nil,
-                sourceLabel: self.sourceLabel)
+                sourceLabel: self.sourceLabel,
+                sourceOrdinal: index + 1)
         }
         // Active first, then magpie's own order, matching the claude-swap card order.
         return projected.filter(\.isActive) + projected.filter { !$0.isActive }
     }
 
-    private static func uniqueIdentity(
-        for row: Account,
-        duplicated: Bool,
-        ordinal: Int,
-        used: inout Set<String>) -> ProviderAccountIdentity
-    {
-        var key = row.email.isEmpty ? "account-\(ordinal)" : row.email.lowercased()
-        if duplicated, !row.organization.isEmpty {
-            key += "\(self.userSeparator)\(row.organization.lowercased())"
-        }
-        if used.contains(key) {
-            key += "#\(ordinal)"
-        }
-        used.insert(key)
-        return ProviderAccountIdentity(source: self.sourceName, opaqueID: "claude:\(key)")
+    private static func identityKey(for row: Account, duplicated: Bool) -> String {
+        guard duplicated, !row.organization.isEmpty else { return row.email.lowercased() }
+        return "\(row.email.lowercased())\(self.userSeparator)\(row.organization.lowercased())"
     }
 
-    private static func displayLabel(for row: Account, duplicated: Bool, ordinal: Int) -> String {
+    private static func displayLabel(for row: Account, duplicated: Bool) -> String {
         if let alias = row.alias { return alias }
-        if row.email.isEmpty { return "Account \(ordinal)" }
         if duplicated, !row.organization.isEmpty {
             return "\(row.email)\(self.userSeparator)\(row.organization)"
         }
@@ -105,7 +100,8 @@ public enum ClaudeMagpieAccountProjection {
         var secondary: RateWindow?
         var scoped: [ClaudeScopedWeeklyLimitMapper.Limit] = []
         for window in row.windows {
-            guard let used = window.used, used.isFinite, let name = window.name else { continue }
+            // Negative usage is malformed; values above 100 are reported as-is.
+            guard let used = window.used, used.isFinite, used >= 0, let name = window.name else { continue }
             let resetsAt = ISO8601DateParser.parse(window.resetsAt)
             if name == self.fiveHourWindowName {
                 primary = RateWindow(

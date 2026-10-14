@@ -4,6 +4,7 @@ public enum ClaudeMagpieAccountReaderError: LocalizedError, Sendable {
     case invalidURL
     case httpStatus(Int)
     case responseTooLarge(byteCount: Int)
+    case noActiveUsage
 
     public var errorDescription: String? {
         switch self {
@@ -14,6 +15,8 @@ public enum ClaudeMagpieAccountReaderError: LocalizedError, Sendable {
         case let .responseTooLarge(byteCount):
             "magpie returned \(byteCount) bytes; refusing to parse more than " +
                 "\(ClaudeMagpieAccountReader.maxResponseBytes)."
+        case .noActiveUsage:
+            "magpie reports no Claude account with usage."
         }
     }
 }

@@ -117,7 +117,10 @@ public enum ClaudeProviderDescriptor {
                     webExtrasEnabled: false,
                     cookieSource: cookieSource,
                     manualCookieHeader: routing.manualCookieHeader,
-                    organizationID: context.account?.sanitizedOrganizationID)
+                    organizationID: context.account?.sanitizedOrganizationID,
+                    magpieQuotasURL: context.config?.claudeMagpieEnabled == true
+                        ? context.config?.sanitizedClaudeMagpieQuotasURL ?? ""
+                        : nil)
             }),
             credentials: self.credentials,
             metadata: ProviderMetadata(
@@ -279,6 +282,10 @@ public enum ClaudeProviderDescriptor {
     }
 
     private static func resolveStrategies(context: ProviderFetchContext) async -> [any ProviderFetchStrategy] {
+        // magpie ownership outranks every selected account and source override: nothing below may run.
+        if let quotasURL = context.settings?.claude?.magpieQuotasURL {
+            return [ClaudeMagpieFetchStrategy(quotasURL: quotasURL)]
+        }
         // An explicitly selected account is the credential authority for this fetch. The global
         // source only controls ambient-account routing and must not redirect a selected account.
         if context.selectedTokenAccountID != nil {

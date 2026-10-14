@@ -137,3 +137,33 @@ private actor RequestedURL {
         self.url = url
     }
 }
+
+struct ClaudeMagpieRowRulesTests {
+    @Test
+    func `rows without an email are not shown and ordinals follow the gateway`() throws {
+        let json = """
+        {"data":[
+          {"provider":"claude","user":"","windows":[{"name":"5 hours","used":1}]},
+          {"provider":"claude","user":"a@example.com","windows":[{"name":"5 hours","used":2}]},
+          {"provider":"claude","user":"b@example.com","last":true,"windows":[{"name":"5 hours","used":3}]}
+        ]}
+        """
+        let accounts = try ClaudeMagpieAccountProjection.accountSnapshots(from: Data(json.utf8))
+
+        #expect(accounts.map(\.accountEmail) == ["b@example.com", "a@example.com"])
+        #expect(accounts.map(\.sourceOrdinal) == [2, 1])
+    }
+
+    @Test
+    func `negative usage is dropped and usage above the limit is kept`() throws {
+        let json = """
+        {"data":[{"provider":"claude","user":"a@example.com",
+          "windows":[{"name":"5 hours","used":-5},{"name":"7 days","used":130}]}]}
+        """
+        let snapshot = try #require(
+            try ClaudeMagpieAccountProjection.accountSnapshots(from: Data(json.utf8)).first?.snapshot)
+
+        #expect(snapshot.primary == nil)
+        #expect(snapshot.secondary?.usedPercent == 130)
+    }
+}

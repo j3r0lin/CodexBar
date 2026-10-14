@@ -158,7 +158,7 @@ extension StatusItemController {
             context: ClaudeSwapAccountMenuDisplay.cardContext(
                 for: account,
                 planLabel: self.claudeSwapAccountActionLabel(account),
-                adapterError: self.store.claudeSwapLastError,
+                adapterError: self.store.claudeAccountSource.lastError,
                 switchError: self.store.claudeSwapTransientState.lastErrorAccountID == account.id
                     ? self.store.claudeSwapTransientState.lastError
                     : nil))

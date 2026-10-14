@@ -128,7 +128,8 @@ extension SettingsStore {
             manualCookieHeader: self.claudeSnapshotCookieHeader(
                 routing: routing,
                 hasSelectedAccount: account != nil),
-            organizationID: account?.sanitizedOrganizationID)
+            organizationID: account?.sanitizedOrganizationID,
+            magpieQuotasURL: self.claudeMagpieEnabled ? self.claudeMagpieQuotasURL : nil)
     }
 
     private static func claudeUsageDataSource(from source: ProviderSourceMode?) -> ClaudeUsageDataSource {

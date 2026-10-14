@@ -6,6 +6,8 @@ import Foundation
 struct ClaudeAccountSource {
     let accounts: [ProviderAccountUsageSnapshot]
     let showSingleAccount: Bool
+    /// The source's last refresh error while its accounts are retained from an earlier success.
+    let lastError: String?
 
     /// Whether these accounts replace the ambient and token-account Claude presentation.
     var ownsPresentation: Bool {
@@ -38,7 +40,7 @@ struct ClaudeAccountSource {
         if account.id.source == ClaudeSwapAccountProjection.sourceName {
             return "Account \(account.id.opaqueID)"
         }
-        let ordinal = (accounts.firstIndex(where: { $0.id == account.id }) ?? 0) + 1
+        let ordinal = account.sourceOrdinal ?? (accounts.firstIndex(where: { $0.id == account.id }) ?? 0) + 1
         return "Account \(ordinal)"
     }
 }
@@ -47,11 +49,15 @@ extension UsageStore {
     var claudeAccountSource: ClaudeAccountSource {
         if self.settings.claudeMagpieEnabled {
             // magpie replaces the ambient account entirely, so even one account is shown as a card.
-            return ClaudeAccountSource(accounts: self.claudeMagpieAccountSnapshots, showSingleAccount: true)
+            return ClaudeAccountSource(
+                accounts: self.claudeMagpieAccountSnapshots,
+                showSingleAccount: true,
+                lastError: self.claudeMagpieLastError)
         }
         return ClaudeAccountSource(
             accounts: self.claudeSwapAccountSnapshots,
-            showSingleAccount: self.settings.claudeSwapShowSingleAccount)
+            showSingleAccount: self.settings.claudeSwapShowSingleAccount,
+            lastError: self.claudeSwapLastError)
     }
 
     /// Whether a Claude account source is switched on, so widgets drop its accounts as soon as it is turned off.
@@ -80,10 +86,9 @@ extension UsageStore {
     /// Removes the ambient Claude usage so no surface keeps showing a credential-derived snapshot under magpie.
     func clearClaudeAmbientUsageForMagpie() {
         let instanceID = UsageProvider.claude.instanceID
-        self.snapshots.removeValue(forKey: instanceID)
-        self.errors[instanceID] = nil
+        // Same coverage as a credential swap, including widget usage preservation and token snapshots.
+        self.clearClaudeCredentialDerivedStateForCredentialSwap()
         self.diagnostics[instanceID] = nil
-        self.lastSourceLabels.removeValue(forKey: instanceID)
         self.lastFetchAttempts.removeValue(forKey: instanceID)
         self.accountSnapshots.removeValue(forKey: instanceID)
     }
@@ -116,12 +121,15 @@ extension UsageStore {
             return
         } catch {
             guard self.isCurrentClaudeMagpieRefresh(quotasURL: quotasURL, generation: generation) else { return }
-            // Keep the last successful accounts as stale data; the settings pane shows the error.
+            // Keep the last successful accounts, but as last-known usage so the age-less menu bar icon
+            // stops presenting them as current; cards and settings show the error.
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            if self.claudeMagpieLastError != message {
-                self.claudeMagpieLastError = message
-                self.claudeMagpieRevision &+= 1
+            let retained = self.claudeMagpieAccountSnapshots.map {
+                $0.usesLastKnownUsage ? $0 : $0.retainedAsLastKnown(error: "magpie refresh failed: \(message)")
             }
+            self.claudeMagpieAccountSnapshots = retained
+            self.claudeMagpieLastError = message
+            self.claudeMagpieRevision &+= 1
         }
     }
 

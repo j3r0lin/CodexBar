@@ -6,14 +6,19 @@ public struct ClaudeProviderSettings: Sendable {
     public let cookieSource: ProviderCookieSource
     public let manualCookieHeader: String?
     public let organizationID: String?
+    /// Non-nil while magpie owns Claude accounts; empty means the default gateway URL. Every Claude fetch then
+    /// reads magpie only, so no caller can reach Claude Code credentials, the Keychain, or OAuth.
+    public let magpieQuotasURL: String?
 
     public init(
         usageDataSource: ClaudeUsageDataSource,
         webExtrasEnabled: Bool,
         cookieSource: ProviderCookieSource,
         manualCookieHeader: String?,
-        organizationID: String? = nil)
+        organizationID: String? = nil,
+        magpieQuotasURL: String? = nil)
     {
+        self.magpieQuotasURL = magpieQuotasURL
         self.usageDataSource = usageDataSource
         self.webExtrasEnabled = webExtrasEnabled
         self.cookieSource = cookieSource
