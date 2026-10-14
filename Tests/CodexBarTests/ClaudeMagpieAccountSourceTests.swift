@@ -189,7 +189,8 @@ struct ClaudeMagpieAccountSourceTests {
                 sessionCostUSD: 1,
                 last30DaysTokens: 10,
                 last30DaysCostUSD: 1,
-                daily: []),
+                daily: [],
+                updatedAt: Date()),
             provider: .claude)
 
         store.settings.claudeMagpieEnabled = true

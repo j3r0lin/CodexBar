@@ -1053,9 +1053,8 @@ extension UsageStore {
         let claudeMagpieDebugNote: String? = provider == .claude && self.settings.claudeMagpieEnabled
             ? self.claudeMagpieDebugNote()
             : nil
-        let claudeDebugConfiguration: ClaudeDebugLogConfiguration? = if provider == .claude,
-                                                                       claudeMagpieDebugNote == nil
-        {
+        let probesClaude = provider == .claude && claudeMagpieDebugNote == nil
+        let claudeDebugConfiguration: ClaudeDebugLogConfiguration? = if probesClaude {
             await self.makeClaudeDebugConfiguration(
                 fallbackUsageDataSource: claudeUsageDataSource,
                 fallbackWebExtrasEnabled: claudeWebExtrasEnabled,
