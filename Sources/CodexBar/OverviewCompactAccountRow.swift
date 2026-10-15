@@ -39,43 +39,43 @@ struct OverviewCompactAccountRow: View {
     @ViewBuilder
     private var usageColumns: some View {
         VStack(alignment: .trailing, spacing: 1) {
-                HStack(spacing: 3) {
-                    if let used = Self.used(self.shortWindow) {
-                        OverviewUsageRing(usedPercent: used)
-                            .frame(width: 16, height: 16)
-                        Text("\(Int(used.rounded()))%")
-                            .font(.system(size: 11).monospacedDigit())
-                            .foregroundStyle(Color(nsColor: UsageSeverityPalette.color(usedPercent: used)))
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                    }
+            HStack(spacing: 3) {
+                if let used = Self.used(self.shortWindow) {
+                    OverviewUsageRing(usedPercent: used)
+                        .frame(width: 16, height: 16)
+                    Text("\(Int(used.rounded()))%")
+                        .font(.system(size: 11).monospacedDigit())
+                        .foregroundStyle(Color(nsColor: UsageSeverityPalette.color(usedPercent: used)))
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                 }
-                .frame(height: 16)
-                self.resetLine(self.shortWindow)
             }
-            .frame(width: 54)
-            VStack(alignment: .trailing, spacing: 1) {
-                HStack(spacing: 6) {
-                    if let used = Self.used(self.longWindow) {
-                        GeometryReader { proxy in
-                            ZStack(alignment: .leading) {
-                                Capsule().fill(Self.trackColor)
-                                Capsule()
-                                    .fill(Color(nsColor: UsageSeverityPalette.color(usedPercent: used)))
-                                    .frame(width: proxy.size.width * min(1, max(0, used / 100)))
-                            }
+            .frame(height: 16)
+            self.resetLine(self.shortWindow)
+        }
+        .frame(width: 54)
+        VStack(alignment: .trailing, spacing: 1) {
+            HStack(spacing: 6) {
+                if let used = Self.used(self.longWindow) {
+                    GeometryReader { proxy in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Self.trackColor)
+                            Capsule()
+                                .fill(Color(nsColor: UsageSeverityPalette.color(usedPercent: used)))
+                                .frame(width: proxy.size.width * min(1, max(0, used / 100)))
                         }
-                        .frame(height: 5)
-                        Text("\(Int(used.rounded()))%")
-                            .font(.system(size: 11).monospacedDigit())
-                            .frame(width: 34, alignment: .trailing)
-                    } else {
-                        Spacer(minLength: 0)
                     }
+                    .frame(height: 5)
+                    Text("\(Int(used.rounded()))%")
+                        .font(.system(size: 11).monospacedDigit())
+                        .frame(width: 34, alignment: .trailing)
+                } else {
+                    Spacer(minLength: 0)
                 }
-                .frame(height: 16)
-                self.resetLine(self.longWindow)
             }
-            .frame(maxWidth: .infinity)
+            .frame(height: 16)
+            self.resetLine(self.longWindow)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     /// Menus are pinned dark, so the empty part of a ring or bar is drawn light enough to read there.

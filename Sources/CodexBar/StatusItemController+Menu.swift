@@ -402,19 +402,20 @@ extension StatusItemController {
         captureMenu: NSMenu? = nil) -> Bool
     {
         let providerScopes = self.overviewProviderScopes(enabledProviders: enabledProviders)
-        typealias OverviewRow = (
-            provider: UsageProvider,
-            model: UsageMenuCardView.Model,
-            claudeAccountID: ProviderAccountIdentity?,
-            snapshot: UsageSnapshot?,
-            errorText: String?)
+        struct OverviewRow {
+            let provider: UsageProvider
+            let model: UsageMenuCardView.Model
+            let claudeAccountID: ProviderAccountIdentity?
+            let snapshot: UsageSnapshot?
+            let errorText: String?
+        }
         let rows: [OverviewRow] =
             providerScopes.visible.flatMap { provider -> [OverviewRow] in
                 // Provider-specific by design: only Claude reads per-account rows from the magpie gateway.
                 if provider == .claude, self.claudeAccountTabsEnabled {
                     // Each magpie account is its own row; the provider-level Claude snapshot is not magpie's data.
                     return self.claudeOverviewAccountRows().map {
-                        (
+                        OverviewRow(
                             provider: provider,
                             model: $0.model,
                             claudeAccountID: $0.id,
@@ -423,7 +424,7 @@ extension StatusItemController {
                     }
                 }
                 guard let model = self.menuCardModel(for: provider) else { return [] }
-                return [(
+                return [OverviewRow(
                     provider: provider,
                     model: model,
                     claudeAccountID: nil,
