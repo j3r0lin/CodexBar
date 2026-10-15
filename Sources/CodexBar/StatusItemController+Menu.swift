@@ -13,7 +13,7 @@ extension StatusItemController {
     static let overviewGroupHeadingIdentifierPrefix = "overviewHeading-"
     static let persistentRefreshMenuItemID = "persistentRefreshAction"
     static let menuFooterBarItemID = "menuFooterBar"
-    static let menuFooterActions: Set<MenuDescriptor.MenuAction> = [.refresh, .settings, .about, .quit]
+    static let menuFooterActions: [MenuDescriptor.MenuAction] = [.refresh, .settings, .about, .quit]
     private static let defaultMenuOpenRefreshDelay: Duration = .seconds(1.2)
     #if DEBUG
     private static var menuOpenRefreshDelayForTesting: Duration = .seconds(1.2)
