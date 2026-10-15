@@ -21,8 +21,8 @@ struct OverviewCompactAccountRow: View {
     private static let resetWidth: CGFloat = 38
     private static let columnSpacing: CGFloat = 10
     private static let laneSpacing: CGFloat = 5
-    /// A row is 28pt tall: the 5pt padding plus a line box this high. The preview's rows are that
-    /// tall, and a row whose lane is blank has to match a row that carries a bar.
+    /// A row is 28pt tall. The bars are only 5pt, so the line box around them is what sets the row's
+    /// height, and a row whose lane is blank has to keep the height of a row that carries a bar.
     private static let lineHeight: CGFloat = 18
 
     var body: some View {
@@ -83,8 +83,8 @@ struct OverviewCompactAccountRow: View {
     /// Menus are pinned dark, so the empty part of a bar is drawn light enough to read there.
     static let trackColor = Color.white.opacity(0.25)
 
-    /// The bar and its number share one colour. A highlighted row keeps it: only the surrounding text
-    /// follows the selection, so the reading survives the blue background.
+    /// The bar and its number share one colour, and a highlighted row keeps it: the selection is painted
+    /// behind the row, so the reading survives the highlight.
     private static func severityColor(_ used: Double) -> Color {
         Color(nsColor: UsageSeverityPalette.color(usedPercent: used))
     }
