@@ -16,6 +16,9 @@ protocol StatusItemMenuPersistentActionDelegate: AnyObject {
 }
 
 final class StatusItemMenu: NSMenu {
+    /// Matches `StatusItemController.overviewDetailBackIdentifier`; duplicated because key handling
+    /// here runs off the main actor and cannot read the controller's constant.
+    nonisolated static let overviewDetailBackIdentifier = "overviewDetailBack"
     weak var persistentActionDelegate: StatusItemMenuPersistentActionDelegate?
     var menuInteractionGeneration: Int?
     var switcherShortcuts: () -> [String: String] = { ProviderSwitcherShortcuts.defaults }
@@ -46,7 +49,7 @@ final class StatusItemMenu: NSMenu {
             return true
         }
         if event.keyCode == 53, self.items.contains(where: {
-            ($0.representedObject as? String) == StatusItemController.overviewDetailBackIdentifier
+            ($0.representedObject as? String) == Self.overviewDetailBackIdentifier
         }) {
             self.persistentActionDelegate?.performProviderNavigation(.previous)
             return true

@@ -10,7 +10,7 @@ extension StatusItemController {
     static let menuCardBaseWidth: CGFloat = 310
     private static let maxOverviewProviders = SettingsStore.mergedOverviewProviderLimit
     static let overviewRowIdentifierPrefix = "overviewRow-"
-    static let overviewDetailBackIdentifier = "overviewDetailBack"
+    static let overviewDetailBackIdentifier = StatusItemMenu.overviewDetailBackIdentifier
     static let persistentRefreshMenuItemID = "persistentRefreshAction"
     private static let defaultMenuOpenRefreshDelay: Duration = .seconds(1.2)
     #if DEBUG
