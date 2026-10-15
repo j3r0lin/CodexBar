@@ -105,6 +105,7 @@ struct MenuFooterBarTests {
         bar.layer?.backgroundColor = NSColor(srgbRed: 0.11, green: 0.11, blue: 0.12, alpha: 1).cgColor
         bar.layoutSubtreeIfNeeded()
 
+        bar.setHovering(true, labeled: "Settings...")
         guard let path = ProcessInfo.processInfo.environment["CODEXBAR_MENU_FOOTER_PROOF"] else { return }
         let rep = try #require(self.bitmap(of: bar, scale: 2))
         let png = try #require(rep.representation(using: .png, properties: [:]))

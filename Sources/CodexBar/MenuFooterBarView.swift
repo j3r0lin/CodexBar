@@ -34,6 +34,11 @@ final class MenuFooterBarView: NSView {
         self.buttons.first { $0.model.label == label }
     }
 
+    /// Forces the hover highlight, so a render can show it without a pointer.
+    func setHovering(_ hovering: Bool, labeled label: String) {
+        self.buttons.first { $0.model.label == label }?.setHovering(hovering)
+    }
+
     init(width: CGFloat, buttons: [MenuFooterButton]) {
         super.init(frame: NSRect(x: 0, y: 0, width: width, height: Self.barHeight))
         for button in buttons {
@@ -135,13 +140,16 @@ final class MenuFooterBarView: NSView {
         }
 
         override func mouseEntered(with event: NSEvent) {
-            self.hovering = true
-            self.highlight.isHidden = false
+            self.setHovering(true)
         }
 
         override func mouseExited(with event: NSEvent) {
-            self.hovering = false
-            self.highlight.isHidden = true
+            self.setHovering(false)
+        }
+
+        func setHovering(_ hovering: Bool) {
+            self.hovering = hovering
+            self.highlight.isHidden = !hovering
         }
 
         override func mouseUp(with event: NSEvent) {
