@@ -8,8 +8,8 @@ import Testing
 /// the app against `reports/preview-layout.html`.
 @MainActor
 struct OverviewRowLayoutProofTests {
-    /// The width the menu is laid out at in the reference screenshot.
-    private static let width: CGFloat = 348
+    /// `StatusItemController.menuCardBaseWidth`, the floor every menu is laid out at.
+    private static let width: CGFloat = 310
     private static let now = Date(timeIntervalSince1970: 1_800_000_000)
 
     @Test

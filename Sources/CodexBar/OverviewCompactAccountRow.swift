@@ -21,6 +21,9 @@ struct OverviewCompactAccountRow: View {
     private static let resetWidth: CGFloat = 38
     private static let columnSpacing: CGFloat = 10
     private static let laneSpacing: CGFloat = 5
+    /// A row is 28pt tall: the 5pt padding plus a line box this high. The preview's rows are that
+    /// tall, and a row whose lane is blank has to match a row that carries a bar.
+    private static let lineHeight: CGFloat = 18
 
     var body: some View {
         HStack(spacing: Self.columnSpacing) {
@@ -32,6 +35,7 @@ struct OverviewCompactAccountRow: View {
             self.lane(label: "5h", window: self.shortWindow)
             self.lane(label: "7d", window: self.longWindow)
         }
+        .frame(height: Self.lineHeight)
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
         .frame(width: self.width, alignment: .leading)
