@@ -2611,3 +2611,5 @@
 "Daily spend · %@" = "Pengeluaran harian · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Berlaku untuk akun token yang dipilih “%@”. Setiap akun menyimpan batasnya sendiri.";
 "Applies to the OpenAI API key, not to token accounts." = "Berlaku untuk kunci API OpenAI, bukan untuk akun token.";
+"%lld accounts" = "%lld akun";
+"Refresh Claude usage" = "Segarkan penggunaan Claude";
