@@ -1384,7 +1384,7 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `overview tab honors stored subset when within the provider limit`() {
+    func `overview lists every enabled provider regardless of the stored overview subset`() {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
@@ -1414,15 +1414,12 @@ extension StatusMenuTests {
 
         let ids = self.representedIDs(in: menu)
         let overviewRows = ids.filter { $0.hasPrefix("overviewRow-") }
-        #expect(overviewRows.count == 2)
-        #expect(overviewRows.contains("overviewRow-codex"))
-        #expect(overviewRows.contains("overviewRow-cursor"))
-        #expect(overviewRows.contains("overviewRow-claude") == false)
+        #expect(Set(overviewRows) == ["overviewRow-codex", "overviewRow-claude", "overviewRow-cursor"])
         #expect(ids.contains("menuCard") == false)
     }
 
     @Test
-    func `overview tab with explicit empty selection is hidden and shows provider detail`() {
+    func `overview lists every enabled provider beyond six even with an empty stored selection`() {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
@@ -1448,10 +1445,10 @@ extension StatusMenuTests {
         controller.menuWillOpen(menu)
 
         let ids = self.representedIDs(in: menu)
-        #expect(ids.contains("menuCard"))
-        #expect(ids.contains(where: { $0.hasPrefix("overviewRow-") }) == false)
+        #expect(ids.contains("menuCard") == false)
+        #expect(Set(ids.filter { $0.hasPrefix("overviewRow-") })
+            == Set(enabledProviders.map { "overviewRow-\($0.rawValue)" }))
         #expect(ids.contains("overviewEmptyState") == false)
-        #expect(menu.items.contains(where: { $0.title == "No providers selected for Overview." }) == false)
     }
 
     @Test

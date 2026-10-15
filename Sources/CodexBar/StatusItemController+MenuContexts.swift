@@ -21,7 +21,6 @@ extension StatusItemController {
 
     struct MenuRebuildContext {
         let enabledProviders: [UsageProvider]
-        let includesOverview: Bool
         let switcherSelection: ProviderSwitcherSelection?
         let currentProvider: UsageProvider
         let selectedProvider: UsageProvider?

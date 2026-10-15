@@ -31,7 +31,9 @@ extension StatusItemController {
         submenu.addItem(self.makeMenuCardItem(
             AccountUsageDetailView(name: title, snapshot: snapshot, width: width),
             id: "overviewDetail-\(title)",
-            width: width))
+            width: width,
+            // The pool holds the parent menu's row views; a detail card built first would take one of them.
+            recyclesView: false))
         if let claudeAccountID {
             submenu.addItem(.separator())
             submenu.addItem(self.makeRefreshClaudeAccountItem(claudeAccountID))

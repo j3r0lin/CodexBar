@@ -64,13 +64,9 @@ extension StatusItemController {
         #if DEBUG
         guard !self.isReleasedForTesting else { return }
         #endif
-        let preservesMergedSwitcherContentCaches = self.preservesMergedSwitcherContentCachesDuringInvalidation
         self.menuSession.invalidate(
             allowsStaleContent: allowStaleContentDuringDataRefresh,
-            requiresRebuild: !preservesMergedSwitcherContentCaches)
-        if !preservesMergedSwitcherContentCaches {
-            self.clearMergedSwitcherContentCaches()
-        }
+            requiresRebuild: true)
         self.pruneVersionScopedMenuCardHeightCache()
         guard self.isMenuRefreshEnabled else { return }
         if !self.openMenus.isEmpty {
@@ -500,14 +496,13 @@ extension StatusItemController {
         let stillSelected: @MainActor () -> Bool = { [weak self, weak menu] in
             guard let self, let menu else { return false }
             guard isCurrent?() ?? true else { return false }
-            if let selection = self.resolvedMergedMenuSelection(
-                enabledProviders: self.store.enabledFirstPartyProvidersForDisplay())
-            {
-                return selection == .provider(provider.instanceID)
+            if self.mergedMenuSelection != nil {
+                // Overview has a row for every enabled provider.
+                return self.store.enabledFirstPartyProvidersForDisplay().contains(provider)
             }
             return self.menuProvider(for: menu) == provider
         }
-        // Late account data must not replace a newer provider/Overview selection request.
+        // Late account data must not rebuild a menu that no longer shows this provider.
         guard stillSelected() else { return }
         self.invalidateMenus(refreshOpenMenus: false, allowStaleContentDuringDataRefresh: true)
         self.scheduleTrackingMenuRebuildIfStillVisible(menu, provider: provider, beforeRebuild: stillSelected)

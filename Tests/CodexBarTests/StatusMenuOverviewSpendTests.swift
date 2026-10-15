@@ -683,7 +683,7 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `overview keeps six visible providers while accounting for all seven connected providers`() throws {
+    func `overview lists all seven connected providers and accounts for their spend`() throws {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
@@ -755,8 +755,7 @@ extension StatusMenuTests {
         defer { controller.releaseStatusItemsForTesting() }
 
         let scopes = controller.overviewProviderScopes(enabledProviders: enabledRoster)
-        let hiddenProvider = try #require(scopes.spend.first { !scopes.visible.contains($0) })
-        let pricedProviders = [scopes.visible[0], scopes.visible[1], hiddenProvider]
+        let pricedProviders = [scopes.visible[0], scopes.visible[1], scopes.visible[6]]
         store._setTokenSnapshotForTesting(snapshot(cost: 35.09), provider: pricedProviders[0])
         store._setTokenSnapshotForTesting(snapshot(cost: 39.79), provider: pricedProviders[1])
         store._setTokenSnapshotForTesting(snapshot(cost: 10.12), provider: pricedProviders[2])
@@ -772,12 +771,11 @@ extension StatusMenuTests {
         let ids = menu.items.compactMap { $0.representedObject as? String }
         let overviewRows = ids.filter { $0.hasPrefix("overviewRow-") }
 
-        #expect(scopes.visible.count == 6)
-        #expect(!scopes.visible.contains(hiddenProvider))
+        #expect(scopes.visible.count == 7)
         #expect(scopes.spend == enabledRoster)
         #expect(duplicateScopes.spend == enabledRoster)
         #expect(Set(overviewRows) == Set(scopes.visible.map { "overviewRow-\($0.rawValue)" }))
-        #expect(overviewRows.count == 6)
+        #expect(overviewRows.count == 7)
         #expect(ids.contains("overviewSpendSummary"))
         #expect(ids.contains("overviewShareStats"))
         let shareItem = try #require(menu.items.first {

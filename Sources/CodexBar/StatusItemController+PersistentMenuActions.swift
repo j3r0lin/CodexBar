@@ -74,8 +74,6 @@ extension StatusItemController {
     func isMergedOverviewSelected(in menu: NSMenu) -> Bool {
         guard self.shouldMergeIcons else { return false }
         if let mergedMenu = self.mergedMenu, menu !== mergedMenu { return false }
-        let providers = self.store.enabledFirstPartyProvidersForDisplay()
-        return self.includesOverviewTab(enabledProviders: providers) &&
-            self.settings.mergedMenuLastSelectedWasOverview
+        return true
     }
 }

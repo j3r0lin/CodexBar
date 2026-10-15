@@ -1150,11 +1150,6 @@ struct ProviderArchitectureGatekeeperTests {
             expectedProviderIDs: ["codex"],
             reason: "This provider-specific app branch passes its already-selected identity to a shared helper."),
         SuppressedProviderReference(
-            path: "Sources/CodexBar/StatusItemController+MemoryPressure.swift",
-            anchor: ".provider(.codex): cacheEntry,",
-            expectedProviderIDs: ["codex"],
-            reason: "The memory-pressure debug fixture installs its synthetic entry in the Codex cache slot."),
-        SuppressedProviderReference(
             path: "Sources/CodexBar/StatusItemController+Menu.swift",
             anchor: "controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .codex) {",
             expectedProviderIDs: ["codex"],
@@ -2519,13 +2514,6 @@ struct ProviderArchitectureGatekeeperTests {
         AllowedProviderConstruct(
             path: "Sources/CodexBar/StatusItemController+MemoryPressure.swift",
             anchor: "scope: UsageProvider.codex.rawValue,",
-            expectedProviderIDs: ["codex"],
-            expectedReferenceCount: 1,
-            expectedReferenceFingerprint: ["codex@0"],
-            reason: "This exact app-runtime bridge coordinates provider-owned state through the shared controller."),
-        AllowedProviderConstruct(
-            path: "Sources/CodexBar/StatusItemController+UserPlugins.swift",
-            anchor: "let fallbackProviderID = (self.resolvedMenuProvider(enabledProviders: enabledProviders) ?? .codex).instanceID",
             expectedProviderIDs: ["codex"],
             expectedReferenceCount: 1,
             expectedReferenceFingerprint: ["codex@0"],

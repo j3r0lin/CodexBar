@@ -253,14 +253,8 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
 
     func manualRefreshProvider(for menu: NSMenu?) -> ProviderInstanceID? {
         guard let menu else { return nil }
-        if self.shouldMergeIcons {
-            guard self.mergedMenu == nil || menu === self.mergedMenu else { return nil }
-            let enabledProviders = self.store.enabledFirstPartyProvidersForDisplay()
-            if let selection = self.resolvedMergedMenuSelection(enabledProviders: enabledProviders) {
-                return selection.instanceID
-            }
-            return self.resolvedMenuProvider(enabledProviders: enabledProviders)?.instanceID
-        }
+        // Overview spans every provider, so a refresh from the merged menu is global.
+        guard !self.shouldMergeIcons else { return nil }
         return self.menuProviders[ObjectIdentifier(menu)]
     }
 

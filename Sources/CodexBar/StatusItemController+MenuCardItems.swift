@@ -45,6 +45,7 @@ extension StatusItemController {
         submenuIndicatorTopPadding: CGFloat = 8,
         containsInteractiveControls: Bool = false,
         usesGPUSelection: Bool = false,
+        recyclesView: Bool = true,
         onClick: (() -> Void)? = nil) -> NSMenuItem
     {
         let allowsMenuHighlight = submenu != nil || onClick != nil
@@ -85,9 +86,10 @@ extension StatusItemController {
             usesGPUSelection: usesGPUSelection,
             onClick: onClick)
         let hosting: ErasedMenuCardHostingView
-        if let recycled = self.takeRecyclableMenuCardView(
-            for: id,
-            as: ErasedMenuCardHostingView.self)
+        if recyclesView,
+           let recycled = self.takeRecyclableMenuCardView(
+               for: id,
+               as: ErasedMenuCardHostingView.self)
         {
             self.replantMenuCardRowPayload(payload, into: recycled)
             hosting = recycled

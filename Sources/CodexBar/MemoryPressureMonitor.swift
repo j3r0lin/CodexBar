@@ -6,14 +6,12 @@ import Foundation
 struct MemoryPressureCacheTrimSummary: Equatable {
     var menuCardHeights = 0
     var menuWidths = 0
-    var mergedSwitcherSelections = 0
     var recycledMenuCardViews = 0
     var openAIWebDebugLines = 0
 
     var total: Int {
         self.menuCardHeights +
             self.menuWidths +
-            self.mergedSwitcherSelections +
             self.recycledMenuCardViews +
             self.openAIWebDebugLines
     }
@@ -22,7 +20,6 @@ struct MemoryPressureCacheTrimSummary: Equatable {
         [
             "menuCardHeights": "\(self.menuCardHeights)",
             "menuWidths": "\(self.menuWidths)",
-            "mergedSwitcherSelections": "\(self.mergedSwitcherSelections)",
             "recycledMenuCardViews": "\(self.recycledMenuCardViews)",
             "openAIWebDebugLines": "\(self.openAIWebDebugLines)",
             "total": "\(self.total)",
@@ -32,7 +29,6 @@ struct MemoryPressureCacheTrimSummary: Equatable {
     mutating func merge(_ other: MemoryPressureCacheTrimSummary) {
         self.menuCardHeights += other.menuCardHeights
         self.menuWidths += other.menuWidths
-        self.mergedSwitcherSelections += other.mergedSwitcherSelections
         self.recycledMenuCardViews += other.recycledMenuCardViews
         self.openAIWebDebugLines += other.openAIWebDebugLines
     }

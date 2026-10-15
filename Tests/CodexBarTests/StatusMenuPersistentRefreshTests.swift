@@ -1040,7 +1040,7 @@ extension StatusMenuPersistentRefreshTests {
     }
 
     @Test
-    func `merged overview refreshes globally while selected provider stays scoped`() async throws {
+    func `merged menu refreshes every provider from the footer and the shortcut`() async throws {
         let settings = self.makeSettings()
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
@@ -1064,17 +1064,17 @@ extension StatusMenuPersistentRefreshTests {
         overviewGate.resume()
         await overviewTask.value
 
-        settings.mergedMenuLastSelectedWasOverview = false
         controller.selectedMenuProvider = .claude
-        let providerGate = ManualRefreshGate()
-        controller._test_manualRefreshOperation = { await providerGate.wait() }
+        let shortcutGate = ManualRefreshGate()
+        controller._test_manualRefreshOperation = { await shortcutGate.wait() }
         #expect(try menu.performKeyEquivalent(with: self.keyEvent("r", keyCode: 15)))
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.claude)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.global] == nil {
             await Task.yield()
         }
-        let providerTask = try #require(controller.manualRefreshTasks[.provider(.claude)])
-        providerGate.resume()
-        await providerTask.value
+        let shortcutTask = try #require(controller.manualRefreshTasks[.global])
+        #expect(controller.manualRefreshTasks[.provider(.claude)] == nil)
+        shortcutGate.resume()
+        await shortcutTask.value
     }
 
     @Test

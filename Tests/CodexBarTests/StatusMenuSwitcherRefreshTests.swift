@@ -32,7 +32,7 @@ private final class SwitcherRefreshManualGate {
 @Suite(.serialized)
 struct StatusMenuSwitcherRefreshTests {
     @Test
-    func `smart provider switch resizes persistent refresh row to rendered menu width`() throws {
+    func `in-place merged update resizes the footer bar to the rendered menu width`() throws {
         let previousMenuCardRendering = StatusItemController.menuCardRenderingEnabled
         let previousMenuRefresh = StatusItemController.menuRefreshEnabled
         StatusItemController.menuCardRenderingEnabled = true
@@ -64,13 +64,13 @@ struct StatusMenuSwitcherRefreshTests {
         controller.menuWillOpen(menu)
         menu.minimumWidth = 420
 
-        let descriptor = controller.makeMenuDescriptor(provider: .claude, includeContextualActions: true)
-        controller.updateMenuContentPreservingSwitcher(
+        let descriptor = controller.makeMenuDescriptor(provider: .claude, includeContextualActions: false)
+        controller.updateMergedMenuContentInPlace(
             menu,
             context: StatusItemController.MenuUpdateContext(
                 provider: .claude,
                 currentProvider: .claude,
-                switcherSelection: .provider(.claude),
+                switcherSelection: .overview,
                 menuWidth: StatusItemController.menuCardBaseWidth,
                 codexAccountDisplay: nil,
                 tokenAccountDisplay: nil,
@@ -86,106 +86,6 @@ struct StatusMenuSwitcherRefreshTests {
         #expect(expectedWidth == 420)
         let refreshView = try #require(menu.items.first { $0.view is MenuFooterBarView }?.view)
         #expect(abs(refreshView.frame.width - expectedWidth) <= 0.5)
-    }
-
-    @Test
-    func `full cached reattachment resynchronizes detached refresh item`() throws {
-        let previousMenuCardRendering = StatusItemController.menuCardRenderingEnabled
-        StatusItemController.menuCardRenderingEnabled = false
-        defer { StatusItemController.menuCardRenderingEnabled = previousMenuCardRendering }
-
-        let settings = Self.makeSettings()
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        Self.enableCodexAndClaude(settings)
-        Self.disableOverview(settings)
-
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: .system)
-        defer {
-            controller.manualRefreshTasks.values.forEach { $0.cancel() }
-            controller.releaseStatusItemsForTesting()
-        }
-
-        let menu = controller.makeMenu()
-        controller.menuWillOpen(menu)
-        let cache = try #require(
-            controller.mergedSwitcherContentCaches[ObjectIdentifier(menu)]?[.provider(.codex)])
-        let refreshItem = try #require(cache.items.first { $0.view is MenuFooterBarView })
-
-        controller.manualRefreshTasks[.global] = Task {}
-        controller.updatePersistentRefreshItemsEnabled()
-        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
-
-        menu.removeAllItems()
-        #expect(refreshItem.menu == nil)
-        controller.manualRefreshTasks[.global] = nil
-        controller.updatePersistentRefreshItemsEnabled()
-        // Detached from its menu, the bar cannot see the refresh finish.
-        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
-
-        #expect(controller.addCachedMergedSwitcherContent(
-            for: .provider(.codex),
-            to: menu,
-            menuWidth: cache.menuWidth,
-            codexAccountDisplay: cache.codexAccountDisplay,
-            tokenAccountDisplay: cache.tokenAccountDisplay))
-        #expect(refreshItem.menu === menu)
-        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
-    }
-
-    @Test
-    func `a provider manual refresh only greys its own tab`() {
-        let settings = Self.makeSettings()
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        Self.enableCodexAndClaude(settings)
-        Self.disableOverview(settings)
-
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: .system)
-        defer {
-            controller.manualRefreshTasks.values.forEach { $0.cancel() }
-            controller.manualRefreshTasks.removeAll()
-            controller.releaseStatusItemsForTesting()
-        }
-
-        let menu = controller.makeMenu()
-        controller.mergedMenu = menu
-        controller.menuWillOpen(menu)
-        defer { controller.menuDidClose(menu) }
-
-        // A manual refresh of Claude must leave the Codex tab's Refresh row enabled.
-        controller.manualRefreshTasks[.provider(.claude)] = Task {}
-        #expect(!controller.isRefreshActionInFlight(for: menu))
-
-        // Switching to the Claude tab reflects Claude's own in-flight refresh.
-        settings.selectedMenuProvider = .claude
-        #expect(controller.isRefreshActionInFlight(for: menu))
-
-        // An all-providers refresh busies every tab regardless of the selected provider.
-        settings.selectedMenuProvider = .codex
-        controller.manualRefreshTasks[.provider(.claude)] = nil
-        controller.manualRefreshTasks[.global] = Task {}
-        #expect(controller.isRefreshActionInFlight(for: menu))
     }
 
     @Test

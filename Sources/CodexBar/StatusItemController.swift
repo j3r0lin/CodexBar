@@ -270,21 +270,11 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     var lastAgentSessionsRefreshFrequency: RefreshFrequency
     var lastStayAwakeEnabled: Bool
     var lastAdaptiveActivityScanningEnabled: Bool
-    /// Tracks which `usageBarsShowUsed` mode the provider switcher was built with.
-    /// Used to decide whether we can "smart update" menu content without rebuilding the switcher.
+    /// Tracks which `usageBarsShowUsed` mode the merged menu was built with; a change forces a full rebuild.
     var lastSwitcherUsageBarsShowUsed: Bool
-    /// Tracks whether the merged-menu switcher was built with the Overview tab visible.
-    /// Used to force switcher rebuilds when Overview availability toggles.
-    var lastSwitcherIncludesOverview: Bool = false
     /// Tracks localization-sensitive labels used by the merged menu.
     /// Used to force menu rebuilds when app language changes.
     var lastMenuLocalizationSignature: String = ""
-    /// Tracks which providers the merged menu's switcher was built with, to detect when it needs full rebuild.
-    var lastSwitcherProviders: [ProviderInstanceID] = []
-    /// Tracks which switcher tab state was used for the current merged-menu switcher instance.
-    var lastMergedSwitcherSelection: ProviderSwitcherSelection?
-    /// Tracks which provider/overview content is currently attached below the merged-menu switcher.
-    var lastMergedMenuContentSelection: ProviderSwitcherSelection?
     /// Tracks the visible Codex account switcher contents for merged-menu smart updates.
     var lastCodexAccountMenuDisplay: CodexAccountMenuDisplay?
     /// Tracks the visible token account switcher contents for merged-menu smart updates.
@@ -298,10 +288,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     var claudeSwapInspectedAccountID: ProviderAccountIdentity?
     /// Compact multi-account layout: providers whose collapsed healthy tail is revealed this menu session.
     var compactAccountExpandedHealthyTailProviders: Set<ProviderInstanceID> = []
-    /// Keeps detached merged-menu tab content reusable while the same menu remains open.
-    var mergedSwitcherContentCaches: [ObjectIdentifier: [ProviderSwitcherSelection: CachedMergedSwitcherMenuContent]]
-        = [:]
-    var preservesMergedSwitcherContentCachesDuringInvalidation = false
     /// Card hosting views harvested from items about to be discarded by the current populate
     /// pass, keyed by card identifier; consumed by `makeMenuCardItem` and cleared when the
     /// pass finishes. Never outlives a single synchronous menu population.
@@ -890,7 +876,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
             if menuID == self.providerSwitcherShortcutMenuID {
                 self.removeProviderSwitcherShortcutMonitor()
             }
-            self.clearMergedSwitcherContentCache(for: menu)
             self.removeMenuLifecycleState(menuID)
         }
 

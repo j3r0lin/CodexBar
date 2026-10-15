@@ -9,6 +9,8 @@ struct OverviewCompactAccountRow: View {
     let width: CGFloat
     /// Account rows under a provider heading sit further right than a lone provider row.
     var indent: CGFloat = 0
+    /// A provider that only has an error shows it in place of its usage.
+    var errorText: String?
     var now = Date()
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
@@ -19,7 +21,24 @@ struct OverviewCompactAccountRow: View {
                 .lineLimit(1)
                 .frame(width: 60 - self.indent, alignment: .leading)
                 .padding(.leading, self.indent)
-            VStack(alignment: .trailing, spacing: 1) {
+            if let errorText {
+                Text(errorText)
+                    .font(.system(size: 11))
+                    .foregroundStyle(MenuHighlightStyle.error(self.isHighlighted))
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, minHeight: 30, alignment: .leading)
+            } else {
+                self.usageColumns
+            }
+        }
+        .padding(.horizontal, UsageMenuCardLayout.horizontalPadding)
+        .padding(.vertical, 4)
+        .frame(width: self.width, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var usageColumns: some View {
+        VStack(alignment: .trailing, spacing: 1) {
                 HStack(spacing: 3) {
                     if let used = Self.used(self.shortWindow) {
                         OverviewUsageRing(usedPercent: used)
@@ -57,10 +76,6 @@ struct OverviewCompactAccountRow: View {
                 self.resetLine(self.longWindow)
             }
             .frame(maxWidth: .infinity)
-        }
-        .padding(.horizontal, UsageMenuCardLayout.horizontalPadding)
-        .padding(.vertical, 4)
-        .frame(width: self.width, alignment: .leading)
     }
 
     /// Menus are pinned dark, so the empty part of a ring or bar is drawn light enough to read there.

@@ -200,7 +200,7 @@ extension StatusItemController {
         }
     }
 
-    // MARK: - Per-account tabs (magpie only)
+    // MARK: - Per-account Overview rows (magpie only)
 
     /// While magpie owns Claude, each magpie account gets its own Overview row.
     var claudeAccountTabsEnabled: Bool {
@@ -224,12 +224,6 @@ extension StatusItemController {
             model.providerName = "Claude · " + Self.claudeAccountShortName(account, hidePersonalInfo: hidePersonalInfo)
             return (id: account.id, model: model, snapshot: account.snapshot)
         }
-    }
-
-    func selectClaudeAccountTab(_ id: ProviderAccountIdentity) {
-        self.claudeSwapInspectedAccountID = id
-        // Every account shares the Claude selection, so a cached Claude page would show the previous account.
-        self.clearMergedSwitcherContentCaches()
     }
 
     static func claudeAccountShortName(_ account: ProviderAccountUsageSnapshot, hidePersonalInfo: Bool) -> String {
@@ -257,11 +251,5 @@ extension StatusItemController {
         Task { @MainActor [weak self] in
             await self?.store.refreshClaudeMagpieAccounts()
         }
-    }
-
-    /// The tighter of the session and weekly windows, so a tab turns red as soon as either one runs out.
-    static func claudeAccountUsedPercent(_ account: ProviderAccountUsageSnapshot) -> Double? {
-        guard let snapshot = account.snapshot else { return nil }
-        return [snapshot.primary?.usedPercent, snapshot.secondary?.usedPercent].compactMap(\.self).max()
     }
 }

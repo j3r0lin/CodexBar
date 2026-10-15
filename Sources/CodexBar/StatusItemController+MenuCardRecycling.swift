@@ -4,24 +4,15 @@ extension StatusItemController {
     /// Collects the card hosting views of items the current populate pass is about to discard
     /// so `makeMenuCardItem` can reuse them for cards with the same identifier (or, failing
     /// that, any other card row) instead of building fresh container views.
-    ///
-    /// Safety: live menu items can alias one merged-switcher cache entry — the one for the
-    /// selection currently displayed, re-cached at the end of every populate. Consuming that
-    /// entry up front (`displacedSelection`) guarantees no cache entry can still reference a
-    /// harvested view; entries for other selections only hold items already detached from the
-    /// menu. Harvested views are detached from their outgoing items; whatever the pass does
+    /// Harvested views are detached from their outgoing items; whatever the pass does
     /// not consume is released by `clearMenuCardViewRecyclePool`.
     func harvestRecyclableMenuCardViews(
         in menu: NSMenu,
         fromIndex: Int,
-        displacedSelection: ProviderSwitcherSelection?,
         preserveHighlightedItem: Bool = false)
     {
         self.menuCardViewRecyclePool.removeAll(keepingCapacity: true)
         let menuKey = ObjectIdentifier(menu)
-        if let displacedSelection {
-            self.mergedSwitcherContentCaches[menuKey]?.removeValue(forKey: displacedSelection)
-        }
         guard self.menuCardRenderingEnabledForController else { return }
         guard fromIndex >= 0, fromIndex < menu.items.count else { return }
         for item in menu.items[fromIndex...] {

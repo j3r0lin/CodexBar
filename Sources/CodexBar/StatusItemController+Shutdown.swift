@@ -93,7 +93,6 @@ extension StatusItemController {
         self.pendingMenuBaselineResyncs.removeAll(keepingCapacity: false)
         self.menuCardHeightCache.removeAll(keepingCapacity: false)
         self.measuredStandardMenuWidthCache.removeAll(keepingCapacity: false)
-        self.mergedSwitcherContentCaches.removeAll(keepingCapacity: false)
         self.menuProviders.removeAll(keepingCapacity: false)
         self.menuReadinessSignatures.removeAll(keepingCapacity: false)
         self.menuIdentitySignatures.removeAll(keepingCapacity: false)
