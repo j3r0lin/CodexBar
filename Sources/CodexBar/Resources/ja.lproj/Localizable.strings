@@ -449,7 +449,7 @@
 "metric_tertiary" = "第3（%@）";
 "multiple_workspaces_found" = "CodexBar は %@ の複数のワークスペースを見つけました。追加するワークスペースを選択してください。";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "最大 %@ 個のプロバイダを選択";
+"overview_choose_providers" = "統合アイコンに使うプロバイダを最大 %@ 件選択";
 "remove_account_message" = "%@ を CodexBar から削除しますか？マネージド Codex ホームも削除されます。";
 "version_format" = "バージョン %@";
 "vertex_ai_login_instructions" = "Vertex AI の使用状況を追跡するには、Google Cloud で認証してください。\n\n1. ターミナルを開く\n2. 実行: gcloud auth application-default login\n3. ブラウザの指示に従ってサインイン\n4. プロジェクトを設定: gcloud config set project PROJECT_ID\n\n今すぐターミナルを開きますか？";
@@ -652,11 +652,11 @@
 "multi_account_layout_subtitle" = "セグメント式のアカウント切替か、積み重ね式のアカウントカードを選択します。";
 "multi_account_layout_segmented" = "セグメント";
 "multi_account_layout_stacked" = "スタック";
-"overview_tab_providers_title" = "概要タブのプロバイダ";
+"overview_tab_providers_title" = "統合アイコンのプロバイダ";
 "configure" = "設定…";
-"overview_enable_merge_icons_hint" = "概要タブのプロバイダを設定するには「アイコンを統合」を有効にしてください。";
+"overview_enable_merge_icons_hint" = "統合アイコンのプロバイダを選ぶには「アイコンを統合」をオンにしてください。";
 "overview_no_providers_hint" = "概要に使用できる有効なプロバイダがありません。";
-"overview_rows_follow_order" = "概要の行は常にプロバイダの並び順に従います。";
+"overview_rows_follow_order" = "統合アイコンはこれらのプロバイダのいずれかを表示します。概要メニューには有効なすべてのプロバイダが表示されます。";
 "overview_no_providers_selected" = "プロバイダが選択されていません";
 "agent_sessions_title" = "エージェントセッション";
 "agent_sessions_subtitle" = "ローカルおよび SSH で検出された Codex と Claude Code のセッションをメニューに表示します。";
@@ -2610,3 +2610,4 @@
 "Daily spend · %@" = "日別の支出 · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "選択中のトークンアカウント「%@」に適用されます。各アカウントは独自の上限を保持します。";
 "Applies to the OpenAI API key, not to token accounts." = "OpenAI APIキーに適用されます。トークンアカウントには適用されません。";
+"No providers enabled" = "有効なプロバイダがありません";

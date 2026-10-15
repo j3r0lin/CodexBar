@@ -45,5 +45,53 @@
       <string>سهم هفتگی ممکن است حدود %d بازه زودتر تمام شود</string>
     </dict>
   </dict>
+  <key>account_detail_window_days</key>
+  <dict>
+    <key>NSStringLocalizedFormatKey</key>
+    <string>%#@n@</string>
+    <key>n</key>
+    <dict>
+      <key>NSStringFormatSpecTypeKey</key>
+      <string>NSStringPluralRuleType</string>
+      <key>NSStringFormatValueTypeKey</key>
+      <string>d</string>
+      <key>one</key>
+      <string>%d روز</string>
+      <key>other</key>
+      <string>%d روز</string>
+    </dict>
+  </dict>
+  <key>account_detail_window_hours</key>
+  <dict>
+    <key>NSStringLocalizedFormatKey</key>
+    <string>%#@n@</string>
+    <key>n</key>
+    <dict>
+      <key>NSStringFormatSpecTypeKey</key>
+      <string>NSStringPluralRuleType</string>
+      <key>NSStringFormatValueTypeKey</key>
+      <string>d</string>
+      <key>one</key>
+      <string>%d ساعت</string>
+      <key>other</key>
+      <string>%d ساعت</string>
+    </dict>
+  </dict>
+  <key>account_detail_window_minutes</key>
+  <dict>
+    <key>NSStringLocalizedFormatKey</key>
+    <string>%#@n@</string>
+    <key>n</key>
+    <dict>
+      <key>NSStringFormatSpecTypeKey</key>
+      <string>NSStringPluralRuleType</string>
+      <key>NSStringFormatValueTypeKey</key>
+      <string>d</string>
+      <key>one</key>
+      <string>%d دقیقه</string>
+      <key>other</key>
+      <string>%d دقیقه</string>
+    </dict>
+  </dict>
 </dict>
 </plist>

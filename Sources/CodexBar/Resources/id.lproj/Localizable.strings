@@ -435,7 +435,7 @@
 "metric_tertiary" = "Tersier (%@)";
 "multiple_workspaces_found" = "CodexBar menemukan beberapa workspace untuk %@. Silakan pilih workspace yang akan ditambahkan.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "Pilih hingga %@ penyedia";
+"overview_choose_providers" = "Pilih hingga %@ penyedia untuk ikon gabungan";
 "remove_account_message" = "Hapus %@ dari CodexBar? Home Codex terkelolanya akan dihapus.";
 "version_format" = "Versi %@";
 "vertex_ai_login_instructions" = "Untuk melacak penggunaan Vertex AI, autentikasi dengan Google Cloud.\n\n1. Buka Terminal\n2. Jalankan: gcloud auth application-default login\n3. Ikuti petunjuk browser untuk masuk\n4. Atur proyek Anda: gcloud config set project PROJECT_ID\n\nBuka Terminal sekarang?";
@@ -663,11 +663,11 @@
 "multi_account_layout_subtitle" = "Pilih pengalihan akun tersegmentasi atau kartu akun bertumpuk.";
 "multi_account_layout_segmented" = "Tersegmentasi";
 "multi_account_layout_stacked" = "Bertumpuk";
-"overview_tab_providers_title" = "Penyedia tab ikhtisar";
+"overview_tab_providers_title" = "Penyedia ikon gabungan";
 "configure" = "Konfigurasi…";
-"overview_enable_merge_icons_hint" = "Aktifkan Gabung Ikon untuk mengonfigurasi penyedia tab Ikhtisar.";
+"overview_enable_merge_icons_hint" = "Aktifkan Gabungkan ikon untuk memilih penyedia ikon gabungan.";
 "overview_no_providers_hint" = "Tidak ada penyedia aktif untuk Ikhtisar.";
-"overview_rows_follow_order" = "Baris ikhtisar selalu mengikuti urutan penyedia.";
+"overview_rows_follow_order" = "Ikon gabungan menampilkan salah satu penyedia ini. Menu Ringkasan menampilkan semua penyedia yang diaktifkan.";
 "overview_no_providers_selected" = "Tidak ada penyedia dipilih";
 "agent_sessions_title" = "Sesi agen";
 "agent_sessions_subtitle" = "Tampilkan sesi Codex dan Claude Code lokal serta yang ditemukan melalui SSH di menu.";
@@ -2613,3 +2613,4 @@
 "Applies to the OpenAI API key, not to token accounts." = "Berlaku untuk kunci API OpenAI, bukan untuk akun token.";
 "%lld accounts" = "%lld akun";
 "Refresh Claude usage" = "Segarkan penggunaan Claude";
+"No providers enabled" = "Tidak ada penyedia yang diaktifkan";

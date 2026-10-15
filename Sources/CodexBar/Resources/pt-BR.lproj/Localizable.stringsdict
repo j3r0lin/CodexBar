@@ -45,5 +45,53 @@
       <string>A cota semanal pode acabar ≈%d janelas antes</string>
     </dict>
   </dict>
+  <key>account_detail_window_days</key>
+  <dict>
+    <key>NSStringLocalizedFormatKey</key>
+    <string>%#@n@</string>
+    <key>n</key>
+    <dict>
+      <key>NSStringFormatSpecTypeKey</key>
+      <string>NSStringPluralRuleType</string>
+      <key>NSStringFormatValueTypeKey</key>
+      <string>d</string>
+      <key>one</key>
+      <string>%d dia</string>
+      <key>other</key>
+      <string>%d dias</string>
+    </dict>
+  </dict>
+  <key>account_detail_window_hours</key>
+  <dict>
+    <key>NSStringLocalizedFormatKey</key>
+    <string>%#@n@</string>
+    <key>n</key>
+    <dict>
+      <key>NSStringFormatSpecTypeKey</key>
+      <string>NSStringPluralRuleType</string>
+      <key>NSStringFormatValueTypeKey</key>
+      <string>d</string>
+      <key>one</key>
+      <string>%d hora</string>
+      <key>other</key>
+      <string>%d horas</string>
+    </dict>
+  </dict>
+  <key>account_detail_window_minutes</key>
+  <dict>
+    <key>NSStringLocalizedFormatKey</key>
+    <string>%#@n@</string>
+    <key>n</key>
+    <dict>
+      <key>NSStringFormatSpecTypeKey</key>
+      <string>NSStringPluralRuleType</string>
+      <key>NSStringFormatValueTypeKey</key>
+      <string>d</string>
+      <key>one</key>
+      <string>%d minuto</string>
+      <key>other</key>
+      <string>%d minutos</string>
+    </dict>
+  </dict>
 </dict>
 </plist>

@@ -55,11 +55,15 @@ read_when:
   positions beyond the widest attached display plus 512 points are cleared before creation. Visibility changes and
   removal validate positions before saving and after AppKit updates them: a missing or invalid result restores only
   a valid previous position. Valid new positions remain untouched; unrelated defaults are never repaired by this path.
-- When Overview has selected providers, the merged menu opens on the Overview list of up to 6 providers; with no
-  provider selected for Overview it shows the current provider's detail card instead.
+- The merged menu always opens on the Overview list, with one row per enabled provider. A provider that only has an
+  error shows the error text in its row. With no enabled provider the menu shows "No providers enabled".
+- The merged icon follows the first provider selected under "Merged icon providers" (or the highest-usage one among
+  them when Combined icon source is Highest usage). It no longer follows a provider page, since the menu has none.
 - Overview row order follows provider order. A provider with several accounts gets a grey "<provider> · N accounts"
   caption with one indented row per account. Hovering a row opens a submenu with that account's five-hour and
-  weekly usage, reset times and data age, plus the provider's usage history chart when it has one.
+  weekly usage, reset times and data age, plus the provider's usage history chart when it has one, followed by the
+  provider's own actions: account switchers, Buy Credits, cost and credits submenus, dashboard and status links, and
+  login repair. A magpie Claude account row shows only that account's usage and its refresh item.
 - Overview uses native vertical scrolling when its menu exceeds the visible height. Fitted menus retain coarse-wheel provider highlighting; precise input and row submenus keep their native scrolling behavior. Scrolling after Command-R still prevents a pending refresh from resetting the viewport.
 - Menu → Overview layout offers Detailed (default) and Compact. Compact keeps provider/account headers and labeled quota bars, omits their reset/detail lines and supplemental sections, and retains detail-only providers. Visibility choices and the shared Usage & Spend summary continue to apply.
 - Menu-card wrappers use standard non-vibrant view behavior so white GPU-tinted Overview content remains visible on macOS 15. Overview selection stays outside the SwiftUI graph, with native submenu click and drag tracking retained.
@@ -216,8 +220,8 @@ Runs out tokens remain hidden until 3% of their window has elapsed.
 - Advanced: “Disable Keychain access” turns off browser cookie import; paste Cookie headers manually in Providers.
 - Advanced: “Show provider storage usage” enables background scans of known provider-owned local paths; CodexBar only
   reports sizes and cleanup ideas, it does not delete files.
-- Display: “Overview tab providers” controls which providers appear in Merge Icons → Overview (up to 6).
-- If no providers are selected for Overview, the Overview tab is hidden.
+- Display: “Merged icon providers” picks up to 6 providers the merged icon draws from. It does not filter the
+  Overview list, which shows every enabled provider.
 - Providers → Claude: “Avoid Keychain prompts” selects the Security.framework reader's `Never prompt` policy.
 - The lower-level “Keychain prompt policy” picker remains visible as the source of truth for Claude OAuth prompts.
 

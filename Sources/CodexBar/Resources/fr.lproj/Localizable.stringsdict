@@ -45,5 +45,53 @@
       <string>Le quota hebdomadaire peut être épuisé ≈%d fenêtres plus tôt</string>
     </dict>
   </dict>
+  <key>account_detail_window_days</key>
+  <dict>
+    <key>NSStringLocalizedFormatKey</key>
+    <string>%#@n@</string>
+    <key>n</key>
+    <dict>
+      <key>NSStringFormatSpecTypeKey</key>
+      <string>NSStringPluralRuleType</string>
+      <key>NSStringFormatValueTypeKey</key>
+      <string>d</string>
+      <key>one</key>
+      <string>%d jour</string>
+      <key>other</key>
+      <string>%d jours</string>
+    </dict>
+  </dict>
+  <key>account_detail_window_hours</key>
+  <dict>
+    <key>NSStringLocalizedFormatKey</key>
+    <string>%#@n@</string>
+    <key>n</key>
+    <dict>
+      <key>NSStringFormatSpecTypeKey</key>
+      <string>NSStringPluralRuleType</string>
+      <key>NSStringFormatValueTypeKey</key>
+      <string>d</string>
+      <key>one</key>
+      <string>%d heure</string>
+      <key>other</key>
+      <string>%d heures</string>
+    </dict>
+  </dict>
+  <key>account_detail_window_minutes</key>
+  <dict>
+    <key>NSStringLocalizedFormatKey</key>
+    <string>%#@n@</string>
+    <key>n</key>
+    <dict>
+      <key>NSStringFormatSpecTypeKey</key>
+      <string>NSStringPluralRuleType</string>
+      <key>NSStringFormatValueTypeKey</key>
+      <string>d</string>
+      <key>one</key>
+      <string>%d minute</string>
+      <key>other</key>
+      <string>%d minutes</string>
+    </dict>
+  </dict>
 </dict>
 </plist>

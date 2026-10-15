@@ -450,7 +450,7 @@
 "metric_tertiary" = "3차 (%@)";
 "multiple_workspaces_found" = "CodexBar가 %@에 대한 여러 작업 공간을 찾았습니다. 추가할 작업 공간을 선택하세요.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "최대 %@개의 공급자 선택";
+"overview_choose_providers" = "통합 아이콘에 사용할 제공자를 최대 %@개 선택";
 "remove_account_message" = "CodexBar에서 %@을(를) 제거하시겠습니까? 관리형 Codex 홈이 삭제됩니다.";
 "version_format" = "버전 %@";
 "vertex_ai_login_instructions" = "Vertex AI 사용량을 추적하려면 Google Cloud로 인증하세요.\n\n1. 터미널 열기\n2. 실행: gcloud auth application-default login\n3. 브라우저 안내에 따라 로그인\n4. 프로젝트 설정: gcloud config set project PROJECT_ID\n\n지금 터미널을 여시겠습니까?";
@@ -645,11 +645,11 @@
 "multi_account_layout_subtitle" = "분할된 계정 전환 또는 쌓인 계정 카드를 선택하세요.";
 "multi_account_layout_segmented" = "분할";
 "multi_account_layout_stacked" = "쌓기";
-"overview_tab_providers_title" = "개요 탭 공급자";
+"overview_tab_providers_title" = "통합 아이콘 제공자";
 "configure" = "구성…";
-"overview_enable_merge_icons_hint" = "개요 탭 공급자를 구성하려면 아이콘 병합을 사용하세요.";
+"overview_enable_merge_icons_hint" = "통합 아이콘의 제공자를 선택하려면 아이콘 합치기를 켜세요.";
 "overview_no_providers_hint" = "개요에 사용할 수 있는 활성화된 공급자가 없습니다.";
-"overview_rows_follow_order" = "개요 행은 항상 공급자 순서를 따릅니다.";
+"overview_rows_follow_order" = "통합 아이콘은 이 제공자 중 하나를 표시합니다. 개요 메뉴에는 활성화된 모든 제공자가 표시됩니다.";
 "overview_no_providers_selected" = "선택된 공급자 없음";
 "agent_sessions_title" = "에이전트 세션";
 "agent_sessions_subtitle" = "메뉴에 로컬 및 SSH로 검색된 Codex 및 Claude Code 세션을 표시합니다.";
@@ -2578,3 +2578,4 @@
 "Daily spend · %@" = "일일 지출 · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "선택한 토큰 계정 “%@”에 적용됩니다. 각 계정은 자체 한도를 유지합니다.";
 "Applies to the OpenAI API key, not to token accounts." = "토큰 계정이 아닌 OpenAI API 키에 적용됩니다.";
+"No providers enabled" = "활성화된 제공자가 없습니다";

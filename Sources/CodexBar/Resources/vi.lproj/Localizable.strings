@@ -449,7 +449,7 @@
 "metric_tertiary" = "Cấp ba ( %@ )";
 "multiple_workspaces_found" = "CodexBar đã tìm thấy nhiều không gian làm việc cho %@ . Vui lòng chọn không gian làm việc để thêm.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "Chọn tối đa %@ nhà cung cấp";
+"overview_choose_providers" = "Chọn tối đa %@ nhà cung cấp cho biểu tượng gộp";
 "remove_account_message" = "Xóa %@ khỏi CodexBar ? Trang chủ Codex được quản lý của nó sẽ bị xóa.";
 "version_format" = "Phiên bản %@";
 "vertex_ai_login_instructions" = "Để theo dõi Vertex AI Mức sử dụng , hãy xác thực bằng Google Cloud.\n\n1. Mở Terminal\n2. Chạy: gcloud auth application-default login\n3. Làm theo lời nhắc của trình duyệt để đăng nhập\n4. Đặt dự án của bạn: gcloud config set project PROJECT_ID\n\nMở Thiết bị đầu cuối bây giờ?";
@@ -651,11 +651,11 @@
 "multi_account_layout_subtitle" = "Chọn thẻ tài khoản chuyển đổi phân đoạn hoặc thẻ tài khoản xếp chồng.";
 "multi_account_layout_segmented" = "Được phân đoạn";
 "multi_account_layout_stacked" = "Xếp chồng";
-"overview_tab_providers_title" = "Nhà cung cấp tab tổng quan";
+"overview_tab_providers_title" = "Nhà cung cấp cho biểu tượng gộp";
 "configure" = "Định cấu hình…";
-"overview_enable_merge_icons_hint" = "Bật Hợp nhất Biểu tượng để định cấu hình nhà cung cấp tab Tổng quan.";
+"overview_enable_merge_icons_hint" = "Bật Gộp biểu tượng để chọn nhà cung cấp cho biểu tượng gộp.";
 "overview_no_providers_hint" = "Không có nhà cung cấp nào được bật cho phần Tổng quan.";
-"overview_rows_follow_order" = "Các hàng tổng quan luôn tuân theo thứ tự Nhà cung cấp.";
+"overview_rows_follow_order" = "Biểu tượng gộp hiển thị một trong các nhà cung cấp này. Menu Tổng quan liệt kê mọi nhà cung cấp đã bật.";
 "overview_no_providers_selected" = "Không có nhà cung cấp nào được chọn";
 "agent_sessions_title" = "Phiên tác nhân";
 "agent_sessions_subtitle" = "Hiển thị các phiên Codex và Claude Code cục bộ cùng các phiên được phát hiện qua SSH trong menu.";
@@ -2611,3 +2611,4 @@
 "Daily spend · %@" = "Chi tiêu hằng ngày · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Áp dụng cho tài khoản token đã chọn “%@”. Mỗi tài khoản giữ giới hạn riêng.";
 "Applies to the OpenAI API key, not to token accounts." = "Áp dụng cho khóa API OpenAI, không áp dụng cho các tài khoản token.";
+"No providers enabled" = "Chưa bật nhà cung cấp nào";

@@ -45,5 +45,53 @@
       <string>每週額度可能提前約 %d 個視窗用完</string>
     </dict>
   </dict>
+  <key>account_detail_window_days</key>
+  <dict>
+    <key>NSStringLocalizedFormatKey</key>
+    <string>%#@n@</string>
+    <key>n</key>
+    <dict>
+      <key>NSStringFormatSpecTypeKey</key>
+      <string>NSStringPluralRuleType</string>
+      <key>NSStringFormatValueTypeKey</key>
+      <string>d</string>
+      <key>one</key>
+      <string>%d 天</string>
+      <key>other</key>
+      <string>%d 天</string>
+    </dict>
+  </dict>
+  <key>account_detail_window_hours</key>
+  <dict>
+    <key>NSStringLocalizedFormatKey</key>
+    <string>%#@n@</string>
+    <key>n</key>
+    <dict>
+      <key>NSStringFormatSpecTypeKey</key>
+      <string>NSStringPluralRuleType</string>
+      <key>NSStringFormatValueTypeKey</key>
+      <string>d</string>
+      <key>one</key>
+      <string>%d 小時</string>
+      <key>other</key>
+      <string>%d 小時</string>
+    </dict>
+  </dict>
+  <key>account_detail_window_minutes</key>
+  <dict>
+    <key>NSStringLocalizedFormatKey</key>
+    <string>%#@n@</string>
+    <key>n</key>
+    <dict>
+      <key>NSStringFormatSpecTypeKey</key>
+      <string>NSStringPluralRuleType</string>
+      <key>NSStringFormatValueTypeKey</key>
+      <string>d</string>
+      <key>one</key>
+      <string>%d 分鐘</string>
+      <key>other</key>
+      <string>%d 分鐘</string>
+    </dict>
+  </dict>
 </dict>
 </plist>

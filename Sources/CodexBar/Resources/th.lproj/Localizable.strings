@@ -435,7 +435,7 @@
 "metric_tertiary" = "ระดับอุดมศึกษา (%@)";
 "multiple_workspaces_found" = "CodexBar พบพื้นที่ทํางานหลายแห่งสําหรับ %@ โปรดเลือกพื้นที่ทํางานที่จะเพิ่ม";
 "ory_session_…=…; csrftoken=…" = "ory_session_...=...; csrftoken=...";
-"overview_choose_providers" = "เลือกผู้ให้บริการได้สูงสุด %@ ราย";
+"overview_choose_providers" = "เลือกผู้ให้บริการได้สูงสุด %@ รายสำหรับไอคอนรวม";
 "remove_account_message" = "ลบ %@ ออกจาก CodexBar? ระบบจะลบหน้าแรก Codex ที่มีการจัดการ";
 "version_format" = "เวอร์ชัน %@";
 "vertex_ai_login_instructions" = "หากต้องการติดตามการใช้งาน Vertex AI ให้ตรวจสอบสิทธิ์ด้วย Google Cloud.\n\n1 เปิดเทอร์มินัล \n2 เรียกใช้: gcloud auth application-default login\n3 ทําตามคําแนะนําของเบราว์เซอร์เพื่อลงชื่อเข้าใช้ \n4 ตั้งค่าโครงการของคุณ: gcloud config set project PROJECT_ID\n\nOpen Terminal ตอนนี้?";
@@ -661,11 +661,11 @@
 "multi_account_layout_subtitle" = "เลือกการสลับบัญชีแบบแบ่งกลุ่มหรือบัตรบัญชีแบบเรียงซ้อน";
 "multi_account_layout_segmented" = "แบ่งกลุ่ม";
 "multi_account_layout_stacked" = "ซ้อนกัน";
-"overview_tab_providers_title" = "ผู้ให้บริการแท็บภาพรวม";
+"overview_tab_providers_title" = "ผู้ให้บริการของไอคอนรวม";
 "configure" = "กําหนดค่า...";
-"overview_enable_merge_icons_hint" = "เปิดใช้งานไอคอนผสานเพื่อกําหนดค่าผู้ให้บริการแท็บภาพรวม";
+"overview_enable_merge_icons_hint" = "เปิด รวมไอคอน เพื่อเลือกผู้ให้บริการของไอคอนรวม";
 "overview_no_providers_hint" = "ไม่มีผู้ให้บริการที่เปิดใช้งานสําหรับภาพรวม";
-"overview_rows_follow_order" = "แถวภาพรวมจะเป็นไปตามลําดับของผู้ให้บริการเสมอ";
+"overview_rows_follow_order" = "ไอคอนรวมแสดงผู้ให้บริการหนึ่งรายจากรายการนี้ เมนูภาพรวมแสดงผู้ให้บริการที่เปิดใช้ทั้งหมด";
 "overview_no_providers_selected" = "ไม่มีผู้ให้บริการที่เลือก";
 "agent_sessions_title" = "เซสชันเอเจนต์";
 "agent_sessions_subtitle" = "แสดงเซสชัน Codex และ Claude Code ที่ค้นพบในเครื่องและผ่าน SSH ในเมนู";
@@ -2612,3 +2612,4 @@
 "Daily spend · %@" = "ค่าใช้จ่ายรายวัน · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "ใช้กับบัญชีโทเคนที่เลือก “%@” แต่ละบัญชีจะเก็บขีดจำกัดของตนเองไว้";
 "Applies to the OpenAI API key, not to token accounts." = "ใช้กับคีย์ API ของ OpenAI ไม่ใช่บัญชีโทเคน";
+"No providers enabled" = "ไม่ได้เปิดใช้ผู้ให้บริการ";

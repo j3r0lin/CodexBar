@@ -21,7 +21,7 @@ struct AccountUsageDetailView: View {
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             } else {
-                Text("No usage data").font(.system(size: 11)).foregroundStyle(.secondary)
+                Text(L("No data")).font(.system(size: 11)).foregroundStyle(.secondary)
             }
         }
         .frame(width: self.width - 24, alignment: .leading)
@@ -37,10 +37,7 @@ struct AccountUsageDetailView: View {
                 HStack {
                     Text(Self.windowTitle(window)).font(.system(size: 11))
                     Spacer()
-                    Text("\(Int(used.rounded()))%"
-                        + (window.resetsAt.map {
-                            " · resets in " + OverviewCompactAccountRow.countdown(to: $0, now: self.now)
-                        } ?? ""))
+                    Text(Self.usageText(used: used, resetsAt: window.resetsAt, now: self.now))
                         .font(.system(size: 11).monospacedDigit())
                         .foregroundStyle(.secondary)
                 }
@@ -57,15 +54,21 @@ struct AccountUsageDetailView: View {
         }
     }
 
-    private static func windowTitle(_ window: RateWindow) -> String {
-        guard let minutes = window.windowMinutes else { return "Window" }
-        if minutes % 1440 == 0 { return "\(minutes / 1440) days" }
-        if minutes % 60 == 0 { return "\(minutes / 60) hours" }
-        return "\(minutes) minutes"
+    static func windowTitle(_ window: RateWindow) -> String {
+        guard let minutes = window.windowMinutes else { return L("Window") }
+        if minutes % 1440 == 0 { return L("account_detail_window_days", minutes / 1440) }
+        if minutes % 60 == 0 { return L("account_detail_window_hours", minutes / 60) }
+        return L("account_detail_window_minutes", minutes)
+    }
+
+    static func usageText(used: Double, resetsAt: Date?, now: Date) -> String {
+        let percent = "\(Int(used.rounded()))%"
+        guard let resetsAt else { return percent }
+        return percent + " · " + L("Resets in %@", OverviewCompactAccountRow.countdown(to: resetsAt, now: now))
     }
 
     static func ageText(_ date: Date, now: Date) -> String {
         let minutes = Int(now.timeIntervalSince(date) / 60)
-        return minutes < 1 ? "Updated just now" : "Updated \(minutes)m ago"
+        return minutes < 1 ? L("Updated just now") : L("Updated %@m ago", String(minutes))
     }
 }

@@ -449,7 +449,7 @@
 "metric_tertiary" = "Вищий (%@)";
 "multiple_workspaces_found" = "CodexBar знайшов кілька робочих областей для %@. Виберіть робочу область для додавання.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "Виберіть до %@ постачальників";
+"overview_choose_providers" = "Виберіть до %@ провайдерів для об’єднаного значка";
 "remove_account_message" = "Видалити %@ з CodexBar? Його керовану домашню сторінку Codex буде видалено.";
 "version_format" = "Версія %@";
 "vertex_ai_login_instructions" = "Щоб відстежувати використання Vertex AI, пройдіть автентифікацію в Google Cloud.\n\n1. Відкрийте термінал\n2. Запустіть: gcloud auth application-default login\n3. Дотримуйтесь підказок браузера, щоб увійти\n4. Налаштуйте свій проект: gcloud config set project PROJECT_ID\n\nВідкрити термінал зараз?";
@@ -655,11 +655,11 @@
 "multi_account_layout_subtitle" = "Виберіть сегментоване перемикання облікових записів або складені картки облікових записів.";
 "multi_account_layout_segmented" = "Сегментований";
 "multi_account_layout_stacked" = "складені";
-"overview_tab_providers_title" = "Постачальники вкладок огляду";
+"overview_tab_providers_title" = "Провайдери об’єднаного значка";
 "configure" = "Налаштувати…";
-"overview_enable_merge_icons_hint" = "Увімкніть Merge Icons, щоб налаштувати постачальників вкладок «Огляд».";
+"overview_enable_merge_icons_hint" = "Увімкніть «Об’єднати значки», щоб вибрати провайдерів об’єднаного значка.";
 "overview_no_providers_hint" = "Немає активованих постачальників, доступних для огляду.";
-"overview_rows_follow_order" = "Оглядові рядки завжди відповідають порядку постачальника.";
+"overview_rows_follow_order" = "Об’єднаний значок показує одного з цих провайдерів. Меню «Огляд» показує всіх увімкнених провайдерів.";
 "overview_no_providers_selected" = "Не вибрано жодного постачальника";
 "agent_sessions_title" = "Сеанси агентів";
 "agent_sessions_subtitle" = "Показувати в меню локальні й виявлені через SSH сеанси Codex і Claude Code.";
@@ -2610,3 +2610,4 @@
 "Daily spend · %@" = "Щоденні витрати · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Застосовується до вибраного облікового запису токена «%@». Кожен обліковий запис зберігає власні ліміти.";
 "Applies to the OpenAI API key, not to token accounts." = "Застосовується до ключа API OpenAI, а не до облікових записів токенів.";
+"No providers enabled" = "Немає увімкнених провайдерів";

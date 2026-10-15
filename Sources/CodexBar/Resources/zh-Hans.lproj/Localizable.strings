@@ -465,7 +465,7 @@
 "metric_tertiary" = "第三（%@）";
 "multiple_workspaces_found" = "CodexBar 发现 %@ 有多个工作区。请选择要添加的工作区。";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "最多选择 %@ 个提供商";
+"overview_choose_providers" = "为合并图标最多选择 %@ 个提供商";
 "remove_account_message" = "要从 CodexBar 中移除 %@ 吗？其托管的 Codex 主目录将被删除。";
 "version_format" = "版本 %@";
 "workspaceID is set but only opencode, opencodego, and deepgram support workspaceID." = "已设置 workspaceID，但只有 opencode、opencodego 和 deepgram 支持 workspaceID。";
@@ -627,11 +627,11 @@
 "multi_account_layout_subtitle" = "选择分段账户切换或堆叠账户卡片。";
 "multi_account_layout_segmented" = "分段";
 "multi_account_layout_stacked" = "堆叠";
-"overview_tab_providers_title" = "概览标签提供商";
+"overview_tab_providers_title" = "合并图标的提供商";
 "configure" = "配置…";
-"overview_enable_merge_icons_hint" = "启用“合并图标”以配置“概览”标签中的提供商。";
+"overview_enable_merge_icons_hint" = "打开“合并图标”后才能选择合并图标的提供商。";
 "overview_no_providers_hint" = "“概览”中没有可用的已启用提供商。";
-"overview_rows_follow_order" = "概览行始终遵循提供商顺序。";
+"overview_rows_follow_order" = "合并图标显示其中一个提供商。概览菜单列出所有已启用的提供商。";
 "overview_no_providers_selected" = "未选择提供商";
 "agent_sessions_title" = "智能体会话";
 "agent_sessions_subtitle" = "在菜单中显示本地及通过 SSH 发现的 Codex 和 Claude Code 会话。";
@@ -2604,3 +2604,4 @@
 "Daily spend · %@" = "每日支出 · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "适用于所选令牌账户“%@”。每个账户保留各自的限制。";
 "Applies to the OpenAI API key, not to token accounts." = "适用于 OpenAI API 密钥，不适用于令牌账户。";
+"No providers enabled" = "未启用任何提供商";

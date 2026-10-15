@@ -435,7 +435,7 @@
 "metric_tertiary" = "دوره سوم (%@)";
 "multiple_workspaces_found" = "CodexBar چندین فضای کاری برای %@ پیدا کردم. لطفا فضای کاری را برای افزودن انتخاب کنید.";
 "ory_session_…=…; csrftoken=…" = "ory_session_...=...; csrftoken=...";
-"overview_choose_providers" = "تا %@ ارائه دهنده را انتخاب کنید";
+"overview_choose_providers" = "حداکثر %@ ارائه‌دهنده برای نماد ادغام‌شده انتخاب کنید";
 "remove_account_message" = "حذف %@ از CodexBar؟ مدیریت Codex خانه آن حذف خواهد شد.";
 "version_format" = "نسخه %@";
 "vertex_ai_login_instructions" = "برای پیگیری Vertex AI استفاده، با Google Cloud.\n\n1 احراز هویت کنید. ترمینال باز\n2. اجرا: gcloud auth application-default login\n3. دستورالعمل های مرورگر را دنبال کنید تا in\n4 را امضا کنید. پروژه ات را تنظیم کن: gcloud config set project PROJECT_ID\n\nOpen Terminal را همین حالا؟";
@@ -661,11 +661,11 @@
 "multi_account_layout_subtitle" = "کارت های حساب سوئیچینگ تقسیم شده یا کارت های حساب انباشته را انتخاب کنید.";
 "multi_account_layout_segmented" = "بخش بندی شده";
 "multi_account_layout_stacked" = "انباشته شده";
-"overview_tab_providers_title" = "ارائه دهندگان تب مرور کلی";
+"overview_tab_providers_title" = "ارائه‌دهندگان نماد ادغام‌شده";
 "configure" = "پیکربندی کن...";
-"overview_enable_merge_icons_hint" = "فعال سازی Merge Icons برای پیکربندی ارائه دهندگان تب نمای کلی.";
+"overview_enable_merge_icons_hint" = "برای انتخاب ارائه‌دهندگان نماد ادغام‌شده، ادغام نمادها را روشن کنید.";
 "overview_no_providers_hint" = "هیچ ارائه دهنده فعالی برای مرور کلی در دسترس نیست.";
-"overview_rows_follow_order" = "ردیف های نمای کلی همیشه مطابق با ترتیب ارائه دهنده انجام می شوند.";
+"overview_rows_follow_order" = "نماد ادغام‌شده یکی از این ارائه‌دهندگان را نشان می‌دهد. منوی نمای کلی همه ارائه‌دهندگان فعال را فهرست می‌کند.";
 "overview_no_providers_selected" = "هیچ ارائه دهنده ای انتخاب نشده است";
 "agent_sessions_title" = "جلسات عامل‌ها";
 "agent_sessions_subtitle" = "جلسات محلی و جلسات Codex و Claude Code یافته‌شده از طریق SSH را در منو نمایش دهید.";
@@ -2614,3 +2614,4 @@
 "Daily spend · %@" = "هزینهٔ روزانه · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "برای حساب توکن انتخاب‌شده «%@» اعمال می‌شود. هر حساب محدودیت‌های خودش را نگه می‌دارد.";
 "Applies to the OpenAI API key, not to token accounts." = "برای کلید API ‏OpenAI اعمال می‌شود، نه حساب‌های توکن.";
+"No providers enabled" = "هیچ ارائه‌دهنده‌ای فعال نیست";

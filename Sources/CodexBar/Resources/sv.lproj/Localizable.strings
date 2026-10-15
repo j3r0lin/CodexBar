@@ -450,7 +450,7 @@
 "metric_tertiary" = "Tertiär (%@)";
 "multiple_workspaces_found" = "CodexBar hittade flera arbetsytor för %@. Välj arbetsytan som ska läggas till.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "Välj upp till %@ leverantörer";
+"overview_choose_providers" = "Välj upp till %@ leverantörer för den sammanslagna ikonen";
 "remove_account_message" = "Ta bort %@ från CodexBar? Dess hanterade Codex-hem tas bort.";
 "version_format" = "Version %@";
 "vertex_ai_login_instructions" = "Autentisera med Google Cloud för att följa Vertex AI-användning.\n\n1. Öppna Terminal\n2. Kör: gcloud auth application-default login\n3. Följ anvisningarna i webbläsaren för att logga in\n4. Ange ditt projekt: gcloud config set project PROJECT_ID\n\nÖppna Terminal nu?";
@@ -654,11 +654,11 @@
 "multi_account_layout_subtitle" = "Välj segmenterad kontoväxling eller staplade kontokort.";
 "multi_account_layout_segmented" = "Segmenterad";
 "multi_account_layout_stacked" = "Staplad";
-"overview_tab_providers_title" = "Leverantörer på översiktsfliken";
+"overview_tab_providers_title" = "Leverantörer för den sammanslagna ikonen";
 "configure" = "Konfigurera…";
-"overview_enable_merge_icons_hint" = "Aktivera Slå ihop ikoner för att konfigurera leverantörer på översiktsfliken.";
+"overview_enable_merge_icons_hint" = "Aktivera Slå ihop ikoner för att välja den sammanslagna ikonens leverantörer.";
 "overview_no_providers_hint" = "Inga aktiverade leverantörer är tillgängliga för översikten.";
-"overview_rows_follow_order" = "Översiktsrader följer alltid leverantörsordningen.";
+"overview_rows_follow_order" = "Den sammanslagna ikonen visar en av dessa leverantörer. Översiktsmenyn listar alla aktiverade leverantörer.";
 "overview_no_providers_selected" = "Inga leverantörer valda";
 "agent_sessions_title" = "Agentsessioner";
 "agent_sessions_subtitle" = "Visa lokala och via SSH upptäckta Codex- och Claude Code-sessioner i menyn.";
@@ -2609,3 +2609,4 @@
 "Daily spend · %@" = "Dagliga utgifter · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Gäller det valda tokenkontot ”%@”. Varje konto behåller sina egna gränser.";
 "Applies to the OpenAI API key, not to token accounts." = "Gäller OpenAI API-nyckeln, inte tokenkonton.";
+"No providers enabled" = "Inga leverantörer aktiverade";
