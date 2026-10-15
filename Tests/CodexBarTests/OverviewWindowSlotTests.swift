@@ -37,4 +37,12 @@ struct OverviewWindowSlotTests {
         #expect(slots.short == first)
         #expect(slots.long == second)
     }
+
+    @Test
+    func `a reading above zero is at least a dot and zero has no fill`() {
+        #expect(UsageBar.fillWidth(used: 0, barWidth: 100, height: 5) == 0)
+        #expect(UsageBar.fillWidth(used: 1, barWidth: 100, height: 5) == 5)
+        #expect(UsageBar.fillWidth(used: 50, barWidth: 100, height: 5) == 50)
+        #expect(UsageBar.fillWidth(used: 120, barWidth: 100, height: 5) == 100)
+    }
 }

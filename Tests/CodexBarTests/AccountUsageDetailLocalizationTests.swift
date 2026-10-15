@@ -70,12 +70,43 @@ struct AccountUsageDetailLocalizationTests {
             AccountUsageDetailView(
                 provider: .claude,
                 providerName: "Claude",
-                accountName: "Account 1",
+                accountName: "claude-1",
                 snapshot: claude,
                 width: 340,
                 now: now)
         }
         .padding(24)
+        .overlay(alignment: .bottomLeading) {
+            VStack(alignment: .leading, spacing: 6) {
+                AccountUsageDetailView(
+                    provider: .claude,
+                    providerName: "Claude",
+                    accountName: "a-very-long-account-name-for-truncation@example.invalid",
+                    snapshot: claude,
+                    width: 340,
+                    now: now)
+                ForEach([0.0, 1, 2, 5, 50, 100], id: \.self) { used in
+                    HStack {
+                        Text("\(Int(used))%").frame(width: 40, alignment: .trailing)
+                        UsageBar(
+                            used: used,
+                            color: Color(nsColor: UsageSeverityPalette.color(usedPercent: used)),
+                            trackColor: OverviewCompactAccountRow.trackColor,
+                            height: 5)
+                            .frame(width: 41)
+                        UsageBar(
+                            used: used,
+                            color: Color(nsColor: UsageSeverityPalette.color(usedPercent: used)),
+                            trackColor: Color.white.opacity(0.16),
+                            height: 6)
+                            .frame(width: 300)
+                    }
+                }
+            }
+            .padding(24)
+            .offset(y: 420)
+        }
+        .padding(.bottom, 420)
         .background(Color.black)
         .environment(\.colorScheme, .dark)
         try CodexBarLocalizationOverride.$appLanguage.withValue("en") {

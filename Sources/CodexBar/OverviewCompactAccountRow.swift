@@ -79,15 +79,7 @@ struct OverviewCompactAccountRow: View {
     }
 
     private func bar(used: Double) -> some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Capsule().fill(Self.trackColor)
-                Capsule()
-                    .fill(Self.severityColor(used))
-                    .frame(width: proxy.size.width * min(1, max(0, used / 100)))
-            }
-        }
-        .frame(height: 5)
+        UsageBar(used: used, color: Self.severityColor(used), trackColor: Self.trackColor, height: 5)
     }
 
     /// Menus are pinned dark, so the empty part of a bar is drawn light enough to read there.
@@ -170,5 +162,34 @@ struct OverviewColumnCaptions: View {
 
     private func caption(_ text: String) -> some View {
         Text(text).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// A capsule track with its fill drawn as a rectangle clipped to the track, so a small reading keeps
+/// the track's rounded left end instead of collapsing into a sliver. Any reading above 0% is at least
+/// as wide as the bar is tall, so it shows as a coloured dot; 0% shows no fill.
+struct UsageBar: View {
+    let used: Double
+    let color: Color
+    let trackColor: Color
+    let height: CGFloat
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Rectangle().fill(self.trackColor)
+                Rectangle()
+                    .fill(self.color)
+                    .frame(width: Self.fillWidth(used: self.used, barWidth: proxy.size.width, height: self.height))
+            }
+            .clipShape(Capsule())
+        }
+        .frame(height: self.height)
+    }
+
+    static func fillWidth(used: Double, barWidth: CGFloat, height: CGFloat) -> CGFloat {
+        guard used > 0 else { return 0 }
+        let width = barWidth * min(1, used / 100)
+        return min(barWidth, max(height, width))
     }
 }

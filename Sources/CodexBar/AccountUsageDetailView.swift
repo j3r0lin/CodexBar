@@ -42,24 +42,24 @@ struct AccountUsageDetailView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            HStack(spacing: 10) {
-                Self.icon(for: self.provider)
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
-                    .foregroundStyle(.primary)
-                Text(L("account_detail_usage_title", self.providerName))
-                    .font(.system(size: 17, weight: .bold))
-                    .lineLimit(1)
-            }
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Self.icon(for: self.provider)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 20, height: 20)
+                .foregroundStyle(.primary)
+                .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 6 }
+            Text(L("account_detail_usage_title", self.providerName))
+                .font(.system(size: 17, weight: .bold))
+                .lineLimit(1)
+                .fixedSize()
             if let accountName {
                 Text(accountName)
-                    .font(.system(size: 12))
+                    .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                    .padding(.leading, 30)
+                    .truncationMode(.middle)
             }
         }
     }
@@ -68,15 +68,11 @@ struct AccountUsageDetailView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(block.title)
                 .font(.system(size: 13))
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.white.opacity(0.16))
-                    Capsule()
-                        .fill(Color(nsColor: UsageSeverityPalette.color(usedPercent: block.used)))
-                        .frame(width: proxy.size.width * min(1, max(0, block.used / 100)))
-                }
-            }
-            .frame(height: 6)
+            UsageBar(
+                used: block.used,
+                color: Color(nsColor: UsageSeverityPalette.color(usedPercent: block.used)),
+                trackColor: Color.white.opacity(0.16),
+                height: 6)
             HStack(alignment: .firstTextBaseline) {
                 Text(Self.usedText(block.used))
                     .font(.system(size: 13, weight: .medium).monospacedDigit())
