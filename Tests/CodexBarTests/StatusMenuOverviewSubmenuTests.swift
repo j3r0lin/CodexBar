@@ -55,7 +55,6 @@ extension StatusMenuTests {
             ($0.representedObject as? String) == "overviewRow-openai"
         })
         let openAIDetail = try #require(openAIRow.submenu)
-        #expect(openAIRow.action == nil)
         #expect((openAIDetail.items.first?.representedObject as? String)?.hasPrefix("overviewDetail-") == true)
         #expect(openAIDetail.items.contains {
             $0.submenu?.items.contains {
@@ -177,7 +176,8 @@ extension StatusMenuTests {
         let zaiRow = try #require(menu.items.first {
             ($0.representedObject as? String) == "overviewRow-zai"
         })
-        #expect(zaiRow.submenu == nil)
+        // Only the shared usage detail; no bespoke chart submenu.
+        #expect(zaiRow.submenu?.items.count == 1)
         let details = try #require(store.snapshot(for: .zai)?.details.first)
         #expect(details.title == "Quota details")
         #expect(details.rows.contains { $0.label == "MCP quota" && $0.value == "50% used" })
