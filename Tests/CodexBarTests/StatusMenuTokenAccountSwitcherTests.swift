@@ -560,7 +560,7 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
-        settings.mergeIcons = true
+        settings.mergeIcons = false
         settings.selectedMenuProvider = .claude
         settings.multiAccountMenuLayout = .segmented
         let registry = ProviderRegistry.shared
@@ -588,7 +588,7 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
 
-        let menu = controller.makeMenu()
+        let menu = controller.makeMenu(for: .claude)
         controller.menuWillOpen(menu)
         let switcher = try XCTUnwrap(menu.items.compactMap { $0.view as? TokenAccountSwitcherView }.first)
 
