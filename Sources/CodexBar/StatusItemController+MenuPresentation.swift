@@ -412,11 +412,15 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     }
 
     private func applyHighlight(animated: Bool) {
-        // A GPU-selected row draws its blue behind the content and leaves the content alone, so the
-        // usage bars keep the colour that carries their reading. Only the text follows the selection.
-        self.highlightState.isHighlighted = self.isRowHighlighted
-        guard self.rowPayload.usesGPUSelection else { return }
+        guard self.rowPayload.usesGPUSelection else {
+            self.highlightState.isHighlighted = self.isRowHighlighted
+            return
+        }
 
+        // The blue selection is drawn behind the row and the row keeps its own colours, so a usage bar
+        // stays readable on it. The SwiftUI highlight state stays false so hovering never re-invalidates
+        // the hosted graph.
+        self.highlightState.isHighlighted = false
         let layer = self.ensureSelectionView().layer
         let targetOpacity: Float = self.isRowHighlighted ? 1 : 0
         if animated {
