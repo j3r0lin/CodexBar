@@ -296,11 +296,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     }
 
     var claudeSwapInspectedAccountID: ProviderAccountIdentity?
-    /// One ring per magpie Claude account, outside the regular status-item vending.
-    var claudeAccountRingItems: [ProviderAccountIdentity: NSStatusItem] = [:]
-    var claudeAccountRingHover: [ProviderAccountIdentity: ClaudeAccountRingHoverTracker] = [:]
-    var claudeAccountRefreshAnimation: ClaudeAccountRingRefreshAnimation?
-    let claudeAccountHoverPanel = ClaudeAccountHoverPanelController()
     /// Compact multi-account layout: providers whose collapsed healthy tail is revealed this menu session.
     var compactAccountExpandedHealthyTailProviders: Set<ProviderInstanceID> = []
     /// Keeps detached merged-menu tab content reusable while the same menu remains open.
@@ -502,7 +497,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     private func wireBindings() {
         self.observeStoreChanges()
         self.observeStoreIconChanges()
-        self.observeClaudeAccountRings()
         self.observeIconPerfRefreshCycleChanges()
         self.observeDebugForceAnimation()
         self.observeSettingsChanges()
@@ -706,7 +700,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
         guard !self.isReleasedForTesting else { return }
         #endif
         MainThreadActivityBreadcrumb.push("updateIcons")
-        self.updateClaudeAccountRingItems()
         self.scheduleMenuBarCountdownRefreshIfNeeded()
         self.lastObservedStoreIconWorkSignature = precomputedStoreIconSignature ?? self.storeIconObservationSignature()
         self.beginIconPerfUpdatePass()

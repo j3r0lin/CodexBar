@@ -608,7 +608,8 @@ extension StatusItemController {
                 snapshot: row.snapshot,
                 provider: row.provider,
                 model: row.model,
-                width: menuWidth)
+                width: menuWidth,
+                claudeAccountID: row.claudeAccountID)
             let item = self.makeMenuCardItem(
                 OverviewCompactAccountRow(
                     name: isGrouped ? accountName ?? row.model.providerName : providerName,

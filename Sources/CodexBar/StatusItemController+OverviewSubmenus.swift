@@ -2,14 +2,16 @@ import AppKit
 import CodexBarCore
 
 extension StatusItemController {
-    /// Hover submenu of an Overview row: the shared usage detail, followed inline by the provider's
-    /// history chart when it has data. The chart is built on first open so unopened rows stay cheap.
+    /// Hover submenu of an Overview row: the shared usage detail, a Claude refresh item on magpie rows,
+    /// then inline the provider's history chart when it has data. The chart is built on first open so
+    /// unopened rows stay cheap.
     func makeOverviewDetailSubmenu(
         title: String,
         snapshot: UsageSnapshot?,
         provider: UsageProvider,
         model: UsageMenuCardView.Model,
-        width: CGFloat) -> NSMenu
+        width: CGFloat,
+        claudeAccountID: ProviderAccountIdentity? = nil) -> NSMenu
     {
         let submenu = OverviewDetailMenu { [weak self] submenu in
             guard let self,
@@ -30,6 +32,10 @@ extension StatusItemController {
             AccountUsageDetailView(name: title, snapshot: snapshot, width: width),
             id: "overviewDetail-\(title)",
             width: width))
+        if let claudeAccountID {
+            submenu.addItem(.separator())
+            submenu.addItem(self.makeRefreshClaudeAccountItem(claudeAccountID))
+        }
         return submenu
     }
 
