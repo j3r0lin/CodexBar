@@ -30,13 +30,9 @@ extension StatusItemController {
         width: CGFloat,
         selectedPluginID: ProviderInstanceID? = nil)
     {
-        let hasTopLevelSwitcher = self.shouldMergeIcons &&
-            self.switcherProviderIDs(
-                enabledFirstPartyProviders: self.store.enabledFirstPartyProvidersForDisplay()).count > 1
         let plugins = Self.userPluginsForMenu(
             UserProviderPluginRegistry.all,
             isEnabled: self.settings.isPluginEnabled,
-            topLevelSwitcherVisible: hasTopLevelSwitcher,
             selectedPluginID: selectedPluginID)
         guard !plugins.isEmpty else { return }
         if !menu.items.isEmpty, menu.items.last?.isSeparatorItem != true {
@@ -87,7 +83,6 @@ extension StatusItemController {
     static func userPluginsForMenu(
         _ plugins: [UserProviderPlugin],
         isEnabled: (ProviderInstanceID) -> Bool,
-        topLevelSwitcherVisible: Bool,
         selectedPluginID: ProviderInstanceID?) -> [UserProviderPlugin]
     {
         let enabledPlugins = plugins.filter { isEnabled($0.manifest.id) }
@@ -98,7 +93,8 @@ extension StatusItemController {
             }
             return selected + legacy
         }
-        return enabledPlugins.filter { !topLevelSwitcherVisible || !$0.manifest.topLevel }
+        // No provider tabs exist anymore, so top-level plugins list their cards with the rest.
+        return enabledPlugins
     }
 }
 

@@ -74,13 +74,13 @@ struct UserProviderPluginTests {
         #expect(controller.statusItem.isVisible)
         #expect(menu === controller.mergedMenu)
         #expect(Self.pluginCardIDs(in: menu) == ["pluginCard:solo-meter"])
-        #expect(settings.selectedMenuProvider == plugin.manifest.id)
-        #expect(controller.manualRefreshProvider(for: menu) == plugin.manifest.id)
+        // The merged menu has no plugin page, so its refresh covers every provider.
+        #expect(controller.manualRefreshProvider(for: menu) == nil)
     }
 
     @MainActor
     @Test
-    func `top level plugin tabs retain legacy plugin cards without built in providers`() throws {
+    func `merged menu lists every enabled plugin card without built in providers`() throws {
         let fixture = try Fixture()
         defer { fixture.remove() }
         _ = try fixture.write(
@@ -106,7 +106,8 @@ struct UserProviderPluginTests {
         let menu = controller.makeMenu()
         controller.populateMenu(menu, provider: nil)
         #expect(store.enabledFirstPartyProvidersForDisplay().isEmpty)
-        #expect(Self.pluginCardIDs(in: menu) == ["pluginCard:first-meter", "pluginCard:legacy-meter"])
+        let expectedCards: Set = ["pluginCard:first-meter", "pluginCard:second-meter", "pluginCard:legacy-meter"]
+        #expect(Set(Self.pluginCardIDs(in: menu)) == expectedCards)
 
         let wideDescriptor = MenuDescriptor(sections: [
             MenuDescriptor.Section(entries: [
@@ -122,9 +123,10 @@ struct UserProviderPluginTests {
             selectedProvider: nil,
             descriptor: wideDescriptor) == measuredWidth)
 
+        // The stored selection no longer narrows the list.
         settings.selectedMenuProvider = secondID
         controller.populateMenu(menu, provider: nil)
-        #expect(Self.pluginCardIDs(in: menu) == ["pluginCard:second-meter", "pluginCard:legacy-meter"])
+        #expect(Set(Self.pluginCardIDs(in: menu)) == expectedCards)
     }
 
     @MainActor
@@ -160,115 +162,6 @@ struct UserProviderPluginTests {
             loader: fixture.loader(transport: RecordingTransport(responseJSON: "{}")))
 
         #expect(controller.menuLocalizationSignature() != firstSignature)
-    }
-
-    @MainActor
-    @Test
-    func `opening a selected top level plugin does not schedule Codex dashboard refresh`() throws {
-        let fixture = try Fixture()
-        defer { fixture.remove() }
-        _ = try fixture.write(
-            name: "selected.js",
-            source: Self.menuPlugin(id: "selected-meter", name: "Selected Meter"))
-        let plugin = try #require(UserProviderPluginRegistry.refresh(
-            loader: fixture.loader(transport: RecordingTransport(responseJSON: "{}"))).first?.plugin)
-        let (controller, _, settings) = Self.makePluginMenuController(
-            suiteName: "UserProviderPluginTests.menuOpenOwnership",
-            selectedPluginID: plugin.manifest.id,
-            enabledPluginIDs: [plugin.manifest.id],
-            approvalStore: fixture.approvals)
-        defer { controller.releaseStatusItemsForTesting() }
-        try settings.setProviderEnabled(
-            provider: .codex,
-            metadata: #require(ProviderRegistry.shared.metadata[.codex]),
-            enabled: true)
-        controller.menuRefreshEnabledOverrideForTesting = true
-
-        let menu = controller.makeMenu()
-        controller.menuWillOpen(menu)
-
-        #expect(controller.lastMenuProvider == plugin.manifest.id)
-        #expect(controller.deferredOpenAIDashboardRefreshReason == nil)
-    }
-
-    @MainActor
-    @Test(arguments: [false, true])
-    func `persistent refresh targets the selected user plugin`(keyboard: Bool) async throws {
-        let fixture = try Fixture()
-        defer { fixture.remove() }
-        _ = try fixture.write(
-            name: "first.js",
-            source: Self.menuPlugin(id: "first-meter", name: "First Meter"))
-        _ = try fixture.write(
-            name: "second.js",
-            source: Self.menuPlugin(id: "second-meter", name: "Second Meter"))
-        let plugins = UserProviderPluginRegistry.refresh(
-            loader: fixture.loader(transport: RecordingTransport(responseJSON: "{}"))).compactMap(\.plugin)
-        let selectedID = try #require(ProviderInstanceID(rawValue: "second-meter"))
-        let selectedPlugin = try #require(plugins.first { $0.manifest.id == selectedID })
-        try fixture.approvals.record(selectedPlugin.approvalBinding(settings: [:]))
-        let (controller, store, settings) = Self.makePluginMenuController(
-            suiteName: "UserProviderPluginTests.selectedRefresh",
-            selectedPluginID: selectedID,
-            enabledPluginIDs: plugins.map(\.manifest.id),
-            approvalStore: fixture.approvals)
-        defer {
-            controller.manualRefreshTasks.values.forEach { $0.cancel() }
-            controller.releaseStatusItemsForTesting()
-        }
-
-        controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = try #require(controller.statusItem.menu as? StatusItemMenu)
-        controller.menuWillOpen(menu)
-        #expect(controller.manualRefreshProvider(for: menu) == selectedID)
-        try settings.setProviderEnabled(
-            provider: .codex,
-            metadata: #require(ProviderRegistry.shared.metadata[.codex]),
-            enabled: true)
-        settings.mergedMenuLastSelectedWasOverview = true
-        #expect(!controller.isMergedOverviewSelected(in: menu))
-        store.refreshingProviders.insert(plugins[0].manifest.id)
-        #expect(!controller.isRefreshActionInFlight(for: menu))
-        store.refreshingProviders.remove(plugins[0].manifest.id)
-        if keyboard {
-            let event = try #require(NSEvent.keyEvent(
-                with: .keyDown,
-                location: .zero,
-                modifierFlags: [.command],
-                timestamp: 0,
-                windowNumber: 0,
-                context: nil,
-                characters: "r",
-                charactersIgnoringModifiers: "r",
-                isARepeat: false,
-                keyCode: 15))
-            #expect(menu.performKeyEquivalent(with: event))
-            for _ in 0..<20 where controller.manualRefreshTasks[.provider(selectedID)] == nil {
-                await Task.yield()
-            }
-        } else {
-            controller.refreshMenuProviderNow(in: menu)
-        }
-
-        #expect(controller.manualRefreshTasks[.provider(selectedID)] != nil)
-        #expect(controller.manualRefreshTasks[.global] == nil)
-        #expect(controller.manualRefreshTasks[.provider(.codex)] == nil)
-        #expect(controller.isRefreshActionInFlight(for: menu))
-
-        await controller.manualRefreshTasks[.provider(selectedID)]?.value
-        #expect(store.snapshots[selectedID]?.primary?.usedPercent == 12)
-        let menuID = ObjectIdentifier(menu)
-        for _ in 0..<20 where controller.menuNeedsRefresh(menu) {
-            if let rebuild = controller.openMenuRebuildTasks[menuID] {
-                await rebuild.value
-            } else {
-                await Task.yield()
-            }
-        }
-        #expect(!controller.menuSession.isParentRebuildDeferred(menuID))
-        let menuIsFresh = !controller.menuNeedsRefresh(menu)
-        #expect(menuIsFresh)
-        #expect(controller.manualRefreshProvider(for: menu) == selectedID)
     }
 
     @Test
