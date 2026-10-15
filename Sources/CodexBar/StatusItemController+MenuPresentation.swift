@@ -143,7 +143,6 @@ struct MenuCardRowPayload {
 final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasuring {
     let highlightState: MenuCardHighlightState
     let interactiveRegionStore: MenuCardInteractiveRegionStore
-    // Forced vibrancy makes white GPU-tinted content disappear on macOS 15.
     private let hosting: NSHostingView<MenuCardSectionContainerView<AnyView>>
     private var measuredSize: NSSize?
     private var selectionView: NSVisualEffectView?
@@ -258,11 +257,6 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
 
     override func acceptsFirstMouse(for _: NSEvent?) -> Bool {
         true
-    }
-
-    override func viewDidChangeEffectiveAppearance() {
-        super.viewDidChangeEffectiveAppearance()
-        self.refreshTintFilter()
     }
 
     override func layout() {
