@@ -34,7 +34,8 @@ struct AccountUsageDetailLocalizationTests {
             #expect(AccountUsageDetailView.ageText(now, now: now) == L("Updated just now"))
             #expect(L("Updated just now") != "Updated just now")
             let withReset = AccountUsageDetailView.usageText(used: 40, resetsAt: now.addingTimeInterval(3600), now: now)
-            #expect(withReset == "40% · " + L("Resets in %@", "1h 0m"))
+            let countdown = OverviewCompactAccountRow.countdown(to: now.addingTimeInterval(3600), now: now)
+            #expect(withReset == "40% · " + L("Resets in %@", countdown))
         }
     }
 }
