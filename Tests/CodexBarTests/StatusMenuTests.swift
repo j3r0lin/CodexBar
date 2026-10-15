@@ -765,31 +765,40 @@ struct StatusMenuTests {
         #expect(!titles.contains("Switch Account..."))
         #expect(!titles.contains("Usage Dashboard"))
         #expect(!titles.contains("Status Page"))
-        #expect(titles.contains("Refresh"))
-        #expect(titles.contains("Settings..."))
-        #expect(titles.contains("About CodexBar"))
-        #expect(titles.contains("Quit"))
+        // Refresh, Settings, About and Quit are one icon bar, not text rows.
+        for title in ["Refresh", "Settings...", "Quit"] {
+            #expect(!titles.contains(title))
+        }
+        #expect(!titles.contains { $0.hasPrefix("About CodexBar") })
 
-        let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
-        #expect(controller.isPersistentRefreshItem(refreshItem))
-        #expect(refreshItem.view is PersistentRefreshMenuView)
-        #expect(refreshItem.keyEquivalent.isEmpty)
-        #expect(refreshItem.keyEquivalentModifierMask.isEmpty)
+        let footer = try #require(menu.items.compactMap { $0.view as? MenuFooterBarView }.first)
+        #expect(footer.button(labeled: "Refresh") != nil)
+        #expect(footer.button(labeled: "Settings...") != nil)
+        #expect(footer.button(labeled: "Quit") != nil)
 
-        let settingsItem = menu.items.first { $0.title == "Settings..." }
-        #expect(settingsItem != nil)
-        #expect(settingsItem?.keyEquivalent == ",")
-        #expect(settingsItem?.keyEquivalentModifierMask == [.command])
-
-        let quitItem = menu.items.first { $0.title == "Quit" }
-        #expect(quitItem != nil)
-        #expect(quitItem?.keyEquivalent == "q")
-        #expect(quitItem?.keyEquivalentModifierMask == [.command])
+        let statusMenu = try #require(menu as? StatusItemMenu)
+        #expect(statusMenu.performKeyEquivalent(with: self.footerKeyEvent("r")))
+        #expect(statusMenu.performKeyEquivalent(with: self.footerKeyEvent(",")))
+        #expect(statusMenu.performKeyEquivalent(with: self.footerKeyEvent("q")))
     }
 }
 
 @MainActor
 extension StatusMenuTests {
+    fileprivate func footerKeyEvent(_ characters: String) throws -> NSEvent {
+        try #require(NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: characters,
+            charactersIgnoringModifiers: characters,
+            isARepeat: false,
+            keyCode: 0))
+    }
+
     @Test
     func `status blurb uses wrapped view-backed menu item`() {
         self.disableMenuCardsForTesting()

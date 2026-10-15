@@ -32,9 +32,8 @@ struct StatusMenuMergedOverviewRefreshTests {
         controller.store.refreshingProviders.insert(.opencode)
         controller.updatePersistentRefreshItemsEnabled()
         #expect(controller.isRefreshActionInFlight(for: menu))
-        let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
-        #expect(controller.isPersistentRefreshItem(refreshItem))
-        #expect(!refreshItem.isEnabled)
+        let footer = try #require(menu.items.compactMap { $0.view as? MenuFooterBarView }.first)
+        #expect(footer.isSpinning(systemImageName: "arrow.clockwise"))
 
         var requestCount = 0
         controller._test_manualRefreshOperation = { requestCount += 1 }

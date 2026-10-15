@@ -12,6 +12,8 @@ extension StatusItemController {
     static let overviewRowIdentifierPrefix = "overviewRow-"
     static let overviewGroupHeadingIdentifierPrefix = "overviewHeading-"
     static let persistentRefreshMenuItemID = "persistentRefreshAction"
+    static let menuFooterBarItemID = "menuFooterBar"
+    static let menuFooterActions: Set<MenuDescriptor.MenuAction> = [.refresh, .settings, .about, .quit]
     private static let defaultMenuOpenRefreshDelay: Duration = .seconds(1.2)
     #if DEBUG
     private static var menuOpenRefreshDelayForTesting: Duration = .seconds(1.2)
@@ -872,6 +874,11 @@ extension StatusItemController {
                     }
                     menu.addItem(item)
                 case let .action(title, action):
+                    if self.appendMenuFooterBarIfNeeded(
+                        entry: entry, section: section, to: menu, width: width, captureMenu: captureMenu)
+                    {
+                        continue
+                    }
                     if action == .refresh {
                         let item = self.makePersistentRefreshItem(
                             title: L(title),
@@ -959,6 +966,71 @@ extension StatusItemController {
             if index < actionableSections.count - 1 {
                 menu.addItem(.separator())
             }
+        }
+    }
+
+    /// The four trailing meta actions collapse into one icon bar. Their keyboard shortcuts stay
+    /// with `StatusItemMenu.performKeyEquivalent`: a hidden item's keyEquivalent does not fire
+    /// while a menu is tracking, even with `allowsKeyEquivalentWhenHidden`.
+    private func appendMenuFooterBarIfNeeded(
+        entry: MenuDescriptor.Entry,
+        section: MenuDescriptor.Section,
+        to menu: NSMenu,
+        width: CGFloat,
+        captureMenu: NSMenu?) -> Bool
+    {
+        guard case let .action(_, action) = entry, Self.menuFooterActions.contains(action) else { return false }
+        guard menu.items.last?.view as? MenuFooterBarView == nil else { return true }
+
+        let actions = section.entries.compactMap { entry -> MenuDescriptor.MenuAction? in
+            guard case let .action(_, action) = entry, Self.menuFooterActions.contains(action) else { return nil }
+            return action
+        }
+        let bar = MenuFooterBarView(width: width, buttons: actions.map { action in
+            MenuFooterButton(systemImageName: action.systemImageName ?? "", label: self.menuFooterLabel(for: action)) {
+                [weak self, weak menu] in
+                guard let self else { return }
+                self.performMenuFooterAction(action, menu: captureMenu ?? menu)
+            }
+        })
+        let item = NSMenuItem()
+        item.view = bar
+        item.representedObject = Self.menuFooterBarItemID
+        menu.addItem(item)
+        self.menuFooterBars.add(bar)
+        self.updateMenuFooterBars()
+        return true
+    }
+
+    private func menuFooterLabel(for action: MenuDescriptor.MenuAction) -> String {
+        switch action {
+        case .refresh: L("Refresh")
+        case .settings: L("Settings...")
+        case .about: L("About CodexBar") + (AppVersion.shortVersion.isEmpty ? "" : " (v\(AppVersion.shortVersion))")
+        case .quit: L("Quit")
+        default: ""
+        }
+    }
+
+    private func performMenuFooterAction(_ action: MenuDescriptor.MenuAction, menu: NSMenu?) {
+        switch action {
+        case .refresh:
+            if let menu = menu as? StatusItemMenu {
+                menu.requestPersistentRefreshAction()
+            } else if let menu {
+                self.performPersistentRefreshAction(in: ObjectIdentifier(menu))
+            }
+        case .settings:
+            menu?.cancelTracking()
+            self.showSettingsGeneral()
+        case .about:
+            menu?.cancelTracking()
+            self.showSettingsAbout()
+        case .quit:
+            menu?.cancelTracking()
+            self.quit()
+        default:
+            break
         }
     }
 

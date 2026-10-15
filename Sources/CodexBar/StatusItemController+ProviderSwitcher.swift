@@ -233,6 +233,7 @@ extension StatusItemController {
         }
         let hasProviderSwitcher = self.shouldMergeIcons && menu.items.first?.view is ProviderSwitcherView
         let hasPersistentRefresh = menu.items.contains { self.isPersistentRefreshItem($0) }
+            || menu.items.contains { $0.view is MenuFooterBarView }
         guard hasProviderSwitcher || hasPersistentRefresh else {
             return
         }
@@ -273,7 +274,7 @@ extension StatusItemController {
             self.advanceMenuInteraction(for: menu)
         }
         if StatusItemMenu.isPersistentRefreshShortcut(for: event),
-           menu.items.contains(where: self.isPersistentRefreshItem)
+           menu.items.contains(where: { self.isPersistentRefreshItem($0) || $0.view is MenuFooterBarView })
         {
             if let menu = menu as? StatusItemMenu {
                 menu.requestPersistentRefreshAction()

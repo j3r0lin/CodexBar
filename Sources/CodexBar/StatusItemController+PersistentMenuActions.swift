@@ -17,6 +17,16 @@ extension StatusItemController {
             item.isEnabled = enabled
             (item.view as? PersistentRefreshMenuView)?.setEnabled(enabled)
         }
+        self.updateMenuFooterBars()
+    }
+
+    /// Spins the refresh icon in every footer bar whose menu currently has a refresh in flight.
+    func updateMenuFooterBars() {
+        for bar in self.menuFooterBars.allObjects {
+            guard let menu = bar.enclosingMenuItem?.menu else { continue }
+            let spinning = self.isRefreshActionInFlight(for: menu)
+            bar.setSpinning(spinning, systemImageName: MenuDescriptor.MenuAction.refresh.systemImageName ?? "")
+        }
     }
 
     func isRefreshActionInFlight(for menu: NSMenu) -> Bool {

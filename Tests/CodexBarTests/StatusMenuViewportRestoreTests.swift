@@ -699,7 +699,7 @@ extension StatusMenuViewportRestoreTests {
         controller.menuRefreshEnabledOverrideForTesting = true
         let menu = controller.makeMenu(for: .codex)
         controller.menuWillOpen(menu)
-        let settingsItem = try #require(menu.items.first { $0.title == "Settings..." })
+        let settingsItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
         controller.menu(menu, willHighlight: settingsItem)
 
         var scheduledCount = 0
@@ -748,7 +748,7 @@ extension StatusMenuViewportRestoreTests {
         await task.value
         #expect(scheduled.count == 1)
 
-        let settingsItem = try #require(menu.items.first { $0.title == "Settings..." })
+        let settingsItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
         controller.menu(menu, willHighlight: settingsItem)
         scheduled.removeFirst()()
 
@@ -841,8 +841,8 @@ extension StatusMenuViewportRestoreTests {
         controller.menuRefreshEnabledOverrideForTesting = true
         let menu = controller.makeMenu(for: .codex)
         controller.menuWillOpen(menu)
-        let refreshItem = try #require(menu.items.first(where: controller.isPersistentRefreshItem))
-        let refreshView = try #require(refreshItem.view as? PersistentRefreshMenuView)
+        let refreshItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
+        let refreshButton = try #require((refreshItem.view as? MenuFooterBarView)?.button(labeled: "Refresh"))
         controller.menu(menu, willHighlight: refreshItem)
 
         var scheduled: [@MainActor () -> Void] = []
@@ -855,17 +855,18 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
 
-        #expect(refreshView.accessibilityPerformPress())
+        #expect(refreshButton.accessibilityPerformPress())
         for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
             await Task.yield()
         }
         let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
         #expect(controller.highlightedMenuItems[ObjectIdentifier(menu)] == nil)
-        #expect(!refreshItem.isEnabled)
+        let footer = try #require(refreshItem.view as? MenuFooterBarView)
+        #expect(footer.isSpinning(systemImageName: "arrow.clockwise"))
 
         gate.resume()
         await task.value
-        #expect(refreshItem.isEnabled)
+        #expect(!footer.isSpinning(systemImageName: "arrow.clockwise"))
         #expect(scheduled.count == 1)
 
         scheduled.removeFirst()()

@@ -302,7 +302,7 @@ struct StatusMenuSwitcherRefreshTests {
 
         let expectedWidth = controller.renderedMenuWidth(for: menu)
         #expect(expectedWidth == 420)
-        let refreshView = try #require(menu.items.first { $0.title == "Refresh" }?.view as? PersistentRefreshMenuView)
+        let refreshView = try #require(menu.items.first { $0.view is MenuFooterBarView }?.view)
         #expect(abs(refreshView.frame.width - expectedWidth) <= 0.5)
     }
 
@@ -449,11 +449,11 @@ struct StatusMenuSwitcherRefreshTests {
         controller.menuWillOpen(menu)
         let selectedButton = try #require(Self.switcherButtons(in: menu).first { $0.state == .on })
         let alternateButton = try #require(Self.switcherButtons(in: menu).first { $0.state == .off })
-        let initialRefreshItem = try #require(menu.items.first { $0.title == "Refresh" })
+        let initialRefreshItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
 
         controller.refreshNow()
         let refreshTask = try #require(controller.manualRefreshTasks[.global])
-        #expect(!initialRefreshItem.isEnabled)
+        #expect((initialRefreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
 
         var rebuildCount = 0
         controller._test_openMenuRebuildObserver = { _ in rebuildCount += 1 }
@@ -471,8 +471,8 @@ struct StatusMenuSwitcherRefreshTests {
         #expect(alternateSwitcher._test_simulateRuntimeClick(buttonTag: selectedButton.tag))
         await Self.waitForRebuildCount(2, rebuildCount: { rebuildCount })
 
-        let restoredRefreshItem = try #require(menu.items.first { $0.title == "Refresh" })
-        #expect(restoredRefreshItem.isEnabled)
+        let restoredRefreshItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
+        #expect((restoredRefreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
     }
 
     @Test
@@ -507,17 +507,18 @@ struct StatusMenuSwitcherRefreshTests {
         controller.menuWillOpen(menu)
         let cache = try #require(
             controller.mergedSwitcherContentCaches[ObjectIdentifier(menu)]?[.provider(.codex)])
-        let refreshItem = try #require(cache.items.first { $0.title == "Refresh" })
+        let refreshItem = try #require(cache.items.first { $0.view is MenuFooterBarView })
 
         controller.manualRefreshTasks[.global] = Task {}
         controller.updatePersistentRefreshItemsEnabled()
-        #expect(!refreshItem.isEnabled)
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
 
         menu.removeAllItems()
         #expect(refreshItem.menu == nil)
         controller.manualRefreshTasks[.global] = nil
         controller.updatePersistentRefreshItemsEnabled()
-        #expect(!refreshItem.isEnabled)
+        // Detached from its menu, the bar cannot see the refresh finish.
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
 
         #expect(controller.addCachedMergedSwitcherContent(
             for: .provider(.codex),
@@ -526,7 +527,7 @@ struct StatusMenuSwitcherRefreshTests {
             codexAccountDisplay: cache.codexAccountDisplay,
             tokenAccountDisplay: cache.tokenAccountDisplay))
         #expect(refreshItem.menu === menu)
-        #expect(refreshItem.isEnabled)
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
     }
 
     @Test
