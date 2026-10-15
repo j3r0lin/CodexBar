@@ -1,7 +1,8 @@
 import CodexBarCore
 import SwiftUI
 
-/// One Overview line per account: name, short-window ring, long-window bar, long-window reset.
+/// One Overview line per account: the name, then a lane per window, each with its own bar,
+/// percentage and reset time.
 struct OverviewCompactAccountRow: View {
     let name: String
     let shortWindow: RateWindow?
@@ -14,81 +15,95 @@ struct OverviewCompactAccountRow: View {
     var now = Date()
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
+    /// Every row has to put the same element in the same column, so each part is sized here and the
+    /// bars take whatever the row has left.
+    private static let nameColumn: CGFloat = 62
+    private static let labelWidth: CGFloat = 14
+    /// Fits "100%", which measures 33.8pt at 12pt, so a three-digit reading never spills into the
+    /// lane's spacing.
+    private static let percentWidth: CGFloat = 36
+    private static let resetWidth: CGFloat = 38
+    private static let columnSpacing: CGFloat = 10
+    private static let laneSpacing: CGFloat = 5
+    /// A row is 28pt tall. The bars are only 5pt, so the line box around them is what sets the row's
+    /// height, and a row whose lane is blank has to keep the height of a row that carries a bar.
+    private static let lineHeight: CGFloat = 18
+
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(spacing: Self.columnSpacing) {
             Text(self.name)
                 .font(.system(size: 12, weight: .medium))
                 .lineLimit(1)
-                .frame(width: 60 - self.indent, alignment: .leading)
+                .frame(width: Self.nameColumn - self.indent, alignment: .leading)
                 .padding(.leading, self.indent)
             if let errorText {
                 Text(errorText)
                     .font(.system(size: 11))
                     .foregroundStyle(MenuHighlightStyle.error(self.isHighlighted))
-                    .lineLimit(2)
-                    .frame(maxWidth: .infinity, minHeight: 30, alignment: .leading)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                self.usageColumns
+                self.lane(label: "5h", window: self.shortWindow)
+                self.lane(label: "7d", window: self.longWindow)
             }
         }
-        .padding(.horizontal, UsageMenuCardLayout.horizontalPadding)
-        .padding(.vertical, 4)
+        .frame(height: Self.lineHeight)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
         .frame(width: self.width, alignment: .leading)
     }
 
-    @ViewBuilder
-    private var usageColumns: some View {
-        VStack(alignment: .trailing, spacing: 1) {
-            HStack(spacing: 3) {
-                if let used = Self.used(self.shortWindow) {
-                    OverviewUsageRing(usedPercent: used)
-                        .frame(width: 16, height: 16)
-                    Text("\(Int(used.rounded()))%")
-                        .font(.system(size: 11).monospacedDigit())
-                        .foregroundStyle(Color(nsColor: UsageSeverityPalette.color(usedPercent: used)))
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                }
+    /// A window the provider did not report leaves its lane blank, but the lane keeps its half of the
+    /// row so the 5h and 7d columns stay put on every line.
+    private func lane(label: String, window: RateWindow?) -> some View {
+        HStack(spacing: Self.laneSpacing) {
+            if let used = Self.used(window) {
+                Text(label)
+                    .font(.system(size: 10))
+                    .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
+                    .frame(width: Self.labelWidth, alignment: .leading)
+                self.bar(used: used)
+                Text("\(Int(used.rounded()))%")
+                    .font(.system(size: 12).monospacedDigit())
+                    .foregroundStyle(Self.severityColor(used))
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .frame(width: Self.percentWidth, alignment: .trailing)
+                Text(self.resetText(window))
+                    .font(.system(size: 10).monospacedDigit())
+                    .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .frame(width: Self.resetWidth, alignment: .leading)
             }
-            .frame(height: 16)
-            self.resetLine(self.shortWindow)
-        }
-        .frame(width: 54)
-        VStack(alignment: .trailing, spacing: 1) {
-            HStack(spacing: 6) {
-                if let used = Self.used(self.longWindow) {
-                    GeometryReader { proxy in
-                        ZStack(alignment: .leading) {
-                            Capsule().fill(Self.trackColor)
-                            Capsule()
-                                .fill(Color(nsColor: UsageSeverityPalette.color(usedPercent: used)))
-                                .frame(width: proxy.size.width * min(1, max(0, used / 100)))
-                        }
-                    }
-                    .frame(height: 5)
-                    Text("\(Int(used.rounded()))%")
-                        .font(.system(size: 11).monospacedDigit())
-                        .frame(width: 34, alignment: .trailing)
-                } else {
-                    Spacer(minLength: 0)
-                }
-            }
-            .frame(height: 16)
-            self.resetLine(self.longWindow)
         }
         .frame(maxWidth: .infinity)
     }
 
-    /// Menus are pinned dark, so the empty part of a ring or bar is drawn light enough to read there.
+    private func bar(used: Double) -> some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Self.trackColor)
+                Capsule()
+                    .fill(Self.severityColor(used))
+                    .frame(width: proxy.size.width * min(1, max(0, used / 100)))
+            }
+        }
+        .frame(height: 5)
+    }
+
+    /// Menus are pinned dark, so the empty part of a bar is drawn light enough to read there.
     static let trackColor = Color.white.opacity(0.25)
 
-    /// A window without a reset time keeps an empty line so every row has the same height.
-    private func resetLine(_ window: RateWindow?) -> some View {
-        let text = Self.used(window) == nil ? nil : window?.resetsAt.map { Self.countdown(to: $0, now: self.now) }
-        return Text(text ?? " ")
-            .font(.caption2.monospacedDigit())
-            .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
-            .lineLimit(1)
-            .frame(maxWidth: .infinity, alignment: .trailing)
+    /// The bar and its number share one colour, and a highlighted row keeps it: the selection is painted
+    /// behind the row, so the reading survives the highlight.
+    private static func severityColor(_ used: Double) -> Color {
+        Color(nsColor: UsageSeverityPalette.color(usedPercent: used))
+    }
+
+    private func resetText(_ window: RateWindow?) -> String {
+        guard Self.used(window) != nil, let resetsAt = window?.resetsAt else { return "" }
+        return Self.countdown(to: resetsAt, now: self.now)
     }
 
     /// Places windows by duration: up to a day is the short slot, longer is the long slot. Only a window
@@ -113,8 +128,8 @@ struct OverviewCompactAccountRow: View {
     static func countdown(to date: Date, now: Date) -> String {
         let minutes = max(0, Int(date.timeIntervalSince(now) / 60))
         let days = minutes / 1440, hours = (minutes % 1440) / 60, mins = minutes % 60
-        if days > 0 { return "\(days)d \(hours)h" }
-        if hours > 0 { return "\(hours)h \(mins)m" }
+        if days > 0 { return "\(days)d\(hours)h" }
+        if hours > 0 { return "\(hours)h\(mins)m" }
         return "\(mins)m"
     }
 }
@@ -130,25 +145,9 @@ struct OverviewAccountGroupHeading: View {
             .foregroundStyle(.secondary)
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, UsageMenuCardLayout.horizontalPadding)
-            .padding(.top, 6)
-            .padding(.bottom, 1)
+            .padding(.horizontal, 8)
+            .padding(.top, 8)
+            .padding(.bottom, 2)
             .frame(width: self.width, alignment: .leading)
-    }
-}
-
-struct OverviewUsageRing: View {
-    let usedPercent: Double
-
-    var body: some View {
-        ZStack {
-            Circle().stroke(OverviewCompactAccountRow.trackColor, lineWidth: 2.2)
-            Circle()
-                .trim(from: 0, to: min(1, max(0, self.usedPercent / 100)))
-                .stroke(
-                    Color(nsColor: UsageSeverityPalette.color(usedPercent: self.usedPercent)),
-                    style: StrokeStyle(lineWidth: 2.2, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-        }
     }
 }

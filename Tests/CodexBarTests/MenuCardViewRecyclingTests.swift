@@ -268,7 +268,7 @@ extension StatusMenuTests {
         #expect(width == 356)
         #expect(StatusItemController.resolvedRenderedMenuWidth(
             menuWidth: 310,
-            trackedWindowWidth: nil) == 310)
+            trackedWindowWidth: nil) == StatusItemController.menuCardBaseWidth)
     }
 
     @Test
