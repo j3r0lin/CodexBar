@@ -17,7 +17,9 @@ struct OverviewCompactAccountRow: View {
     /// bars take whatever the row has left.
     private static let nameColumn: CGFloat = 62
     private static let labelWidth: CGFloat = 14
-    private static let percentWidth: CGFloat = 32
+    /// Fits "100%", which measures 33.8pt at 12pt, so a three-digit reading never spills into the
+    /// lane's spacing.
+    private static let percentWidth: CGFloat = 36
     private static let resetWidth: CGFloat = 38
     private static let columnSpacing: CGFloat = 10
     private static let laneSpacing: CGFloat = 5

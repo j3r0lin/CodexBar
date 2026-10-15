@@ -7,7 +7,10 @@ import SwiftUI
 // MARK: - NSMenu construction
 
 extension StatusItemController {
-    static let menuCardBaseWidth: CGFloat = 310
+    /// The floor every menu is laid out at, and the width the Overview row is drawn at. Everything in
+    /// that row except the two bars takes 304pt of it, so a narrower menu leaves the bars too short to
+    /// read the fill.
+    static let menuCardBaseWidth: CGFloat = 340
     private static let maxOverviewProviders = SettingsStore.mergedOverviewProviderLimit
     static let overviewRowIdentifierPrefix = "overviewRow-"
     static let overviewGroupHeadingIdentifierPrefix = "overviewHeading-"
