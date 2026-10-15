@@ -58,5 +58,4 @@ extension StatusItemController {
         }
         return self.makeStorageBreakdownSubmenu(provider: provider, width: width)
     }
-
 }

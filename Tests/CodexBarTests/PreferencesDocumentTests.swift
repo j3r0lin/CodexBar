@@ -232,5 +232,4 @@ struct ProviderSwitcherShortcutsTests {
         #expect(disabled["previous"] == "none")
         #expect(disabled["next"] == "none")
     }
-
 }

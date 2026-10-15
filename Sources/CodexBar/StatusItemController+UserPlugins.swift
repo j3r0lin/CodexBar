@@ -141,7 +141,6 @@ extension StatusItemController {
         }
         return enabledPlugins.filter { !topLevelSwitcherVisible || !$0.manifest.topLevel }
     }
-
 }
 
 struct UserPluginQuotaPresentation: Equatable {

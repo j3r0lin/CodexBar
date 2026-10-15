@@ -68,7 +68,8 @@ final class ProviderSwitcherEventPeekGate {
     }
 }
 
-/// Handles the persistent Refresh shortcut and observes scrolling while a status menu is open. `NSMenu` tracking pulls events itself, so local event monitors,
+/// Handles the persistent Refresh shortcut and observes scrolling while a status menu is open.
+/// `NSMenu` tracking pulls events itself, so local event monitors,
 /// Carbon dispatcher handlers, registered hot keys (tracking pushes a hotkey-disable mode),
 /// and `menuHasKeyEquivalent` never see these events — peeking the queue from a run-loop
 /// observer is the only delivery path.
