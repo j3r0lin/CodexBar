@@ -505,23 +505,6 @@ struct StatusItemAnimationSignatureTests {
         #expect(controller.lastAppliedMergedIconRenderSignature?.contains("warningFlash=0") == true)
 
         controller.menuWillOpen(menu)
-        settings.selectedMenuProvider = .synthetic
-        #expect(controller.primaryProviderForUnifiedIcon() == .synthetic)
-        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=codex") == true)
-
-        controller.startQuotaWarningFlash(provider: .codex)
-        let switchedProviderWarningTask = controller.quotaWarningFlashTasks[.codex]
-        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=synthetic") == true)
-        controller.clearExpiredQuotaWarningFlash(provider: .codex, now: .distantFuture)
-        switchedProviderWarningTask?.cancel()
-        controller.menuDidClose(menu)
-
-        settings.selectedMenuProvider = .codex
-        for _ in 0..<10 where controller.primaryProviderForUnifiedIcon() != .codex {
-            await Task.yield()
-        }
-
-        controller.menuWillOpen(menu)
         store._setSnapshotForTesting(nil, provider: .codex)
         controller.updateAnimationState()
         controller.applyIcon(phase: controller.animationPhase)

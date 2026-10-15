@@ -524,6 +524,7 @@ extension StatusItemController {
             snapshot: UsageSnapshot?)
         let rows: [OverviewRow] =
             providerScopes.visible.flatMap { provider -> [OverviewRow] in
+                // Provider-specific by design: only Claude reads per-account rows from the magpie gateway.
                 if provider == .claude, self.claudeAccountTabsEnabled {
                     // Each magpie account is its own row; the provider-level Claude snapshot is not magpie's data.
                     return self.claudeOverviewAccountRows().map {

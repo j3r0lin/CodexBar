@@ -7,7 +7,7 @@ import Testing
 @Suite(.serialized)
 struct StatusMenuLocalizationRefreshTests {
     @Test
-    func `open merged menu refreshes localized cost title when language changes`() async {
+    func `open provider menu refreshes localized cost title when language changes`() async {
         let previousLanguage = UserDefaults.standard.object(forKey: "appLanguage")
         let previousAppleLanguages = UserDefaults.standard.object(forKey: "AppleLanguages")
         defer {
@@ -27,7 +27,7 @@ struct StatusMenuLocalizationRefreshTests {
         let settings = Self.makeSettings()
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
-        settings.mergeIcons = true
+        settings.mergeIcons = false
         settings.selectedMenuProvider = .codex
         settings.costUsageEnabled = true
         settings.costSummaryDisplayStyle = .both

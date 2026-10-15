@@ -86,7 +86,7 @@ struct StatusMenuAccountDataRefreshTests {
 
     @Test
     func `late account data cannot replace a newer provider selection request`() throws {
-        try self.withMenu { fixture, controller, menu in
+        try self.withMenu(mergeIcons: true) { fixture, controller, menu in
             fixture.settings.setProviderEnabled(
                 provider: .claude,
                 metadata: ProviderDescriptorRegistry.descriptor(for: .claude).metadata,
@@ -144,6 +144,7 @@ struct StatusMenuAccountDataRefreshTests {
     }
 
     private func withMenu(
+        mergeIcons: Bool = false,
         _ body: (CodexAccountMenuPhaseFixture, StatusItemController, NSMenu) throws -> Void) throws
     {
         let previousRendering = StatusItemController.menuCardRenderingEnabled
@@ -156,6 +157,8 @@ struct StatusMenuAccountDataRefreshTests {
         }
         let fixture = try CodexAccountMenuPhaseFixture()
         defer { fixture.cleanup() }
+        // The merged menu always opens on Overview; the standalone Codex menu keeps a provider page open.
+        fixture.settings.mergeIcons = mergeIcons
         let controller = fixture.makeController()
         defer { controller.releaseStatusItemsForTesting() }
         let menu = controller.makeMenu()

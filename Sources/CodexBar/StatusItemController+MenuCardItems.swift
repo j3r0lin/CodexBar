@@ -18,6 +18,10 @@ extension StatusItemController {
                 view.applySize(width: width, height: PersistentRefreshRowMetrics.defaults.rowHeight)
                 continue
             }
+            if let view = item.view as? MenuFooterBarView {
+                if abs(view.frame.width - width) > 0.5 { view.applyWidth(width) }
+                continue
+            }
             guard let view = item.view, let measuring = view as? any MenuCardMeasuring else { continue }
             guard abs(view.frame.width - width) > 0.5 else { continue }
             let id = item.representedObject as? String ?? "menuCard"

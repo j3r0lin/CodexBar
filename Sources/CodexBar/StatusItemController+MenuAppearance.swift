@@ -2,7 +2,7 @@ import AppKit
 
 @MainActor
 enum StatusMenuAppearance {
-    /// Menus, their submenus and the ring hover card stay dark even when the system is light.
+    /// Menus and their submenus stay dark even when the system is light.
     static let menuAppearance = NSAppearance(named: .darkAqua)
 
     static func pin(_ menu: NSMenu) {

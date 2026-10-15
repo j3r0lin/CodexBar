@@ -25,13 +25,12 @@ struct StatusMenuAppearanceTests {
     }
 
     @Test
-    func `pin uses the exact application effective appearance`() {
+    func `pin keeps menus dark regardless of the application appearance`() {
         let menu = NSMenu()
-        let effectiveAppearance = NSApplication.shared.effectiveAppearance
 
         StatusMenuAppearance.pin(menu)
 
-        #expect(menu.appearance === effectiveAppearance)
+        #expect(menu.appearance?.name == .darkAqua)
     }
 
     @Test
