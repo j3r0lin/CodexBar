@@ -14,6 +14,7 @@ extension StatusItemController {
         MenuFooterBarRegistry.bars.setObject(created, forKey: self)
         return created
     }
+
     /// The four trailing meta actions collapse into one icon bar. Their keyboard shortcuts stay
     /// with `StatusItemMenu.performKeyEquivalent`: a hidden item's keyEquivalent does not fire
     /// while a menu is tracking, even with `allowsKeyEquivalentWhenHidden`.
@@ -85,5 +86,4 @@ extension StatusItemController {
             break
         }
     }
-
 }

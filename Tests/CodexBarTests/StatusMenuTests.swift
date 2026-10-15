@@ -777,9 +777,12 @@ struct StatusMenuTests {
         #expect(footer.button(labeled: "Quit") != nil)
 
         let statusMenu = try #require(menu as? StatusItemMenu)
-        #expect(statusMenu.performKeyEquivalent(with: try self.footerKeyEvent("r")))
-        #expect(statusMenu.performKeyEquivalent(with: try self.footerKeyEvent(",")))
-        #expect(statusMenu.performKeyEquivalent(with: try self.footerKeyEvent("q")))
+        let refreshKey = try self.footerKeyEvent("r")
+        let settingsKey = try self.footerKeyEvent(",")
+        let quitKey = try self.footerKeyEvent("q")
+        #expect(statusMenu.performKeyEquivalent(with: refreshKey))
+        #expect(statusMenu.performKeyEquivalent(with: settingsKey))
+        #expect(statusMenu.performKeyEquivalent(with: quitKey))
     }
 }
 

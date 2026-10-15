@@ -234,8 +234,10 @@ struct StatusMenuPersistentRefreshTests {
         #expect(footer.button(labeled: "Settings...") != nil)
         #expect(footer.button(labeled: "Quit") != nil)
         let statusMenu = try #require(menu as? StatusItemMenu)
-        #expect(statusMenu.performKeyEquivalent(with: try self.keyEvent(",", keyCode: 43)))
-        #expect(statusMenu.performKeyEquivalent(with: try self.keyEvent("q", keyCode: 12)))
+        let settingsKey = try self.keyEvent(",", keyCode: 43)
+        let quitKey = try self.keyEvent("q", keyCode: 12)
+        #expect(statusMenu.performKeyEquivalent(with: settingsKey))
+        #expect(statusMenu.performKeyEquivalent(with: quitKey))
     }
 
     @Test
