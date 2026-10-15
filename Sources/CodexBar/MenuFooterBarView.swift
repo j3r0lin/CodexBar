@@ -32,6 +32,11 @@ final class MenuFooterBarView: NSView {
         self.buttons.contains { $0.model.systemImageName == systemImageName && $0.isSpinning }
     }
 
+    /// The layer that draws the named button's symbol, for checking where it turns.
+    func iconLayer(systemImageName: String) -> CALayer? {
+        self.buttons.first { $0.model.systemImageName == systemImageName }?.iconLayer
+    }
+
     func button(labeled label: String) -> NSView? {
         self.buttons.first { $0.model.label == label }
     }
@@ -60,6 +65,18 @@ final class MenuFooterBarView: NSView {
         self.needsLayout = true
     }
 
+    /// Takes the other bar's button actions and labels while keeping this bar's views, so a menu rebuild
+    /// leaves a spinning or hovered button as it is. Returns false when the buttons differ in kind.
+    func adoptButtons(from other: MenuFooterBarView) -> Bool {
+        guard self.buttons.map(\.model.systemImageName) == other.buttons.map(\.model.systemImageName)
+        else { return false }
+        for (button, replacement) in zip(self.buttons, other.buttons) {
+            button.model = replacement.model
+            button.toolTip = replacement.model.label
+        }
+        return true
+    }
+
     /// Spins (or stops) the button whose symbol is `systemImageName`. Used for the refresh button.
     func setSpinning(_ spinning: Bool, systemImageName: String) {
         for button in self.buttons where button.model.systemImageName == systemImageName {
@@ -83,8 +100,11 @@ final class MenuFooterBarView: NSView {
     }
 
     private final class Button: NSView {
-        let model: MenuFooterButton
-        private let iconView = NSImageView()
+        var model: MenuFooterButton
+        /// The symbol is drawn by a layer this view owns rather than by an NSImageView: AppKit resets
+        /// the anchor point and position of a view's backing layer on layout, and a rotation about that
+        /// reset anchor swings the icon around its corner instead of turning it in place.
+        let iconLayer = CALayer()
         private let highlight = NSView()
         private var hovering = false
         private var tracking: NSTrackingArea?
@@ -101,12 +121,26 @@ final class MenuFooterBarView: NSView {
             self.highlight.isHidden = true
             self.addSubview(self.highlight)
 
-            if let image = Self.icon(named: model.systemImageName) {
-                self.iconView.image = image
-                self.iconView.contentTintColor = MenuFooterBarView.idleTint
-                self.iconView.imageScaling = .scaleProportionallyUpOrDown
+            self.wantsLayer = true
+            self.iconLayer.contents = Self.icon(named: model.systemImageName).map(Self.tinted)
+            self.iconLayer.contentsGravity = .resizeAspect
+            self.iconLayer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+            self.iconLayer.zPosition = 1
+            self.layer?.addSublayer(self.iconLayer)
+        }
+
+        private static func tinted(_ image: NSImage) -> NSImage {
+            NSImage(size: image.size, flipped: false) { rect in
+                image.draw(in: rect)
+                MenuFooterBarView.idleTint.set()
+                rect.fill(using: .sourceAtop)
+                return true
             }
-            self.addSubview(self.iconView)
+        }
+
+        override func viewDidChangeBackingProperties() {
+            super.viewDidChangeBackingProperties()
+            self.iconLayer.contentsScale = self.window?.backingScaleFactor ?? 2
         }
 
         /// One point size and one box for every symbol, so no button reads heavier than its neighbours.
@@ -127,11 +161,11 @@ final class MenuFooterBarView: NSView {
             super.layout()
             self.highlight.frame = self.bounds
             let side = MenuFooterBarView.iconSide
-            self.iconView.frame = NSRect(
-                x: floor((self.bounds.width - side) / 2),
-                y: floor((self.bounds.height - side) / 2),
-                width: side,
-                height: side)
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            self.iconLayer.bounds = CGRect(x: 0, y: 0, width: side, height: side)
+            self.iconLayer.position = CGPoint(x: self.bounds.midX, y: self.bounds.midY)
+            CATransaction.commit()
         }
 
         override func updateTrackingAreas() {
@@ -172,16 +206,15 @@ final class MenuFooterBarView: NSView {
         func setSpinning(_ spinning: Bool) {
             self.isSpinning = spinning
             if spinning {
-                guard self.iconView.layer?.animation(forKey: "footerSpin") == nil else { return }
+                guard self.iconLayer.animation(forKey: "footerSpin") == nil else { return }
                 let animation = CABasicAnimation(keyPath: "transform.rotation.z")
                 animation.fromValue = 0
                 animation.toValue = -Double.pi * 2
                 animation.duration = 0.9
                 animation.repeatCount = .infinity
-                self.iconView.wantsLayer = true
-                self.iconView.layer?.add(animation, forKey: "footerSpin")
+                self.iconLayer.add(animation, forKey: "footerSpin")
             } else {
-                self.iconView.layer?.removeAnimation(forKey: "footerSpin")
+                self.iconLayer.removeAnimation(forKey: "footerSpin")
             }
         }
 

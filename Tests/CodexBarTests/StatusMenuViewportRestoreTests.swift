@@ -1396,7 +1396,37 @@ extension StatusMenuViewportRestoreTests {
         // Menu items exist but no view is hosted in a menu window, so the private
         // scroll view cannot be resolved and the restore must bail out quietly.
         #expect(StatusItemController.attachedMenuScrollView(in: menu) == nil)
-        controller.restoreMenuViewportToTop(menu)
+        controller.restoreMenuViewport(menu, topDistance: 40)
+    }
+
+    @Test
+    func `viewport restore returns to the scroll position the refresh started from`() {
+        for flipped in [true, false] {
+            let geometry = MenuViewportGeometry(
+                documentID: ObjectIdentifier(NSObject()),
+                clipID: ObjectIdentifier(NSObject()),
+                documentSize: CGSize(width: 340, height: 900),
+                documentIsFlipped: flipped,
+                clipSize: CGSize(width: 340, height: 500),
+                clipOrigin: CGPoint(x: 0, y: flipped ? 150 : 250))
+            let distance = StatusItemController.menuViewportTopDistance(geometry)
+            #expect(distance == 150)
+            // Rows above grew by 60pt during the refresh; the viewport goes back 150pt below the top.
+            let target = StatusItemController.menuViewportOffset(
+                topDistance: distance,
+                documentIsFlipped: flipped,
+                documentHeight: 960,
+                clipHeight: 500,
+                currentOffset: flipped ? 0 : 460)
+            #expect(target == (flipped ? 150 : 310))
+            // A distance past the new end is clamped to the bottom.
+            #expect(StatusItemController.menuViewportOffset(
+                topDistance: 2000,
+                documentIsFlipped: flipped,
+                documentHeight: 960,
+                clipHeight: 500,
+                currentOffset: flipped ? 0 : 460) == (flipped ? 460 : 0))
+        }
     }
 
     private func keyEvent(_ characters: String, keyCode: UInt16) throws -> NSEvent {

@@ -32,8 +32,7 @@ struct OverviewRowRenderTests {
             Account(name: "claude-2", session: window(300, 0, 70), weekly: window(10080, 93, 1740)),
         ]
         let view = VStack(alignment: .leading, spacing: 0) {
-            OverviewColumnCaptions(width: width)
-            OverviewAccountGroupHeading(title: "Claude · 3 accounts", width: width)
+            OverviewAccountGroupHeading(title: "Claude · 3 accounts", width: width, showsColumnCaptions: true)
             ForEach(accounts.indices, id: \.self) { index in
                 let account = accounts[index]
                 OverviewCompactAccountRow(
@@ -56,6 +55,15 @@ struct OverviewRowRenderTests {
                 name: "Grok",
                 shortWindow: nil,
                 longWindow: window(10080, 92, 6960),
+                width: width,
+                now: now)
+            Divider().padding(.horizontal, 12).padding(.vertical, 4)
+            // A list that opens on a plain row keeps the captions on their own line.
+            OverviewColumnCaptions(width: width)
+            OverviewCompactAccountRow(
+                name: "Kimi Code",
+                shortWindow: window(300, 3, 54),
+                longWindow: window(10080, 2, 5580),
                 width: width,
                 now: now)
         }

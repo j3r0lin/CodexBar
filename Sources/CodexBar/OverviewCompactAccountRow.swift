@@ -125,33 +125,56 @@ struct OverviewCompactAccountRow: View {
 }
 
 /// Grey caption above a provider's account rows. It is not a row: no usage, no highlight, no action.
+/// The first heading also carries the "5h" and "7d" column captions, each over its lane's percentage
+/// column: the title is wider than the name column, so a caption over the bar would collide with it.
 struct OverviewAccountGroupHeading: View {
     let title: String
     let width: CGFloat
+    var showsColumnCaptions = false
 
     var body: some View {
-        Text(self.title)
-            .font(.system(size: 11))
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 8)
-            .padding(.top, 4)
-            .padding(.bottom, 0)
-            .frame(width: self.width, alignment: .leading)
+        ZStack(alignment: .leading) {
+            if self.showsColumnCaptions {
+                HStack(spacing: OverviewCompactAccountRow.columnSpacing) {
+                    Color.clear.frame(width: OverviewCompactAccountRow.nameColumn, height: 1)
+                    OverviewColumnCaptions.laneCaption("5h", overBar: false)
+                    OverviewColumnCaptions.laneCaption("7d", overBar: false)
+                }
+            }
+            Text(self.title)
+                .lineLimit(1)
+                .frame(maxWidth: self.showsColumnCaptions ? self.titleWidth : .infinity, alignment: .leading)
+        }
+        .font(.system(size: 11))
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, OverviewCompactAccountRow.horizontalPadding)
+        .padding(.top, 4)
+        .padding(.bottom, 0)
+        .frame(width: self.width, alignment: .leading)
+    }
+
+    /// Room left before the first caption, with a 6pt gap.
+    private var titleWidth: CGFloat {
+        let row = OverviewCompactAccountRow.self
+        let lanes = self.width - row.horizontalPadding * 2 - row.nameColumn - row.columnSpacing * 2
+        return row.nameColumn + row.columnSpacing + lanes / 2 - OverviewColumnCaptions.trailingColumns - 6
     }
 }
 
 /// One grey line above the Overview list naming the two window columns, laid out like a row so each
-/// caption sits over the start of its bars.
+/// caption sits over the start of its bars. Used when the list does not open with a group heading.
 struct OverviewColumnCaptions: View {
     let width: CGFloat
+
+    /// The percentage and reset columns that follow a bar, with their gaps.
+    static let trailingColumns = OverviewCompactAccountRow.barPercentGap + OverviewCompactAccountRow.percentWidth
+        + OverviewCompactAccountRow.percentResetGap + OverviewCompactAccountRow.resetWidth
 
     var body: some View {
         HStack(spacing: OverviewCompactAccountRow.columnSpacing) {
             Color.clear.frame(width: OverviewCompactAccountRow.nameColumn, height: 1)
-            self.caption("5h")
-            self.caption("7d")
+            Self.laneCaption("5h", overBar: true)
+            Self.laneCaption("7d", overBar: true)
         }
         .font(.system(size: 10))
         .foregroundStyle(.secondary)
@@ -160,8 +183,21 @@ struct OverviewColumnCaptions: View {
         .frame(width: self.width, alignment: .leading)
     }
 
-    private func caption(_ text: String) -> some View {
-        Text(text).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+    static func laneCaption(_ text: String, overBar: Bool) -> some View {
+        HStack(spacing: 0) {
+            if overBar {
+                Text(text).font(.system(size: 10)).lineLimit(1)
+                Spacer(minLength: 0)
+            } else {
+                Spacer(minLength: 0)
+                Text(text)
+                    .font(.system(size: 10))
+                    .lineLimit(1)
+                    .padding(.leading, OverviewCompactAccountRow.barPercentGap)
+                    .frame(width: Self.trailingColumns, alignment: .leading)
+            }
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 

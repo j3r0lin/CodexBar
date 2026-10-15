@@ -4,6 +4,9 @@ struct ManualRefreshViewportRestoreRequest {
     let generation: Int
     let menuInteractionGeneration: Int
     let switcherSelection: ProviderSwitcherSelection?
+    /// How far the viewport sat below the top of the content when the refresh started; the restore
+    /// returns there, since rows above it may change height while the refresh runs.
+    var topDistance: CGFloat = 0
 }
 
 struct MenuViewportGeometry: Equatable {
@@ -374,7 +377,11 @@ extension StatusItemController {
             }
             self.manualRefreshViewportRestoreState.deferredUntilRebuild.removeValue(forKey: key)
             let generation = self.menuSession.armViewportRestore(key)
+            var topDistance: CGFloat = 0
             if let scrollView = Self.attachedMenuScrollView(in: menu) {
+                if let geometry = Self.menuViewportGeometry(in: scrollView) {
+                    topDistance = Self.menuViewportTopDistance(geometry)
+                }
                 self.manualRefreshViewportRestoreState.startMovementTracking(
                     for: key,
                     generation: generation,
@@ -383,7 +390,8 @@ extension StatusItemController {
             requests[key] = ManualRefreshViewportRestoreRequest(
                 generation: generation,
                 menuInteractionGeneration: menuInteractionGeneration,
-                switcherSelection: self.viewportRestoreSwitcherSelection(for: menu))
+                switcherSelection: self.viewportRestoreSwitcherSelection(for: menu),
+                topDistance: topDistance)
         }
         return requests
     }
@@ -557,7 +565,7 @@ extension StatusItemController {
             self.manualRefreshViewportRestoreState.stopMovementTracking(
                 for: key,
                 generation: request.generation)
-            self.restoreMenuViewportToTop(menu)
+            self.restoreMenuViewport(menu, topDistance: request.topDistance)
         }
         let operation: @MainActor () -> Void = { [weak self] in
             self?.manualRefreshViewportRestoreState.afterMovementSettles(
@@ -635,7 +643,7 @@ extension StatusItemController {
         (menu as? StatusItemMenu)?.menuInteractionGeneration = generation
     }
 
-    func restoreMenuViewportToTop(_ menu: NSMenu) {
+    func restoreMenuViewport(_ menu: NSMenu, topDistance: CGFloat) {
         #if DEBUG
         if let observer = self._test_menuViewportRestoreObserver {
             observer(menu)
@@ -646,7 +654,8 @@ extension StatusItemController {
               let documentView = scrollView.documentView
         else { return }
         let clipView = scrollView.contentView
-        guard let target = Self.menuViewportTopOffset(
+        guard let target = Self.menuViewportOffset(
+            topDistance: topDistance,
             documentIsFlipped: documentView.isFlipped,
             documentHeight: documentView.frame.height,
             clipHeight: clipView.bounds.height,
@@ -722,9 +731,35 @@ extension StatusItemController {
         clipHeight: CGFloat,
         currentOffset: CGFloat) -> CGFloat?
     {
-        guard clipHeight > 0, documentHeight - clipHeight > 0.5 else { return nil }
-        let top: CGFloat = documentIsFlipped ? 0 : documentHeight - clipHeight
-        guard abs(currentOffset - top) > 0.5 else { return nil }
-        return top
+        self.menuViewportOffset(
+            topDistance: 0,
+            documentIsFlipped: documentIsFlipped,
+            documentHeight: documentHeight,
+            clipHeight: clipHeight,
+            currentOffset: currentOffset)
+    }
+
+    /// Returns the offset that puts the viewport `topDistance` below the top of the content, clamped to
+    /// the scrollable range, or nil when the menu is not scrollable or the viewport is already there.
+    static func menuViewportOffset(
+        topDistance: CGFloat,
+        documentIsFlipped: Bool,
+        documentHeight: CGFloat,
+        clipHeight: CGFloat,
+        currentOffset: CGFloat) -> CGFloat?
+    {
+        let maximum = documentHeight - clipHeight
+        guard clipHeight > 0, maximum > 0.5 else { return nil }
+        let distance = min(max(0, topDistance), maximum)
+        let target = documentIsFlipped ? distance : maximum - distance
+        guard abs(currentOffset - target) > 0.5 else { return nil }
+        return target
+    }
+
+    /// The viewport's distance below the top of the content, whichever way the document is flipped.
+    static func menuViewportTopDistance(_ geometry: MenuViewportGeometry) -> CGFloat {
+        let maximum = max(0, geometry.documentSize.height - geometry.clipSize.height)
+        let distance = geometry.documentIsFlipped ? geometry.clipOrigin.y : maximum - geometry.clipOrigin.y
+        return min(max(0, distance), maximum)
     }
 }

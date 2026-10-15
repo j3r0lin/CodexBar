@@ -142,6 +142,65 @@ struct MenuFooterBarTests {
         return rep
     }
 
+    @Test
+    func `refresh icon turns about the centre of its button`() throws {
+        let bar = MenuFooterBarView(width: 300, buttons: [
+            MenuFooterButton(systemImageName: "arrow.clockwise", label: "Refresh") {},
+        ])
+        bar.layoutSubtreeIfNeeded()
+        let button = try #require(bar.button(labeled: "Refresh"))
+        button.layoutSubtreeIfNeeded()
+        let layer = try #require(bar.iconLayer(systemImageName: "arrow.clockwise"))
+        bar.setSpinning(true, systemImageName: "arrow.clockwise")
+        #expect(bar.isSpinning(systemImageName: "arrow.clockwise"))
+        // A rotation keeps the anchor point fixed, so the anchor has to be the button's centre.
+        #expect(layer.anchorPoint == CGPoint(x: 0.5, y: 0.5))
+        #expect(abs(layer.position.x - button.bounds.midX) < 0.5)
+        #expect(abs(layer.position.y - button.bounds.midY) < 0.5)
+        #expect(abs(layer.frame.midX - button.bounds.midX) < 0.5)
+        bar.setSpinning(false, systemImageName: "arrow.clockwise")
+        #expect(!bar.isSpinning(systemImageName: "arrow.clockwise"))
+        #expect(abs(layer.frame.midY - button.bounds.midY) < 0.5)
+    }
+
+    @Test
+    func `a menu rebuild keeps the footer bar and its spinning refresh icon`() throws {
+        let settings = self.makeSettings()
+        settings.refreshFrequency = .manual
+        settings.mergeIcons = false
+        enableTestProviders([.codex], settings: settings)
+        let controller = self.makeController(settings: settings)
+        let menu = controller.makeMenu(for: .codex)
+        controller.menuWillOpen(menu)
+        defer { controller.menuDidClose(menu) }
+
+        let footerItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
+        let bar = try #require(footerItem.view as? MenuFooterBarView)
+        // A refresh is in flight for the whole rebuild, so every footer bar keeps spinning.
+        let gate = RefreshGate()
+        controller.manualRefreshTasks[.global] = Task { await gate.wait() }
+        defer {
+            gate.resume()
+            controller.manualRefreshTasks[.global] = nil
+        }
+        controller.updateMenuFooterBars()
+        let spin = bar.iconLayer(systemImageName: "arrow.clockwise")?.animation(forKey: "footerSpin")
+
+        let shapes = controller.menuContentShapes(in: menu, fromIndex: 0)
+        let scratch = controller.makeMenu(for: .codex)
+        controller.menuWillOpen(scratch)
+        controller.menuDidClose(scratch)
+        let scratchBar = try #require(scratch.items.first { $0.view is MenuFooterBarView }?.view)
+        controller.reconcileMenuContent(menu, fromIndex: 0, shapes: shapes, with: scratch)
+
+        let rebuiltItem = try #require(menu.items.first { $0.representedObject as? String == "menuFooterBar" })
+        #expect(rebuiltItem.view === bar)
+        #expect(rebuiltItem.view !== scratchBar)
+        #expect(bar.isSpinning(systemImageName: "arrow.clockwise"))
+        #expect(bar.iconLayer(systemImageName: "arrow.clockwise")?.animation(forKey: "footerSpin") === spin)
+        #expect(!controller.menuFooterBars.contains(scratchBar as? MenuFooterBarView))
+    }
+
     private func keyEvent(_ characters: String) throws -> NSEvent {
         try #require(NSEvent.keyEvent(
             with: .keyDown,

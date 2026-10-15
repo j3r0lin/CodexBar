@@ -214,7 +214,17 @@ extension StatusItemController {
         newItem.view = nil
         let submenu = newItem.submenu
         newItem.submenu = nil
-        liveItem.view = view
+        // A footer bar keeps its views across a rebuild, so a spinning refresh icon does not restart and
+        // the replaced bar does not keep spinning outside the menu.
+        if let liveBar = liveItem.view as? MenuFooterBarView,
+           let newBar = view as? MenuFooterBarView,
+           liveBar.adoptButtons(from: newBar)
+        {
+            self.menuFooterBars.remove(newBar)
+            liveBar.applyWidth(newBar.frame.width)
+        } else {
+            liveItem.view = view
+        }
         liveItem.submenu = submenu
         liveItem.title = newItem.title
         liveItem.attributedTitle = newItem.attributedTitle

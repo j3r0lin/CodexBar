@@ -477,14 +477,19 @@ extension StatusItemController {
         // A provider with several accounts gets one grey caption; a lone account is its own row.
         let accountCounts = Dictionary(rows.map { ($0.provider, 1) }, uniquingKeysWith: +)
         let hidePersonalInfo = self.settings.hidePersonalInfo
-        let captions = self.makeMenuCardItem(
-            OverviewColumnCaptions(width: menuWidth),
-            id: "overviewColumnCaptions",
-            width: menuWidth,
-            heightCacheScope: "overviewColumnCaptions",
-            heightCacheFingerprint: "captions")
-        captions.isEnabled = false
-        menu.addItem(captions)
+        // The column captions share the first heading's line; a list that opens on a plain row has no
+        // free line, so the captions get one of their own.
+        let opensWithHeading = rows.first.map { (accountCounts[$0.provider] ?? 1) > 1 } ?? false
+        if !opensWithHeading {
+            let captions = self.makeMenuCardItem(
+                OverviewColumnCaptions(width: menuWidth),
+                id: "overviewColumnCaptions",
+                width: menuWidth,
+                heightCacheScope: "overviewColumnCaptions",
+                heightCacheFingerprint: "captions")
+            captions.isEnabled = false
+            menu.addItem(captions)
+        }
         for (index, row) in rows.enumerated() {
             let isGrouped = (accountCounts[row.provider] ?? 1) > 1
             let startsProvider = index == 0 || rows[index - 1].provider != row.provider
@@ -499,7 +504,8 @@ extension StatusItemController {
                 let heading = self.makeMenuCardItem(
                     OverviewAccountGroupHeading(
                         title: "\(providerName) · " + L("%lld accounts", accountCounts[row.provider] ?? 0),
-                        width: menuWidth),
+                        width: menuWidth,
+                        showsColumnCaptions: index == 0),
                     id: "\(Self.overviewGroupHeadingIdentifierPrefix)\(row.provider.rawValue)",
                     width: menuWidth,
                     heightCacheScope: "overviewAccountGroupHeading",
