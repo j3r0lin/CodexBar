@@ -459,8 +459,9 @@ extension StatusItemController {
         return "\(value.utf8.count):\(value)"
     }
 
+    /// Open submenus that a parent rebuild would close: hosted charts and Overview detail submenus.
     func hasOpenHostedSubviewMenu() -> Bool {
-        self.openMenus.values.contains { self.isHostedSubviewMenu($0) }
+        self.openMenus.values.contains { self.isHostedSubviewMenu($0) || $0 is OverviewDetailMenu }
     }
 
     func hasOpenNonHostedChildMenu() -> Bool {
@@ -646,6 +647,8 @@ extension StatusItemController {
         deferParentRebuildDuringTracking: Bool,
         hasOpenHostedSubviewMenu: Bool)
     {
+        // A detail submenu is rebuilt with its parent, never on its own.
+        guard !(menu is OverviewDetailMenu) else { return }
         if self.isHostedSubviewMenu(menu) {
             self.scheduleOpenMenuRebuildIfStillVisible(menu, provider: self.menuProvider(for: menu))
             return

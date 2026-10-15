@@ -19,31 +19,9 @@ extension StatusItemController {
             }
             return
         }
-        let display = ClaudeSwapAccountMenuDisplay(
-            accounts: accounts,
-            layout: self.settings.multiAccountMenuLayout,
-            switchingAccountID: self.store.claudeSwapTransientState.switchingAccountID,
-            errorAccountID: self.store.claudeSwapTransientState.lastErrorAccountID,
-            inspectedAccountID: self.claudeSwapInspectedAccountID)
+        let display = self.claudeSwapAccountMenuDisplay()
         if display.showsSwitcher {
-            // Read-only sources (magpie) only inspect accounts, so do not promise a switch.
-            let headingTitle = accounts.contains(where: \.canActivate) || self.store.shouldFetchClaudeSwapAccounts()
-                ? L("Switch Claude Code account")
-                : L("Accounts")
-            let switcherHeading = NSMenuItem(title: headingTitle, action: nil, keyEquivalent: "")
-            switcherHeading.isEnabled = false
-            menu.addItem(switcherHeading)
-            let item = NSMenuItem()
-            item.view = ClaudeSwapAccountSwitcherView(
-                display: display,
-                hidePersonalInfo: self.settings.hidePersonalInfo,
-                width: context.menuWidth,
-                onSelect: { [weak self, weak captureMenu] id in
-                    self?.handleClaudeSwapAccountSelection(id, menu: captureMenu)
-                })
-            item.isEnabled = false
-            menu.addItem(item)
-            menu.addItem(.separator())
+            self.addClaudeSwapAccountSwitcher(display, to: menu, captureMenu: captureMenu, width: context.menuWidth)
             if !accounts.contains(where: \.isActive) {
                 let notice = NSMenuItem(title: L("No active account"), action: nil, keyEquivalent: "")
                 notice.isEnabled = false
@@ -90,6 +68,43 @@ extension StatusItemController {
             to: menu,
             captureMenu: captureMenu,
             context: context)
+    }
+
+    func claudeSwapAccountMenuDisplay() -> ClaudeSwapAccountMenuDisplay {
+        ClaudeSwapAccountMenuDisplay(
+            accounts: self.store.claudeAccountSource.accounts,
+            layout: self.settings.multiAccountMenuLayout,
+            switchingAccountID: self.store.claudeSwapTransientState.switchingAccountID,
+            errorAccountID: self.store.claudeSwapTransientState.lastErrorAccountID,
+            inspectedAccountID: self.claudeSwapInspectedAccountID)
+    }
+
+    /// The heading and segmented account switcher, followed by a separator.
+    func addClaudeSwapAccountSwitcher(
+        _ display: ClaudeSwapAccountMenuDisplay,
+        to menu: NSMenu,
+        captureMenu: NSMenu,
+        width: CGFloat)
+    {
+        let accounts = self.store.claudeAccountSource.accounts
+        // Read-only sources (magpie) only inspect accounts, so do not promise a switch.
+        let headingTitle = accounts.contains(where: \.canActivate) || self.store.shouldFetchClaudeSwapAccounts()
+            ? L("Switch Claude Code account")
+            : L("Accounts")
+        let switcherHeading = NSMenuItem(title: headingTitle, action: nil, keyEquivalent: "")
+        switcherHeading.isEnabled = false
+        menu.addItem(switcherHeading)
+        let item = NSMenuItem()
+        item.view = ClaudeSwapAccountSwitcherView(
+            display: display,
+            hidePersonalInfo: self.settings.hidePersonalInfo,
+            width: width,
+            onSelect: { [weak self, weak captureMenu] id in
+                self?.handleClaudeSwapAccountSelection(id, menu: captureMenu)
+            })
+        item.isEnabled = false
+        menu.addItem(item)
+        menu.addItem(.separator())
     }
 
     func resetClaudeSwapAccountInspection() {

@@ -1256,6 +1256,51 @@ extension StatusMenuViewportRestoreTests {
     }
 
     @Test
+    func `queued refresh captures a detail submenu hover before its task starts`() async throws {
+        let settings = self.makeSettings()
+        settings.refreshFrequency = .manual
+        settings.mergeIcons = true
+        self.enableOnly([.claude, .codex], settings: settings)
+
+        let controller = self.makeController(settings: settings)
+        defer { controller.releaseStatusItemsForTesting() }
+        controller.menuRefreshEnabledOverrideForTesting = true
+        let menu = try #require(controller.makeMenu() as? StatusItemMenu)
+        controller.mergedMenu = menu
+        controller.menuWillOpen(menu)
+        defer { controller.menuDidClose(menu) }
+
+        let gate = ViewportRefreshGate()
+        var scheduledCount = 0
+        controller._test_menuViewportRestoreScheduler = { _ in scheduledCount += 1 }
+        controller._test_manualRefreshOperation = {
+            await gate.wait()
+            controller.refreshOpenMenusAfterExplicitStoreAction()
+        }
+
+        menu.requestPersistentRefreshAction()
+        let actionGeneration = try #require(controller.menuSession
+            .menuInteractionGeneration(for: ObjectIdentifier(menu)))
+        let row = try #require(menu.items.first { ($0.representedObject as? String) == "overviewRow-codex" })
+        let detail = try #require(row.submenu)
+        detail.delegate?.menuWillOpen?(detail)
+        #expect(controller.menuSession.menuInteractionGeneration(for: ObjectIdentifier(menu)) == actionGeneration + 1)
+
+        for _ in 0..<20 where controller.manualRefreshTasks[.global] == nil {
+            await Task.yield()
+        }
+        let task = try #require(controller.manualRefreshTasks[.global])
+        #expect(controller.menuSession.pendingViewportRestores.isEmpty)
+
+        gate.resume()
+        await task.value
+        detail.delegate?.menuDidClose?(detail)
+
+        #expect(scheduledCount == 0)
+        #expect(controller.menuSession.pendingViewportRestores.isEmpty)
+    }
+
+    @Test
     func `account selection ABA discards originating refresh restore`() async throws {
         let settings = self.makeSettings()
         settings.refreshFrequency = .manual

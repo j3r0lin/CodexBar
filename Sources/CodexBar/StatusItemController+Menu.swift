@@ -93,6 +93,13 @@ extension StatusItemController {
         // on a nested submenu open could mask a pending refresh for the already-open parent menu.
         let menuTrackingWasIdle = self.openMenus.isEmpty
 
+        if menu is OverviewDetailMenu {
+            if self.isMenuRefreshEnabled {
+                self.openMenus[ObjectIdentifier(menu)] = menu
+            }
+            return
+        }
+
         if self.isHostedSubviewMenu(menu) {
             if !self.hydrateHostedSubviewMenuIfNeeded(menu) {
                 self.refreshHostedSubviewMenu(menu)
@@ -169,7 +176,7 @@ extension StatusItemController {
     }
 
     func menuDidClose(_ menu: NSMenu) {
-        let wasHostedSubviewMenu = self.isHostedSubviewMenu(menu)
+        let wasHostedSubviewMenu = self.isHostedSubviewMenu(menu) || menu is OverviewDetailMenu
         self.forgetClosedMenu(menu)
         if wasHostedSubviewMenu {
             self.refreshOpenMenusAfterHostedSubviewClose()
@@ -1182,7 +1189,7 @@ extension StatusItemController {
         }
     }
 
-    private func makeBuyCreditsItem() -> NSMenuItem {
+    func makeBuyCreditsItem() -> NSMenuItem {
         let item = NSMenuItem(
             title: L("Buy Credits..."),
             action: #selector(self.openCreditsPurchase),
@@ -1197,7 +1204,7 @@ extension StatusItemController {
     }
 
     @discardableResult
-    private func addCreditsHistorySubmenu(to menu: NSMenu) -> Bool {
+    func addCreditsHistorySubmenu(to menu: NSMenu) -> Bool {
         guard let submenu = self.makeCreditsHistorySubmenu(width: self.renderedMenuWidth(for: menu))
         else { return false }
         let item = NSMenuItem(title: L("Credits history"), action: nil, keyEquivalent: "")
@@ -1208,7 +1215,7 @@ extension StatusItemController {
     }
 
     @discardableResult
-    private func addUsageBreakdownSubmenu(to menu: NSMenu) -> Bool {
+    func addUsageBreakdownSubmenu(to menu: NSMenu) -> Bool {
         guard let submenu = self.makeUsageBreakdownSubmenu(width: self.renderedMenuWidth(for: menu))
         else { return false }
         let item = NSMenuItem(title: L("Usage breakdown"), action: nil, keyEquivalent: "")
@@ -1219,7 +1226,7 @@ extension StatusItemController {
     }
 
     @discardableResult
-    private func addCostHistorySubmenu(to menu: NSMenu, provider: UsageProvider) -> Bool {
+    func addCostHistorySubmenu(to menu: NSMenu, provider: UsageProvider) -> Bool {
         guard let submenu = self.makeCostHistorySubmenu(provider: provider, width: self.renderedMenuWidth(for: menu))
         else { return false }
         let title: String = switch self.store.settings.costReportingPeriod {

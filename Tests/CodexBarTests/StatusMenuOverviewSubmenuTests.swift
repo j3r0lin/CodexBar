@@ -61,7 +61,11 @@ extension StatusMenuTests {
         #expect(openAIDetail.items.contains {
             ($0.representedObject as? String) == StatusItemController.costHistoryChartID
         })
-        #expect(openAIDetail.items.allSatisfy { $0.submenu == nil })
+        #expect(!openAIDetail.items.contains { item in
+            item.submenu?.items.contains {
+                ($0.representedObject as? String) == StatusItemController.costHistoryChartID
+            } == true
+        })
     }
 
     @Test
@@ -180,7 +184,13 @@ extension StatusMenuTests {
         // Without history data the detail stands alone: no chart and no empty placeholder.
         let zaiDetail = try #require(zaiRow.submenu)
         zaiDetail.delegate?.menuNeedsUpdate?(zaiDetail)
-        #expect(zaiDetail.items.count == 1)
+        let historyIDs = [
+            StatusItemController.usageHistoryChartID,
+            StatusItemController.costHistoryChartID,
+            StatusItemController.storageBreakdownID,
+        ]
+        #expect(!zaiDetail.items.contains { historyIDs.contains($0.representedObject as? String ?? "") })
+        #expect(!zaiDetail.items.contains { $0.identifier == StatusItemController.hostedSubviewUnavailableItemID })
         let details = try #require(store.snapshot(for: .zai)?.details.first)
         #expect(details.title == "Quota details")
         #expect(details.rows.contains { $0.label == "MCP quota" && $0.value == "50% used" })
@@ -257,5 +267,101 @@ extension StatusMenuTests {
         #expect(refresh.title == L("Refresh Claude usage"))
         #expect(refresh.representedObject as? String == accountID.opaqueID)
         #expect(refresh.target as? StatusItemController === controller)
+
+        // Provider-level Claude history and actions are not this account's, so the refresh item ends the submenu.
+        let submenu = try #require(row.submenu)
+        submenu.delegate?.menuNeedsUpdate?(submenu)
+        #expect(submenu.items.last === refresh)
+    }
+
+    @Test
+    func `overview detail submenu ends with the provider's own actions`() throws {
+        self.disableMenuCardsForTesting()
+        let settings = self.makeSettings()
+        settings.statusChecksEnabled = false
+        settings.refreshFrequency = .manual
+        settings.mergeIcons = true
+        settings.multiAccountMenuLayout = .segmented
+        enableTestProviders([.claude, .codex], settings: settings)
+        settings.addTokenAccount(provider: .claude, label: "Primary", token: "Bearer sk-ant-oat-primary")
+        settings.addTokenAccount(provider: .claude, label: "Secondary", token: "Bearer sk-ant-oat-secondary")
+        settings.setActiveTokenAccountIndex(0, for: .claude)
+
+        let fetcher = UsageFetcher()
+        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let controller = StatusItemController(
+            store: store,
+            settings: settings,
+            account: fetcher.loadAccountInfo(),
+            updater: DisabledUpdaterController(),
+            preferencesSelection: PreferencesSelection(),
+            statusBar: self.makeStatusBarForTesting())
+        defer { controller.releaseStatusItemsForTesting() }
+
+        let menu = controller.makeMenu()
+        controller.menuWillOpen(menu)
+
+        let row = try #require(menu.items.first { ($0.representedObject as? String) == "overviewRow-claude" })
+        let detail = try #require(row.submenu)
+        detail.delegate?.menuNeedsUpdate?(detail)
+        #expect((detail.items.first?.representedObject as? String)?.hasPrefix("overviewDetail-") == true)
+        #expect(detail.items.contains { $0.view is TokenAccountSwitcherView })
+        #expect(detail.items.last?.action == controller.selector(for: .statusPage).0)
+        #expect(detail.items.contains { $0.action == controller.selector(for: .dashboard).0 })
+        // App-wide rows stay in the main menu.
+        #expect(!detail.items.contains { $0.view is MenuFooterBarView })
+        #expect(!detail.items.contains { $0.action == controller.selector(for: .settings).0 })
+    }
+
+    @Test
+    func `a refresh that completes while a detail submenu is open waits for it to close`() async throws {
+        self.disableMenuCardsForTesting()
+        let previousRefresh = StatusItemController.menuRefreshEnabled
+        StatusItemController.setMenuRefreshEnabledForTesting(true)
+        defer { StatusItemController.setMenuRefreshEnabledForTesting(previousRefresh) }
+        let settings = self.makeSettings()
+        settings.statusChecksEnabled = false
+        settings.refreshFrequency = .manual
+        settings.mergeIcons = true
+        enableTestProviders([.claude, .codex], settings: settings)
+
+        let fetcher = UsageFetcher()
+        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let controller = StatusItemController(
+            store: store,
+            settings: settings,
+            account: fetcher.loadAccountInfo(),
+            updater: DisabledUpdaterController(),
+            preferencesSelection: PreferencesSelection(),
+            statusBar: self.makeStatusBarForTesting())
+        defer { controller.releaseStatusItemsForTesting() }
+
+        let menu = controller.makeMenu()
+        controller.mergedMenu = menu
+        controller.menuWillOpen(menu)
+        defer { controller.menuDidClose(menu) }
+        let row = try #require(menu.items.first { ($0.representedObject as? String) == "overviewRow-codex" })
+        let detail = try #require(row.submenu)
+        detail.delegate?.menuWillOpen?(detail)
+        #expect(controller.openMenus[ObjectIdentifier(detail)] === detail)
+
+        var rebuilds = 0
+        controller._test_openMenuRebuildObserver = { rebuilt in
+            if rebuilt === menu { rebuilds += 1 }
+        }
+        defer { controller._test_openMenuRebuildObserver = nil }
+        // A completed data refresh invalidates the open menus.
+        controller.invalidateMenus(refreshOpenMenus: true)
+        try? await Task.sleep(for: .milliseconds(100))
+        #expect(rebuilds == 0)
+        #expect(controller.menuNeedsRefresh(menu))
+        #expect(row.submenu === detail)
+
+        detail.delegate?.menuDidClose?(detail)
+        #expect(controller.openMenus[ObjectIdentifier(detail)] == nil)
+        for _ in 0..<50 where controller.menuNeedsRefresh(menu) {
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(!controller.menuNeedsRefresh(menu))
     }
 }

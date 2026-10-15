@@ -54,7 +54,11 @@ extension StatusItemController {
         return view.fittingSize.height
     }
 
+    static let hostedSubviewUnavailableItemID = NSUserInterfaceItemIdentifier("hostedSubviewUnavailable")
+
     func isHostedSubviewMenu(_ menu: NSMenu) -> Bool {
+        // A detail submenu carries chart rows inline but is not itself a chart menu to re-hydrate.
+        guard !(menu is OverviewDetailMenu) else { return false }
         let ids: Set = [
             Self.usageBreakdownChartID,
             Self.creditsHistoryChartID,
@@ -358,6 +362,7 @@ extension StatusItemController {
         providerRawValue: String?)
     {
         let unavailableItem = NSMenuItem(title: L("No data available"), action: nil, keyEquivalent: "")
+        unavailableItem.identifier = Self.hostedSubviewUnavailableItemID
         unavailableItem.isEnabled = false
         unavailableItem.representedObject = chartID
         unavailableItem.toolTip = providerRawValue
