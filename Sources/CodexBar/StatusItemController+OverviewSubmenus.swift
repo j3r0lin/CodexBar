@@ -2,8 +2,8 @@ import AppKit
 import CodexBarCore
 
 extension StatusItemController {
-    /// Hover submenu of an Overview row: the same usage detail the menu-bar ring card shows,
-    /// followed by the provider's history chart when it has one.
+    /// Hover submenu of an Overview row: the shared usage detail, followed inline by the provider's
+    /// history chart when it has data. The chart is built on first open so unopened rows stay cheap.
     func makeOverviewDetailSubmenu(
         title: String,
         snapshot: UsageSnapshot?,
@@ -11,19 +11,25 @@ extension StatusItemController {
         model: UsageMenuCardView.Model,
         width: CGFloat) -> NSMenu
     {
-        let submenu = NSMenu()
+        let submenu = OverviewDetailMenu { [weak self] submenu in
+            guard let self,
+                  let chartMenu = self.makeOverviewRowSubmenu(provider: provider, model: model, width: width)
+            else { return }
+            self.hydrateHostedSubviewMenuIfNeeded(chartMenu, width: width)
+            let chartItems = chartMenu.items
+            // An empty history hydrates to a disabled "No data available" row; show no chart at all then.
+            guard chartItems.contains(where: \.isEnabled) else { return }
+            chartMenu.removeAllItems()
+            submenu.addItem(.separator())
+            chartItems.forEach(submenu.addItem)
+        }
         submenu.autoenablesItems = false
+        submenu.minimumWidth = width
         submenu.appearance = StatusMenuAppearance.menuAppearance
         submenu.addItem(self.makeMenuCardItem(
-            AccountUsageDetailView(name: title, snapshot: snapshot, width: AccountUsageDetailView.defaultWidth),
+            AccountUsageDetailView(name: title, snapshot: snapshot, width: width),
             id: "overviewDetail-\(title)",
-            width: AccountUsageDetailView.defaultWidth))
-        if let chartMenu = self.makeOverviewRowSubmenu(provider: provider, model: model, width: width) {
-            submenu.addItem(.separator())
-            let chartItem = NSMenuItem(title: L("Usage history (30 days)"), action: nil, keyEquivalent: "")
-            chartItem.submenu = chartMenu
-            submenu.addItem(chartItem)
-        }
+            width: width))
         return submenu
     }
 
@@ -57,5 +63,27 @@ extension StatusItemController {
             return submenu
         }
         return self.makeStorageBreakdownSubmenu(provider: provider, width: width)
+    }
+}
+
+/// Detail submenu that appends its chart the first time AppKit is about to show it.
+final class OverviewDetailMenu: NSMenu, NSMenuDelegate {
+    private var appendChart: ((NSMenu) -> Void)?
+
+    init(appendChart: @escaping (NSMenu) -> Void) {
+        self.appendChart = appendChart
+        super.init(title: "")
+        self.delegate = self
+    }
+
+    @available(*, unavailable)
+    required init(coder: NSCoder) {
+        fatalError("init(coder:) is not supported")
+    }
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        guard let appendChart = self.appendChart else { return }
+        self.appendChart = nil
+        appendChart(menu)
     }
 }

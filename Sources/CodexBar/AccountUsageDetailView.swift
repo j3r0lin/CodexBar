@@ -46,7 +46,7 @@ struct AccountUsageDetailView: View {
                 }
                 GeometryReader { proxy in
                     ZStack(alignment: .leading) {
-                        Capsule().fill(Color.secondary.opacity(0.22))
+                        Capsule().fill(OverviewCompactAccountRow.trackColor)
                         Capsule()
                             .fill(Color(nsColor: UsageSeverityPalette.color(usedPercent: used)))
                             .frame(width: proxy.size.width * used / 100)

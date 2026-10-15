@@ -55,12 +55,13 @@ extension StatusMenuTests {
             ($0.representedObject as? String) == "overviewRow-openai"
         })
         let openAIDetail = try #require(openAIRow.submenu)
+        openAIDetail.delegate?.menuNeedsUpdate?(openAIDetail)
         #expect((openAIDetail.items.first?.representedObject as? String)?.hasPrefix("overviewDetail-") == true)
+        // The history chart sits inline below the detail, not behind another submenu.
         #expect(openAIDetail.items.contains {
-            $0.submenu?.items.contains {
-                ($0.representedObject as? String) == StatusItemController.costHistoryChartID
-            } == true
+            ($0.representedObject as? String) == StatusItemController.costHistoryChartID
         })
+        #expect(openAIDetail.items.allSatisfy { $0.submenu == nil })
     }
 
     @Test
@@ -119,9 +120,9 @@ extension StatusMenuTests {
         let opencodegoRow = try #require(menu.items.first {
             ($0.representedObject as? String) == "overviewRow-opencodego"
         })
-        let chartIDs = opencodegoRow.submenu?.items.flatMap {
-            $0.submenu?.items.compactMap { $0.representedObject as? String } ?? []
-        } ?? []
+        let opencodegoDetail = try #require(opencodegoRow.submenu)
+        opencodegoDetail.delegate?.menuNeedsUpdate?(opencodegoDetail)
+        let chartIDs = opencodegoDetail.items.compactMap { $0.representedObject as? String }
         #expect(chartIDs.contains(StatusItemController.usageHistoryChartID))
         #expect(!chartIDs.contains(StatusItemController.costHistoryChartID))
     }
@@ -176,8 +177,10 @@ extension StatusMenuTests {
         let zaiRow = try #require(menu.items.first {
             ($0.representedObject as? String) == "overviewRow-zai"
         })
-        // Only the shared usage detail; no bespoke chart submenu.
-        #expect(zaiRow.submenu?.items.count == 1)
+        // Without history data the detail stands alone: no chart and no empty placeholder.
+        let zaiDetail = try #require(zaiRow.submenu)
+        zaiDetail.delegate?.menuNeedsUpdate?(zaiDetail)
+        #expect(zaiDetail.items.count == 1)
         let details = try #require(store.snapshot(for: .zai)?.details.first)
         #expect(details.title == "Quota details")
         #expect(details.rows.contains { $0.label == "MCP quota" && $0.value == "50% used" })
