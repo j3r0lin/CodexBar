@@ -30,7 +30,10 @@ struct OverviewRowLayoutProofTests {
             MenuFooterButton(systemImageName: "arrow.clockwise", label: "Refresh", action: {}),
             MenuFooterButton(systemImageName: "gearshape", label: "Settings...", action: {}),
             MenuFooterButton(systemImageName: "info.circle", label: "About CodexBar", action: {}),
-            MenuFooterButton(systemImageName: MenuDescriptor.MenuAction.quit.systemImageName ?? "", label: "Quit", action: {}),
+            MenuFooterButton(
+                systemImageName: MenuDescriptor.MenuAction.quit.systemImageName ?? "",
+                label: "Quit",
+                action: {}),
         ])
         footer.appearance = NSAppearance(named: .darkAqua)
         footer.wantsLayer = true
@@ -47,47 +50,35 @@ struct OverviewRowLayoutProofTests {
     /// The reference data set from the HTML preview: Codex 96/15, Claude a/b/c, Kimi Code, and a Grok
     /// row with only a 7d window.
     private static func column() -> some View {
-        let width = Self.width
-        let now = Self.now
-        return VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
             self.row(
                 name: "Codex",
                 short: self.window(96, minutes: 2 * 60 + 20),
                 long: self.window(15, minutes: 6 * 1440 + 21 * 60),
-                width: width,
-                indent: 0,
-                now: now)
+                indent: 0)
             Divider()
-            OverviewAccountGroupHeading(title: "Claude · 3 accounts", width: width)
+            OverviewAccountGroupHeading(title: "Claude · 3 accounts", width: Self.width)
             self.row(
                 name: "a",
                 short: self.window(46, minutes: 18),
                 long: self.window(95, minutes: 9 * 60 + 58),
-                width: width,
-                indent: 10,
-                now: now)
+                indent: 10)
             self.row(
                 name: "b",
                 short: self.window(0, minutes: nil),
                 long: self.window(84, minutes: 1440 + 9 * 60),
-                width: width,
-                indent: 10,
-                now: now)
+                indent: 10)
             self.row(
                 name: "c",
                 short: self.window(0, minutes: nil),
                 long: self.window(100, minutes: 2 * 60 + 58),
-                width: width,
-                indent: 10,
-                now: now)
+                indent: 10)
             Divider()
             self.row(
                 name: "Kimi Code",
                 short: self.window(8, minutes: 4 * 1440 + 2 * 60),
                 long: self.window(10, minutes: 52),
-                width: width,
-                indent: 0,
-                now: now)
+                indent: 0)
             self.row(
                 name: "Grok",
                 short: RateWindow(
@@ -97,11 +88,9 @@ struct OverviewRowLayoutProofTests {
                     resetDescription: nil,
                     isSyntheticPlaceholder: true),
                 long: self.window(90, minutes: 4 * 1440 + 20 * 60),
-                width: width,
-                indent: 0,
-                now: now)
+                indent: 0)
         }
-        .frame(width: width)
+        .frame(width: Self.width)
         .background(Color(nsColor: self.menuBackground))
         .environment(\.colorScheme, .dark)
     }
@@ -110,17 +99,15 @@ struct OverviewRowLayoutProofTests {
         name: String,
         short: RateWindow?,
         long: RateWindow?,
-        width: CGFloat,
-        indent: CGFloat,
-        now: Date) -> some View
+        indent: CGFloat) -> some View
     {
         OverviewCompactAccountRow(
             name: name,
             shortWindow: short,
             longWindow: long,
-            width: width,
+            width: Self.width,
             indent: indent,
-            now: now)
+            now: Self.now)
     }
 
     private static func window(_ usedPercent: Double, minutes: Int?) -> RateWindow {
