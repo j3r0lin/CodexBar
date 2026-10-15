@@ -91,6 +91,19 @@ struct OverviewCompactAccountRow: View {
             .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
+    /// Places windows by duration: up to a day is the short slot, longer is the long slot. Only a window
+    /// without a duration falls back to its position (primary short, secondary long), because a provider
+    /// with a single weekly window still reports it as primary.
+    static func slots(of snapshot: UsageSnapshot?) -> (short: RateWindow?, long: RateWindow?) {
+        guard let snapshot else { return (nil, nil) }
+        let windows = [snapshot.primary, snapshot.secondary, snapshot.tertiary].compactMap(\.self)
+        let short = windows.first { ($0.windowMinutes ?? .max) <= 1440 }
+            ?? snapshot.primary.flatMap { $0.windowMinutes == nil ? $0 : nil }
+        let long = windows.first { ($0.windowMinutes ?? 0) > 1440 }
+            ?? snapshot.secondary.flatMap { $0.windowMinutes == nil ? $0 : nil }
+        return (short, long)
+    }
+
     /// A placeholder window stands for a lane the provider did not report, so it gets no number.
     static func used(_ window: RateWindow?) -> Double? {
         guard let window, !window.isSyntheticPlaceholder else { return nil }

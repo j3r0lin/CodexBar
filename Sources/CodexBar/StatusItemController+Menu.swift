@@ -508,8 +508,8 @@ extension StatusItemController {
             let item = self.makeMenuCardItem(
                 OverviewCompactAccountRow(
                     name: isGrouped ? accountName ?? row.model.providerName : providerName,
-                    shortWindow: row.snapshot?.primary,
-                    longWindow: row.snapshot?.secondary,
+                    shortWindow: OverviewCompactAccountRow.slots(of: row.snapshot).short,
+                    longWindow: OverviewCompactAccountRow.slots(of: row.snapshot).long,
                     width: menuWidth,
                     indent: isGrouped ? 10 : 0,
                     errorText: row.errorText),
