@@ -78,7 +78,7 @@ struct OverviewRowLayoutProofTests {
                 short: self.window(96, minutes: 2 * 60 + 20),
                 long: self.window(15, minutes: 6 * 1440 + 21 * 60),
                 indent: 0)
-            Divider()
+            self.separator()
             OverviewAccountGroupHeading(title: "Claude · 3 accounts", width: Self.width)
             self.row(
                 name: "a",
@@ -95,7 +95,7 @@ struct OverviewRowLayoutProofTests {
                 short: self.window(0, minutes: nil),
                 long: self.window(100, minutes: 2 * 60 + 58),
                 indent: 10)
-            Divider()
+            self.separator()
             self.row(
                 name: "Kimi Code",
                 short: self.window(8, minutes: 4 * 1440 + 2 * 60),
@@ -115,6 +115,16 @@ struct OverviewRowLayoutProofTests {
         .frame(width: self.width)
         .background(Color(nsColor: self.menuBackground))
         .environment(\.colorScheme, .dark)
+    }
+
+    /// The app's separators come from AppKit. This copies the geometry measured off the running menu:
+    /// a 1pt line, 6pt in from the leading edge, with 6pt of air above and below.
+    private static func separator() -> some View {
+        Rectangle()
+            .fill(Color.white.opacity(0.1))
+            .frame(height: 1)
+            .padding(.leading, 6)
+            .padding(.vertical, 6)
     }
 
     private static func row(
