@@ -177,8 +177,8 @@ struct StatusMenuPersistentRefreshTests {
         defer { controller.menuDidClose(menu) }
 
         let refreshItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
-        #expect(controller.providerSwitcherShortcutEventMonitor != nil)
-        #expect(controller.providerSwitcherShortcutMenuID == ObjectIdentifier(menu))
+        #expect(controller.menuTrackingShortcutEventMonitor != nil)
+        #expect(controller.menuTrackingShortcutMenuID == ObjectIdentifier(menu))
         #expect(refreshItem.keyEquivalent.isEmpty)
 
         let gate = ManualRefreshGate()
@@ -196,6 +196,27 @@ struct StatusMenuPersistentRefreshTests {
 
         #expect(controller.manualRefreshTasks[.provider(.codex)] == nil)
         #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
+    }
+
+    @Test
+    func `footer bar comes after the update entry in its section`() throws {
+        let previousRendering = StatusItemController.menuCardRenderingEnabled
+        StatusItemController.menuCardRenderingEnabled = true
+        defer { StatusItemController.menuCardRenderingEnabled = previousRendering }
+
+        let settings = self.makeSettings()
+        settings.refreshFrequency = .manual
+        settings.mergeIcons = false
+
+        let controller = self.makeController(settings: settings, updater: UpdateReadyUpdater())
+        let menu = controller.makeMenu(for: .codex)
+        controller.menuWillOpen(menu)
+        defer { controller.menuDidClose(menu) }
+
+        let updateIndex = try #require(menu.items.firstIndex { $0.title == "Update ready, restart now?" })
+        let footerIndex = try #require(menu.items.firstIndex { $0.view is MenuFooterBarView })
+        #expect(updateIndex < footerIndex)
+        #expect(footerIndex == menu.items.count - 1)
     }
 
     @Test
@@ -253,42 +274,42 @@ struct StatusMenuPersistentRefreshTests {
         #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
 
         controller.store.refreshingProviders.insert(.claude)
-        controller.updatePersistentRefreshItemsEnabled()
+        controller.updateMenuFooterBars()
         #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
 
         controller.store.refreshingProviders.insert(.codex)
-        controller.updatePersistentRefreshItemsEnabled()
+        controller.updateMenuFooterBars()
         #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
 
         controller.store.refreshingProviders.removeAll()
         controller.store.isRefreshing = true
-        controller.updatePersistentRefreshItemsEnabled()
+        controller.updateMenuFooterBars()
         #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
 
         controller.store.isRefreshing = false
 
         // A manual refresh scoped to another provider must not grey out this provider's row.
         controller.manualRefreshTasks[.provider(.claude)] = Task {}
-        controller.updatePersistentRefreshItemsEnabled()
+        controller.updateMenuFooterBars()
         #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
 
         // This provider's own manual refresh does disable its row.
         controller.manualRefreshTasks[.provider(.codex)] = Task {}
-        controller.updatePersistentRefreshItemsEnabled()
+        controller.updateMenuFooterBars()
         #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
 
         controller.manualRefreshTasks[.provider(.codex)] = nil
         controller.manualRefreshTasks[.provider(.claude)] = nil
-        controller.updatePersistentRefreshItemsEnabled()
+        controller.updateMenuFooterBars()
         #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
 
         // An all-providers refresh greys every row.
         controller.manualRefreshTasks[.global] = Task {}
-        controller.updatePersistentRefreshItemsEnabled()
+        controller.updateMenuFooterBars()
         #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
 
         controller.manualRefreshTasks[.global] = nil
-        controller.updatePersistentRefreshItemsEnabled()
+        controller.updateMenuFooterBars()
         #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
 
         controller.manualRefreshTasks[.global] = nil
@@ -1136,6 +1157,28 @@ extension StatusMenuPersistentRefreshTests {
     }
 
     @Test
+    func `tracking monitor routes command comma and command Q to settings and quit`() throws {
+        let settings = self.makeSettings()
+        settings.refreshFrequency = .manual
+        settings.mergeIcons = false
+
+        let controller = self.makeController(settings: settings)
+        controller.menuRefreshEnabledOverrideForTesting = true
+        let menu = try #require(controller.makeMenu(for: .codex) as? StatusItemMenu)
+        controller.menuWillOpen(menu)
+        defer { controller.menuDidClose(menu) }
+        let recorder = RefreshShortcutRecorder()
+        menu.persistentActionDelegate = recorder
+
+        #expect(try controller.handleMenuTrackingShortcutEvent(self.keyEvent(",", keyCode: 43), menu: menu))
+        #expect(try controller.handleMenuTrackingShortcutEvent(self.keyEvent("q", keyCode: 12), menu: menu))
+
+        #expect(recorder.settingsCount == 1)
+        #expect(recorder.quitCount == 1)
+        #expect(recorder.refreshCount == 0)
+    }
+
+    @Test
     func `status item menu intercepts persistent shortcuts without native item selection`() throws {
         let menu = StatusItemMenu()
         let recorder = RefreshShortcutRecorder()
@@ -1169,96 +1212,6 @@ extension StatusMenuPersistentRefreshTests {
             keyCode: keyCode))
     }
 
-    @Test
-    func `refresh row metrics match tuned native-style values`() {
-        let metrics = PersistentRefreshRowMetrics.defaults
-        #expect(metrics.rowHeight == 24)
-        #expect(metrics.selectionHorizontalInset == 5)
-        #expect(metrics.selectionVerticalInset == 0)
-        #expect(metrics.selectionCornerRadius == 7)
-        #expect(metrics.leadingPadding == 15)
-        #expect(metrics.trailingPadding == 8)
-        #expect(metrics.iconWidth == 16)
-        #expect(metrics.iconSymbolPointSize == 16)
-        #expect(metrics.iconSymbolWeight == .regular)
-        #expect(metrics.iconTitleSpacing == 4.5)
-        #expect(metrics.shortcutFontSize == 13)
-        #expect(metrics.shortcutXOffset == -9.5)
-        #expect(metrics.shortcutYOffset == 0)
-    }
-
-    @Test
-    func `refresh shortcut display has stable native-style column`() throws {
-        let previousRendering = StatusItemController.menuCardRenderingEnabled
-        StatusItemController.menuCardRenderingEnabled = true
-        defer { StatusItemController.menuCardRenderingEnabled = previousRendering }
-
-        let settings = self.makeSettings()
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = false
-
-        let controller = self.makeController(settings: settings)
-        let menu = controller.makeMenu(for: .codex)
-        controller.menuWillOpen(menu)
-
-        // The footer no longer shows a shortcut column; the old row's column stays stable on its own.
-        let refreshView = PersistentRefreshMenuView(
-            title: "Refresh", systemImageName: nil, shortcutText: "⌘ R")
-        refreshView.applySize(width: 320, height: PersistentRefreshRowMetrics.defaults.rowHeight)
-        refreshView.layoutSubtreeIfNeeded()
-
-        let shortcutField = try #require(
-            refreshView.subviews.compactMap { $0 as? NSTextField }.first { $0.stringValue == "⌘ R" })
-        #expect(shortcutField.alignment == .left)
-        #expect(shortcutField.lineBreakMode == .byClipping)
-        #expect(shortcutField.frame.width >= 40)
-        let shortcutFont = try #require(shortcutField.font)
-        #expect(abs(shortcutFont.pointSize - PersistentRefreshRowMetrics.defaults.shortcutFontSize) < 0.001)
-
-        #expect(refreshView.subviews.compactMap { $0 as? NSImageView }.isEmpty)
-        let titleField = try #require(
-            refreshView.subviews.compactMap { $0 as? NSTextField }.first { $0.stringValue == "Refresh" })
-        #expect(titleField.frame.minX == PersistentRefreshRowMetrics.defaults.leadingPadding)
-    }
-
-    @Test
-    func `refresh row width follows final rendered menu width`() {
-        let settings = self.makeSettings()
-        let controller = self.makeController(settings: settings)
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let metrics = PersistentRefreshRowMetrics.defaults
-        let refreshView = PersistentRefreshMenuView(
-            title: "Refresh",
-            systemImageName: "arrow.clockwise",
-            shortcutText: "⌘ R")
-        refreshView.applySize(width: StatusItemController.menuCardBaseWidth, height: metrics.rowHeight)
-        refreshView.frame.origin.x = 4
-
-        let refreshItem = NSMenuItem()
-        refreshItem.title = "Refresh"
-        refreshItem.view = refreshView
-
-        let wideNativeItem = NSMenuItem(
-            title: String(repeating: "W", count: 60),
-            action: nil,
-            keyEquivalent: "")
-        let menu = NSMenu()
-        menu.addItem(refreshItem)
-        menu.addItem(wideNativeItem)
-
-        let expectedWidth = controller.renderedMenuWidth(for: menu)
-        #expect(expectedWidth > StatusItemController.menuCardBaseWidth)
-
-        controller.refreshMenuCardHeights(in: menu)
-
-        #expect(abs(refreshView.frame.width - expectedWidth) <= 0.5)
-        #expect(refreshView.frame.origin == .zero)
-        #expect(refreshView.frame.height == metrics.rowHeight)
-    }
-}
-
-extension StatusMenuPersistentRefreshTests {
     @Test
     func `global manual refresh only marks active provider cards as refreshing`() {
         let settings = self.makeSettings()

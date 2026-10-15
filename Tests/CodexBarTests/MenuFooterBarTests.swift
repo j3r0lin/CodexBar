@@ -30,6 +30,9 @@ struct MenuFooterBarTests {
         #expect(bar.button(labeled: "Quit") != nil)
         let labels = bar.subviews.compactMap { $0.accessibilityLabel() }
         #expect(labels.contains { $0.hasPrefix("About CodexBar") })
+        let quitButton = try #require(bar.button(labeled: "Quit"))
+        #expect(quitButton.isAccessibilityElement())
+        #expect(quitButton.accessibilityRole() == .button)
 
         // Shortcuts are not carried by menu items anymore; the menu itself answers them.
         let hasShortcut = menu.items.contains { $0.keyEquivalent.isEmpty == false }
@@ -58,11 +61,11 @@ struct MenuFooterBarTests {
 
         #expect(!bar.isSpinning(systemImageName: symbol))
         controller.store.refreshingProviders.insert(.codex)
-        controller.updatePersistentRefreshItemsEnabled()
+        controller.updateMenuFooterBars()
         #expect(bar.isSpinning(systemImageName: symbol))
 
         controller.store.refreshingProviders.removeAll()
-        controller.updatePersistentRefreshItemsEnabled()
+        controller.updateMenuFooterBars()
         #expect(!bar.isSpinning(systemImageName: symbol))
     }
 

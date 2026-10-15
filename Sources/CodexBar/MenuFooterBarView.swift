@@ -152,6 +152,9 @@ final class MenuFooterBarView: NSView {
             self.highlight.isHidden = !hovering
         }
 
+        /// A view that takes the press is the one AppKit sends the matching release to.
+        override func mouseDown(with event: NSEvent) {}
+
         override func mouseUp(with event: NSEvent) {
             guard self.bounds.contains(self.convert(event.locationInWindow, from: nil)) else { return }
             self.model.action()
@@ -171,6 +174,10 @@ final class MenuFooterBarView: NSView {
             } else {
                 self.iconView.layer?.removeAnimation(forKey: "footerSpin")
             }
+        }
+
+        override func isAccessibilityElement() -> Bool {
+            true
         }
 
         override func accessibilityRole() -> NSAccessibility.Role? {

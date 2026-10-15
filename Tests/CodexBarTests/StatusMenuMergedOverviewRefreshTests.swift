@@ -30,7 +30,7 @@ struct StatusMenuMergedOverviewRefreshTests {
         #expect(!visibleProviders.contains(.opencode))
 
         controller.store.refreshingProviders.insert(.opencode)
-        controller.updatePersistentRefreshItemsEnabled()
+        controller.updateMenuFooterBars()
         #expect(controller.isRefreshActionInFlight(for: menu))
         let footer = try #require(menu.items.compactMap { $0.view as? MenuFooterBarView }.first)
         #expect(footer.isSpinning(systemImageName: "arrow.clockwise"))

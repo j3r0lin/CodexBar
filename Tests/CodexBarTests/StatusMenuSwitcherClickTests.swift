@@ -49,10 +49,10 @@ struct StatusMenuSwitcherClickTests {
 
         let menu = StatusItemMenu()
         let refreshItem = NSMenuItem()
-        refreshItem.representedObject = StatusItemController.persistentRefreshMenuItemID
+        refreshItem.view = MenuFooterBarView(width: 300, buttons: [])
         menu.addItem(refreshItem)
 
-        controller.installProviderSwitcherShortcutMonitorIfNeeded(for: menu)
+        controller.installMenuTrackingShortcutMonitorIfNeeded(for: menu)
         return (controller, menu)
     }
 
@@ -67,14 +67,14 @@ struct StatusMenuSwitcherClickTests {
         let (controller, menu) = self.makeInstalledSwitcherShortcutMonitor()
         defer { controller.releaseStatusItemsForTesting() }
 
-        #expect(controller.providerSwitcherShortcutEventMonitor != nil)
-        #expect(controller.providerSwitcherShortcutMenuID == ObjectIdentifier(menu))
+        #expect(controller.menuTrackingShortcutEventMonitor != nil)
+        #expect(controller.menuTrackingShortcutMenuID == ObjectIdentifier(menu))
 
         menu.removeAllItems()
         controller.menuDidClose(menu)
 
-        #expect(controller.providerSwitcherShortcutEventMonitor == nil)
-        #expect(controller.providerSwitcherShortcutMenuID == nil)
+        #expect(controller.menuTrackingShortcutEventMonitor == nil)
+        #expect(controller.menuTrackingShortcutMenuID == nil)
     }
 
     @Test
@@ -88,12 +88,12 @@ struct StatusMenuSwitcherClickTests {
         let (controller, menu) = self.makeInstalledSwitcherShortcutMonitor()
         defer { controller.releaseStatusItemsForTesting() }
 
-        #expect(controller.providerSwitcherShortcutEventMonitor != nil)
-        #expect(controller.providerSwitcherShortcutMenuID == ObjectIdentifier(menu))
+        #expect(controller.menuTrackingShortcutEventMonitor != nil)
+        #expect(controller.menuTrackingShortcutMenuID == ObjectIdentifier(menu))
 
         controller.forgetClosedMenu(menu)
 
-        #expect(controller.providerSwitcherShortcutEventMonitor == nil)
-        #expect(controller.providerSwitcherShortcutMenuID == nil)
+        #expect(controller.menuTrackingShortcutEventMonitor == nil)
+        #expect(controller.menuTrackingShortcutMenuID == nil)
     }
 }

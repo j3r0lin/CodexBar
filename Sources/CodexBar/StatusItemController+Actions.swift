@@ -206,7 +206,7 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
                 if tracksFirstPartyCards {
                     self.menuCardRefreshMonitor.endManualRefresh(for: firstPartyProvider)
                 }
-                self.updatePersistentRefreshItemsEnabled()
+                self.updateMenuFooterBars()
                 if completed {
                     self.scheduleCompletedManualRefreshViewportRestore(viewportRestoreRequests)
                 } else {
@@ -248,7 +248,7 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
         if tracksFirstPartyCards {
             self.menuCardRefreshMonitor.beginManualRefresh(frozenModels: frozenModels, provider: firstPartyProvider)
         }
-        self.updatePersistentRefreshItemsEnabled()
+        self.updateMenuFooterBars()
     }
 
     func manualRefreshProvider(for menu: NSMenu?) -> ProviderInstanceID? {

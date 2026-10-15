@@ -150,7 +150,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     var menuReadinessSignatures: [ObjectIdentifier: String] = [:]
     let hostedSubviewRenderSignatures = NSMapTable<NSMenu, HostedSubviewRenderSignatureBox>.weakToStrongObjects()
     /// Persistent Refresh rows are weakly tracked so their enabled state can change during menu tracking.
-    let persistentRefreshItems = NSHashTable<NSMenuItem>.weakObjects()
     var menuCardHeightCache: [MenuCardHeightCacheKey: CGFloat] = [:]
     var measuredStandardMenuWidthCache: [String: CGFloat] = [:]
     var lastMenuAdjunctReadinessSignature = ""
@@ -189,8 +188,8 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     var nativeHighlightDeferredMenuRebuilds: [ObjectIdentifier: NativeHighlightDeferredMenuRebuild] = [:]
     /// Baseline resync intent survives rebuild coalescing and any native-row or hosted-submenu deferral.
     var pendingMenuBaselineResyncs: Set<ObjectIdentifier> = []
-    var providerSwitcherShortcutEventMonitor: ProviderSwitcherShortcutEventMonitor?
-    var providerSwitcherShortcutMenuID: ObjectIdentifier?
+    var menuTrackingShortcutEventMonitor: MenuTrackingShortcutEventMonitor?
+    var menuTrackingShortcutMenuID: ObjectIdentifier?
     var overviewScrollAccumulatedDelta: CGFloat = 0
     var overviewScrollNavigationHandlerForTesting: ((OverviewScrollStep) -> Void)?
     var hasPreparedForAppShutdown = false
@@ -504,7 +503,7 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
 
     func handleObservedStoreMenuChange() {
         self.observeStoreChanges()
-        self.updatePersistentRefreshItemsEnabled()
+        self.updateMenuFooterBars()
         let rootOpenHandledReadiness = self.consumeRootOpenHandledMenuObservationIfNeeded()
         // `refreshOpenMenus` is only consulted when a menu is currently open.
         // Computing the readiness signature serializes every enabled provider's
@@ -873,8 +872,8 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     private func removeProviderStatusItem(for instanceID: ProviderInstanceID) {
         if let menu = self.providerMenus.removeValue(forKey: instanceID) {
             let menuID = ObjectIdentifier(menu)
-            if menuID == self.providerSwitcherShortcutMenuID {
-                self.removeProviderSwitcherShortcutMonitor()
+            if menuID == self.menuTrackingShortcutMenuID {
+                self.removeMenuTrackingShortcutMonitor()
             }
             self.removeMenuLifecycleState(menuID)
         }

@@ -7,7 +7,7 @@ import CodexBarCore
 /// `NSApp.nextEvent` is to call, so gating on them removes the per-pass peek cost from
 /// hover-heavy menu interaction (mouse moves never advance these counters).
 @MainActor
-final class ProviderSwitcherEventPeekGate {
+final class MenuTrackingEventPeekGate {
     private let eventTypes: [CGEventType]
     private let counterProvider: (CGEventType) -> UInt32
     private var lastCounters: [UInt32]?
@@ -84,19 +84,19 @@ final class ProviderSwitcherEventPeekGate {
 /// peek only starts once the tracking loop is confirmed pumping, and mouse clicks are not
 /// monitored at all, so the monitor never dequeues a click meant for AppKit.
 @MainActor
-final class ProviderSwitcherShortcutEventMonitor {
+final class MenuTrackingShortcutEventMonitor {
     private let callback: @MainActor (NSEvent) -> Bool
     private let observer: CFRunLoopObserver
-    private let trackingState = ProviderSwitcherMenuTrackingState()
+    private let trackingState = MenuTrackingSessionState()
     private var isActive = false
 
     /// A run-loop mode nothing else registers sources or timers in, so running the loop in
     /// this mode while polling the event queue cannot dispatch menu-session work re-entrantly.
-    private static let peekMode = RunLoop.Mode("com.steipete.codexbar.switcher-peek")
+    private static let peekMode = RunLoop.Mode("com.steipete.codexbar.menu-tracking-peek")
 
     init(
         events: NSEvent.EventTypeMask,
-        peekGate: ProviderSwitcherEventPeekGate = ProviderSwitcherEventPeekGate(
+        peekGate: MenuTrackingEventPeekGate = MenuTrackingEventPeekGate(
             eventTypes: [.keyDown, .keyUp, .scrollWheel]),
         callback: @escaping @MainActor (NSEvent) -> Bool)
     {
@@ -179,7 +179,7 @@ final class ProviderSwitcherShortcutEventMonitor {
 /// Tracks whether an `NSMenu` tracking session is currently alive, so the shortcut monitor
 /// only touches the event queue while AppKit is actually pumping it.
 @MainActor
-private final class ProviderSwitcherMenuTrackingState {
+private final class MenuTrackingSessionState {
     var isTrackingActive = false
 }
 
@@ -221,23 +221,21 @@ enum ProviderSwitcherTrackingRunLoopScheduler {
 }
 
 extension StatusItemController {
-    func installProviderSwitcherShortcutMonitorIfNeeded(for menu: NSMenu) {
+    func installMenuTrackingShortcutMonitorIfNeeded(for menu: NSMenu) {
         guard self.isMenuRefreshEnabled else {
             return
         }
-        let hasPersistentRefresh = menu.items.contains { self.isPersistentRefreshItem($0) }
-            || menu.items.contains { $0.view is MenuFooterBarView }
-        guard hasPersistentRefresh else {
+        guard menu.items.contains(where: { $0.view is MenuFooterBarView }) else {
             return
         }
 
-        self.removeProviderSwitcherShortcutMonitor()
+        self.removeMenuTrackingShortcutMonitor()
         self.resetOverviewScrollAccumulation()
         // Every tracked menu observes wheel events so a manual scroll made after Refresh
         // invalidates that refresh's pending viewport restore. Unhandled wheel events remain
         // queued for AppKit's native menu scroller.
         let eventMask: NSEvent.EventTypeMask = [.keyDown, .keyUp, .scrollWheel]
-        let monitor = ProviderSwitcherShortcutEventMonitor(
+        let monitor = MenuTrackingShortcutEventMonitor(
             events: eventMask)
         { [weak self, weak menu] event in
             guard let self,
@@ -250,14 +248,14 @@ extension StatusItemController {
             return self.handleMenuTrackingShortcutEvent(event, menu: menu)
         }
         monitor.start()
-        self.providerSwitcherShortcutEventMonitor = monitor
-        self.providerSwitcherShortcutMenuID = ObjectIdentifier(menu)
+        self.menuTrackingShortcutEventMonitor = monitor
+        self.menuTrackingShortcutMenuID = ObjectIdentifier(menu)
     }
 
-    func removeProviderSwitcherShortcutMonitor() {
-        self.providerSwitcherShortcutEventMonitor?.stop()
-        self.providerSwitcherShortcutEventMonitor = nil
-        self.providerSwitcherShortcutMenuID = nil
+    func removeMenuTrackingShortcutMonitor() {
+        self.menuTrackingShortcutEventMonitor?.stop()
+        self.menuTrackingShortcutEventMonitor = nil
+        self.menuTrackingShortcutMenuID = nil
     }
 
     @discardableResult
@@ -265,13 +263,20 @@ extension StatusItemController {
         if event.type == .scrollWheel {
             self.advanceMenuInteraction(for: menu)
         }
-        if StatusItemMenu.isPersistentRefreshShortcut(for: event),
-           menu.items.contains(where: { self.isPersistentRefreshItem($0) || $0.view is MenuFooterBarView })
+        if let action = StatusItemMenu.persistentAction(for: event),
+           menu.items.contains(where: { $0.view is MenuFooterBarView })
         {
             if let menu = menu as? StatusItemMenu {
-                menu.requestPersistentRefreshAction()
-            } else {
+                menu.performPersistentAction(action)
+                return true
+            }
+            switch action {
+            case .refresh:
                 self.performPersistentRefreshAction(in: ObjectIdentifier(menu))
+            case .settings:
+                self.performPersistentSettingsAction()
+            case .quit:
+                self.performPersistentQuitAction()
             }
             return true
         }

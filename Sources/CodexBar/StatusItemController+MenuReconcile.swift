@@ -240,9 +240,6 @@ extension StatusItemController {
         if #available(macOS 14.4, *) {
             liveItem.subtitle = newItem.subtitle
         }
-        if self.isPersistentRefreshItem(liveItem) {
-            self.persistentRefreshItems.add(liveItem)
-        }
     }
 
     private func swapMenuItemContents(_ liveItem: NSMenuItem, _ cachedItem: NSMenuItem) {
@@ -303,8 +300,5 @@ extension StatusItemController {
         swap(&liveItem.isEnabled, &cachedItem.isEnabled)
         self.applyMenuCardHighlight(liveItem, highlighted: liveRemainsHighlighted)
         (cachedItem.view as? MenuCardHighlighting)?.setHighlighted(false)
-        if self.isPersistentRefreshItem(liveItem) {
-            self.persistentRefreshItems.add(liveItem)
-        }
     }
 }

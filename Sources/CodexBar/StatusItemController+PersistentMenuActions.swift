@@ -1,27 +1,8 @@
 import AppKit
 
 extension StatusItemController {
-    /// Updates persistent Refresh rows in place while their menus are tracking.
-    func updatePersistentRefreshItemsEnabled() {
-        for item in self.persistentRefreshItems.allObjects {
-            guard self.isPersistentRefreshItem(item) else {
-                self.persistentRefreshItems.remove(item)
-                continue
-            }
-            guard let menu = item.menu else { continue }
-            let enabled = !self.isRefreshActionInFlight(for: menu)
-            if !enabled, self.highlightedMenuItems[ObjectIdentifier(menu)] === item {
-                (item.view as? MenuCardHighlighting)?.setHighlighted(false)
-                self.highlightedMenuItems.removeValue(forKey: ObjectIdentifier(menu))
-            }
-            item.isEnabled = enabled
-            (item.view as? PersistentRefreshMenuView)?.setEnabled(enabled)
-        }
-        self.updateMenuFooterBars()
-    }
-
-    /// A spinning refresh icon stands in for the old disabled Refresh row, which also dropped its
-    /// highlight so a manual refresh could restore the menu viewport.
+    /// A highlighted footer would keep the viewport restore after a manual refresh from running,
+    /// so the footer drops its highlight while its refresh icon spins.
     private func clearFooterHighlightWhileRefreshing(in menu: NSMenu) {
         guard let highlighted = self.highlightedMenuItems[ObjectIdentifier(menu)],
               highlighted.view is MenuFooterBarView

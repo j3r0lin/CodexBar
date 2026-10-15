@@ -16,23 +16,25 @@ extension StatusItemController {
         return created
     }
 
-    /// The four trailing meta actions collapse into one icon bar. Their keyboard shortcuts stay
-    /// with `StatusItemMenu.performKeyEquivalent`: a hidden item's keyEquivalent does not fire
-    /// while a menu is tracking, even with `allowsKeyEquivalentWhenHidden`.
+    static func isMenuFooterEntry(_ entry: MenuDescriptor.Entry) -> Bool {
+        guard case let .action(_, action) = entry else { return false }
+        return Self.menuFooterActions.contains(action)
+    }
+
+    /// The four trailing meta actions collapse into one icon bar after the section's other entries.
+    /// Their keyboard shortcuts stay with `StatusItemMenu.performKeyEquivalent`: a hidden item's
+    /// keyEquivalent does not fire while a menu is tracking, even with `allowsKeyEquivalentWhenHidden`.
     func appendMenuFooterBarIfNeeded(
-        entry: MenuDescriptor.Entry,
         section: MenuDescriptor.Section,
         to menu: NSMenu,
         width: CGFloat,
-        captureMenu: NSMenu?) -> Bool
+        captureMenu: NSMenu?)
     {
-        guard case let .action(_, action) = entry, Self.menuFooterActions.contains(action) else { return false }
-        guard menu.items.last?.view as? MenuFooterBarView == nil else { return true }
-
         let actions = section.entries.compactMap { entry -> MenuDescriptor.MenuAction? in
             guard case let .action(_, action) = entry, Self.menuFooterActions.contains(action) else { return nil }
             return action
         }
+        guard !actions.isEmpty else { return }
         let buttons = actions.map { action in
             self.menuFooterButton(for: action, menu: captureMenu ?? menu)
         }
@@ -43,7 +45,6 @@ extension StatusItemController {
         menu.addItem(item)
         self.menuFooterBars.add(bar)
         self.updateMenuFooterBars()
-        return true
     }
 
     private func menuFooterButton(for action: MenuDescriptor.MenuAction, menu: NSMenu?) -> MenuFooterButton {

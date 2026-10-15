@@ -76,7 +76,7 @@ extension StatusItemController {
     }
 
     private func clearShutdownMenuState() {
-        self.removeProviderSwitcherShortcutMonitor()
+        self.removeMenuTrackingShortcutMonitor()
         self.menuRefreshTasks.removeAll(keepingCapacity: false)
         self.closedMenuRebuildTasks.removeAll(keepingCapacity: false)
         self.closedMenuRebuildRequests.cancelAll()

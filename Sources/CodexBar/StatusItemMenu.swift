@@ -22,30 +22,30 @@ final class StatusItemMenu: NSMenu {
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
         if let action = Self.persistentAction(for: event) {
-            switch action {
-            case .refresh:
-                self.requestPersistentRefreshAction()
-            case .settings:
-                self.persistentActionDelegate?.performPersistentSettingsAction()
-            case .quit:
-                self.persistentActionDelegate?.performPersistentQuitAction()
-            }
+            self.performPersistentAction(action)
             return true
         }
         return super.performKeyEquivalent(with: event)
     }
 
-    private enum PersistentAction {
+    func performPersistentAction(_ action: PersistentAction) {
+        switch action {
+        case .refresh:
+            self.requestPersistentRefreshAction()
+        case .settings:
+            self.persistentActionDelegate?.performPersistentSettingsAction()
+        case .quit:
+            self.persistentActionDelegate?.performPersistentQuitAction()
+        }
+    }
+
+    enum PersistentAction {
         case refresh
         case settings
         case quit
     }
 
-    nonisolated static func isPersistentRefreshShortcut(for event: NSEvent) -> Bool {
-        self.persistentAction(for: event) == .refresh
-    }
-
-    private nonisolated static func persistentAction(for event: NSEvent) -> PersistentAction? {
+    nonisolated static func persistentAction(for event: NSEvent) -> PersistentAction? {
         guard event.type == .keyDown else { return nil }
 
         let relevantModifiers = event.modifierFlags.intersection([.command, .option, .control, .shift])

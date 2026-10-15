@@ -111,7 +111,7 @@ struct StatusItemControllerShutdownTests {
         #expect(controller.menuIdentitySignatures.isEmpty)
         #expect(controller.nativeHighlightDeferredMenuRebuilds.isEmpty)
         #expect(controller.pendingMenuBaselineResyncs.isEmpty)
-        #expect(controller.providerSwitcherShortcutEventMonitor == nil)
+        #expect(controller.menuTrackingShortcutEventMonitor == nil)
         #expect(controller.statusItem.menu == nil)
         #expect(controller.statusItems.isEmpty)
         #expect(controller.providerMenus.isEmpty)

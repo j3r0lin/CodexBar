@@ -912,7 +912,7 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `disabled hover preserves card and refresh colors`() throws {
+    func `disabled hover preserves card colors`() throws {
         StatusItemController.setMenuRefreshEnabledForTesting(false)
         let previousRendering = StatusItemController.menuCardRenderingEnabled
         StatusItemController.menuCardRenderingEnabled = true
@@ -935,14 +935,12 @@ extension StatusMenuTests {
             onClick: { clicks += 1 })
         let provider = controller.makeMenuCardItem(
             Text("Codex"), id: "provider-codex", width: 300, onClick: { clicks += 1 })
-        let refresh = controller.makePersistentRefreshItem(title: "Refresh", menu: menu, width: 300)
-        for item in [overview, provider, refresh] {
+        for item in [overview, provider] {
             menu.addItem(item)
         }
         let overviewView = try #require(overview.view as? MenuRowContainerView)
         let providerView = try #require(provider.view as? MenuRowContainerView)
         let selection = try #require(overviewView.subviews.compactMap { $0 as? NSVisualEffectView }.first)
-        let refreshSelection = try #require(refresh.view?.subviews.compactMap { $0 as? NSVisualEffectView }.first)
 
         controller.menu(menu, willHighlight: overview)
         #expect(controller.highlightedMenuItems[ObjectIdentifier(menu)] === overview)
@@ -954,11 +952,6 @@ extension StatusMenuTests {
         #expect(!providerView.highlightState.isHighlighted)
         #expect(providerView._test_simulateRuntimeClick())
         #expect(clicks == 2)
-        controller.menu(menu, willHighlight: refresh)
-        #expect(refreshSelection.isHidden)
-
-        controller.menu(menu, willHighlight: refresh, eventType: .keyDown)
-        #expect(!refreshSelection.isHidden)
         controller.menu(menu, willHighlight: overview, eventType: .keyDown)
         #expect(selection.layer?.opacity == 1)
         controller.menu(menu, willHighlight: provider, eventType: .keyDown)
@@ -977,7 +970,6 @@ extension StatusMenuTests {
             onClick: {}))
         scratch.addItem(controller.makeMenuCardItem(
             Text("Updated Codex"), id: "provider-codex", width: 300, onClick: {}))
-        scratch.addItem(controller.makePersistentRefreshItem(title: "Refresh", menu: menu, width: 300))
         controller.reconcileMenuContent(menu, fromIndex: 0, shapes: shapes, with: scratch)
         let updatedView = try #require(menu.items[1].view as? MenuRowContainerView)
         #expect(controller.highlightedMenuItems[ObjectIdentifier(menu)] === menu.items[1])
