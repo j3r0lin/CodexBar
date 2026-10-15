@@ -2617,3 +2617,4 @@
 "Weekly limit" = "ขีดจำกัดรายสัปดาห์";
 "account_detail_usage_title" = "การใช้งาน %@";
 "account_detail_used" = "ใช้ไป %@";
+"account_detail_history" = "ประวัติ";

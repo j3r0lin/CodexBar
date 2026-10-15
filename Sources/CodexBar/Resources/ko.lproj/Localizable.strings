@@ -2583,3 +2583,4 @@
 "Weekly limit" = "주간 한도";
 "account_detail_usage_title" = "%@ 사용량";
 "account_detail_used" = "%@ 사용됨";
+"account_detail_history" = "기록";

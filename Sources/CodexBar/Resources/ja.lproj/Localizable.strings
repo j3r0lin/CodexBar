@@ -2615,3 +2615,4 @@
 "Weekly limit" = "週間の上限";
 "account_detail_usage_title" = "%@ の使用状況";
 "account_detail_used" = "%@ 使用済み";
+"account_detail_history" = "履歴";

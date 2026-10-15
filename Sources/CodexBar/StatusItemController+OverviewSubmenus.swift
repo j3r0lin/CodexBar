@@ -14,10 +14,16 @@ extension StatusItemController {
         width: CGFloat,
         claudeAccountID: ProviderAccountIdentity? = nil) -> NSMenu
     {
+        // A magpie account row holds one account; the provider-level history and actions are not its own.
+        let history = claudeAccountID == nil ? self.overviewDetailHistory(for: provider) : []
         let submenu = OverviewDetailMenu(controller: self) { [weak self] submenu in
-            // A magpie account row holds one account; the provider-level history and actions are not its own.
             guard let self, claudeAccountID == nil else { return }
-            let chartID = self.appendOverviewRowChart(to: submenu, provider: provider, model: model, width: width)
+            let chartID = self.appendOverviewRowChart(
+                to: submenu,
+                provider: provider,
+                model: model,
+                width: width,
+                includesUsageHistory: history.isEmpty)
             self.appendOverviewRowActions(to: submenu, provider: provider, width: width, inlineChartID: chartID)
         }
         submenu.autoenablesItems = false
@@ -29,7 +35,8 @@ extension StatusItemController {
                 providerName: providerName,
                 accountName: accountName,
                 snapshot: snapshot,
-                width: width),
+                width: width,
+                history: history),
             id: "overviewDetail-\(providerName)" + (accountName.map { "-\($0)" } ?? ""),
             width: width,
             // The pool holds the parent menu's row views; a detail card built first would take one of them.
@@ -41,14 +48,28 @@ extension StatusItemController {
         return submenu
     }
 
+    /// The card draws usage history itself, so the full usage-history chart is left out when it has some.
+    private func overviewDetailHistory(for provider: UsageProvider) -> [Double?] {
+        guard self.store.supportsPlanUtilizationHistory(for: provider),
+              !self.store.shouldHidePlanUtilizationMenuItem(for: provider)
+        else { return [] }
+        let histories = self.store.planUtilizationHistorySelection(for: provider, readOnly: true).histories
+        return AccountUsageDetailView.dailyPeaks(histories, now: Date())
+    }
+
     /// Appends the row's history chart inline and returns its chart identifier, or nil when there is none.
     private func appendOverviewRowChart(
         to submenu: NSMenu,
         provider: UsageProvider,
         model: UsageMenuCardView.Model,
-        width: CGFloat) -> String?
+        width: CGFloat,
+        includesUsageHistory: Bool) -> String?
     {
-        guard let chartMenu = self.makeOverviewRowSubmenu(provider: provider, model: model, width: width)
+        guard let chartMenu = self.makeOverviewRowSubmenu(
+            provider: provider,
+            model: model,
+            width: width,
+            includesUsageHistory: includesUsageHistory)
         else { return nil }
         self.hydrateHostedSubviewMenuIfNeeded(chartMenu, width: width)
         let chartItems = chartMenu.items
@@ -120,7 +141,8 @@ extension StatusItemController {
     func makeOverviewRowSubmenu(
         provider: UsageProvider,
         model: UsageMenuCardView.Model,
-        width: CGFloat) -> NSMenu?
+        width: CGFloat,
+        includesUsageHistory: Bool = true) -> NSMenu?
     {
         if provider == .openai,
            self.settings.costSummaryShowsSubmenu(for: provider),
@@ -143,7 +165,7 @@ extension StatusItemController {
         {
             return submenu
         }
-        if let submenu = self.makeUsageHistorySubmenu(provider: provider, width: width) {
+        if includesUsageHistory, let submenu = self.makeUsageHistorySubmenu(provider: provider, width: width) {
             return submenu
         }
         return self.makeStorageBreakdownSubmenu(provider: provider, width: width)

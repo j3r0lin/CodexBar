@@ -1378,11 +1378,11 @@ extension StatusMenuTests {
         let ids = self.representedIDs(in: menu)
         let overviewRows = ids.filter { $0.hasPrefix("overviewRow-") }
         #expect(Set(overviewRows) == Set(enabledProviders.map { "overviewRow-\($0.rawValue)" }))
-        // The list is the top of the menu under its column captions: one separator between providers,
-        // one before the actions.
+        // The list is the top of the menu under its column captions; providers sit in their own blocks,
+        // so the only separator is the one before the actions.
         #expect(ids.first == "overviewColumnCaptions")
         #expect(ids.dropFirst().first?.hasPrefix("overviewRow-") == true)
-        #expect(menu.items.count(where: \.isSeparatorItem) == overviewRows.count)
+        #expect(menu.items.count(where: \.isSeparatorItem) == 1)
     }
 
     @Test

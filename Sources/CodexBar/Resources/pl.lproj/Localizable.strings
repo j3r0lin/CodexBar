@@ -2620,3 +2620,4 @@
 "Weekly limit" = "Limit tygodniowy";
 "account_detail_usage_title" = "Użycie %@";
 "account_detail_used" = "Wykorzystano %@";
+"account_detail_history" = "Historia";

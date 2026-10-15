@@ -2620,3 +2620,4 @@
 "Weekly limit" = "Haftalık limit";
 "account_detail_usage_title" = "%@ kullanımı";
 "account_detail_used" = "%@ kullanıldı";
+"account_detail_history" = "Geçmiş";

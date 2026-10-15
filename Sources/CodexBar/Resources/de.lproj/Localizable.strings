@@ -2613,3 +2613,4 @@
 "Weekly limit" = "Wochenlimit";
 "account_detail_usage_title" = "%@-Nutzung";
 "account_detail_used" = "%@ genutzt";
+"account_detail_history" = "Verlauf";

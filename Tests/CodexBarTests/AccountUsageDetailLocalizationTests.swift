@@ -30,14 +30,12 @@ struct AccountUsageDetailLocalizationTests {
     }
 
     @Test
-    func `used and reset lines are localized`() {
+    func `reset lines are localized`() {
         let reset = Date(timeIntervalSince1970: 1_000_000)
         CodexBarLocalizationOverride.$appLanguage.withValue("en") {
-            #expect(AccountUsageDetailView.usedText(92) == "92% Used")
             #expect(AccountUsageDetailView.resetText(reset).hasPrefix("Resets "))
         }
         CodexBarLocalizationOverride.$appLanguage.withValue("zh-Hans") {
-            #expect(AccountUsageDetailView.usedText(92) == "已用 92%")
             #expect(AccountUsageDetailView.resetText(reset).hasPrefix("重置于 "))
         }
     }
@@ -63,8 +61,13 @@ struct AccountUsageDetailLocalizationTests {
             updatedAt: now)
         let claude = UsageSnapshot(
             primary: self.window(minutes: 300, used: 38, resetsAt: now.addingTimeInterval(2 * 3600)),
-            secondary: self.window(minutes: 7 * 1440, used: 61, resetsAt: reset),
+            secondary: self.window(minutes: 7 * 1440, used: 95, resetsAt: reset),
             updatedAt: now)
+        let history: [Double?] = (0..<30).map { (day: Int) -> Double? in
+            if day % 7 == 3 { return nil }
+            let lift = day > 22 ? 20 : 0
+            return Double(10 + (day * 37) % 60 + lift)
+        }
         let view = HStack(alignment: .top, spacing: 24) {
             AccountUsageDetailView(provider: .grok, providerName: "Grok", snapshot: grok, width: 340, now: now)
             AccountUsageDetailView(
@@ -73,6 +76,7 @@ struct AccountUsageDetailLocalizationTests {
                 accountName: "claude-1",
                 snapshot: claude,
                 width: 340,
+                history: history,
                 now: now)
         }
         .padding(24)
@@ -90,13 +94,13 @@ struct AccountUsageDetailLocalizationTests {
                         Text("\(Int(used))%").frame(width: 40, alignment: .trailing)
                         UsageBar(
                             used: used,
-                            color: Color(nsColor: UsageSeverityPalette.color(usedPercent: used)),
+                            color: OverviewPalette.color(usedPercent: used),
                             trackColor: OverviewCompactAccountRow.trackColor,
                             height: 5)
                             .frame(width: 41)
                         UsageBar(
                             used: used,
-                            color: Color(nsColor: UsageSeverityPalette.color(usedPercent: used)),
+                            color: OverviewPalette.color(usedPercent: used),
                             trackColor: Color.white.opacity(0.16),
                             height: 6)
                             .frame(width: 300)
@@ -116,5 +120,34 @@ struct AccountUsageDetailLocalizationTests {
             let png = try #require(bitmap.representation(using: .png, properties: [:]))
             try png.write(to: URL(fileURLWithPath: dir).appendingPathComponent("detail-cards.png"))
         }
+    }
+}
+
+extension AccountUsageDetailLocalizationTests {
+    @Test
+    func `daily peaks keep the highest reading per day of the longest window`() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(TimeZone(identifier: "UTC"))
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        func entry(daysAgo: Double, _ used: Double) -> PlanUtilizationHistoryEntry {
+            PlanUtilizationHistoryEntry(
+                capturedAt: now.addingTimeInterval(-daysAgo * 86400),
+                usedPercent: used,
+                resetsAt: nil)
+        }
+        let weekly = PlanUtilizationSeriesHistory(
+            name: "weekly",
+            windowMinutes: 10080,
+            entries: [entry(daysAgo: 0, 20), entry(daysAgo: 0, 35), entry(daysAgo: 2, 50), entry(daysAgo: 40, 90)])
+        let session = PlanUtilizationSeriesHistory(
+            name: "session",
+            windowMinutes: 300,
+            entries: [entry(daysAgo: 1, 99)])
+        let peaks = AccountUsageDetailView.dailyPeaks([session, weekly], now: now, calendar: calendar)
+        #expect(peaks.count == 30)
+        #expect(peaks.last == 35)
+        #expect(peaks[27] == 50)
+        #expect(peaks[28] == nil)
+        #expect(AccountUsageDetailView.dailyPeaks([], now: now).isEmpty)
     }
 }

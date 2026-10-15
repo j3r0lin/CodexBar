@@ -27,12 +27,20 @@ struct OverviewRowRenderTests {
             let weekly: RateWindow
         }
         let accounts = [
-            Account(name: "claude-1", session: window(300, 27, 180), weekly: window(10080, 3, 9960)),
-            Account(name: "claude", session: window(300, 29, 20), weekly: window(10080, 99, 300)),
-            Account(name: "claude-2", session: window(300, 0, 70), weekly: window(10080, 93, 1740)),
+            Account(name: "claude-1", session: window(300, 46, 18), weekly: window(10080, 95, 598)),
+            Account(name: "claude", session: window(300, 0, 70), weekly: window(10080, 84, 2340)),
+            Account(name: "claude-2", session: window(300, 2, 70), weekly: window(10080, 100, 178)),
         ]
         let view = VStack(alignment: .leading, spacing: 0) {
-            OverviewAccountGroupHeading(title: "Claude · 3 accounts", width: width, showsColumnCaptions: true)
+            OverviewColumnCaptions(width: width)
+            OverviewCompactAccountRow(
+                name: "Codex",
+                shortWindow: window(300, 96, 140),
+                longWindow: window(10080, 15, 9900),
+                width: width,
+                namesProvider: true,
+                now: now)
+            OverviewAccountGroupHeading(title: "Claude · 3 accounts", width: width)
             ForEach(accounts.indices, id: \.self) { index in
                 let account = accounts[index]
                 OverviewCompactAccountRow(
@@ -41,34 +49,26 @@ struct OverviewRowRenderTests {
                     longWindow: account.weekly,
                     width: width,
                     indent: 10,
+                    block: index == accounts.count - 1 ? .bottom : .middle,
                     now: now)
             }
-            Divider().padding(.horizontal, 12).padding(.vertical, 4)
             OverviewCompactAccountRow(
                 name: "Kimi Code",
-                shortWindow: window(300, 10, 54),
-                longWindow: window(10080, 11, 5580),
+                shortWindow: window(300, 8, 5880),
+                longWindow: window(10080, 10, 52),
                 width: width,
+                namesProvider: true,
                 now: now)
-            Divider().padding(.horizontal, 12).padding(.vertical, 4)
             OverviewCompactAccountRow(
                 name: "Grok",
                 shortWindow: nil,
-                longWindow: window(10080, 92, 6960),
+                longWindow: window(10080, 90, 6960),
                 width: width,
-                now: now)
-            Divider().padding(.horizontal, 12).padding(.vertical, 4)
-            // A list that opens on a plain row keeps the captions on their own line.
-            OverviewColumnCaptions(width: width)
-            OverviewCompactAccountRow(
-                name: "Kimi Code",
-                shortWindow: window(300, 3, 54),
-                longWindow: window(10080, 2, 5580),
-                width: width,
+                namesProvider: true,
                 now: now)
         }
         .padding(.vertical, 6)
-        .background(Color(white: 0.16))
+        .background(Color(red: 0.14, green: 0.14, blue: 0.16))
         .environment(\.colorScheme, .dark)
         let renderer = ImageRenderer(content: view)
         renderer.scale = 2

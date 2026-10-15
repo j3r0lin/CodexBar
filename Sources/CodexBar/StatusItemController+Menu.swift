@@ -477,35 +477,33 @@ extension StatusItemController {
         // A provider with several accounts gets one grey caption; a lone account is its own row.
         let accountCounts = Dictionary(rows.map { ($0.provider, 1) }, uniquingKeysWith: +)
         let hidePersonalInfo = self.settings.hidePersonalInfo
-        // The column captions share the first heading's line; a list that opens on a plain row has no
-        // free line, so the captions get one of their own.
-        let opensWithHeading = rows.first.map { (accountCounts[$0.provider] ?? 1) > 1 } ?? false
-        if !opensWithHeading {
-            let captions = self.makeMenuCardItem(
-                OverviewColumnCaptions(width: menuWidth),
-                id: "overviewColumnCaptions",
-                width: menuWidth,
-                heightCacheScope: "overviewColumnCaptions",
-                heightCacheFingerprint: "captions")
-            captions.isEnabled = false
-            menu.addItem(captions)
-        }
+        let captions = self.makeMenuCardItem(
+            OverviewColumnCaptions(width: menuWidth),
+            id: "overviewColumnCaptions",
+            width: menuWidth,
+            heightCacheScope: "overviewColumnCaptions",
+            heightCacheFingerprint: "captions")
+        captions.isEnabled = false
+        menu.addItem(captions)
         for (index, row) in rows.enumerated() {
             let isGrouped = (accountCounts[row.provider] ?? 1) > 1
             let startsProvider = index == 0 || rows[index - 1].provider != row.provider
+            let endsProvider = index == rows.count - 1 || rows[index + 1].provider != row.provider
             let providerName = L(ProviderDescriptorRegistry.descriptor(for: row.provider).metadata.displayName)
             let identifier = "\(Self.overviewRowIdentifierPrefix)\(row.provider.rawValue)"
                 + (row.claudeAccountID.map { "#\($0.opaqueID)" } ?? "")
-            // Compact rows of one provider read as a group; only a provider change gets a separator.
-            if index > 0, startsProvider {
-                menu.addItem(.separator())
+            // Each provider is one tinted block; a grouped provider's heading opens its block.
+            let block: OverviewBlockPosition = switch (isGrouped || !startsProvider, endsProvider) {
+            case (false, true): .single
+            case (false, false): .top
+            case (true, true): .bottom
+            case (true, false): .middle
             }
             if isGrouped, startsProvider {
                 let heading = self.makeMenuCardItem(
                     OverviewAccountGroupHeading(
                         title: "\(providerName) · " + L("%lld accounts", accountCounts[row.provider] ?? 0),
-                        width: menuWidth,
-                        showsColumnCaptions: index == 0),
+                        width: menuWidth),
                     id: "\(Self.overviewGroupHeadingIdentifierPrefix)\(row.provider.rawValue)",
                     width: menuWidth,
                     heightCacheScope: "overviewAccountGroupHeading",
@@ -530,11 +528,13 @@ extension StatusItemController {
                     longWindow: OverviewCompactAccountRow.slots(of: row.snapshot).long,
                     width: menuWidth,
                     indent: isGrouped ? 10 : 0,
+                    namesProvider: !isGrouped,
+                    block: block,
                     errorText: row.errorText),
                 id: identifier,
                 width: menuWidth,
                 heightCacheScope: "overviewCompactRow",
-                heightCacheFingerprint: "compact",
+                heightCacheFingerprint: "compact-\(block)",
                 submenu: submenu,
                 showsSubmenuIndicator: false,
                 usesGPUSelection: true)

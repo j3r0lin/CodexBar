@@ -1,6 +1,66 @@
 import CodexBarCore
 import SwiftUI
 
+/// Overview colours: one accent for normal readings, orange from 70% and red from 90%, for both the bar
+/// and its number. Provider and group names use the accent too.
+enum OverviewPalette {
+    static let accent = Color(red: 0x4F / 255, green: 0xD1 / 255, blue: 0xE8 / 255)
+    static let warning = Color(red: 1, green: 0xB3 / 255, blue: 0x40 / 255)
+    static let critical = Color(red: 1, green: 0x5A / 255, blue: 0x4F / 255)
+    static let caption = Color(red: 0x6B / 255, green: 0x71 / 255, blue: 0x80 / 255)
+
+    static func color(usedPercent used: Double) -> Color {
+        if used >= 90 { return self.critical }
+        if used >= 70 { return self.warning }
+        return self.accent
+    }
+}
+
+/// Where a menu item sits in its provider's block: every block is one tinted rounded panel, drawn piecewise
+/// by the items it spans because each item is its own view.
+enum OverviewBlockPosition {
+    case single
+    case top
+    case middle
+    case bottom
+
+    var roundsTop: Bool {
+        self == .single || self == .top
+    }
+
+    var roundsBottom: Bool {
+        self == .single || self == .bottom
+    }
+}
+
+extension View {
+    /// Draws this item's part of its provider block, leaving a 3pt gap above the first and below the last
+    /// item so blocks read as separate without separator lines.
+    func overviewBlock(_ position: OverviewBlockPosition) -> some View {
+        let radius: CGFloat = 8
+        return self
+            .background(
+                UnevenRoundedRectangle(
+                    topLeadingRadius: position.roundsTop ? radius : 0,
+                    bottomLeadingRadius: position.roundsBottom ? radius : 0,
+                    bottomTrailingRadius: position.roundsBottom ? radius : 0,
+                    topTrailingRadius: position.roundsTop ? radius : 0)
+                    .fill(Color.white.opacity(0.035)))
+            .padding(.horizontal, OverviewCompactAccountRow.blockInset)
+            .padding(.top, position.roundsTop ? 3 : 0)
+            .padding(.bottom, position.roundsBottom ? 3 : 0)
+    }
+
+    /// Accent-coloured, upper-case, slightly tracked label used for provider and group names.
+    func overviewSectionTitleStyle() -> some View {
+        self
+            .font(.system(size: 11, weight: .semibold))
+            .tracking(0.66)
+            .textCase(.uppercase)
+            .foregroundStyle(OverviewPalette.accent)
+    }
+}
+
 /// One Overview line per account: the name, then a lane per window, each with its own bar,
 /// percentage and reset time.
 struct OverviewCompactAccountRow: View {
@@ -10,29 +70,33 @@ struct OverviewCompactAccountRow: View {
     let width: CGFloat
     /// Account rows under a provider heading sit further right than a lone provider row.
     var indent: CGFloat = 0
+    /// A lone provider row names its provider in the section-title style; an account row names its account.
+    var namesProvider = false
+    var block: OverviewBlockPosition = .single
     /// A provider that only has an error shows it in place of its usage.
     var errorText: String?
     var now = Date()
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
     /// Every row, and the caption line above them, puts the same element in the same column, so each
-    /// part is sized here and the bars take whatever the row has left: at 340pt that is 41pt per bar.
-    static let nameColumn: CGFloat = 62
-    /// Fits "100%", which measures 33.8pt at 12pt.
-    static let percentWidth: CGFloat = 36
-    static let resetWidth: CGFloat = 38
-    static let columnSpacing: CGFloat = 8
+    /// part is sized here and the bars take whatever the row has left: at 340pt that is 39pt per bar.
+    static let blockInset: CGFloat = 4
+    static let horizontalPadding: CGFloat = 6
+    static let nameColumn: CGFloat = 66
+    /// Fits "100%" at 15pt semibold with monospaced digits.
+    static let percentWidth: CGFloat = 43
+    /// Fits "6d22h" at 10pt.
+    static let resetWidth: CGFloat = 32
+    static let columnSpacing: CGFloat = 6
     /// The number sits right after its bar so the two read as one reading.
-    static let barPercentGap: CGFloat = 4
+    static let barPercentGap: CGFloat = 3
     static let percentResetGap: CGFloat = 4
-    static let horizontalPadding: CGFloat = 8
-    /// With 4pt above and below, a row is 22pt tall. A row whose lane is blank keeps this height.
-    private static let lineHeight: CGFloat = 14
+    /// With 3pt above and below, a row is 24pt tall inside its block. A blank lane keeps this height.
+    private static let lineHeight: CGFloat = 18
 
     var body: some View {
         HStack(spacing: Self.columnSpacing) {
-            Text(self.name)
-                .font(.system(size: 12, weight: .medium))
+            self.nameLabel
                 .lineLimit(1)
                 .frame(width: Self.nameColumn - self.indent, alignment: .leading)
                 .padding(.leading, self.indent)
@@ -49,8 +113,18 @@ struct OverviewCompactAccountRow: View {
         }
         .frame(height: Self.lineHeight)
         .padding(.horizontal, Self.horizontalPadding)
-        .padding(.vertical, 4)
+        .padding(.vertical, 3)
+        .overviewBlock(self.block)
         .frame(width: self.width, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var nameLabel: some View {
+        if self.namesProvider {
+            Text(self.name).overviewSectionTitleStyle()
+        } else {
+            Text(self.name).font(.system(size: 12, weight: .medium))
+        }
     }
 
     /// A window the provider did not report leaves its lane blank, but the lane keeps its half of the
@@ -58,9 +132,9 @@ struct OverviewCompactAccountRow: View {
     private func lane(window: RateWindow?) -> some View {
         HStack(spacing: 0) {
             if let used = Self.used(window) {
-                self.bar(used: used)
+                UsageBar(used: used, color: Self.severityColor(used), trackColor: Self.trackColor, height: 5)
                 Text("\(Int(used.rounded()))%")
-                    .font(.system(size: 12).monospacedDigit())
+                    .font(.system(size: 15, weight: .semibold).monospacedDigit())
                     .foregroundStyle(Self.severityColor(used))
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
@@ -78,17 +152,13 @@ struct OverviewCompactAccountRow: View {
         .frame(maxWidth: .infinity)
     }
 
-    private func bar(used: Double) -> some View {
-        UsageBar(used: used, color: Self.severityColor(used), trackColor: Self.trackColor, height: 5)
-    }
-
     /// Menus are pinned dark, so the empty part of a bar is drawn light enough to read there.
-    static let trackColor = Color.white.opacity(0.25)
+    static let trackColor = Color.white.opacity(0.18)
 
     /// The bar and its number share one colour, and a highlighted row keeps it: the selection is painted
     /// behind the row, so the reading survives the highlight.
-    private static func severityColor(_ used: Double) -> Color {
-        Color(nsColor: UsageSeverityPalette.color(usedPercent: used))
+    static func severityColor(_ used: Double) -> Color {
+        OverviewPalette.color(usedPercent: used)
     }
 
     private func resetText(_ window: RateWindow?) -> String {
@@ -124,80 +194,45 @@ struct OverviewCompactAccountRow: View {
     }
 }
 
-/// Grey caption above a provider's account rows. It is not a row: no usage, no highlight, no action.
-/// The first heading also carries the "5h" and "7d" column captions, each over its lane's percentage
-/// column: the title is wider than the name column, so a caption over the bar would collide with it.
+/// Title at the top of a provider's block when it has several accounts. It is not a row: no usage,
+/// no highlight, no action.
 struct OverviewAccountGroupHeading: View {
     let title: String
     let width: CGFloat
-    var showsColumnCaptions = false
 
     var body: some View {
-        ZStack(alignment: .leading) {
-            if self.showsColumnCaptions {
-                HStack(spacing: OverviewCompactAccountRow.columnSpacing) {
-                    Color.clear.frame(width: OverviewCompactAccountRow.nameColumn, height: 1)
-                    OverviewColumnCaptions.laneCaption("5h", overBar: false)
-                    OverviewColumnCaptions.laneCaption("7d", overBar: false)
-                }
-            }
-            Text(self.title)
-                .lineLimit(1)
-                .frame(maxWidth: self.showsColumnCaptions ? self.titleWidth : .infinity, alignment: .leading)
-        }
-        .font(.system(size: 11))
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, OverviewCompactAccountRow.horizontalPadding)
-        .padding(.top, 4)
-        .padding(.bottom, 0)
-        .frame(width: self.width, alignment: .leading)
-    }
-
-    /// Room left before the first caption, with a 6pt gap.
-    private var titleWidth: CGFloat {
-        let row = OverviewCompactAccountRow.self
-        let lanes = self.width - row.horizontalPadding * 2 - row.nameColumn - row.columnSpacing * 2
-        return row.nameColumn + row.columnSpacing + lanes / 2 - OverviewColumnCaptions.trailingColumns - 6
+        Text(self.title)
+            .overviewSectionTitleStyle()
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, OverviewCompactAccountRow.horizontalPadding)
+            .padding(.top, 6)
+            .padding(.bottom, 1)
+            .overviewBlock(.top)
+            .frame(width: self.width, alignment: .leading)
     }
 }
 
-/// One grey line above the Overview list naming the two window columns, laid out like a row so each
-/// caption sits over the start of its bars. Used when the list does not open with a group heading.
+/// One line at the top of the Overview list naming the two window columns, each centred over its lane.
+/// It sits on its own line because an upper-case group title is wider than the name column and would
+/// run into a caption on the same line.
 struct OverviewColumnCaptions: View {
     let width: CGFloat
-
-    /// The percentage and reset columns that follow a bar, with their gaps.
-    static let trailingColumns = OverviewCompactAccountRow.barPercentGap + OverviewCompactAccountRow.percentWidth
-        + OverviewCompactAccountRow.percentResetGap + OverviewCompactAccountRow.resetWidth
 
     var body: some View {
         HStack(spacing: OverviewCompactAccountRow.columnSpacing) {
             Color.clear.frame(width: OverviewCompactAccountRow.nameColumn, height: 1)
-            Self.laneCaption("5h", overBar: true)
-            Self.laneCaption("7d", overBar: true)
+            Text("5H").frame(maxWidth: .infinity)
+            Text("7D").frame(maxWidth: .infinity)
         }
-        .font(.system(size: 10))
-        .foregroundStyle(.secondary)
+        .font(.system(size: 10, weight: .medium))
+        .tracking(0.6)
+        .foregroundStyle(OverviewPalette.caption)
+        .lineLimit(1)
         .padding(.horizontal, OverviewCompactAccountRow.horizontalPadding)
         .padding(.top, 4)
+        .padding(.horizontal, OverviewCompactAccountRow.blockInset)
         .frame(width: self.width, alignment: .leading)
-    }
-
-    static func laneCaption(_ text: String, overBar: Bool) -> some View {
-        HStack(spacing: 0) {
-            if overBar {
-                Text(text).font(.system(size: 10)).lineLimit(1)
-                Spacer(minLength: 0)
-            } else {
-                Spacer(minLength: 0)
-                Text(text)
-                    .font(.system(size: 10))
-                    .lineLimit(1)
-                    .padding(.leading, OverviewCompactAccountRow.barPercentGap)
-                    .frame(width: Self.trailingColumns, alignment: .leading)
-            }
-        }
-        .frame(maxWidth: .infinity)
     }
 }
 

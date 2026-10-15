@@ -2593,3 +2593,4 @@
 "Weekly limit" = "每週限額";
 "account_detail_usage_title" = "%@ 用量";
 "account_detail_used" = "已用 %@";
+"account_detail_history" = "歷史";

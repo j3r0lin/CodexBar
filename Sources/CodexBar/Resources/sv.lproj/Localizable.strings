@@ -2614,3 +2614,4 @@
 "Weekly limit" = "Veckogräns";
 "account_detail_usage_title" = "Användning av %@";
 "account_detail_used" = "%@ använt";
+"account_detail_history" = "Historik";

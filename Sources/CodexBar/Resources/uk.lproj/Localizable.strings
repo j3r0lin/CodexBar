@@ -2615,3 +2615,4 @@
 "Weekly limit" = "Тижневий ліміт";
 "account_detail_usage_title" = "Використання %@";
 "account_detail_used" = "Використано %@";
+"account_detail_history" = "Історія";
