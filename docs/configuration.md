@@ -375,8 +375,9 @@ The open menu's persistent **Refresh** row uses a text label aligned with the ot
 
 **Settings → General → Provider Switcher Shortcuts…** edits the same mapping as `switcherShortcuts` above.
 Defaults are `left`/`right` for `previous`/`next` and `cmd+1` through `cmd+9` for `select1` through `select9`.
-Selection refers to positions in the visible switcher, including Overview when present. These are local
-menu shortcuts, not global provider-opening hotkeys.
+These are local menu shortcuts, not global provider-opening hotkeys. The merged menu no longer has a provider
+switcher (it opens on the Overview list, with details in hover submenus), so the mapping is still stored and
+transferred but currently has no effect.
 
 Combine `ctrl`, `alt`, `shift` and `cmd` with an ASCII letter, digit, `left` or `right`; letters and digits
 require Command, Control or Option. `none` disables an action. Modifier order and letter case are normalized.

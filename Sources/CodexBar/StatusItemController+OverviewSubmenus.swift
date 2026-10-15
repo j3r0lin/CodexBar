@@ -59,40 +59,4 @@ extension StatusItemController {
         return self.makeStorageBreakdownSubmenu(provider: provider, width: width)
     }
 
-    @objc func selectOverviewProvider(_ sender: NSMenuItem) {
-        guard let represented = sender.representedObject as? String,
-              represented.hasPrefix(Self.overviewRowIdentifierPrefix)
-        else {
-            return
-        }
-        let parts = represented.dropFirst(Self.overviewRowIdentifierPrefix.count)
-            .split(separator: "#", maxSplits: 1)
-        let rawProvider = parts.first.map(String.init) ?? ""
-        if parts.count == 2,
-           let account = self.store.claudeAccountSource.accounts.first(where: { $0.id.opaqueID == parts[1] })
-        {
-            self.selectClaudeAccountTab(account.id)
-        }
-        guard let provider = UsageProvider(rawValue: rawProvider),
-              let menu = sender.menu
-        else {
-            return
-        }
-
-        self.selectOverviewProvider(provider, menu: menu)
-    }
-
-    func selectOverviewProvider(_ provider: UsageProvider, menu: NSMenu) {
-        if !self.settings.mergedMenuLastSelectedWasOverview, self.selectedMenuProvider == provider.instanceID { return }
-        self.preservingMergedSwitcherContentCachesDuringInvalidation {
-            self.settings.mergedMenuLastSelectedWasOverview = false
-            self.lastMergedSwitcherSelection = .provider(provider.instanceID)
-            self.selectedMenuProvider = provider.instanceID
-            self.lastMenuProvider = provider.instanceID
-            self.refreshProviderSelectionDependentUI(deferRendering: true)
-        }
-        // Custom-view clicks stay open and rebuild next turn. Standard menu-item activation can close;
-        // menuWillOpen then renders the saved provider without doing structural work inside the action.
-        self.requestProviderSwitcherMenuRebuild(menu, provider: provider)
-    }
 }

@@ -62,8 +62,6 @@ struct PerplexityCreditPercentTests {
         let automatic = MenuBarMetricWindowResolver.rateWindow(
             preference: .automatic, provider: .perplexity, snapshot: snapshot, supportsAverage: false)
         #expect(automatic?.remainingPercent == 75)
-        #expect(StatusItemController.switcherWeeklyMetricPercent(
-            for: .perplexity, snapshot: snapshot, showUsed: showUsed) == (showUsed ? 25 : 75))
         let data = self.renderData(provider: .perplexity, snapshot: snapshot)
         for (preference, expected): (MenuBarPercentWindowPreference, String) in [
             (.session, showUsed ? "C 100%" : "C 0%"),

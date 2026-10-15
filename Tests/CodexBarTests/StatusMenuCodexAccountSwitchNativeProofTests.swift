@@ -183,7 +183,7 @@ private final class CodexAccountSwitchTrackingDriver {
     }
 
     private func record(label: String, text: String) {
-        var receipt = MergedMenuScrollingSwapNativeProofTests.phaseReceipt(
+        var receipt = MergedMenuProofGeometry.phaseReceipt(
             menu: self.menu, label: label, settings: self.fixture.settings)
         receipt["trackingReturned"] = self.trackingReturned
         receipt["selectedAccount"] = self.fixture.settings.codexVisibleAccountProjection.activeVisibleAccountID
@@ -195,7 +195,7 @@ private final class CodexAccountSwitchTrackingDriver {
 
     private func capture(label: String) throws -> String {
         let menuURL = self.output.appendingPathComponent("\(label)-menu-\(UUID().uuidString).png")
-        MergedMenuScrollingSwapNativeProofTests.capture(menu: self.menu, to: menuURL)
+        MergedMenuProofGeometry.capture(menu: self.menu, to: menuURL)
         let image = try XCTUnwrap(NSImage(contentsOf: menuURL)?.cgImage(forProposedRect: nil, context: nil, hints: nil))
         try Data(contentsOf: menuURL).write(
             to: self.output.appendingPathComponent("\(label)-menu.png"), options: .atomic)

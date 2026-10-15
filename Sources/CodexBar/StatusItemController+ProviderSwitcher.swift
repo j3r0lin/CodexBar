@@ -1,11 +1,6 @@
 import AppKit
 import CodexBarCore
 
-struct PendingProviderSwitcherRebuild {
-    let menu: NSMenu
-    let provider: UsageProvider?
-}
-
 /// Skips the event-queue peek on run-loop passes where no event of the monitored kinds
 /// can possibly be pending. The menu-tracking run loop spins on every mouse move, and the
 /// session-wide event counters for keys and clicks are far cheaper to read than
@@ -73,8 +68,7 @@ final class ProviderSwitcherEventPeekGate {
     }
 }
 
-/// Handles provider-switcher keyboard shortcuts and overview scrolling while the merged
-/// status menu is open. `NSMenu` tracking pulls events itself, so local event monitors,
+/// Handles the persistent Refresh shortcut and observes scrolling while a status menu is open. `NSMenu` tracking pulls events itself, so local event monitors,
 /// Carbon dispatcher handlers, registered hot keys (tracking pushes a hotkey-disable mode),
 /// and `menuHasKeyEquivalent` never see these events — peeking the queue from a run-loop
 /// observer is the only delivery path.
@@ -87,8 +81,7 @@ final class ProviderSwitcherEventPeekGate {
 /// beach-balled. Three guards prevent that: peeks run in a private run-loop mode with no
 /// sources or timers registered (the queue is mode-agnostic, so matching still works), the
 /// peek only starts once the tracking loop is confirmed pumping, and mouse clicks are not
-/// monitored at all (`ProviderSwitcherView` handles those via its own `mouseDown`/`mouseUp`
-/// overrides), so the monitor never dequeues a click meant for AppKit.
+/// monitored at all, so the monitor never dequeues a click meant for AppKit.
 @MainActor
 final class ProviderSwitcherShortcutEventMonitor {
     private let callback: @MainActor (NSEvent) -> Bool
@@ -231,9 +224,7 @@ extension StatusItemController {
         guard self.isMenuRefreshEnabled else {
             return
         }
-        let hasProviderSwitcher = self.shouldMergeIcons && menu.items.first?.view is ProviderSwitcherView
-        let hasPersistentRefresh = menu.items.contains { self.isPersistentRefreshItem($0) }
-        guard hasProviderSwitcher || hasPersistentRefresh else {
+        guard menu.items.contains(where: { self.isPersistentRefreshItem($0) }) else {
             return
         }
 
@@ -264,7 +255,6 @@ extension StatusItemController {
         self.providerSwitcherShortcutEventMonitor?.stop()
         self.providerSwitcherShortcutEventMonitor = nil
         self.providerSwitcherShortcutMenuID = nil
-        self.clearProviderSwitcherPointerInteraction()
     }
 
     @discardableResult
@@ -282,112 +272,9 @@ extension StatusItemController {
             }
             return true
         }
-        guard menu.items.first?.view is ProviderSwitcherView else { return false }
-        return self.handleProviderSwitcherTrackingEvent(event, menu: menu)
-    }
-
-    func providerSwitcherContentStartIndex(in menu: NSMenu) -> Int {
-        menu.items.first?.view is ProviderSwitcherView ? 2 : 0
-    }
-
-    @discardableResult
-    func handleProviderSwitcherShortcut(_ event: NSEvent, menu: NSMenu) -> Bool {
-        if let index = StatusItemMenu.providerSelectionIndex(
-            for: event,
-            mapping: self.settings.providerSwitcherShortcuts)
-        {
-            return self.selectProviderSwitcherSegment(at: index, menu: menu)
-        }
-        if let direction = StatusItemMenu.providerNavigationDirection(
-            for: event,
-            mapping: self.settings.providerSwitcherShortcuts)
-        {
-            self.navigateProviderSwitcher(direction, menu: menu)
-            return true
+        if event.type == .scrollWheel, self.shouldMergeIcons {
+            return self.handleOverviewScrollWheel(event, menu: menu)
         }
         return false
-    }
-
-    @discardableResult
-    func handleProviderSwitcherTrackingEvent(_ event: NSEvent, menu: NSMenu) -> Bool {
-        switch event.type {
-        case .keyDown:
-            return self.handleProviderSwitcherShortcut(event, menu: menu)
-        case .leftMouseDown:
-            guard let switcher = menu.items.first?.view as? ProviderSwitcherView else { return false }
-            self.beginProviderSwitcherPointerInteraction(in: menu)
-            let handled = switcher.handleMenuTrackingMouseDown(event)
-            if !handled {
-                self.clearProviderSwitcherPointerInteraction(in: menu)
-            }
-            return handled
-        case .leftMouseUp:
-            guard self.providerSwitcherPointerInteractionMenuID == ObjectIdentifier(menu) else {
-                return false
-            }
-            guard let switcher = menu.items.first?.view as? ProviderSwitcherView else {
-                self.clearProviderSwitcherPointerInteraction(in: menu)
-                return true
-            }
-            _ = switcher.handleMenuTrackingMouseUp(event)
-            self.finishProviderSwitcherPointerInteraction(in: menu)
-            return true
-        case .scrollWheel:
-            return self.handleOverviewScrollWheel(event, menu: menu)
-        default:
-            return false
-        }
-    }
-
-    func requestProviderSwitcherMenuRebuild(_ menu: NSMenu, provider: UsageProvider?) {
-        guard self.providerSwitcherPointerInteractionMenuID == ObjectIdentifier(menu) else {
-            self.deferSwitcherMenuRebuildIfStillVisible(menu, provider: provider)
-            return
-        }
-        self.pendingProviderSwitcherPointerRebuild = PendingProviderSwitcherRebuild(
-            menu: menu,
-            provider: provider)
-    }
-
-    private func beginProviderSwitcherPointerInteraction(in menu: NSMenu) {
-        let menuID = ObjectIdentifier(menu)
-        if self.providerSwitcherPointerInteractionMenuID != menuID {
-            self.pendingProviderSwitcherPointerRebuild = nil
-        }
-        self.providerSwitcherPointerInteractionMenuID = menuID
-    }
-
-    private func finishProviderSwitcherPointerInteraction(in menu: NSMenu) {
-        let menuID = ObjectIdentifier(menu)
-        guard self.providerSwitcherPointerInteractionMenuID == menuID else { return }
-        self.providerSwitcherPointerInteractionMenuID = nil
-        guard let pending = self.pendingProviderSwitcherPointerRebuild,
-              pending.menu === menu
-        else {
-            self.pendingProviderSwitcherPointerRebuild = nil
-            return
-        }
-        self.pendingProviderSwitcherPointerRebuild = nil
-        self.deferSwitcherMenuRebuildIfStillVisible(menu, provider: pending.provider)
-    }
-
-    private func clearProviderSwitcherPointerInteraction(in menu: NSMenu? = nil) {
-        if let menu,
-           self.providerSwitcherPointerInteractionMenuID != ObjectIdentifier(menu)
-        {
-            return
-        }
-        self.providerSwitcherPointerInteractionMenuID = nil
-        self.pendingProviderSwitcherPointerRebuild = nil
-    }
-
-    @discardableResult
-    private func selectProviderSwitcherSegment(at index: Int, menu: NSMenu) -> Bool {
-        guard let switcherView = menu.items.first?.view as? ProviderSwitcherView,
-              switcherView.handleKeyboardSelection(at: index)
-        else {
-            return false
-        }
-        return true
     }
 }

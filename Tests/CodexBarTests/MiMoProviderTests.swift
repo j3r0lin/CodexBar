@@ -304,7 +304,7 @@ struct MiMoProviderTests {
     }
 
     @Test
-    func `balance does not participate in icon or switcher quota percentages`() {
+    func `balance does not participate in icon quota percentages`() {
         let balanceOnly = MiMoUsageSnapshot(
             balance: 25.51,
             currency: "USD",
@@ -325,16 +325,8 @@ struct MiMoProviderTests {
 
         #expect(balanceIcon.primary == nil)
         #expect(balanceIcon.secondary == nil)
-        #expect(StatusItemController.switcherWeeklyMetricPercent(
-            for: .mimo,
-            snapshot: balanceOnly,
-            showUsed: false) == nil)
         #expect(planIcon.primary == 90)
         #expect(planIcon.secondary == nil)
-        #expect(StatusItemController.switcherWeeklyMetricPercent(
-            for: .mimo,
-            snapshot: withPlan,
-            showUsed: false) == 90)
     }
 
     @Test

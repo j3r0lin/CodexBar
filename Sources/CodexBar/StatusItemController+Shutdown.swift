@@ -73,8 +73,6 @@ extension StatusItemController {
         self.providerSelectionUIRefreshTask?.cancel()
         self.providerSelectionUIRefreshTask = nil
         self.deferredMergedIconRenderAfterTracking = false
-        self.providerSwitcherPointerInteractionMenuID = nil
-        self.pendingProviderSwitcherPointerRebuild = nil
     }
 
     private func clearShutdownMenuState() {

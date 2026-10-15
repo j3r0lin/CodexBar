@@ -453,37 +453,6 @@ struct StatusMenuOverviewScrollTests {
         #expect(steps == [.down, .down])
     }
 
-    @Test(arguments: [false, true])
-    func `overflow routing through detached switcher still records user scrolling`(precise: Bool) throws {
-        let controller = try self.makeController(suiteName: "OverviewScroll-Switcher")
-        defer { controller.releaseStatusItemsForTesting() }
-        let menu = self.makeOverviewMenu()
-        let switcherItem = NSMenuItem()
-        switcherItem.isEnabled = false
-        switcherItem.view = ProviderSwitcherView(
-            providers: [.codex, .claude],
-            selected: .overview,
-            includesOverview: true,
-            width: 320,
-            showsIcons: false,
-            iconProvider: { _ in NSImage() },
-            weeklyRemainingProvider: { _ in nil },
-            onSelect: { _ in })
-        menu.insertItem(switcherItem, at: 0)
-        menu.insertItem(.separator(), at: 1)
-        let scrollView = self.attachMenuViewport(to: menu, verticalOverflow: true, itemIndex: 2)
-        let menuID = ObjectIdentifier(menu)
-        controller.openMenus[menuID] = menu
-        let generation = controller.menuSession.beginTrackingSession(menuID)
-        defer { controller.openMenus.removeAll() }
-
-        let wheel = self.makeScrollEvent(deltaY: -1, precise: precise)
-        #expect(!controller.handleMenuTrackingShortcutEvent(wheel, menu: menu))
-        #expect(controller.menuSession.menuInteractionGeneration(for: menuID) == generation + 1)
-        #expect(StatusItemController.attachedMenuScrollView(in: menu) === scrollView)
-        #expect(switcherItem.view?.enclosingScrollView == nil)
-    }
-
     @Test
     func `wheel at an overview boundary clears keyboard only highlighting`() throws {
         let controller = try self.makeController(suiteName: #function, renderCards: true)

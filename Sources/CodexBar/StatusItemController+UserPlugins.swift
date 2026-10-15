@@ -142,31 +142,6 @@ extension StatusItemController {
         return enabledPlugins.filter { !topLevelSwitcherVisible || !$0.manifest.topLevel }
     }
 
-    func userPluginSwitcherIcon(for plugin: UserProviderPlugin) -> NSImage {
-        let size = NSSize(width: 16, height: 16)
-        let image = NSImage(size: size, flipped: false) { rect in
-            let rawTint = plugin.manifest.icon.tint.dropFirst()
-            let tint = UInt32(rawTint, radix: 16) ?? 0x6B7280
-            NSColor(
-                deviceRed: CGFloat((tint >> 16) & 0xFF) / 255,
-                green: CGFloat((tint >> 8) & 0xFF) / 255,
-                blue: CGFloat(tint & 0xFF) / 255,
-                alpha: 1).setFill()
-            NSBezierPath(roundedRect: rect, xRadius: 4, yRadius: 4).fill()
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: NSFont.systemFont(ofSize: 8, weight: .bold),
-                .foregroundColor: NSColor.white,
-            ]
-            let monogram = plugin.manifest.icon.monogram as NSString
-            let textSize = monogram.size(withAttributes: attributes)
-            monogram.draw(
-                at: NSPoint(x: rect.midX - textSize.width / 2, y: rect.midY - textSize.height / 2),
-                withAttributes: attributes)
-            return true
-        }
-        image.isTemplate = false
-        return image
-    }
 }
 
 struct UserPluginQuotaPresentation: Equatable {
@@ -179,17 +154,6 @@ struct UserPluginQuotaPresentation: Equatable {
         return Self(
             percent: showUsed ? used : remaining,
             text: UsageFormatter.usageLine(remaining: remaining, used: used, showUsed: showUsed))
-    }
-}
-
-extension ProviderSwitcherView {
-    static func pluginSwitcherImage(
-        _ plugin: UserProviderPlugin,
-        iconProvider: (UserProviderPlugin) -> NSImage) -> NSImage
-    {
-        let image = iconProvider(plugin)
-        image.size = NSSize(width: 16, height: 16)
-        return image
     }
 }
 

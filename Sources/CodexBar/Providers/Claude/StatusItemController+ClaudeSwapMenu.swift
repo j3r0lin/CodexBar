@@ -9,7 +9,7 @@ extension StatusItemController {
     {
         let accounts = self.store.claudeAccountSource.accounts
         if self.claudeAccountTabsEnabled {
-            // The top switcher already has one tab per account; show only the selected account's card.
+            // Each account has its own Overview row; the Claude detail card shows only the selected account.
             if let account = self.selectedClaudeTabAccount {
                 self.addStackedClaudeSwapMenuCards(
                     accounts: [account],
@@ -202,7 +202,7 @@ extension StatusItemController {
 
     // MARK: - Per-account tabs and menu-bar rings (magpie only)
 
-    /// While magpie owns Claude, each magpie account gets its own switcher tab and menu-bar ring.
+    /// While magpie owns Claude, each magpie account gets its own Overview row and menu-bar ring.
     var claudeAccountTabsEnabled: Bool {
         self.settings.claudeMagpieEnabled && !self.store.claudeAccountSource.accounts.isEmpty
     }
@@ -223,17 +223,6 @@ extension StatusItemController {
             guard var model = self.claudeSwapCardModel(for: account) else { return nil }
             model.providerName = "Claude · " + Self.claudeAccountShortName(account, hidePersonalInfo: hidePersonalInfo)
             return (id: account.id, model: model, snapshot: account.snapshot)
-        }
-    }
-
-    func claudeAccountTabs() -> [ProviderSwitcherView.ClaudeAccountTab] {
-        guard self.claudeAccountTabsEnabled else { return [] }
-        let hidePersonalInfo = self.settings.hidePersonalInfo
-        return self.store.claudeAccountSource.accounts.map { account in
-            ProviderSwitcherView.ClaudeAccountTab(
-                id: account.id,
-                title: Self.claudeAccountShortName(account, hidePersonalInfo: hidePersonalInfo),
-                usedPercent: Self.claudeAccountUsedPercent(account))
         }
     }
 

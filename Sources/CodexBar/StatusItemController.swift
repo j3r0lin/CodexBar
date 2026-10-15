@@ -191,8 +191,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     var pendingMenuBaselineResyncs: Set<ObjectIdentifier> = []
     var providerSwitcherShortcutEventMonitor: ProviderSwitcherShortcutEventMonitor?
     var providerSwitcherShortcutMenuID: ObjectIdentifier?
-    var providerSwitcherPointerInteractionMenuID: ObjectIdentifier?
-    var pendingProviderSwitcherPointerRebuild: PendingProviderSwitcherRebuild?
     var overviewScrollAccumulatedDelta: CGFloat = 0
     var overviewScrollNavigationHandlerForTesting: ((OverviewScrollStep) -> Void)?
     var hasPreparedForAppShutdown = false
@@ -265,7 +263,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     private var lastConfigRevision: Int
     private var lastProviderOrder: [ProviderInstanceID]
     private var lastMergeIcons: Bool
-    private var lastSwitcherShowsIcons: Bool
     private var lastObservedUsageBarsShowUsed: Bool
     var lastWidgetDisplaySettingsSignature = ""
     var lastAgentSessionsEnabled: Bool
@@ -292,9 +289,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     var lastCodexAccountMenuDisplay: CodexAccountMenuDisplay?
     /// Tracks the visible token account switcher contents for merged-menu smart updates.
     var lastTokenAccountMenuDisplay: TokenAccountMenuDisplay?
-    /// Debounced pre-build of sibling switcher tabs for flicker-free tab switches.
-    /// A common-modes Timer (not a Task) so it fires during NSMenu tracking.
-    var mergedSwitcherWarmupTimer: Timer?
     /// Compact multi-account layout: remember explicit card expansion across menu opens and app launches.
     var compactAccountExpandedIDs: Set<ProviderAccountIdentity> {
         get { self.settings.compactAccountExpandedIDs }
@@ -407,7 +401,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
         self.lastConfigRevision = settings.configRevision
         self.lastProviderOrder = settings.providerOrder
         self.lastMergeIcons = settings.mergeIcons
-        self.lastSwitcherShowsIcons = settings.switcherShowsIcons
         self.lastObservedUsageBarsShowUsed = settings.usageBarsShowUsed
         self.lastAgentSessionsEnabled = settings.agentSessionsEnabled
         self.lastAgentSessionsManualHosts = settings.agentSessionsManualHosts
@@ -666,11 +659,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
         let mergeIcons = self.settings.mergeIcons
         if mergeIcons != self.lastMergeIcons {
             self.lastMergeIcons = mergeIcons
-            shouldRefresh = true
-        }
-        let showsIcons = self.settings.switcherShowsIcons
-        if showsIcons != self.lastSwitcherShowsIcons {
-            self.lastSwitcherShowsIcons = showsIcons
             shouldRefresh = true
         }
         let usageBarsShowUsed = self.settings.usageBarsShowUsed

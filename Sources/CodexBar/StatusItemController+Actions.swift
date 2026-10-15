@@ -320,12 +320,6 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
         }
     }
 
-    nonisolated func performProviderNavigation(_ direction: StatusItemMenuProviderNavigationDirection) {
-        Task { @MainActor [weak self] in
-            self?.navigateProviderSwitcher(direction)
-        }
-    }
-
     @objc func refreshAugmentSession() {
         Task {
             await self.store.forceRefreshAugmentSession()

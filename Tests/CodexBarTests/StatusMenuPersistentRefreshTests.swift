@@ -10,7 +10,6 @@ private final class RefreshShortcutRecorder: StatusItemMenuPersistentActionDeleg
     var refreshMenuInteractionGenerations: [Int] = []
     var settingsCount = 0
     var quitCount = 0
-    var navigationDirections: [StatusItemMenuProviderNavigationDirection] = []
 
     func performPersistentRefreshAction(
         in menuID: ObjectIdentifier,
@@ -27,10 +26,6 @@ private final class RefreshShortcutRecorder: StatusItemMenuPersistentActionDeleg
 
     func performPersistentQuitAction() {
         self.quitCount += 1
-    }
-
-    func performProviderNavigation(_ direction: StatusItemMenuProviderNavigationDirection) {
-        self.navigationDirections.append(direction)
     }
 }
 
