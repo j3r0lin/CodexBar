@@ -649,7 +649,7 @@ extension StatusMenuTests {
         #expect(statusItem != nil)
         #expect(statusItem?.view != nil)
         #expect(statusItem?.title.isEmpty == true)
-        #expect(statusItem?.view?.frame.width == 310)
+        #expect(statusItem?.view?.frame.width == StatusItemController.menuCardBaseWidth)
     }
 
     @Test
