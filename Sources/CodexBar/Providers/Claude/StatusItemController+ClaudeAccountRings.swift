@@ -84,29 +84,28 @@ extension StatusItemController {
     /// account's row; AppKit then highlights it and opens its submenu as if the pointer hovered there.
     private func openClaudeAccountRowSubmenu(_ id: ProviderAccountIdentity, in menu: NSMenu) {
         let identifier = "\(Self.overviewRowIdentifierPrefix)\(UsageProvider.claude.rawValue)#\(id.opaqueID)"
-        let timer = Timer(timeInterval: 0.05, repeats: false) { [weak self, weak menu] _ in
-            MainActor.assumeIsolated {
-                guard let self, let menu,
-                      let item = menu.items.first(where: { ($0.representedObject as? String) == identifier }),
-                      let view = item.view, let window = view.window
-                else { return }
-                self.menu(menu, willHighlight: item, eventType: .mouseMoved)
-                let location = view.convert(NSPoint(x: view.bounds.midX, y: view.bounds.midY), to: nil)
-                guard let event = NSEvent.mouseEvent(
-                    with: .mouseMoved,
-                    location: location,
-                    modifierFlags: [],
-                    timestamp: ProcessInfo.processInfo.systemUptime,
-                    windowNumber: window.windowNumber,
-                    context: nil,
-                    eventNumber: 0,
-                    clickCount: 0,
-                    pressure: 0)
-                else { return }
-                NSApp.postEvent(event, atStart: false)
-            }
+        // The main queue keeps draining while the menu tracks, so this runs once the menu window is up.
+        Task { @MainActor [weak self, weak menu] in
+            try? await Task.sleep(for: .milliseconds(50))
+            guard let self, let menu,
+                  let item = menu.items.first(where: { ($0.representedObject as? String) == identifier }),
+                  let view = item.view, let window = view.window
+            else { return }
+            self.menu(menu, willHighlight: item, eventType: .mouseMoved)
+            let location = view.convert(NSPoint(x: view.bounds.midX, y: view.bounds.midY), to: nil)
+            guard let event = NSEvent.mouseEvent(
+                with: .mouseMoved,
+                location: location,
+                modifierFlags: [],
+                timestamp: ProcessInfo.processInfo.systemUptime,
+                windowNumber: window.windowNumber,
+                context: nil,
+                eventNumber: 0,
+                clickCount: 0,
+                pressure: 0)
+            else { return }
+            NSApp.postEvent(event, atStart: false)
         }
-        RunLoop.main.add(timer, forMode: .eventTracking)
     }
 
     /// magpie serves every account from one quotas call, so refreshing one account refreshes the source.
