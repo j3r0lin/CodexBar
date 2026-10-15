@@ -185,6 +185,7 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     var deferredMenuInteractionRefreshTask: Task<Void, Never>?
     var highlightedMenuItems: [ObjectIdentifier: NSMenuItem] = [:]
     var keyboardHighlightedMenus: Set<ObjectIdentifier> = []
+    var opensClaudeAccountDetailOnce = false
     /// Open-menu rebuilds paused so AppKit's native selection background cannot retain stale geometry.
     var nativeHighlightDeferredMenuRebuilds: [ObjectIdentifier: NativeHighlightDeferredMenuRebuild] = [:]
     /// Baseline resync intent survives rebuild coalescing and any native-row or hosted-submenu deferral.

@@ -54,9 +54,10 @@ extension StatusMenuTests {
         let openAIRow = try #require(menu.items.first {
             ($0.representedObject as? String) == "overviewRow-openai"
         })
-        #expect(openAIRow.submenu?.items.contains {
-            ($0.representedObject as? String) == StatusItemController.costHistoryChartID
-        } == true)
+        #expect(openAIRow.submenu == nil)
+        controller.selectOverviewProvider(openAIRow)
+        #expect(settings.selectedMenuProvider == .openai)
+        #expect(!settings.mergedMenuLastSelectedWasOverview)
     }
 
     @Test
@@ -115,12 +116,10 @@ extension StatusMenuTests {
         let opencodegoRow = try #require(menu.items.first {
             ($0.representedObject as? String) == "overviewRow-opencodego"
         })
-        #expect(opencodegoRow.submenu?.items.contains {
-            ($0.representedObject as? String) == StatusItemController.usageHistoryChartID
-        } == true)
-        #expect(opencodegoRow.submenu?.items.contains {
-            ($0.representedObject as? String) == StatusItemController.costHistoryChartID
-        } == false)
+        #expect(opencodegoRow.submenu == nil)
+        controller.selectOverviewProvider(opencodegoRow)
+        #expect(settings.selectedMenuProvider == .opencodego)
+        #expect(!settings.mergedMenuLastSelectedWasOverview)
     }
 
     @Test
@@ -247,12 +246,10 @@ extension StatusMenuTests {
         }
 
         let representedIDs = menu.items.compactMap { $0.representedObject as? String }
-        let switcherButtons = (menu.items.first?.view as? ProviderSwitcherView)?.subviews
-            .compactMap { $0 as? NSButton } ?? []
         #expect(rebuildCount == 1)
         #expect(representedIDs.contains("menuCard"))
+        #expect(representedIDs.contains(StatusItemController.overviewDetailBackIdentifier))
         #expect(representedIDs.contains(where: { $0.hasPrefix("overviewRow-") }) == false)
-        #expect(switcherButtons.first(where: { $0.state == .on })?.tag == 2)
     }
 
     @Test
@@ -311,11 +308,10 @@ extension StatusMenuTests {
         controller.menuWillOpen(menu)
         defer { controller.menuDidClose(menu) }
 
+        // A fresh open always returns to the account list, even after a detail page was open.
         let representedIDs = menu.items.compactMap { $0.representedObject as? String }
-        let switcherButtons = (menu.items.first?.view as? ProviderSwitcherView)?.subviews
-            .compactMap { $0 as? NSButton } ?? []
-        #expect(representedIDs.contains("menuCard"))
-        #expect(representedIDs.contains(where: { $0.hasPrefix("overviewRow-") }) == false)
-        #expect(switcherButtons.first(where: { $0.state == .on })?.tag == 2)
+        #expect(representedIDs.contains(where: { $0.hasPrefix("overviewRow-") }))
+        #expect(representedIDs.contains("menuCard") == false)
+        #expect(settings.mergedMenuLastSelectedWasOverview == true)
     }
 }

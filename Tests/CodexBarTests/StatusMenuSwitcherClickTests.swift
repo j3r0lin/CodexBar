@@ -455,7 +455,7 @@ struct StatusMenuSwitcherClickTests {
     }
 
     @Test
-    func `merged switcher handles left and right arrow keyboard navigation`() async throws {
+    func `arrow keys move between the account list and the highlighted account`() async throws {
         let previousMenuCardRendering = StatusItemController.menuCardRenderingEnabled
         let previousMenuRefresh = StatusItemController.menuRefreshEnabled
         StatusItemController.menuCardRenderingEnabled = false
@@ -470,22 +470,9 @@ struct StatusMenuSwitcherClickTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
         settings.selectedMenuProvider = .codex
-        settings.mergedMenuLastSelectedWasOverview = false
+        settings.mergedMenuLastSelectedWasOverview = true
 
-        let registry = ProviderRegistry.shared
-        for provider in UsageProvider.allCases {
-            guard let metadata = registry.metadata[provider] else { continue }
-            let shouldEnable = provider == .codex || provider == .claude
-            settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: shouldEnable)
-        }
-        settings.setMergedOverviewProviderSelection(
-            provider: .codex,
-            isSelected: false,
-            activeProviders: [.codex, .claude])
-        settings.setMergedOverviewProviderSelection(
-            provider: .claude,
-            isSelected: false,
-            activeProviders: [.codex, .claude])
+        enableTestProviders([.codex, .claude], settings: settings)
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
@@ -501,16 +488,18 @@ struct StatusMenuSwitcherClickTests {
 
         let menu = try #require(controller.makeMenu() as? StatusItemMenu)
         controller.menuWillOpen(menu)
-        #expect(menu.items.first?.view is ProviderSwitcherView)
-        store.tokenRefreshInFlight.insert(.codex)
-        defer { store.tokenRefreshInFlight.remove(.codex) }
+        let claudeRow = try #require(menu.items.first {
+            ($0.representedObject as? String) == "overviewRow-claude"
+        })
+        controller.menu(menu, willHighlight: claudeRow, eventType: .keyDown)
         var rebuildCount = 0
         controller._test_openMenuRebuildObserver = { _ in
             rebuildCount += 1
         }
         defer { controller._test_openMenuRebuildObserver = nil }
 
-        #expect(try menu.performKeyEquivalent(with: Self.arrowKeyEvent(keyCode: 124)) == true)
+        // Right arrow opens the highlighted account.
+        #expect(try controller.handleMenuTrackingShortcutEvent(Self.arrowKeyEvent(keyCode: 124), menu: menu))
         for _ in 0..<100 where rebuildCount == 0 {
             await Task.yield()
             try? await Task.sleep(for: .milliseconds(5))
@@ -519,18 +508,18 @@ struct StatusMenuSwitcherClickTests {
         #expect(settings.selectedMenuProvider == .claude)
         #expect(rebuildCount == 1)
 
-        #expect(try menu.performKeyEquivalent(with: Self.arrowKeyEvent(keyCode: 123)) == true)
+        // Left arrow returns to the account list.
+        #expect(try controller.handleMenuTrackingShortcutEvent(Self.arrowKeyEvent(keyCode: 123), menu: menu))
         for _ in 0..<100 where rebuildCount == 1 {
             await Task.yield()
             try? await Task.sleep(for: .milliseconds(5))
         }
-        #expect(settings.mergedMenuLastSelectedWasOverview == false)
-        #expect(settings.selectedMenuProvider == .codex)
+        #expect(settings.mergedMenuLastSelectedWasOverview == true)
         #expect(rebuildCount == 2)
     }
 
     @Test
-    func `merged switcher handles command number shortcuts in visible order`() async throws {
+    func `command number shortcuts open account rows in visible order`() async throws {
         let previousMenuCardRendering = StatusItemController.menuCardRenderingEnabled
         let previousMenuRefresh = StatusItemController.menuRefreshEnabled
         StatusItemController.menuCardRenderingEnabled = false
@@ -545,14 +534,9 @@ struct StatusMenuSwitcherClickTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
         settings.selectedMenuProvider = .codex
-        settings.mergedMenuLastSelectedWasOverview = false
+        settings.mergedMenuLastSelectedWasOverview = true
 
-        let registry = ProviderRegistry.shared
-        for provider in UsageProvider.allCases {
-            guard let metadata = registry.metadata[provider] else { continue }
-            let shouldEnable = provider == .codex || provider == .claude || provider == .cursor
-            settings.setProviderEnabled(provider: provider, metadata: metadata, enabled: shouldEnable)
-        }
+        enableTestProviders([.codex, .claude, .cursor], settings: settings)
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
@@ -567,22 +551,15 @@ struct StatusMenuSwitcherClickTests {
 
         let menu = try #require(controller.makeMenu() as? StatusItemMenu)
         controller.menuWillOpen(menu)
-        #expect(menu.items.first?.view is ProviderSwitcherView)
+        #expect(menu.items.contains { ($0.representedObject as? String)?.hasPrefix("overviewRow-") == true })
 
+        // The third account row opens that account's detail page.
         #expect(try controller.handleProviderSwitcherShortcut(Self.commandKeyEvent("3", keyCode: 20), menu: menu))
         await Task.yield()
         #expect(settings.mergedMenuLastSelectedWasOverview == false)
-        #expect(settings.selectedMenuProvider == .claude)
 
-        #expect(try controller.handleProviderSwitcherShortcut(Self.commandKeyEvent("1", keyCode: 18), menu: menu))
-        await Task.yield()
-        #expect(settings.mergedMenuLastSelectedWasOverview == true)
-        #expect(settings.selectedMenuProvider == .claude)
-
+        // A number past the last row does nothing.
         #expect(try !controller.handleProviderSwitcherShortcut(Self.commandKeyEvent("9", keyCode: 25), menu: menu))
-        await Task.yield()
-        #expect(settings.mergedMenuLastSelectedWasOverview == true)
-        #expect(settings.selectedMenuProvider == .claude)
     }
 
     @Test

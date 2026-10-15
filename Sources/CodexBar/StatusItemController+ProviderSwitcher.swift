@@ -296,6 +296,20 @@ extension StatusItemController {
 
     @discardableResult
     func handleProviderSwitcherShortcut(_ event: NSEvent, menu: NSMenu) -> Bool {
+        guard event.type == .keyDown else { return false }
+        let modifiers = event.modifierFlags.intersection([.command, .option, .control, .shift])
+        if modifiers.isEmpty {
+            if [123, 53].contains(event.keyCode), !self.settings.mergedMenuLastSelectedWasOverview {
+                self.showOverviewHome(menu: menu)
+                return true
+            }
+            if [124, 36, 76].contains(event.keyCode), self.settings.mergedMenuLastSelectedWasOverview,
+               let item = self.highlightedMenuItems[ObjectIdentifier(menu)],
+               (item.representedObject as? String)?.hasPrefix(Self.overviewRowIdentifierPrefix) == true {
+                self.selectOverviewProvider(item)
+                return true
+            }
+        }
         if let index = StatusItemMenu.providerSelectionIndex(
             for: event,
             mapping: self.settings.providerSwitcherShortcuts)

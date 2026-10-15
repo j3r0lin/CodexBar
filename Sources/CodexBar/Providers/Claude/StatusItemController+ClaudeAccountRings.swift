@@ -70,6 +70,7 @@ extension StatusItemController {
             return
         }
         self.selectClaudeAccountTab(account.id)
+        self.opensClaudeAccountDetailOnce = true
         self.selectedMenuProvider = UsageProvider.claude.instanceID
         self.lastMenuProvider = UsageProvider.claude.instanceID
         self.settings.mergedMenuLastSelectedWasOverview = false

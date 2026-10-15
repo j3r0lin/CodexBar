@@ -116,8 +116,11 @@ extension StatusItemController {
         if self.shouldMergeIcons {
             // The account list is the home page, so a fresh open never resumes a detail page.
             if menuTrackingWasIdle {
-                self.settings.mergedMenuLastSelectedWasOverview = true
-                self.lastMergedSwitcherSelection = .overview
+                let opensDetail = self.opensClaudeAccountDetailOnce
+                self.opensClaudeAccountDetailOnce = false
+                self.settings.mergedMenuLastSelectedWasOverview = !opensDetail
+                self.lastMergedSwitcherSelection = opensDetail ? .provider(.claude) : .overview
+                self.invalidateMenus()
             }
             let enabledProviders = self.store.enabledFirstPartyProvidersForDisplay()
             let selection = self.resolvedMergedMenuSelection(enabledProviders: enabledProviders)
@@ -407,12 +410,6 @@ extension StatusItemController {
             defer { self.clearMenuCardViewRecyclePool() }
             menu.removeAllItems()
             let contentSelection = context.switcherSelection ?? .provider(context.currentProvider.instanceID)
-            self.addProviderSwitcherIfNeeded(
-                to: menu,
-                enabledProviders: context.enabledProviders,
-                includesOverview: context.includesOverview,
-                selection: context.switcherSelection ?? .provider(context.currentProvider.instanceID),
-                width: context.menuWidth)
             // Track which providers the switcher was built with for smart update detection
             if self.shouldMergeIcons,
                self.switcherProviderIDs(enabledFirstPartyProviders: context.enabledProviders).count > 1
@@ -616,9 +613,7 @@ extension StatusItemController {
             let isGrouped = (accountCounts[row.provider] ?? 1) > 1
             let identifier = "\(Self.overviewRowIdentifierPrefix)\(row.provider.rawValue)"
                 + (row.claudeAccountID.map { "#\($0.opaqueID)" } ?? "")
-            let submenu = row.claudeAccountID == nil
-                ? self.makeOverviewRowSubmenu(provider: row.provider, model: row.model, width: menuWidth)
-                : nil
+            // Charts that used to hang off the row now live on the detail page the row opens.
             let shortWindow = row.snapshot?.primary
             let longWindow = row.snapshot?.secondary
             if isGrouped, index == 0 || rows[index - 1].provider != row.provider {
@@ -649,7 +644,6 @@ extension StatusItemController {
                 width: menuWidth,
                 heightCacheScope: "overviewCompactRow",
                 heightCacheFingerprint: "compact",
-                submenu: submenu,
                 usesGPUSelection: true,
                 onClick: { [weak self, weak interactionMenu] in
                     guard let self, let interactionMenu else { return }
@@ -658,11 +652,9 @@ extension StatusItemController {
                     }
                     self.selectOverviewProvider(row.provider, menu: interactionMenu)
                 })
-            if submenu == nil {
-                // Keep plain rows wired for keyboard activation and accessibility action paths.
-                item.target = self
-                item.action = #selector(self.selectOverviewProvider(_:))
-            }
+            // The action is what Return and the right arrow invoke; the click closure covers the pointer.
+            item.target = self
+            item.action = #selector(self.selectOverviewProvider(_:))
             // Compact rows of one provider read as a group; only a provider change gets a separator.
             if index > 0, rows[index - 1].provider != row.provider {
                 menu.addItem(.separator())
