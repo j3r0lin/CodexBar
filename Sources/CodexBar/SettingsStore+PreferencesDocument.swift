@@ -19,7 +19,6 @@ extension SettingsStore {
                 self.resolvedMergedOverviewProviders(activeProviders: active)
                     .map(\.rawValue))
         }
-        try document.set("switcherShortcuts", self.providerSwitcherShortcuts)
         return document
     }
 
@@ -50,15 +49,6 @@ extension SettingsStore {
                 active.map(\.rawValue).sorted(),
                 forKey: Self.mergedOverviewSelectionEditedActiveProvidersKey)
         }
-        if let value: [String: String] = try document.value("switcherShortcuts") {
-            try self.setProviderSwitcherShortcuts(value)
-        }
-    }
-
-    func setProviderSwitcherShortcuts(_ shortcuts: [String: String]) throws {
-        let validated = try ProviderSwitcherShortcuts.validated(shortcuts)
-        self.providerSwitcherShortcuts = validated
-        self.userDefaults.set(validated, forKey: "switcherShortcuts")
     }
 
     func consumePendingPreferencesImport() {

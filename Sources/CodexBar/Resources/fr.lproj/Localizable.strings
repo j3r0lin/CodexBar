@@ -1781,7 +1781,6 @@
 "Enable Antigravity provider" = "Activer le fournisseur Antigravity";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "Activez les widgets de compte dans CodexBar → Paramètres → Menu → Widgets. Modifiez ensuite ce widget pour choisir un compte.";
 "Error: %@" = "Erreur : %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "Exemples : alt+cmd+2, shift+right. Actualiser (cmd+r), Paramètres (cmd+,) et Quitter (cmd+q) sont réservés.";
 "Export Preferences…" = "Préférences d’exportation…";
 "External Codex OAuth sources" = "Sources externes Codex OAuth";
 "Extra usage balance" = "Solde d'utilisation supplémentaire";
@@ -1831,7 +1830,6 @@
 "My AI subscriptions · last %d days" = "Mes abonnements AI · les derniers jours %d";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "Profil nommé AWS à partir de ~/.aws/config. Peut également être réglé avec AWS_PROFILE.";
-"Next provider" = "Fournisseur suivant";
 "No active account" = "Aucun compte actif";
 "No cookie header pasted." = "Aucun en-tête cookie collé.";
 "No matching OpenAI web session found for %@." = "Aucune session Web OpenAI correspondante trouvée pour %@.";
@@ -1906,14 +1904,11 @@
 "Preferences could not be transferred" = "Les préférences n'ont pas pu être transférées";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Préféré pour les limites d’utilisation de Go. Lit également OPENCODE_API_KEY.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "Empêchez la mise en veille du système inactif pendant l'exécution d'un processus d'agent local, même lorsqu'il est inactif. Utilise l'énergie de la batterie ; n'empêche pas la fermeture du couvercle ni l'affichage du mode veille.";
-"Previous provider" = "Fournisseur précédent";
 "Primary quota" = "Quota principal";
 "Prioritize exhausted quotas" = "Prioriser les quotas épuisés";
 "Profile name" = "Nom du profil de configuration";
 "Provider %@" = "Fournisseur %@";
 "Provider + Metric" = "Fournisseur + Indicateur";
-"Provider Switcher Shortcuts" = "Raccourcis de changement de fournisseur";
-"Provider Switcher Shortcuts…" = "Raccourcis de changement de fournisseur…";
 "Provider service status: %@" = "Statut du service du fournisseur : %@";
 "Quota estimated from local usage history" = "Quota estimé à partir de l'historique d'utilisation local";
 "Quota from the selected dev.meta.ai browser team" = "Quota de l'équipe de navigateur dev.meta.ai sélectionnée";
@@ -1942,7 +1937,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "Enregistré dans le fichier de configuration local de CodexBar. Ou définissez GITKRAKEN_API_TOKEN.";
 "Scoped weekly" = "Quota hebdomadaire pour le périmètre sélectionné";
 "Secondary quota" = "Quota secondaire";
-"Select position %@" = "Sélectionnez la position %@";
 "Select the provider and account to display in the widget." = "Sélectionnez le fournisseur et le compte à afficher dans le widget.";
 "Select the provider and metric to display." = "Sélectionnez le fournisseur et Indicateur à afficher.";
 "Select the provider and usage window to display." = "Sélectionnez le fournisseur et la fenêtre d'utilisation à afficher.";
@@ -1976,7 +1970,6 @@
 "The pasted header is sent only to this tenant." = "L'en-tête collé est envoyé uniquement à ce locataire.";
 "The selected Codex profile has no verified account email." = "Le profil Codex sélectionné n’a pas d’adresse e-mail de compte vérifiée.";
 "The selected managed Codex account is unavailable." = "Le compte Codex géré sélectionné n'est pas disponible.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "Ces raccourcis fonctionnent lorsque le menu de sélection du fournisseur est ouvert. Utilisez `ctrl`, `alt`, `shift` et `cmd` avec une lettre, un chiffre, `left` ou `right` ; utilisez `none` pour désactiver une action.";
 "Third quota" = "Troisième quota";
 "Today cost" = "Coût d'aujourd'hui";
 "Token Refreshed" = "jetons Actualisé";

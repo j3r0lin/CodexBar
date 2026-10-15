@@ -1786,7 +1786,6 @@
 "Enable Antigravity provider" = "ارائه دهنده Antigravity را فعال کنید";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "ویجت های حساب را در CodexBar → تنظیمات → منو → ابزارک ها فعال کنید. سپس این ویجت را ویرایش کنید تا یک حساب کاربری انتخاب کنید.";
 "Error: %@" = "خطا: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "مثال: alt+cmd+2، shift+right. بازخوانی (cmd+r)، تنظیمات (cmd+،) و خروج (cmd+q) رزرو شده است.";
 "Export Preferences…" = "صادرات ترجیحات…";
 "External Codex OAuth sources" = "منابع خارجی Codex OAuth";
 "Extra usage balance" = "موجودی استفاده اضافی";
@@ -1836,7 +1835,6 @@
 "My AI subscriptions · last %d days" = "اشتراک های AI من · آخرین روز %d";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "نام پروفایل AWS از ~/.aws/config. همچنین با AWS_PROFILE قابل تنظیم است.";
-"Next provider" = "ارائه دهنده بعدی";
 "No active account" = "هیچ حساب کاربری فعالی وجود ندارد";
 "No cookie header pasted." = "هیچ سرصفحه cookie چسبانده نشد.";
 "No matching OpenAI web session found for %@." = "هیچ جلسه وب مطابق با OpenAI برای %@ یافت نشد.";
@@ -1911,14 +1909,11 @@
 "Preferences could not be transferred" = "تنظیمات برگزیده قابل انتقال نیست";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "برای محدودیت‌های استفاده Go ترجیح داده می‌شود. همچنین OPENCODE_API_KEY را می خواند.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "از خواب سیستم بیکار در حین اجرای فرآیند عامل محلی، حتی در حالت بیکار جلوگیری کنید. از انرژی باتری استفاده می کند. مانع از بسته شدن درب یا نمایش خواب نمی شود.";
-"Previous provider" = "ارائه دهنده قبلی";
 "Primary quota" = "سهمیه اولیه";
 "Prioritize exhausted quotas" = "سهمیه خسته را اولویت بندی کنید";
 "Profile name" = "نام نمایه پیکربندی";
 "Provider %@" = "ارائه دهنده %@";
 "Provider + Metric" = "ارائه دهنده + معیار";
-"Provider Switcher Shortcuts" = "میانبرهای سوئیچر ارائه دهنده";
-"Provider Switcher Shortcuts…" = "میانبرهای سوئیچر ارائه دهنده…";
 "Provider service status: %@" = "وضعیت ارائه دهنده خدمات: %@";
 "Quota estimated from local usage history" = "سهمیه از تاریخچه استفاده محلی تخمین زده شده است";
 "Quota from the selected dev.meta.ai browser team" = "سهمیه از تیم منتخب مرورگر dev.meta.ai";
@@ -1947,7 +1942,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "در فایل پیکربندی محلی CodexBar ذخیره شده است. یا GITKRAKEN_API_TOKEN را تنظیم کنید.";
 "Scoped weekly" = "هفتگی سهمیه برای محدوده انتخاب شده";
 "Secondary quota" = "ثانویه سهمیه";
-"Select position %@" = "موقعیت %@ را انتخاب کنید";
 "Select the provider and account to display in the widget." = "ارائه دهنده و حساب را برای نمایش در ویجت انتخاب کنید.";
 "Select the provider and metric to display." = "ارائه دهنده و معیار را برای نمایش انتخاب کنید.";
 "Select the provider and usage window to display." = "ارائه دهنده و پنجره استفاده را برای نمایش انتخاب کنید.";
@@ -1981,7 +1975,6 @@
 "The pasted header is sent only to this tenant." = "هدر چسبانده شده فقط برای این مستاجر ارسال می شود.";
 "The selected Codex profile has no verified account email." = "نمایه Codex انتخاب شده هیچ ایمیل حساب تایید شده ای ندارد.";
 "The selected managed Codex account is unavailable." = "حساب مدیریت انتخاب شده Codex در دسترس نیست.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "این میانبرها هنگام باز بودن منوی تغییر ارائه‌دهنده کار می‌کنند. از `ctrl`، `alt`، `shift` و `cmd` همراه با یک حرف، رقم، `left` یا `right` استفاده کنید؛ برای غیرفعال کردن یک عمل از `none` استفاده کنید.";
 "Third quota" = "سوم سهمیه";
 "Today cost" = "هزینه امروز";
 "Token Refreshed" = "توکن ها به روز شد";

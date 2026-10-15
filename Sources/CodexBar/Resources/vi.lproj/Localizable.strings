@@ -1783,7 +1783,6 @@
 "Enable Antigravity provider" = "Kích hoạt nhà cung cấp Antigravity";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "Kích hoạt tiện ích tài khoản trong CodexBar → Cài đặt → Menu → Tiện ích. Sau đó chỉnh sửa tiện ích này để chọn tài khoản.";
 "Error: %@" = "Lỗi: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "Ví dụ: alt+cmd+2, shift+right. Làm mới (cmd+r), Cài đặt (cmd+,) và Thoát (cmd+q) được bảo lưu.";
 "Export Preferences…" = "Xuất tùy chọn…";
 "External Codex OAuth sources" = "Nguồn Codex OAuth bên ngoài";
 "Extra usage balance" = "Số dư sử dụng thêm";
@@ -1833,7 +1832,6 @@
 "My AI subscriptions · last %d days" = "Đăng ký AI của tôi · những ngày %d vừa qua";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "Hồ sơ AWS được đặt tên từ ~/.aws/config. Cũng có thể được đặt bằng AWS_PROFILE.";
-"Next provider" = "Nhà cung cấp tiếp theo";
 "No active account" = "Không có tài khoản đang hoạt động";
 "No cookie header pasted." = "Không có tiêu đề cookie nào được dán.";
 "No matching OpenAI web session found for %@." = "Không tìm thấy phiên web OpenAI phù hợp cho %@.";
@@ -1908,14 +1906,11 @@
 "Preferences could not be transferred" = "Không thể chuyển tùy chọn";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Ưu tiên cho giới hạn sử dụng Go. Cũng đọc OPENCODE_API_KEY.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "Ngăn chặn trạng thái ngủ của hệ thống không hoạt động trong khi quy trình tác nhân cục bộ đang chạy, ngay cả khi không hoạt động. Sử dụng năng lượng pin; không ngăn cản việc đóng nắp hoặc hiển thị giấc ngủ.";
-"Previous provider" = "Nhà cung cấp trước đó";
 "Primary quota" = "Hạn mức chính";
 "Prioritize exhausted quotas" = "Ưu tiên Hạn mức đã cạn kiệt";
 "Profile name" = "Tên hồ sơ cấu hình";
 "Provider %@" = "Nhà cung cấp %@";
 "Provider + Metric" = "Nhà cung cấp + Chỉ số";
-"Provider Switcher Shortcuts" = "Phím tắt chuyển đổi nhà cung cấp";
-"Provider Switcher Shortcuts…" = "Phím tắt chuyển đổi nhà cung cấp…";
 "Provider service status: %@" = "Trạng thái dịch vụ của nhà cung cấp: %@";
 "Quota estimated from local usage history" = "Hạn mức được ước tính từ lịch sử sử dụng cục bộ";
 "Quota from the selected dev.meta.ai browser team" = "Hạn mức từ nhóm trình duyệt dev.meta.ai đã chọn";
@@ -1944,7 +1939,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "Được lưu trong tệp cấu hình cục bộ của CodexBar. Hoặc đặt GITKRAKEN_API_TOKEN.";
 "Scoped weekly" = "Hạn mức hàng tuần cho phạm vi đã chọn";
 "Secondary quota" = "Hạn mức thứ cấp";
-"Select position %@" = "Chọn vị trí %@";
 "Select the provider and account to display in the widget." = "Chọn nhà cung cấp và tài khoản để hiển thị trong tiện ích.";
 "Select the provider and metric to display." = "Chọn nhà cung cấp và Chỉ số để hiển thị.";
 "Select the provider and usage window to display." = "Chọn cửa sổ nhà cung cấp và sử dụng để hiển thị.";
@@ -1978,7 +1972,6 @@
 "The pasted header is sent only to this tenant." = "Tiêu đề đã dán chỉ được gửi cho đối tượng thuê này.";
 "The selected Codex profile has no verified account email." = "Hồ sơ Codex đã chọn không có email tài khoản được xác minh.";
 "The selected managed Codex account is unavailable." = "Tài khoản Codex được quản lý đã chọn không khả dụng.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "Các phím tắt này hoạt động khi menu chuyển nhà cung cấp đang mở. Dùng `ctrl`, `alt`, `shift` và `cmd` với chữ cái, chữ số, `left` hoặc `right`; dùng `none` để tắt một thao tác.";
 "Third quota" = "Hạn mức thứ ba";
 "Today cost" = "giá hôm nay";
 "Token Refreshed" = "mã thông báo đã được làm mới";

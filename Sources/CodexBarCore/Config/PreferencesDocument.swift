@@ -50,7 +50,6 @@ public struct PreferencesDocument: Codable, Sendable {
     private static var keys: Set<String> {
         self.boolKeys.union(self.stringChoices.keys).union(self.thresholdKeys).union([
             "weeklyProgressWorkDays", "preferredCurrencyCode", "mergedOverviewSelectedProviders",
-            "switcherShortcuts",
         ])
     }
 
@@ -132,32 +131,30 @@ public struct PreferencesDocument: Codable, Sendable {
     public func validate() throws {
         guard self.version == 1 else { throw Error.invalid("Unsupported preferences version") }
         for (key, value) in self.preferences {
-            let valid: Bool
-            switch value {
-            case .bool: valid = Self.boolKeys.contains(key)
+            let valid: Bool = switch value {
+            case .bool: Self.boolKeys.contains(key)
             case let .string(raw):
-                valid = Self.stringChoices[key]?.contains(raw)
+                Self.stringChoices[key]?.contains(raw)
                     ??
                     (key == "preferredCurrencyCode" &&
                         (raw == "auto" || (raw.count == 3 && raw.utf8.allSatisfy { (65...90).contains($0) })))
-            case let .integer(number): valid = key == "weeklyProgressWorkDays" && (1...7).contains(number)
-            case .null: valid = key == "weeklyProgressWorkDays"
+            case let .integer(number): key == "weeklyProgressWorkDays" && (1...7).contains(number)
+            case .null: key == "weeklyProgressWorkDays"
             case let .array(values):
                 if Self.thresholdKeys.contains(key) {
-                    valid = values
-                        .allSatisfy {
-                            if case let .integer(n) = $0 { return QuotaWarningThresholds.allowedRange.contains(Int(n))
-                            }; return false
-                        }
+                    values.allSatisfy {
+                        if case let .integer(n) = $0 { return QuotaWarningThresholds.allowedRange.contains(Int(n)) }
+                        return false
+                    }
                 } else {
-                    valid = key == "mergedOverviewSelectedProviders" && values.count <= 6 && values.allSatisfy {
-                        if case let .string(raw) = $0 { return UsageProvider(rawValue: raw) != nil }; return false
+                    key == "mergedOverviewSelectedProviders" && values.count <= 6 && values.allSatisfy {
+                        if case let .string(raw) = $0 { return UsageProvider(rawValue: raw) != nil }
+                        return false
                     }
                 }
-            case .object:
-                valid = key == "switcherShortcuts"
-                if valid { _ = try ProviderSwitcherShortcuts.validated(self.value(key) ?? [:]) }
-            default: valid = false
+            // Older exports carry the removed provider-switcher shortcuts; they still import and are ignored.
+            case .object: key == "switcherShortcuts"
+            default: false
             }
             guard valid else { throw Error.invalid("Invalid or non-portable preference: \(key)") }
         }

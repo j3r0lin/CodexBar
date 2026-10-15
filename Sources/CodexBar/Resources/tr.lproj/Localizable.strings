@@ -1785,7 +1785,6 @@
 "Enable Antigravity provider" = "Antigravity sağlayıcısını etkinleştirin";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "CodexBar → Ayarlar → Menü → Widget'lar bölümünde hesap widget'larını etkinleştirin. Daha sonra bir hesap seçmek için bu widget'ı düzenleyin.";
 "Error: %@" = "Hata: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "Örnekler: alt+cmd+2, shift+right. Yenile (cmd+r), Ayarlar (cmd+,) ve Çık (cmd+q) ayrılmıştır.";
 "Export Preferences…" = "Tercihleri Dışa Aktar…";
 "External Codex OAuth sources" = "Harici Codex OAuth kaynakları";
 "Extra usage balance" = "Ekstra kullanım bakiyesi";
@@ -1835,7 +1834,6 @@
 "My AI subscriptions · last %d days" = "AI aboneliklerim · son %d günleri";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "~/.aws/config adresinden AWS profili adlandırıldı. AWS_PROFILE ile de ayarlanabilir.";
-"Next provider" = "Sonraki sağlayıcı";
 "No active account" = "Aktif hesap yok";
 "No cookie header pasted." = "cookie başlığı yapıştırılmadı.";
 "No matching OpenAI web session found for %@." = "%@ için eşleşen OpenAI web oturumu bulunamadı.";
@@ -1910,14 +1908,11 @@
 "Preferences could not be transferred" = "Tercihler aktarılamadı";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Go kullanım sınırları için tercih edilir. Ayrıca OPENCODE_API_KEY okur.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "Yerel aracı işlemi çalışırken, boştayken bile sistemin boşta uyumasını önleyin. Pil gücünü kullanır; kapağın kapanmasını veya görüntü uykusunu engellemez.";
-"Previous provider" = "Önceki sağlayıcı";
 "Primary quota" = "Birincil Kota";
 "Prioritize exhausted quotas" = "Tükenmiş Kota'ye öncelik verin";
 "Profile name" = "Yapılandırma profili adı";
 "Provider %@" = "Sağlayıcı %@";
 "Provider + Metric" = "Sağlayıcı + Metrik";
-"Provider Switcher Shortcuts" = "Sağlayıcı Değiştirici Kısayolları";
-"Provider Switcher Shortcuts…" = "Sağlayıcı Değiştirici Kısayolları…";
 "Provider service status: %@" = "Sağlayıcı hizmet durumu: %@";
 "Quota estimated from local usage history" = "Kota yerel kullanım geçmişinden tahmin edilmiştir";
 "Quota from the selected dev.meta.ai browser team" = "Seçilen dev.meta.ai tarayıcı ekibinden Kota";
@@ -1946,7 +1941,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "CodexBar'nin yerel yapılandırma dosyasına kaydedildi. Veya GITKRAKEN_API_TOKEN'yi ayarlayın.";
 "Scoped weekly" = "Seçilen kapsam için haftalık Kota";
 "Secondary quota" = "İkincil Kota";
-"Select position %@" = "%@ konumunu seçin";
 "Select the provider and account to display in the widget." = "Widget'ta görüntülenecek sağlayıcıyı ve hesabı seçin.";
 "Select the provider and metric to display." = "Görüntülenecek sağlayıcıyı ve Metrik'yi seçin.";
 "Select the provider and usage window to display." = "Görüntülenecek sağlayıcıyı ve kullanım penceresini seçin.";
@@ -1980,7 +1974,6 @@
 "The pasted header is sent only to this tenant." = "Yapıştırılan başlık yalnızca bu kiracıya gönderilir.";
 "The selected Codex profile has no verified account email." = "Seçilen Codex profilinde doğrulanmış hesap e-postası yok.";
 "The selected managed Codex account is unavailable." = "Seçilen yönetilen Codex hesabı kullanılamıyor.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "Bu kısayollar sağlayıcı değiştirme menüsü açıkken çalışır. `ctrl`, `alt`, `shift` ve `cmd` ile bir harf, rakam, `left` veya `right` kullanın; bir eylemi devre dışı bırakmak için `none` kullanın.";
 "Third quota" = "Üçüncü Kota";
 "Today cost" = "Bugünkü maliyet";
 "Token Refreshed" = "token Yenilendi";

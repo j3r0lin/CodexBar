@@ -1781,7 +1781,6 @@
 "Enable Antigravity provider" = "Schakel de Antigravity-provider in";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "Schakel accountwidgets in CodexBar → Instellingen → Menu → Widgets in. Bewerk vervolgens deze widget om een ​​account te kiezen.";
 "Error: %@" = "Fout: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "Voorbeelden: alt+cmd+2, shift+right. Vernieuwen (cmd+r), Instellingen (cmd+,) en Afsluiten (cmd+q) zijn gereserveerd.";
 "Export Preferences…" = "Voorkeuren exporteren...";
 "External Codex OAuth sources" = "Externe Codex OAuth-bronnen";
 "Extra usage balance" = "Extra gebruikssaldo";
@@ -1831,7 +1830,6 @@
 "My AI subscriptions · last %d days" = "Mijn AI-abonnementen · de afgelopen %d-dagen";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "Genoemd AWS-profiel uit ~/.aws/config. Kan ook worden ingesteld met AWS_PROFILE.";
-"Next provider" = "Volgende aanbieder";
 "No active account" = "Geen actief account";
 "No cookie header pasted." = "Geen cookie-header geplakt.";
 "No matching OpenAI web session found for %@." = "Er is geen overeenkomende OpenAI-websessie gevonden voor %@.";
@@ -1906,14 +1904,11 @@
 "Preferences could not be transferred" = "Voorkeuren kunnen niet worden overgedragen";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Voorkeur voor Go-gebruikslimieten. Leest ook OPENCODE_API_KEY.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "Voorkom de inactieve systeemslaap terwijl een lokaal agentproces actief is, zelfs als het inactief is. Gebruikt batterijvermogen; verhindert niet dat het deksel wordt gesloten of dat de display in slaap valt.";
-"Previous provider" = "Vorige aanbieder";
 "Primary quota" = "Primaire Quotum";
 "Prioritize exhausted quotas" = "Geef prioriteit aan uitgeputte Quotum";
 "Profile name" = "Naam van configuratieprofiel";
 "Provider %@" = "Aanbieder %@";
 "Provider + Metric" = "Aanbieder + Metriek";
-"Provider Switcher Shortcuts" = "Snelkoppelingen naar providerwisselaars";
-"Provider Switcher Shortcuts…" = "Snelkoppelingen naar providerwisselaar…";
 "Provider service status: %@" = "Servicestatus provider: %@";
 "Quota estimated from local usage history" = "Quotum geschat op basis van lokale gebruiksgeschiedenis";
 "Quota from the selected dev.meta.ai browser team" = "Quotum van het geselecteerde dev.meta.ai-browserteam";
@@ -1942,7 +1937,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "Opgeslagen in het lokale configuratiebestand van CodexBar. Of stel GITKRAKEN_API_TOKEN in.";
 "Scoped weekly" = "Wekelijks Quotum voor het geselecteerde bereik";
 "Secondary quota" = "Secundaire Quotum";
-"Select position %@" = "Positie %@ selecteren";
 "Select the provider and account to display in the widget." = "Selecteer de provider en het account dat u in de widget wilt weergeven.";
 "Select the provider and metric to display." = "Selecteer de provider en Metriek die u wilt weergeven.";
 "Select the provider and usage window to display." = "Selecteer de provider en het gebruiksvenster dat u wilt weergeven.";
@@ -1976,7 +1970,6 @@
 "The pasted header is sent only to this tenant." = "De geplakte header wordt alleen naar deze tenant verzonden.";
 "The selected Codex profile has no verified account email." = "Het geselecteerde Codex-profiel heeft geen geverifieerd account-e-mailadres.";
 "The selected managed Codex account is unavailable." = "Het geselecteerde beheerde Codex-account is niet beschikbaar.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "Deze sneltoetsen werken terwijl het menu voor het wisselen van provider open is. Gebruik `ctrl`, `alt`, `shift` en `cmd` met een letter, cijfer, `left` of `right`; gebruik `none` om een actie uit te schakelen.";
 "Third quota" = "Derde Quotum";
 "Today cost" = "Vandaag kosten";
 "Token Refreshed" = "Token vernieuwd";

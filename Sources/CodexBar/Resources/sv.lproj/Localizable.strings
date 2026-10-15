@@ -1781,7 +1781,6 @@
 "Enable Antigravity provider" = "Aktivera Antigravity-leverantör";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "Aktivera kontowidgetar i CodexBar → Inställningar → Meny → Widgets. Redigera sedan denna widget för att välja ett konto.";
 "Error: %@" = "Fel: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "Exempel: alt+cmd+2, shift+right. Uppdatera (cmd+r), Inställningar (cmd+,) och Avsluta (cmd+q) är reserverade.";
 "Export Preferences…" = "Exportera inställningar...";
 "External Codex OAuth sources" = "Externa Codex OAuth källor";
 "Extra usage balance" = "Extra användningsbalans";
@@ -1831,7 +1830,6 @@
 "My AI subscriptions · last %d days" = "Mina AI prenumerationer · de senaste %d dagarna";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "Namngiven AWS-profil från ~/.aws/config. Kan även ställas in med AWS_PROFILE.";
-"Next provider" = "Nästa leverantör";
 "No active account" = "Inget aktivt konto";
 "No cookie header pasted." = "Ingen cookie-huvud har klistrats in.";
 "No matching OpenAI web session found for %@." = "Ingen matchande OpenAI webbsession hittades för %@.";
@@ -1906,14 +1904,11 @@
 "Preferences could not be transferred" = "Det gick inte att överföra inställningar";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Föredraget för användningsgränser för Go. Läser även OPENCODE_API_KEY.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "Förhindra viloläge när en lokal agentprocess körs, även när den är inaktiv. Använder batterikraft; förhindrar inte lock-stängning eller display sleep.";
-"Previous provider" = "Tidigare leverantör";
 "Primary quota" = "Primär Kvot";
 "Prioritize exhausted quotas" = "Prioritera utmattad Kvot";
 "Profile name" = "Konfigurationsprofilens namn";
 "Provider %@" = "Leverantör %@";
 "Provider + Metric" = "Leverantör + Mått";
-"Provider Switcher Shortcuts" = "Genvägar för leverantörsbyte";
-"Provider Switcher Shortcuts…" = "Genvägar för leverantörsbyte...";
 "Provider service status: %@" = "Leverantörstjänststatus: %@";
 "Quota estimated from local usage history" = "Kvot uppskattad från lokal användningshistorik";
 "Quota from the selected dev.meta.ai browser team" = "Kvot från det valda dev.meta.ai webbläsarteamet";
@@ -1942,7 +1937,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "Sparad i CodexBar:s lokala konfigurationsfil. Eller ställ in GITKRAKEN_API_TOKEN.";
 "Scoped weekly" = "Veckovis Kvot för det valda omfånget";
 "Secondary quota" = "Sekundär Kvot";
-"Select position %@" = "Välj position %@";
 "Select the provider and account to display in the widget." = "Välj leverantör och konto som ska visas i widgeten.";
 "Select the provider and metric to display." = "Välj leverantör och Mått som ska visas.";
 "Select the provider and usage window to display." = "Välj leverantör och användningsfönster som ska visas.";
@@ -1976,7 +1970,6 @@
 "The pasted header is sent only to this tenant." = "Den inklistrade rubriken skickas endast till denna klient.";
 "The selected Codex profile has no verified account email." = "Den valda Codex-profilen har ingen verifierad konto-e-postadress.";
 "The selected managed Codex account is unavailable." = "Det valda hanterade Codex-kontot är inte tillgängligt.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "Dessa kortkommandon fungerar medan menyn för leverantörsbyte är öppen. Använd `ctrl`, `alt`, `shift` och `cmd` med en bokstav, siffra, `left` eller `right`; använd `none` för att inaktivera en åtgärd.";
 "Third quota" = "Tredje Kvot";
 "Today cost" = "Kostar idag";
 "Token Refreshed" = "token Uppdaterad";

@@ -324,12 +324,7 @@ These commands transfer macOS UI preferences and are unavailable on Linux.
     "refreshFrequency": "fiveMinutes",
     "hidePersonalInfo": true,
     "mergeIcons": true,
-    "mergedOverviewSelectedProviders": ["codex", "claude"],
-    "switcherShortcuts": {
-      "previous": "shift+left",
-      "next": "shift+right",
-      "select2": "alt+cmd+2"
-    }
+    "mergedOverviewSelectedProviders": ["codex", "claude"]
   }
 }
 ```
@@ -341,14 +336,15 @@ and tick appearance; usage/reset display; local cost display, comparisons and su
 blink/confetti effects, highest-usage selection, optional credits/extra usage, changelog links, currency
 and alphabetical provider sorting. JSON keys match the `SyncedPreferences` fields. It additionally includes
 `limitResetNotificationsEnabled`, `mergeIcons`, `mergeIconsStacked`, `switcherShowsIcons`, `mergedOverviewLayout`,
-`mergedOverviewSelectedProviders`, and `switcherShortcuts`. An overview selection is applied intentionally
+and `mergedOverviewSelectedProviders`. An overview selection is applied intentionally
 to the receiving Mac's active providers, including an empty selection. `weeklyProgressWorkDays: null`
-restores the seven-day default. Missing keys leave the receiving Mac's settings unchanged. Unknown preference keys,
-unsupported versions, invalid types and invalid shortcut mappings are rejected before applying changes.
+restores the seven-day default. Missing keys leave the receiving Mac's settings unchanged. `switcherShortcuts` from
+older exports is accepted and ignored; the provider switcher it configured no longer exists. Unknown preference keys,
+unsupported versions and invalid types are rejected before applying changes.
 
 Credentials, accounts, hooks, launch at login, global hotkeys, local paths, device identity, iCloud switches,
 debug settings, and consent are excluded. Import does not enable activity-scan consent. Only the existing
-iCloud projection syncs onward; reset notifications, the additional menu settings, and switcher shortcuts stay local
+iCloud projection syncs onward; reset notifications and the additional menu settings stay local
 unless explicitly exported and imported. Import does not modify `config.json` or iCloud's remote-update suppression.
 
 ### Menu bar controls
@@ -370,17 +366,3 @@ layout falls back to a critter, that visible critter can still animate; stored l
 In **Settings → Menu Bar**, inactive combined-icon controls use dimmed labels. Their titles and explanations remain readable and available to VoiceOver; label styling follows each control's enabled state, including stacked-icon restrictions. The layout size and gap controls remain independent of Merge Icons.
 
 The open menu's persistent **Refresh** row uses a text label aligned with the other actions, without a decorative icon. Click the row, press **⌘R**, or use its VoiceOver button action to refresh.
-
-### Provider switcher shortcuts
-
-**Settings → General → Provider Switcher Shortcuts…** edits the same mapping as `switcherShortcuts` above.
-Defaults are `left`/`right` for `previous`/`next` and `cmd+1` through `cmd+9` for `select1` through `select9`.
-These are local menu shortcuts, not global provider-opening hotkeys. The merged menu no longer has a provider
-switcher (it opens on the Overview list, with details in hover submenus), so the mapping is still stored and
-transferred but currently has no effect.
-
-Combine `ctrl`, `alt`, `shift` and `cmd` with an ASCII letter, digit, `left` or `right`; letters and digits
-require Command, Control or Option. `none` disables an action. Modifier order and letter case are normalized.
-Omitted actions retain their defaults. Duplicate assignments (including conflicts with defaults) and
-reserved commands are rejected. Reserved combinations are `cmd+r`, `cmd+,`, `cmd+q`, `cmd+h`, `cmd+m`,
-`cmd+w` and `alt+cmd+h`; Escape, Tab, Return and up/down arrows remain available to menu navigation.

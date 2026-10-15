@@ -1786,7 +1786,6 @@
 "Enable Antigravity provider" = "Activa el proveïdor Antigravity";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "Activa els ginys del compte a CodexBar → Configuració → Menú → Ginys. A continuació, editeu aquest widget per triar un compte.";
 "Error: %@" = "Error: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "Exemples: alt+cmd+2, shift+right. Actualitzar (cmd+r), Configuració (cmd+,) i Surt (cmd+q) estan reservats.";
 "Export Preferences…" = "Exporta les preferències...";
 "External Codex OAuth sources" = "Fonts externes Codex OAuth";
 "Extra usage balance" = "Saldo d'ús addicional";
@@ -1836,7 +1835,6 @@
 "My AI subscriptions · last %d days" = "Les meves subscripcions AI · els darrers dies %d";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "Perfil anomenat AWS des de ~/.aws/config. També es pot configurar amb AWS_PROFILE.";
-"Next provider" = "Següent proveïdor";
 "No active account" = "Cap compte actiu";
 "No cookie header pasted." = "No s'ha enganxat cap capçalera cookie.";
 "No matching OpenAI web session found for %@." = "No s'ha trobat cap sessió web OpenAI coincident per a %@.";
@@ -1911,14 +1909,11 @@
 "Preferences could not be transferred" = "No s'han pogut transferir les preferències";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Preferible per als límits d'ús de Go. També es llegeix OPENCODE_API_KEY.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "Eviteu el repòs del sistema inactiu mentre s'executa un procés d'agent local, fins i tot quan està inactiu. Utilitza energia de la bateria; no impedeix el tancament de la tapa o el son de la pantalla.";
-"Previous provider" = "Proveïdor anterior";
 "Primary quota" = "Quota primària";
 "Prioritize exhausted quotas" = "Prioritzar les quotes esgotades";
 "Profile name" = "Nom del perfil de configuració";
 "Provider %@" = "Proveïdor %@";
 "Provider + Metric" = "Proveïdor + Mètrica";
-"Provider Switcher Shortcuts" = "Dreceres del commutador de proveïdors";
-"Provider Switcher Shortcuts…" = "Dreceres del commutador de proveïdors...";
 "Provider service status: %@" = "Estat del servei del proveïdor: %@";
 "Quota estimated from local usage history" = "Quota estimada a partir de l'historial d'ús local";
 "Quota from the selected dev.meta.ai browser team" = "Quota de l'equip de navegador dev.meta.ai seleccionat";
@@ -1947,7 +1942,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "Desat al fitxer de configuració local de CodexBar. O configureu GITKRAKEN_API_TOKEN.";
 "Scoped weekly" = "Quota setmanal per a l'àmbit seleccionat";
 "Secondary quota" = "Quota secundària";
-"Select position %@" = "Seleccioneu la posició %@";
 "Select the provider and account to display in the widget." = "Seleccioneu el proveïdor i el compte que voleu mostrar al giny.";
 "Select the provider and metric to display." = "Seleccioneu el proveïdor i Mètrica per mostrar.";
 "Select the provider and usage window to display." = "Seleccioneu el proveïdor i la finestra d'ús que voleu mostrar.";
@@ -1981,7 +1975,6 @@
 "The pasted header is sent only to this tenant." = "La capçalera enganxada només s'envia a aquest inquilí.";
 "The selected Codex profile has no verified account email." = "El perfil Codex seleccionat no té cap correu electrònic de compte verificat.";
 "The selected managed Codex account is unavailable." = "El compte Codex gestionat seleccionat no està disponible.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "Aquestes dreceres funcionen mentre el menú del commutador de proveïdors és obert. Feu servir `ctrl`, `alt`, `shift` i `cmd` amb una lletra, un dígit, `left` o `right`; feu servir `none` per desactivar una acció.";
 "Third quota" = "Tercera quota";
 "Today cost" = "Avui costa";
 "Token Refreshed" = "Token actualitzat";

@@ -1782,7 +1782,6 @@
 "Enable Antigravity provider" = "Увімкнути постачальника Antigravity";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "Увімкніть віджети облікового запису в CodexBar → Налаштування → Меню → Віджети. Потім відредагуйте цей віджет, щоб вибрати обліковий запис.";
 "Error: %@" = "Помилка: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "Приклади: alt+cmd+2, shift+right. Оновлення (cmd+r), налаштування (cmd+,) і вихід (cmd+q) зарезервовані.";
 "Export Preferences…" = "Параметри експорту…";
 "External Codex OAuth sources" = "Зовнішні джерела Codex OAuth";
 "Extra usage balance" = "Залишок додаткового використання";
@@ -1832,7 +1831,6 @@
 "My AI subscriptions · last %d days" = "Мої підписки на AI · останні дні %d";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "Названий профіль AWS із ~/.aws/config. Також можна встановити за допомогою AWS_PROFILE.";
-"Next provider" = "Наступний провайдер";
 "No active account" = "Немає активного облікового запису";
 "No cookie header pasted." = "Заголовок cookie не вставлено.";
 "No matching OpenAI web session found for %@." = "Для %@ не знайдено відповідної веб-сесії OpenAI.";
@@ -1907,14 +1905,11 @@
 "Preferences could not be transferred" = "Не вдалося передати налаштування";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Бажано для обмежень використання Go. Також читається OPENCODE_API_KEY.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "Запобігання простою системи в режимі сну, коли працює процес локального агента, навіть коли він неактивний. Використовує заряд акумулятора; не перешкоджає закриттю кришки або сплячому режиму дисплея.";
-"Previous provider" = "Попередній постачальник";
 "Primary quota" = "Первинний Квота";
 "Prioritize exhausted quotas" = "Пріоритет вичерпаного Квота";
 "Profile name" = "Назва профілю конфігурації";
 "Provider %@" = "Постачальник %@";
 "Provider + Metric" = "Провайдер + Показник";
-"Provider Switcher Shortcuts" = "Ярлики перемикача постачальників";
-"Provider Switcher Shortcuts…" = "Ярлики перемикача постачальників…";
 "Provider service status: %@" = "Статус служби постачальника: %@";
 "Quota estimated from local usage history" = "Квота оцінено на основі локальної історії використання";
 "Quota from the selected dev.meta.ai browser team" = "Квота від обраної команди браузера dev.meta.ai";
@@ -1943,7 +1938,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "Збережено в локальному конфігураційному файлі CodexBar. Або встановити GITKRAKEN_API_TOKEN.";
 "Scoped weekly" = "Щотижня Квота для вибраного обсягу";
 "Secondary quota" = "Вторинний Квота";
-"Select position %@" = "Виберіть позицію %@";
 "Select the provider and account to display in the widget." = "Виберіть постачальника та обліковий запис для відображення у віджеті.";
 "Select the provider and metric to display." = "Виберіть постачальника та Показник для відображення.";
 "Select the provider and usage window to display." = "Виберіть постачальника та вікно використання для відображення.";
@@ -1977,7 +1971,6 @@
 "The pasted header is sent only to this tenant." = "Вставлений заголовок надсилається лише цьому орендарю.";
 "The selected Codex profile has no verified account email." = "Вибраний профіль Codex не має підтвердженої електронної адреси облікового запису.";
 "The selected managed Codex account is unavailable." = "Вибраний керований обліковий запис Codex недоступний.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "Ці сполучення клавіш працюють, коли відкрито меню перемикання постачальника. Використовуйте `ctrl`, `alt`, `shift` і `cmd` з літерою, цифрою, `left` або `right`; використовуйте `none`, щоб вимкнути дію.";
 "Third quota" = "Третій Квота";
 "Today cost" = "Сьогодні вартість";
 "Token Refreshed" = "жетони Оновлено";

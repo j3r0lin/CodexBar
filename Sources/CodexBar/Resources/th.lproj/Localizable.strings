@@ -1786,7 +1786,6 @@
 "Enable Antigravity provider" = "เปิดใช้งานผู้ให้บริการ Antigravity";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "เปิดใช้งานวิดเจ็ตบัญชีใน CodexBar → การตั้งค่า → เมนู → วิดเจ็ต จากนั้นแก้ไขวิดเจ็ตนี้เพื่อเลือกบัญชี";
 "Error: %@" = "ข้อผิดพลาด: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "ตัวอย่าง: alt+cmd+2, shift+right รีเฟรช (cmd+r), การตั้งค่า (cmd+,) และออก (cmd+q) สงวนไว้";
 "Export Preferences…" = "การตั้งค่าการส่งออก...";
 "External Codex OAuth sources" = "แหล่งที่มา Codex OAuth ภายนอก";
 "Extra usage balance" = "ยอดการใช้งานเพิ่มเติม";
@@ -1836,7 +1835,6 @@
 "My AI subscriptions · last %d days" = "การสมัครสมาชิก AI ของฉัน · วัน %d ที่ผ่านมา";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "ตั้งชื่อโปรไฟล์ AWS จาก ~/.aws/config สามารถตั้งค่าด้วย AWS_PROFILE ได้เช่นกัน";
-"Next provider" = "ผู้ให้บริการรายต่อไป";
 "No active account" = "ไม่มีบัญชีที่ใช้งานอยู่";
 "No cookie header pasted." = "ไม่มีการวางส่วนหัว cookie";
 "No matching OpenAI web session found for %@." = "ไม่พบเซสชันเว็บ OpenAI ที่ตรงกันสำหรับ %@";
@@ -1911,14 +1909,11 @@
 "Preferences could not be transferred" = "ไม่สามารถโอนการตั้งค่าได้";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "ที่ต้องการสำหรับการจำกัดการใช้งาน Go อ่าน OPENCODE_API_KEY ด้วย";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "ป้องกันการนอนหลับของระบบที่ไม่ได้ใช้งานในขณะที่กระบวนการตัวแทนในเครื่องกำลังทำงานอยู่ แม้ว่าจะไม่ได้ใช้งานก็ตาม ใช้พลังงานแบตเตอรี่ ไม่ป้องกันการปิดฝาหรือเข้าสู่โหมดสลีป";
-"Previous provider" = "ผู้ให้บริการก่อนหน้า";
 "Primary quota" = "หลัก โควต้า";
 "Prioritize exhausted quotas" = "จัดลำดับความสำคัญของ โควต้า ที่หมดแรง";
 "Profile name" = "ชื่อโปรไฟล์การกำหนดค่า";
 "Provider %@" = "ผู้ให้บริการ %@";
 "Provider + Metric" = "ผู้ให้บริการ + เมตริก";
-"Provider Switcher Shortcuts" = "ทางลัดตัวสลับผู้ให้บริการ";
-"Provider Switcher Shortcuts…" = "ทางลัดตัวสลับผู้ให้บริการ...";
 "Provider service status: %@" = "สถานะบริการของผู้ให้บริการ: %@";
 "Quota estimated from local usage history" = "โควต้า ประเมินจากประวัติการใช้งานในเครื่อง";
 "Quota from the selected dev.meta.ai browser team" = "โควต้า จากทีมเบราว์เซอร์ dev.meta.ai ที่เลือก";
@@ -1947,7 +1942,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "บันทึกในไฟล์กำหนดค่าในเครื่องของ CodexBar หรือตั้งค่า GITKRAKEN_API_TOKEN";
 "Scoped weekly" = "โควต้า รายสัปดาห์สำหรับขอบเขตที่เลือก";
 "Secondary quota" = "โควต้า รอง";
-"Select position %@" = "เลือกตำแหน่ง %@";
 "Select the provider and account to display in the widget." = "เลือกผู้ให้บริการและบัญชีที่จะแสดงในวิดเจ็ต";
 "Select the provider and metric to display." = "เลือกผู้ให้บริการและ เมตริก ที่จะแสดง";
 "Select the provider and usage window to display." = "เลือกผู้ให้บริการและหน้าต่างการใช้งานที่จะแสดง";
@@ -1981,7 +1975,6 @@
 "The pasted header is sent only to this tenant." = "ส่วนหัวที่วางจะถูกส่งไปยังผู้เช่ารายนี้เท่านั้น";
 "The selected Codex profile has no verified account email." = "โปรไฟล์ Codex ที่เลือกไม่มีอีเมลบัญชีที่ได้รับการยืนยัน";
 "The selected managed Codex account is unavailable." = "บัญชี Codex ที่ได้รับการจัดการที่เลือกไม่พร้อมใช้งาน";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "ทางลัดเหล่านี้ใช้งานได้ขณะเปิดเมนูสลับผู้ให้บริการ ใช้ `ctrl`, `alt`, `shift` และ `cmd` ร่วมกับตัวอักษร ตัวเลข `left` หรือ `right` และใช้ `none` เพื่อปิดใช้งานการดำเนินการ";
 "Third quota" = "โควต้า ตัวที่สาม";
 "Today cost" = "ราคาวันนี้";
 "Token Refreshed" = "โทเค็น รีเฟรชแล้ว";

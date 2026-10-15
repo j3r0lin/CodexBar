@@ -6,7 +6,6 @@ import UniformTypeIdentifiers
 struct PreferencesTransferSection: View {
     @Bindable var settings: SettingsStore
     @State private var failure: String?
-    @State private var editingShortcuts = false
 
     var body: some View {
         Section {
@@ -14,7 +13,6 @@ struct PreferencesTransferSection: View {
                 Button(L("Export Preferences…")) { self.transfer(importing: false) }
                 Button(L("Import Preferences…")) { self.transfer(importing: true) }
             }
-            Button(L("Provider Switcher Shortcuts…")) { self.editingShortcuts = true }
         } header: {
             Text(L("Portable preferences"))
         } footer: {
@@ -30,9 +28,6 @@ struct PreferencesTransferSection: View {
         } message: {
             Text(self.failure ?? "")
         }
-        .sheet(isPresented: self.$editingShortcuts) {
-                ProviderSwitcherShortcutEditor(settings: self.settings)
-            }
     }
 
     private func transfer(importing: Bool) {
@@ -49,60 +44,6 @@ struct PreferencesTransferSection: View {
             }
         } catch {
             self.failure = error.localizedDescription
-        }
-    }
-}
-
-struct ProviderSwitcherShortcutEditor: View {
-    let settings: SettingsStore
-    @Environment(\.dismiss) private var dismiss
-    @State private var shortcuts: [String: String] = [:]
-    @State private var failure: String?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(L("Provider Switcher Shortcuts")).font(.headline)
-            Text(
-                L(
-                    "These shortcuts work while the provider switcher menu is open. "
-                        + "Use ctrl, alt, shift and cmd with a letter, digit, left or right; "
-                        + "use none to disable an action."))
-                .font(.callout).foregroundStyle(.secondary)
-            Form {
-                ForEach(ProviderSwitcherShortcuts.actions, id: \.self) { action in
-                    TextField(self.label(action), text: Binding(
-                        get: { self.shortcuts[action] ?? "" },
-                        set: { self.shortcuts[action] = $0 }))
-                }
-            }
-            Text(
-                L("Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved."))
-                .font(.caption).foregroundStyle(.secondary)
-            if let failure { Text(failure).foregroundStyle(.red).accessibilityLabel(L(
-                "Error: %@",
-                String(describing: failure))) }
-            HStack {
-                Button(L("Restore Defaults")) { self.shortcuts = ProviderSwitcherShortcuts.defaults; self.failure = nil
-                }
-                Spacer()
-                Button(L("Cancel")) { self.dismiss() }.keyboardShortcut(.cancelAction)
-                Button(L("Save")) {
-                    do {
-                        try self.settings.setProviderSwitcherShortcuts(self.shortcuts)
-                        self.dismiss()
-                    } catch { self.failure = error.localizedDescription }
-                }.keyboardShortcut(.defaultAction)
-            }
-        }
-        .padding(24).frame(width: 460)
-        .onAppear { self.shortcuts = self.settings.providerSwitcherShortcuts }
-    }
-
-    private func label(_ action: String) -> String {
-        switch action {
-        case "previous": L("Previous provider")
-        case "next": L("Next provider")
-        default: L("Select position %@", String(action.dropFirst(6)))
         }
     }
 }

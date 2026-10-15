@@ -1782,7 +1782,6 @@
 "Enable Antigravity provider" = "Habilitar provedor Antigravity";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "Habilite widgets de conta em CodexBar → Configurações → Menu → Widgets. Em seguida, edite este widget para escolher uma conta.";
 "Error: %@" = "Erro: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "Exemplos: alt+cmd+2, shift+right. Atualizar (cmd+r), Configurações (cmd+,) e Sair (cmd+q) são reservados.";
 "Export Preferences…" = "Exportar preferências…";
 "External Codex OAuth sources" = "Fontes externas Codex OAuth";
 "Extra usage balance" = "Saldo de uso extra";
@@ -1832,7 +1831,6 @@
 "My AI subscriptions · last %d days" = "Minhas assinaturas AI · últimos dias %d";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "Perfil denominado AWS de ~/.aws/config. Também pode ser definido com AWS_PROFILE.";
-"Next provider" = "Próximo provedor";
 "No active account" = "Nenhuma conta ativa";
 "No cookie header pasted." = "Nenhum cabeçalho cookie colado.";
 "No matching OpenAI web session found for %@." = "Nenhuma sessão da web OpenAI correspondente encontrada para %@.";
@@ -1907,14 +1905,11 @@
 "Preferences could not be transferred" = "Não foi possível transferir as preferências";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Preferido para limites de uso Go. Também lê OPENCODE_API_KEY.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "Evite a suspensão ociosa do sistema enquanto um processo de agente local estiver em execução, mesmo quando ocioso. Usa energia da bateria; não impede o fechamento da tampa ou o sono da tela.";
-"Previous provider" = "Provedor anterior";
 "Primary quota" = "Primário Cota";
 "Prioritize exhausted quotas" = "Priorize o esgotado Cota";
 "Profile name" = "Nome do perfil de configuração";
 "Provider %@" = "Provedor %@";
 "Provider + Metric" = "Provedor + Métrica";
-"Provider Switcher Shortcuts" = "Atalhos do alternador de provedor";
-"Provider Switcher Shortcuts…" = "Atalhos do alternador de provedor…";
 "Provider service status: %@" = "Status do serviço do provedor: %@";
 "Quota estimated from local usage history" = "Cota estimado a partir do histórico de uso local";
 "Quota from the selected dev.meta.ai browser team" = "Cota da equipe de navegadores dev.meta.ai selecionada";
@@ -1943,7 +1938,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "Salvo no arquivo de configuração local do CodexBar. Ou defina GITKRAKEN_API_TOKEN.";
 "Scoped weekly" = "Cota semanal para o escopo selecionado";
 "Secondary quota" = "Cota secundário";
-"Select position %@" = "Selecione a posição %@";
 "Select the provider and account to display in the widget." = "Selecione o provedor e a conta a serem exibidos no widget.";
 "Select the provider and metric to display." = "Selecione o provedor e Métrica para exibir.";
 "Select the provider and usage window to display." = "Selecione o provedor e a janela de uso a serem exibidos.";
@@ -1977,7 +1971,6 @@
 "The pasted header is sent only to this tenant." = "O cabeçalho colado é enviado somente para este locatário.";
 "The selected Codex profile has no verified account email." = "O perfil Codex selecionado não possui e-mail de conta verificado.";
 "The selected managed Codex account is unavailable." = "A conta Codex gerenciada selecionada não está disponível.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "Esses atalhos funcionam enquanto o menu de seleção de provedor está aberto. Use `ctrl`, `alt`, `shift` e `cmd` com uma letra, um dígito, `left` ou `right`; use `none` para desativar uma ação.";
 "Third quota" = "Terceiro Cota";
 "Today cost" = "Custo hoje";
 "Token Refreshed" = "Token atualizado";

@@ -1785,7 +1785,6 @@
 "Enable Antigravity provider" = "Aktifkan penyedia Antigravity";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "Aktifkan widget akun di CodexBar → Pengaturan → Menu → Widget. Kemudian edit widget ini untuk memilih akun.";
 "Error: %@" = "Kesalahan: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "Contoh: alt+cmd+2, shift+right. Refresh (cmd+r), Pengaturan (cmd+,) dan Keluar (cmd+q) dicadangkan.";
 "Export Preferences…" = "Preferensi Ekspor…";
 "External Codex OAuth sources" = "Sumber Codex OAuth eksternal";
 "Extra usage balance" = "Saldo penggunaan ekstra";
@@ -1835,7 +1834,6 @@
 "My AI subscriptions · last %d days" = "Langganan AI saya · %d hari terakhir";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "Dinamakan profil AWS dari ~/.aws/config. Bisa juga diatur dengan AWS_PROFILE.";
-"Next provider" = "Penyedia berikutnya";
 "No active account" = "Tidak ada akun aktif";
 "No cookie header pasted." = "Tidak ada header cookie yang ditempel.";
 "No matching OpenAI web session found for %@." = "Tidak ditemukan sesi web OpenAI yang cocok untuk %@.";
@@ -1910,14 +1908,11 @@
 "Preferences could not be transferred" = "Preferensi tidak dapat ditransfer";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Lebih disukai untuk batas penggunaan Go. Baca juga OPENCODE_API_KEY.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "Cegah tidur sistem idle saat proses agen lokal sedang berjalan, bahkan saat idle. Menggunakan daya baterai; tidak mencegah tutup-tutup atau tampilan tidur.";
-"Previous provider" = "Penyedia sebelumnya";
 "Primary quota" = "Kuota utama";
 "Prioritize exhausted quotas" = "Prioritaskan Kuota yang habis";
 "Profile name" = "Nama profil konfigurasi";
 "Provider %@" = "Penyedia %@";
 "Provider + Metric" = "Penyedia + Metrik";
-"Provider Switcher Shortcuts" = "Pintasan Pengalih Penyedia";
-"Provider Switcher Shortcuts…" = "Pintasan Pengalih Penyedia…";
 "Provider service status: %@" = "Status layanan penyedia: %@";
 "Quota estimated from local usage history" = "Kuota diperkirakan dari riwayat penggunaan lokal";
 "Quota from the selected dev.meta.ai browser team" = "Kuota dari tim browser dev.meta.ai yang dipilih";
@@ -1946,7 +1941,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "Disimpan dalam file konfigurasi lokal CodexBar. Atau atur GITKRAKEN_API_TOKEN.";
 "Scoped weekly" = "Kuota mingguan untuk cakupan yang dipilih";
 "Secondary quota" = "Kuota sekunder";
-"Select position %@" = "Pilih posisi %@";
 "Select the provider and account to display in the widget." = "Pilih penyedia dan akun untuk ditampilkan di widget.";
 "Select the provider and metric to display." = "Pilih penyedia dan Metrik untuk ditampilkan.";
 "Select the provider and usage window to display." = "Pilih penyedia dan jendela penggunaan untuk ditampilkan.";
@@ -1980,7 +1974,6 @@
 "The pasted header is sent only to this tenant." = "Header yang ditempel hanya dikirim ke penyewa ini.";
 "The selected Codex profile has no verified account email." = "Profil Codex yang dipilih tidak memiliki email akun terverifikasi.";
 "The selected managed Codex account is unavailable." = "Akun Codex terkelola yang dipilih tidak tersedia.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "Pintasan ini berfungsi saat menu pengalih penyedia terbuka. Gunakan `ctrl`, `alt`, `shift`, dan `cmd` dengan huruf, angka, `left`, atau `right`; gunakan `none` untuk menonaktifkan tindakan.";
 "Third quota" = "Kuota ketiga";
 "Today cost" = "Biaya hari ini";
 "Token Refreshed" = "token Disegarkan";

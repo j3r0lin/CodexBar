@@ -1782,7 +1782,6 @@
 "Enable Antigravity provider" = "Antigravityプロバイダーを有効にする";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "CodexBar → 設定 → メニュー → ウィジェットでアカウント ウィジェットを有効にします。次に、このウィジェットを編集してアカウントを選択します。";
 "Error: %@" = "エラー: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "例: alt+cmd+2、shift+right。更新 (cmd+r)、設定 (cmd+,)、および終了 (cmd+q) は予約されています。";
 "Export Preferences…" = "エクスポート設定…";
 "External Codex OAuth sources" = "外部 Codex OAuth ソース";
 "Extra usage balance" = "追加使用残高";
@@ -1832,7 +1831,6 @@
 "My AI subscriptions · last %d days" = "私の AI サブスクリプション · 過去 %d 日間";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "~/.aws/config から AWS プロファイルという名前を付けました。 AWS_PROFILEでも設定可能です。";
-"Next provider" = "次のプロバイダー";
 "No active account" = "アクティブなアカウントがありません";
 "No cookie header pasted." = "cookie ヘッダーは貼り付けられていません。";
 "No matching OpenAI web session found for %@." = "%@ に一致する OpenAI Web セッションが見つかりません。";
@@ -1907,14 +1905,11 @@
 "Preferences could not be transferred" = "設定を転送できませんでした";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Go の使用制限に推奨されます。 OPENCODE_API_KEY とも読みます。";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "アイドル状態であっても、ローカル エージェント プロセスの実行中にアイドル状態のシステム スリープを防止します。バッテリー電源を使用します。蓋を閉めたり、ディスプレイのスリープを妨げたりすることはありません。";
-"Previous provider" = "以前のプロバイダー";
 "Primary quota" = "プライマリ クォータ";
 "Prioritize exhausted quotas" = "消耗したクォータを優先します";
 "Profile name" = "構成プロファイル名";
 "Provider %@" = "プロバイダー %@";
 "Provider + Metric" = "プロバイダー + 指標";
-"Provider Switcher Shortcuts" = "プロバイダー切り替えのショートカット";
-"Provider Switcher Shortcuts…" = "プロバイダー切り替えのショートカット…";
 "Provider service status: %@" = "プロバイダーのサービスステータス: %@";
 "Quota estimated from local usage history" = "クォータ ローカルの使用履歴から推定";
 "Quota from the selected dev.meta.ai browser team" = "選択された dev.meta.ai ブラウザー チームの クォータ";
@@ -1943,7 +1938,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "CodexBar のローカル設定ファイルに保存されます。または、GITKRAKEN_API_TOKEN を設定します。";
 "Scoped weekly" = "選択したスコープの週次 クォータ";
 "Secondary quota" = "セカンダリ クォータ";
-"Select position %@" = "位置を選択 %@";
 "Select the provider and account to display in the widget." = "ウィジェットに表示するプロバイダーとアカウントを選択します。";
 "Select the provider and metric to display." = "プロバイダーと表示する 指標 を選択します。";
 "Select the provider and usage window to display." = "表示するプロバイダーと使用状況ウィンドウを選択します。";
@@ -1977,7 +1971,6 @@
 "The pasted header is sent only to this tenant." = "貼り付けられたヘッダーは、このテナントにのみ送信されます。";
 "The selected Codex profile has no verified account email." = "選択した Codex プロファイルには検証済みのアカウント電子メールがありません。";
 "The selected managed Codex account is unavailable." = "選択した管理対象 Codex アカウントは使用できません。";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "これらのショートカットは、プロバイダー切り替えメニューが開いている間に使えます。`ctrl`、`alt`、`shift`、`cmd` を文字、数字、`left` または `right` と組み合わせて入力します。操作を無効にするには `none` を使います。";
 "Third quota" = "3 番目の クォータ";
 "Today cost" = "今日の費用";
 "Token Refreshed" = "トークン 更新されました";

@@ -1786,7 +1786,6 @@
 "Enable Antigravity provider" = "تمكين مزود Antigravity";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "قم بتمكين أدوات الحساب في CodexBar → الإعدادات → القائمة → الأدوات. ثم قم بتحرير هذه القطعة لاختيار حساب.";
 "Error: %@" = "خطأ: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "أمثلة: alt+cmd+2، shift+right. التحديث (cmd+r)، والإعدادات (cmd+،) والخروج (cmd+q) محجوزة.";
 "Export Preferences…" = "تفضيلات التصدير...";
 "External Codex OAuth sources" = "مصادر Codex OAuth الخارجية";
 "Extra usage balance" = "رصيد استخدام إضافي";
@@ -1836,7 +1835,6 @@
 "My AI subscriptions · last %d days" = "اشتراكاتي في AI · آخر أيام %d";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "تم تسمية الملف الشخصي AWS من ~/.aws/config. يمكن أيضًا ضبطه مع AWS_PROFILE.";
-"Next provider" = "المزود التالي";
 "No active account" = "لا يوجد حساب نشط";
 "No cookie header pasted." = "لم يتم لصق رأس cookie.";
 "No matching OpenAI web session found for %@." = "لم يتم العثور على جلسة ويب OpenAI مطابقة لـ %@.";
@@ -1911,14 +1909,11 @@
 "Preferences could not be transferred" = "لا يمكن نقل التفضيلات";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "يُفضل استخدام حدود استخدام Go. يقرأ أيضًا OPENCODE_API_KEY.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "منع سكون النظام الخامل أثناء تشغيل عملية الوكيل المحلي، حتى عندما يكون خاملاً. يستخدم طاقة البطارية. لا يمنع إغلاق الغطاء أو عرضه للنوم.";
-"Previous provider" = "المزود السابق";
 "Primary quota" = "الابتدائي الحصة";
 "Prioritize exhausted quotas" = "إعطاء الأولوية ل الحصة المنهكة";
 "Profile name" = "اسم ملف تعريف التكوين";
 "Provider %@" = "المزود %@";
 "Provider + Metric" = "المزود + المؤشر";
-"Provider Switcher Shortcuts" = "اختصارات موفر الجلاد";
-"Provider Switcher Shortcuts…" = "اختصارات موفر التبديل...";
 "Provider service status: %@" = "حالة خدمة الموفر: %@";
 "Quota estimated from local usage history" = "تم تقدير الحصة من تاريخ الاستخدام المحلي";
 "Quota from the selected dev.meta.ai browser team" = "الحصة من فريق متصفح dev.meta.ai المحدد";
@@ -1947,7 +1942,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "تم الحفظ في ملف التكوين المحلي الخاص بـ CodexBar. أو قم بتعيين GITKRAKEN_API_TOKEN.";
 "Scoped weekly" = "الحصة أسبوعيًا للنطاق المحدد";
 "Secondary quota" = "الثانوية الحصة";
-"Select position %@" = "حدد الموضع %@";
 "Select the provider and account to display in the widget." = "حدد الموفر والحساب لعرضهما في الأداة.";
 "Select the provider and metric to display." = "حدد الموفر والمؤشر لعرضه.";
 "Select the provider and usage window to display." = "حدد الموفر ونافذة الاستخدام لعرضهما.";
@@ -1981,7 +1975,6 @@
 "The pasted header is sent only to this tenant." = "يتم إرسال الرأس الملصق إلى هذا المستأجر فقط.";
 "The selected Codex profile has no verified account email." = "لا يحتوي ملف تعريف Codex المحدد على بريد إلكتروني للحساب الذي تم التحقق منه.";
 "The selected managed Codex account is unavailable." = "حساب Codex المُدار المحدد غير متاح.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "تعمل هذه الاختصارات عندما تكون قائمة تبديل الموفر مفتوحة. استخدم `ctrl` و`alt` و`shift` و`cmd` مع حرف أو رقم أو `left` أو `right`؛ استخدم `none` لتعطيل الإجراء.";
 "Third quota" = "الثالث الحصة";
 "Today cost" = "تكلفة اليوم";
 "Token Refreshed" = "تم تحديث الرموز";

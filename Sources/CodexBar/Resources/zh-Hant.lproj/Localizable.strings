@@ -1800,7 +1800,6 @@
 "Enable Antigravity provider" = "啟用 Antigravity 提供程序";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "在 CodexBar → 設定 → 選單 → 小工具中啟用帳號小工具。然後編輯此小部件以選擇帳戶。";
 "Error: %@" = "錯誤：%@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "例：alt+cmd+2、shift+right。刷新（cmd+r）、設定（cmd+,）和退出（cmd+q）被保留。";
 "Export Preferences…" = "匯出首選項...";
 "External Codex OAuth sources" = "外部 Codex OAuth 來源";
 "Extra usage balance" = "額外用量餘額";
@@ -1839,7 +1838,6 @@
 "My AI subscriptions · last %d days" = "我的 AI 訂閱 · 最近 %d 天";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "~/.aws/config 中的 AWS 配置檔案名稱，也可通過 AWS_PROFILE 設置。";
-"Next provider" = "下一個提供者";
 "No active account" = "沒有正在使用的帳戶";
 "No cookie header pasted." = "尚未粘貼 Cookie 請求頭。";
 "No model-level history in this local snapshot" = "此本地快照沒有按模型統計的歷史用量";
@@ -1900,14 +1898,11 @@
 "Preferences could not be transferred" = "無法遷移偏好設置";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Go 使用限制的首選。也讀取 OPENCODE_API_KEY。";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "本地 agent 進程運行時，即使沒有活動也保持系統喚醒。會消耗電量，不阻止合蓋睡眠或顯示器休眠。";
-"Previous provider" = "上一個提供商";
 "Primary quota" = "第一項配額";
 "Prioritize exhausted quotas" = "優先顯示已耗盡的配額";
 "Profile name" = "配置檔案名稱";
 "Provider %@" = "供應商 %@";
 "Provider + Metric" = "提供者+指標";
-"Provider Switcher Shortcuts" = "提供商切換快捷鍵";
-"Provider Switcher Shortcuts…" = "提供商切換快捷鍵…";
 "Provider service status: %@" = "提供者服務狀態：%@";
 "Quota estimated from local usage history" = "根據本地用量歷史估算的配額";
 "Quota from the selected dev.meta.ai browser team" = "所選 dev.meta.ai 網頁團隊的配額";
@@ -1933,7 +1928,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "儲存在CodexBar的本機設定檔中。或設定GITKRAKEN_API_TOKEN。";
 "Scoped weekly" = "所選範圍的每周配額";
 "Secondary quota" = "第二項配額";
-"Select position %@" = "選擇第 %@ 項";
 "Select the provider and account to display in the widget." = "選擇要在小工具中顯示的提供者和帳戶。";
 "Select the provider and metric to display." = "選擇要顯示的提供者和 指標。";
 "Select the provider and usage window to display." = "選擇要顯示的提供者和使用視窗。";
@@ -1964,7 +1958,6 @@
 "TRACKED TOKENS · %@" = "已記錄 token · %@";
 "That managed account uses a workspace that differs from its saved Codex auth default. Keep it as a managed account; CodexBar will not rewrite Codex-owned auth to promote it." = "此托管帳戶的工作區與保存的 Codex 默認認證工作區不同。請繼續將其作為托管帳戶使用；CodexBar 不會修改 Codex 管理的認證信息來將其設為系統帳戶。";
 "The pasted header is sent only to this tenant." = "貼上的標頭僅發送給該租戶。";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "這些快速鍵在服務商切換選單開啟時可用。輸入 `ctrl`、`alt`、`shift` 和 `cmd`，搭配字母、數字、`left` 或 `right`；輸入 `none` 可停用對應操作。";
 "Third quota" = "第三項配額";
 "Today cost" = "今日費用";
 "Token value only (without Bearer)" = "僅輸入令牌值，不含 Bearer 前綴";

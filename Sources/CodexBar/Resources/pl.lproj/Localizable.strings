@@ -1785,7 +1785,6 @@
 "Enable Antigravity provider" = "Włącz dostawcę Antigravity";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "Włącz widżety konta w CodexBar → Ustawienia → Menu → Widżety. Następnie edytuj ten widget, aby wybrać konto.";
 "Error: %@" = "Błąd: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "Przykłady: alt+cmd+2, shift+right. Odśwież (cmd+r), Ustawienia (cmd+,) i Zakończ (cmd+q) są zarezerwowane.";
 "Export Preferences…" = "Preferencje eksportu…";
 "External Codex OAuth sources" = "Zewnętrzne źródła Codex OAuth";
 "Extra usage balance" = "Dodatkowe saldo użytkowania";
@@ -1835,7 +1834,6 @@
 "My AI subscriptions · last %d days" = "Moje subskrypcje AI · ostatnie dni %d";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "Nazwany profil AWS z ~/.aws/config. Można także ustawić za pomocą AWS_PROFILE.";
-"Next provider" = "Następny dostawca";
 "No active account" = "Brak aktywnego konta";
 "No cookie header pasted." = "Nie wklejono nagłówka cookie.";
 "No matching OpenAI web session found for %@." = "Nie znaleziono pasującej sesji internetowej OpenAI dla %@.";
@@ -1910,14 +1908,11 @@
 "Preferences could not be transferred" = "Nie można przenieść preferencji";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Preferowane w przypadku ograniczeń użytkowania Go. Przeczytaj także OPENCODE_API_KEY.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "Zapobiegaj uśpieniu bezczynnego systemu podczas działania procesu agenta lokalnego, nawet w stanie bezczynności. Wykorzystuje energię baterii; nie zapobiega zamykaniu pokrywy ani uśpieniu wyświetlacza.";
-"Previous provider" = "Poprzedni dostawca";
 "Primary quota" = "Podstawowy Limit";
 "Prioritize exhausted quotas" = "Priorytetowo traktuj wyczerpaną Limit";
 "Profile name" = "Nazwa profilu konfiguracyjnego";
 "Provider %@" = "Dostawca %@";
 "Provider + Metric" = "Dostawca + Wskaźnik";
-"Provider Switcher Shortcuts" = "Skróty do przełączania dostawców";
-"Provider Switcher Shortcuts…" = "Skróty zmiany dostawcy…";
 "Provider service status: %@" = "Status usługi dostawcy: %@";
 "Quota estimated from local usage history" = "Limit oszacowano na podstawie lokalnej historii użytkowania";
 "Quota from the selected dev.meta.ai browser team" = "Limit od wybranego zespołu przeglądarek dev.meta.ai";
@@ -1946,7 +1941,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "Zapisano w lokalnym pliku konfiguracyjnym CodexBar. Lub ustaw GITKRAKEN_API_TOKEN.";
 "Scoped weekly" = "Co tydzień Limit dla wybranego zakresu";
 "Secondary quota" = "Dodatkowy Limit";
-"Select position %@" = "Wybierz pozycję %@";
 "Select the provider and account to display in the widget." = "Wybierz dostawcę i konto, które chcesz wyświetlić w widżecie.";
 "Select the provider and metric to display." = "Wybierz dostawcę i Wskaźnik do wyświetlenia.";
 "Select the provider and usage window to display." = "Wybierz dostawcę i okno użytkowania do wyświetlenia.";
@@ -1980,7 +1974,6 @@
 "The pasted header is sent only to this tenant." = "Wklejony nagłówek jest wysyłany tylko do tego dzierżawcy.";
 "The selected Codex profile has no verified account email." = "Wybrany profil Codex nie ma zweryfikowanego adresu e-mail konta.";
 "The selected managed Codex account is unavailable." = "Wybrane zarządzane konto Codex jest niedostępne.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "Te skróty działają, gdy menu wyboru dostawcy jest otwarte. Użyj `ctrl`, `alt`, `shift` i `cmd` z literą, cyfrą, `left` lub `right`; użyj `none`, aby wyłączyć działanie.";
 "Third quota" = "Trzeci Limit";
 "Today cost" = "Dzisiaj koszt";
 "Token Refreshed" = "tokeny Odświeżony";

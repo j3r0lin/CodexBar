@@ -1787,7 +1787,6 @@
 "Enable Antigravity provider" = "Enable Antigravity provider";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account.";
 "Error: %@" = "Error: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved.";
 "Export Preferences…" = "Export Preferences…";
 "External Codex OAuth sources" = "External Codex OAuth sources";
 "Extra usage balance" = "Extra usage balance";
@@ -1837,7 +1836,6 @@
 "My AI subscriptions · last %d days" = "My AI subscriptions · last %d days";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE.";
-"Next provider" = "Next provider";
 "No active account" = "No active account";
 "No cookie header pasted." = "No cookie header pasted.";
 "No matching OpenAI web session found for %@." = "No matching OpenAI web session found for %@.";
@@ -1912,14 +1910,11 @@
 "Preferences could not be transferred" = "Preferences could not be transferred";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Preferred for Go usage limits. Also reads OPENCODE_API_KEY.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep.";
-"Previous provider" = "Previous provider";
 "Primary quota" = "Primary quota";
 "Prioritize exhausted quotas" = "Prioritize exhausted quotas";
 "Profile name" = "Profile name";
 "Provider %@" = "Provider %@";
 "Provider + Metric" = "Provider + Metric";
-"Provider Switcher Shortcuts" = "Provider Switcher Shortcuts";
-"Provider Switcher Shortcuts…" = "Provider Switcher Shortcuts…";
 "Provider service status: %@" = "Provider service status: %@";
 "Quota estimated from local usage history" = "Quota estimated from local usage history";
 "Quota from the selected dev.meta.ai browser team" = "Quota from the selected dev.meta.ai browser team";
@@ -1948,7 +1943,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN.";
 "Scoped weekly" = "Scoped weekly";
 "Secondary quota" = "Secondary quota";
-"Select position %@" = "Select position %@";
 "Select the provider and account to display in the widget." = "Select the provider and account to display in the widget.";
 "Select the provider and metric to display." = "Select the provider and metric to display.";
 "Select the provider and usage window to display." = "Select the provider and usage window to display.";
@@ -1982,7 +1976,6 @@
 "The pasted header is sent only to this tenant." = "The pasted header is sent only to this tenant.";
 "The selected Codex profile has no verified account email." = "The selected Codex profile has no verified account email.";
 "The selected managed Codex account is unavailable." = "The selected managed Codex account is unavailable.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action.";
 "Third quota" = "Third quota";
 "Today cost" = "Today cost";
 "Token Refreshed" = "Token Refreshed";

@@ -1786,7 +1786,6 @@
 "Enable Antigravity provider" = "Abilita il fornitore Antigravity";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "Abilita i widget dell'account in CodexBar → Impostazioni → Menu → Widget. Quindi modifica questo widget per scegliere un account.";
 "Error: %@" = "Errore: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "Esempi: alt+cmd+2, shift+right. Aggiorna (cmd+r), Impostazioni (cmd+,) e Esci (cmd+q) sono riservati.";
 "Export Preferences…" = "Esporta preferenze...";
 "External Codex OAuth sources" = "Sorgenti esterne Codex OAuth";
 "Extra usage balance" = "Saldo di utilizzo extra";
@@ -1836,7 +1835,6 @@
 "My AI subscriptions · last %d days" = "I miei abbonamenti AI · gli ultimi giorni %d";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "Profilo denominato AWS da ~/.aws/config. Può anche essere impostato con AWS_PROFILE.";
-"Next provider" = "Fornitore successivo";
 "No active account" = "Nessun account attivo";
 "No cookie header pasted." = "Nessuna intestazione cookie incollata.";
 "No matching OpenAI web session found for %@." = "Nessuna sessione web OpenAI corrispondente trovata per %@.";
@@ -1911,14 +1909,11 @@
 "Preferences could not be transferred" = "Impossibile trasferire le preferenze";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Preferito per i limiti di utilizzo Go. Si legge anche OPENCODE_API_KEY.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "Impedisce la sospensione del sistema inattivo mentre è in esecuzione un processo dell'agente locale, anche quando è inattivo. Utilizza la batteria; non impedisce la chiusura del coperchio o la sospensione del display.";
-"Previous provider" = "Fornitore precedente";
 "Primary quota" = "Primario Limite";
 "Prioritize exhausted quotas" = "Dai priorità allo Limite esaurito";
 "Profile name" = "Nome del profilo di configurazione";
 "Provider %@" = "Fornitore %@";
 "Provider + Metric" = "Fornitore + Metrica";
-"Provider Switcher Shortcuts" = "Scorciatoie per il cambio del provider";
-"Provider Switcher Shortcuts…" = "Scorciatoie per il cambio del provider...";
 "Provider service status: %@" = "Stato del servizio del fornitore: %@";
 "Quota estimated from local usage history" = "Limite stimato dalla cronologia di utilizzo locale";
 "Quota from the selected dev.meta.ai browser team" = "Limite dal team di browser dev.meta.ai selezionato";
@@ -1947,7 +1942,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "Salvato nel file di configurazione locale di CodexBar. Oppure imposta GITKRAKEN_API_TOKEN.";
 "Scoped weekly" = "Limite settimanale per l'ambito selezionato";
 "Secondary quota" = "Secondario Limite";
-"Select position %@" = "Selezionare la posizione %@";
 "Select the provider and account to display in the widget." = "Seleziona il fornitore e l'account da visualizzare nel widget.";
 "Select the provider and metric to display." = "Selezionare il provider e Metrica da visualizzare.";
 "Select the provider and usage window to display." = "Seleziona il provider e la finestra di utilizzo da visualizzare.";
@@ -1981,7 +1975,6 @@
 "The pasted header is sent only to this tenant." = "L'intestazione incollata viene inviata solo a questo tenant.";
 "The selected Codex profile has no verified account email." = "Il profilo Codex selezionato non ha un account email verificato.";
 "The selected managed Codex account is unavailable." = "L'account gestito Codex selezionato non è disponibile.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "Queste scorciatoie funzionano mentre il menu di selezione del provider è aperto. Usa `ctrl`, `alt`, `shift` e `cmd` con una lettera, una cifra, `left` o `right`; usa `none` per disabilitare un’azione.";
 "Third quota" = "Terzo Limite";
 "Today cost" = "Oggi costa";
 "Token Refreshed" = "token Aggiornato";
