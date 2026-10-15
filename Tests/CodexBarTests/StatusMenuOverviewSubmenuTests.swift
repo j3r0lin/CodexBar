@@ -199,12 +199,13 @@ extension StatusMenuTests {
         settings.mergeIcons = true
         settings.selectedMenuProvider = .claude
         settings.mergedMenuLastSelectedWasOverview = true
-        settings.claudeMagpieEnabled = true
 
         enableTestProviders([.claude], settings: settings)
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        // Enabling magpie clears snapshots and schedules a refresh, so the fixture goes in afterwards.
+        settings.claudeMagpieEnabled = true
         let accountID = ProviderAccountIdentity(source: "magpie", opaqueID: "claude:first@example.com")
         store.claudeMagpieAccountSnapshots = [
             ProviderAccountUsageSnapshot(
