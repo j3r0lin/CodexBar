@@ -700,7 +700,8 @@ extension UserProviderPluginTests {
                 metadata: #require(ProviderRegistry.shared.metadata[provider]),
                 enabled: true)
         }
-        let expectedCards = topLevel == false ? ["pluginCard:placement-meter"] : []
+        // The merged menu has no plugin tabs, so it lists the card whatever the placement.
+        let expectedCards = ["pluginCard:placement-meter"]
         for overview in [false, true] {
             settings.mergedMenuLastSelectedWasOverview = overview
             let menu = controller.makeMenu()
