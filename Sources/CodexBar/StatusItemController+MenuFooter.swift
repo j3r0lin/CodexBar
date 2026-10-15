@@ -2,7 +2,8 @@ import AppKit
 
 private enum MenuFooterBarRegistry {
     /// Footer bars are weakly tracked so a refresh started while the menu is open can spin their icon.
-    static let bars = NSMapTable<StatusItemController, NSHashTable<MenuFooterBarView>>.weakToStrongObjects()
+    nonisolated(unsafe) static let bars =
+        NSMapTable<StatusItemController, NSHashTable<MenuFooterBarView>>.weakToStrongObjects()
 }
 
 extension StatusItemController {
@@ -18,7 +19,7 @@ extension StatusItemController {
     /// The four trailing meta actions collapse into one icon bar. Their keyboard shortcuts stay
     /// with `StatusItemMenu.performKeyEquivalent`: a hidden item's keyEquivalent does not fire
     /// while a menu is tracking, even with `allowsKeyEquivalentWhenHidden`.
-    private func appendMenuFooterBarIfNeeded(
+    func appendMenuFooterBarIfNeeded(
         entry: MenuDescriptor.Entry,
         section: MenuDescriptor.Section,
         to menu: NSMenu,

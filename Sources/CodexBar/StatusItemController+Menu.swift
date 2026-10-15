@@ -946,7 +946,7 @@ extension StatusItemController {
                     submenu.autoenablesItems = false
                     for submenuItem in submenuItems {
                         let child = NSMenuItem(title: submenuItem.title, action: nil, keyEquivalent: "")
-                        child.state = submenuItem.isChecked ? .on : .off
+                        child.state = submenuItem.isChecked ? NSControl.StateValue.on : NSControl.StateValue.off
                         child.isEnabled = submenuItem.isEnabled
                         if let action = submenuItem.action {
                             let (selector, represented) = self.selector(for: action)
