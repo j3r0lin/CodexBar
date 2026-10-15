@@ -36,11 +36,33 @@ struct OverviewRowLayoutProofTests {
                 action: {}),
         ])
         footer.appearance = NSAppearance(named: .darkAqua)
-        footer.wantsLayer = true
-        footer.layer?.backgroundColor = Self.menuBackground.cgColor
         footer.layoutSubtreeIfNeeded()
-        let footerPNG = try #require(MenuLayoutScreenshotRenderTests.pngDataWithWindow(hosting: footer))
+        let footerPNG = try #require(Self.bitmap(of: footer, scale: 2)?.representation(using: .png, properties: [:]))
         try footerPNG.write(to: root.appendingPathComponent("footer-dark.png"))
+    }
+
+    /// `dataWithPDF` drops layer backgrounds, so the menu colour is painted into the bitmap first.
+    private static func bitmap(of view: NSView, scale: CGFloat) -> NSBitmapImageRep? {
+        let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: Int(view.bounds.width * scale),
+            pixelsHigh: Int(view.bounds.height * scale),
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0)
+        guard let rep, let context = NSGraphicsContext(bitmapImageRep: rep) else { return nil }
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = context
+        context.cgContext.scaleBy(x: scale, y: scale)
+        self.menuBackground.setFill()
+        view.bounds.fill()
+        view.displayIgnoringOpacity(view.bounds, in: context)
+        NSGraphicsContext.restoreGraphicsState()
+        return rep
     }
 
     private static var menuBackground: NSColor {

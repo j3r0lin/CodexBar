@@ -50,10 +50,14 @@ struct OverviewCompactAccountRow: View {
                 Text("\(Int(used.rounded()))%")
                     .font(.system(size: 12).monospacedDigit())
                     .foregroundStyle(Self.severityColor(used))
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
                     .frame(width: Self.percentWidth, alignment: .trailing)
                 Text(self.resetText(window))
                     .font(.system(size: 10).monospacedDigit())
                     .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
                     .frame(width: Self.resetWidth, alignment: .leading)
             }
         }
