@@ -106,15 +106,36 @@ struct MenuFooterBarTests {
         bar.layoutSubtreeIfNeeded()
 
         guard let path = ProcessInfo.processInfo.environment["CODEXBAR_MENU_FOOTER_PROOF"] else { return }
-        let rep = try #require(self.bitmap(of: bar))
+        let rep = try #require(self.bitmap(of: bar, scale: 2))
         let png = try #require(rep.representation(using: .png, properties: [:]))
         try png.write(to: URL(fileURLWithPath: path))
     }
 
-    private func bitmap(of view: NSView) -> NSBitmapImageRep? {
-        guard let data = view.dataWithPDF(inside: view.bounds) as Data? else { return nil }
-        guard let image = NSImage(data: data) else { return nil }
-        return NSBitmapImageRep(data: image.tiffRepresentation ?? Data())
+    /// `dataWithPDF` drops layer backgrounds, so the menu colour is painted into the bitmap first.
+    private func bitmap(of view: NSView, scale: CGFloat) -> NSBitmapImageRep? {
+        let width = Int(view.bounds.width * scale)
+        let height = Int(view.bounds.height * scale)
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: width,
+            pixelsHigh: height,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0)
+        else { return nil }
+        NSGraphicsContext.saveGraphicsState()
+        let context = NSGraphicsContext(bitmapImageRep: rep)
+        NSGraphicsContext.current = context
+        context?.cgContext.scaleBy(x: scale, y: scale)
+        NSColor(srgbRed: 0.11, green: 0.11, blue: 0.12, alpha: 1).setFill()
+        view.bounds.fill()
+        view.displayIgnoringOpacity(view.bounds, in: context!)
+        NSGraphicsContext.restoreGraphicsState()
+        return rep
     }
 
     private func keyEvent(_ characters: String) throws -> NSEvent {
