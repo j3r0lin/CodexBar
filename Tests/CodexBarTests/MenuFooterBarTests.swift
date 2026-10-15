@@ -101,6 +101,8 @@ struct MenuFooterBarTests {
             MenuFooterButton(systemImageName: "power", label: "Quit", action: {}),
         ])
         bar.appearance = NSAppearance(named: .darkAqua)
+        bar.wantsLayer = true
+        bar.layer?.backgroundColor = NSColor(srgbRed: 0.11, green: 0.11, blue: 0.12, alpha: 1).cgColor
         bar.layoutSubtreeIfNeeded()
 
         guard let path = ProcessInfo.processInfo.environment["CODEXBAR_MENU_FOOTER_PROOF"] else { return }
