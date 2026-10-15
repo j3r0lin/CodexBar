@@ -204,7 +204,12 @@ extension StatusMenuTests {
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        // Enabling magpie clears snapshots and schedules a refresh, so the fixture goes in afterwards.
+        // Enabling magpie clears snapshots and schedules a refresh. A transport that never completes keeps
+        // that refresh from replacing the fixture with whatever the local magpie happens to serve.
+        store.claudeMagpieTransport = { _ in
+            try await Task.sleep(for: .seconds(3600))
+            throw CancellationError()
+        }
         settings.claudeMagpieEnabled = true
         let accountID = ProviderAccountIdentity(source: "magpie", opaqueID: "claude:first@example.com")
         store.claudeMagpieAccountSnapshots = [
