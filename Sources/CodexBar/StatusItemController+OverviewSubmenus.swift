@@ -2,14 +2,15 @@ import AppKit
 import CodexBarCore
 
 extension StatusItemController {
-    /// Hover submenu of an Overview row: the same usage detail the menu-bar ring card shows,
-    /// followed by the provider's history chart when it has one.
+    /// Hover submenu of an Overview row: the account's usage detail, followed by the provider's
+    /// history chart when it has one. A magpie Claude row also refreshes that one account.
     func makeOverviewDetailSubmenu(
         title: String,
         snapshot: UsageSnapshot?,
         provider: UsageProvider,
         model: UsageMenuCardView.Model,
-        width: CGFloat) -> NSMenu
+        width: CGFloat,
+        claudeAccountID: ProviderAccountIdentity? = nil) -> NSMenu
     {
         let submenu = NSMenu()
         submenu.autoenablesItems = false
@@ -18,6 +19,10 @@ extension StatusItemController {
             AccountUsageDetailView(name: title, snapshot: snapshot, width: AccountUsageDetailView.defaultWidth),
             id: "overviewDetail-\(title)",
             width: AccountUsageDetailView.defaultWidth))
+        if let claudeAccountID {
+            submenu.addItem(.separator())
+            submenu.addItem(self.makeRefreshClaudeAccountItem(claudeAccountID))
+        }
         if let chartMenu = self.makeOverviewRowSubmenu(provider: provider, model: model, width: width) {
             submenu.addItem(.separator())
             let chartItem = NSMenuItem(title: L("Usage history (30 days)"), action: nil, keyEquivalent: "")

@@ -190,3 +190,60 @@ extension StatusMenuTests {
         })
     }
 }
+
+    @Test
+    func `magpie overview row offers refresh for that account`() throws {
+        self.disableMenuCardsForTesting()
+        let settings = self.makeSettings()
+        settings.statusChecksEnabled = false
+        settings.refreshFrequency = .manual
+        settings.mergeIcons = true
+        settings.selectedMenuProvider = .claude
+        settings.mergedMenuLastSelectedWasOverview = true
+        settings.claudeMagpieEnabled = true
+
+        enableTestProviders([.claude], settings: settings)
+
+        let fetcher = UsageFetcher()
+        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let accountID = ProviderAccountIdentity(source: "magpie", opaqueID: "claude:first@example.com")
+        store.claudeMagpieAccountSnapshots = [
+            ProviderAccountUsageSnapshot(
+                id: accountID,
+                provider: .claude,
+                displayLabel: "main",
+                accountEmail: "first@example.com",
+                isActive: true,
+                snapshot: UsageSnapshot(
+                    primary: RateWindow(
+                        usedPercent: 12,
+                        windowMinutes: 300,
+                        resetsAt: nil,
+                        resetDescription: nil),
+                    secondary: nil,
+                    updatedAt: Date(timeIntervalSince1970: 1_700_000_000),
+                    identity: nil),
+                error: nil,
+                sourceLabel: "magpie"),
+        ]
+
+        let controller = StatusItemController(
+            store: store,
+            settings: settings,
+            account: fetcher.loadAccountInfo(),
+            updater: DisabledUpdaterController(),
+            preferencesSelection: PreferencesSelection(),
+            statusBar: self.makeStatusBarForTesting())
+        defer { controller.releaseStatusItemsForTesting() }
+
+        let menu = controller.makeMenu()
+        controller.menuWillOpen(menu)
+
+        let row = try #require(menu.items.first {
+            ($0.representedObject as? String) == "overviewRow-claude#\(accountID.opaqueID)"
+        })
+        let refresh = try #require(row.submenu?.items.first { $0.action == #selector(StatusItemController.refreshClaudeAccount(_:)) })
+        #expect(refresh.title == L("Refresh this account"))
+        #expect(refresh.representedObject as? String == accountID.opaqueID)
+        #expect(refresh.target as? StatusItemController === controller)
+    }

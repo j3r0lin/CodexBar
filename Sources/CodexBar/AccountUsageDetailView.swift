@@ -2,7 +2,7 @@ import CodexBarCore
 import SwiftUI
 
 /// Usage detail of one account or provider: short and long window bars with percent and reset, and data age.
-/// Shared by the Overview row submenus and the menu-bar ring hover card.
+/// Shown in the Overview row's detail submenu.
 struct AccountUsageDetailView: View {
     static let defaultWidth: CGFloat = 240
 

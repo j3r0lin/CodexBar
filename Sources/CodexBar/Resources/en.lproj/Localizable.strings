@@ -282,6 +282,7 @@
 "Random (default)" = "Random (default)";
 "Reads local usage logs. Shows today + last 30 days cost in the menu." = "Reads local usage logs. Shows today + the selected history window in the menu.";
 "Refresh" = "Refresh";
+"Refresh this account" = "Refresh this account";
 "Refresh cadence" = "Refresh cadence";
 "Remote" = "Remote";
 "Remove" = "Remove";

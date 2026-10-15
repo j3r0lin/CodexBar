@@ -200,9 +200,9 @@ extension StatusItemController {
         }
     }
 
-    // MARK: - Per-account tabs and menu-bar rings (magpie only)
+    // MARK: - Per-account tabs (magpie only)
 
-    /// While magpie owns Claude, each magpie account gets its own switcher tab and menu-bar ring.
+    /// While magpie owns Claude, each magpie account gets its own switcher tab.
     var claudeAccountTabsEnabled: Bool {
         self.settings.claudeMagpieEnabled && !self.store.claudeAccountSource.accounts.isEmpty
     }
@@ -248,6 +248,26 @@ extension StatusItemController {
         guard !hidePersonalInfo else { return label }
         // magpie labels are an alias, or an email when no alias is set; the local part is enough for a tab.
         return label.split(separator: "@").first.map(String.init) ?? label
+    }
+
+    /// magpie serves every account from one quotas call, so refreshing one account refreshes the source.
+    func makeRefreshClaudeAccountItem(_ id: ProviderAccountIdentity) -> NSMenuItem {
+        let item = NSMenuItem(
+            title: L("Refresh this account"),
+            action: #selector(self.refreshClaudeAccount(_:)),
+            keyEquivalent: "")
+        item.target = self
+        item.representedObject = id.opaqueID
+        return item
+    }
+
+    @objc func refreshClaudeAccount(_ sender: NSMenuItem) {
+        guard let opaqueID = sender.representedObject as? String,
+              self.store.claudeAccountSource.accounts.contains(where: { $0.id.opaqueID == opaqueID })
+        else { return }
+        Task { @MainActor [weak self] in
+            await self?.store.refreshClaudeMagpieAccounts()
+        }
     }
 
     /// The tighter of the session and weekly windows, so a tab turns red as soon as either one runs out.

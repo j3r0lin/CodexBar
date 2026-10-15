@@ -730,7 +730,7 @@ final class ProviderSwitcherView: NSView {
     }
 
     private func remainingPercent(for segment: Segment) -> Double? {
-        // The switcher is navigation only; usage lives in the Overview rows and the menu-bar rings.
+        // The switcher is navigation only; usage lives in the Overview rows.
         if Self.showsQuotaIndicators == false { return nil }
         if let account = segment.claudeAccount {
             // Fill shows what is left, matching the other tabs' default.
