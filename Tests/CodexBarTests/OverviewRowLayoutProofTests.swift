@@ -90,7 +90,7 @@ struct OverviewRowLayoutProofTests {
                 long: self.window(90, minutes: 4 * 1440 + 20 * 60),
                 indent: 0)
         }
-        .frame(width: Self.width)
+        .frame(width: self.width)
         .background(Color(nsColor: self.menuBackground))
         .environment(\.colorScheme, .dark)
     }
@@ -105,9 +105,9 @@ struct OverviewRowLayoutProofTests {
             name: name,
             shortWindow: short,
             longWindow: long,
-            width: Self.width,
+            width: self.width,
             indent: indent,
-            now: Self.now)
+            now: self.now)
     }
 
     private static func window(_ usedPercent: Double, minutes: Int?) -> RateWindow {
