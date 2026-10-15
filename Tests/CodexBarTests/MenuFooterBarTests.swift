@@ -163,6 +163,46 @@ struct MenuFooterBarTests {
         #expect(abs(layer.frame.midY - button.bounds.midY) < 0.5)
     }
 
+    /// Samples where the spinning refresh icon is drawn, in a real window, when CODEXBAR_FOOTER_SPIN_SAMPLE
+    /// is set; it needs a window server, so it stays out of the default run.
+    @Test
+    func `spinning refresh icon stays centred in a window`() throws {
+        guard ProcessInfo.processInfo.environment["CODEXBAR_FOOTER_SPIN_SAMPLE"] != nil else { return }
+        let bar = MenuFooterBarView(width: 300, buttons: [
+            MenuFooterButton(systemImageName: "arrow.clockwise", label: "Refresh") {},
+        ])
+        let window = NSWindow(
+            contentRect: NSRect(x: 200, y: 200, width: 300, height: MenuFooterBarView.barHeight),
+            styleMask: .borderless,
+            backing: .buffered,
+            defer: false)
+        window.contentView = bar
+        window.orderFrontRegardless()
+        defer { window.orderOut(nil) }
+        bar.layoutSubtreeIfNeeded()
+        let button = try #require(bar.button(labeled: "Refresh"))
+        let layer = try #require(bar.iconLayer(systemImageName: "arrow.clockwise"))
+        bar.setSpinning(true, systemImageName: "arrow.clockwise")
+        var samples: [CGPoint] = []
+        let start = Date()
+        while Date().timeIntervalSince(start) < 0.6 {
+            RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+            if let presentation = layer.presentation() {
+                samples.append(CGPoint(x: presentation.frame.midX, y: presentation.frame.midY))
+            }
+        }
+        bar.setSpinning(false, systemImageName: "arrow.clockwise")
+        RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        let rest = CGPoint(x: layer.frame.midX, y: layer.frame.midY)
+        print("SPIN_SAMPLES button=\(button.bounds.size) centre=\(samples) rest=\(rest)")
+        #expect(!samples.isEmpty)
+        for sample in samples {
+            #expect(abs(sample.x - button.bounds.midX) <= 0.5)
+            #expect(abs(sample.y - button.bounds.midY) <= 0.5)
+        }
+        #expect(abs(rest.x - button.bounds.midX) <= 0.5 && abs(rest.y - button.bounds.midY) <= 0.5)
+    }
+
     @Test
     func `a menu rebuild keeps the footer bar and its spinning refresh icon`() throws {
         let settings = self.makeSettings()
