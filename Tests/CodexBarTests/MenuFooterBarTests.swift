@@ -28,11 +28,12 @@ struct MenuFooterBarTests {
         #expect(bar.button(labeled: "Refresh") != nil)
         #expect(bar.button(labeled: "Settings...") != nil)
         #expect(bar.button(labeled: "Quit") != nil)
-        let labels = bar.subviews.compactMap(\.accessibilityLabel)
+        let labels = bar.subviews.compactMap { $0.accessibilityLabel() }
         #expect(labels.contains { $0.hasPrefix("About CodexBar") })
 
         // Shortcuts are not carried by menu items anymore; the menu itself answers them.
-        #expect(menu.items.allSatisfy(\.keyEquivalent.isEmpty))
+        let keyEquivalents = menu.items.map(\.keyEquivalent)
+        #expect(keyEquivalents.allSatisfy(\.isEmpty))
         let statusMenu = try #require(menu as? StatusItemMenu)
         let refreshKey = try self.keyEvent("r")
         let settingsKey = try self.keyEvent(",")
