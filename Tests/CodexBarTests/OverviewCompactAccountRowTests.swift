@@ -10,10 +10,12 @@ struct OverviewCompactAccountRowTests {
     private static let width: CGFloat = 310
 
     @Test
-    func `a row is one line tall even when a window is missing`() {
-        let both = self.height(short: Self.window(96, minutes: 140), long: Self.window(15, minutes: 9900))
-        let missingShort = self.height(short: nil, long: Self.window(90, minutes: 6960))
-        #expect(abs(both - missingShort) < 0.5)
+    func `a row has one line per reported window, short window first`() {
+        let both = self.row(short: Self.window(96, minutes: 140), long: Self.window(15, minutes: 9900))
+        let missingShort = self.row(short: nil, long: Self.window(90, minutes: 6960))
+        #expect(both.lines.map(\.used) == [96, 15])
+        #expect(missingShort.lines.map(\.used) == [90])
+        #expect(self.height(both) > self.height(missingShort) + 10)
     }
 
     @Test
@@ -30,14 +32,17 @@ struct OverviewCompactAccountRowTests {
             now: Self.now)
     }
 
-    private func height(short: RateWindow?, long: RateWindow?) -> CGFloat {
-        let row = OverviewCompactAccountRow(
+    private func row(short: RateWindow?, long: RateWindow?) -> OverviewCompactAccountRow {
+        OverviewCompactAccountRow(
             name: "Codex",
             shortWindow: short,
             longWindow: long,
             width: Self.width,
             now: Self.now)
-        return NSHostingController(rootView: row)
+    }
+
+    private func height(_ row: OverviewCompactAccountRow) -> CGFloat {
+        NSHostingController(rootView: row)
             .sizeThatFits(in: CGSize(width: Self.width, height: .greatestFiniteMagnitude))
             .height
     }

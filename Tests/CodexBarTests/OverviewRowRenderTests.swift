@@ -32,7 +32,6 @@ struct OverviewRowRenderTests {
             Account(name: "claude-2", session: window(300, 2, 70), weekly: window(10080, 100, 178)),
         ]
         let view = VStack(alignment: .leading, spacing: 0) {
-            OverviewColumnCaptions(width: width)
             OverviewCompactAccountRow(
                 name: "Codex",
                 shortWindow: window(300, 96, 140),
