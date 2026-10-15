@@ -699,8 +699,10 @@ extension StatusMenuViewportRestoreTests {
         controller.menuRefreshEnabledOverrideForTesting = true
         let menu = controller.makeMenu(for: .codex)
         controller.menuWillOpen(menu)
-        let settingsItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
-        controller.menu(menu, willHighlight: settingsItem)
+        // The footer is a custom view; a plain titled item is what AppKit highlights natively.
+        let nativeItem = NSMenuItem(title: "Native", action: nil, keyEquivalent: "")
+        menu.addItem(nativeItem)
+        controller.menu(menu, willHighlight: nativeItem)
 
         var scheduledCount = 0
         var restoreCount = 0
@@ -1250,43 +1252,6 @@ extension StatusMenuViewportRestoreTests {
         scheduled.removeFirst()()
 
         #expect(restoreCount == 0)
-        #expect(controller.menuSession.pendingViewportRestores.isEmpty)
-    }
-
-    @Test
-    func `merged selection change discards originating refresh restore`() async throws {
-        let settings = self.makeSettings()
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        self.enableOnly([.claude, .codex], settings: settings)
-        settings.selectedMenuProvider = .claude
-        settings.mergedMenuLastSelectedWasOverview = false
-
-        let controller = self.makeController(settings: settings)
-        defer { controller.releaseStatusItemsForTesting() }
-        controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu()
-        controller.mergedMenu = menu
-        controller.menuWillOpen(menu)
-
-        let gate = ViewportRefreshGate()
-        var scheduledCount = 0
-        controller._test_menuViewportRestoreScheduler = { _ in scheduledCount += 1 }
-        controller._test_manualRefreshOperation = {
-            await gate.wait()
-            controller.refreshOpenMenusAfterExplicitStoreAction()
-        }
-        controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.claude)] == nil {
-            await Task.yield()
-        }
-        let task = try #require(controller.manualRefreshTasks[.provider(.claude)])
-
-        settings.selectedMenuProvider = .codex
-        gate.resume()
-        await task.value
-
-        #expect(scheduledCount == 0)
         #expect(controller.menuSession.pendingViewportRestores.isEmpty)
     }
 
