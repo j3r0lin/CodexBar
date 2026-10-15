@@ -15,19 +15,19 @@ struct OverviewCompactAccountRow: View {
     var now = Date()
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
-    /// Every row has to put the same element in the same column, so each part is sized here and the
-    /// bars take whatever the row has left.
-    private static let nameColumn: CGFloat = 62
-    private static let labelWidth: CGFloat = 14
-    /// Fits "100%", which measures 33.8pt at 12pt, so a three-digit reading never spills into the
-    /// lane's spacing.
-    private static let percentWidth: CGFloat = 36
-    private static let resetWidth: CGFloat = 38
-    private static let columnSpacing: CGFloat = 10
-    private static let laneSpacing: CGFloat = 5
-    /// A row is 28pt tall. The bars are only 5pt, so the line box around them is what sets the row's
-    /// height, and a row whose lane is blank has to keep the height of a row that carries a bar.
-    private static let lineHeight: CGFloat = 18
+    /// Every row, and the caption line above them, puts the same element in the same column, so each
+    /// part is sized here and the bars take whatever the row has left: at 340pt that is 41pt per bar.
+    static let nameColumn: CGFloat = 62
+    /// Fits "100%", which measures 33.8pt at 12pt.
+    static let percentWidth: CGFloat = 36
+    static let resetWidth: CGFloat = 38
+    static let columnSpacing: CGFloat = 8
+    /// The number sits right after its bar so the two read as one reading.
+    static let barPercentGap: CGFloat = 4
+    static let percentResetGap: CGFloat = 4
+    static let horizontalPadding: CGFloat = 8
+    /// With 4pt above and below, a row is 22pt tall. A row whose lane is blank keeps this height.
+    private static let lineHeight: CGFloat = 14
 
     var body: some View {
         HStack(spacing: Self.columnSpacing) {
@@ -43,38 +43,36 @@ struct OverviewCompactAccountRow: View {
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                self.lane(label: "5h", window: self.shortWindow)
-                self.lane(label: "7d", window: self.longWindow)
+                self.lane(window: self.shortWindow)
+                self.lane(window: self.longWindow)
             }
         }
         .frame(height: Self.lineHeight)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
+        .padding(.horizontal, Self.horizontalPadding)
+        .padding(.vertical, 4)
         .frame(width: self.width, alignment: .leading)
     }
 
     /// A window the provider did not report leaves its lane blank, but the lane keeps its half of the
-    /// row so the 5h and 7d columns stay put on every line.
-    private func lane(label: String, window: RateWindow?) -> some View {
-        HStack(spacing: Self.laneSpacing) {
+    /// row so the columns stay put on every line.
+    private func lane(window: RateWindow?) -> some View {
+        HStack(spacing: 0) {
             if let used = Self.used(window) {
-                Text(label)
-                    .font(.system(size: 10))
-                    .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
-                    .frame(width: Self.labelWidth, alignment: .leading)
                 self.bar(used: used)
                 Text("\(Int(used.rounded()))%")
                     .font(.system(size: 12).monospacedDigit())
                     .foregroundStyle(Self.severityColor(used))
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
-                    .frame(width: Self.percentWidth, alignment: .trailing)
+                    .frame(width: Self.percentWidth, alignment: .leading)
+                    .padding(.leading, Self.barPercentGap)
                 Text(self.resetText(window))
                     .font(.system(size: 10).monospacedDigit())
                     .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
                     .frame(width: Self.resetWidth, alignment: .leading)
+                    .padding(.leading, Self.percentResetGap)
             }
         }
         .frame(maxWidth: .infinity)
@@ -146,8 +144,31 @@ struct OverviewAccountGroupHeading: View {
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 8)
-            .padding(.top, 8)
-            .padding(.bottom, 2)
+            .padding(.top, 4)
+            .padding(.bottom, 0)
             .frame(width: self.width, alignment: .leading)
+    }
+}
+
+/// One grey line above the Overview list naming the two window columns, laid out like a row so each
+/// caption sits over the start of its bars.
+struct OverviewColumnCaptions: View {
+    let width: CGFloat
+
+    var body: some View {
+        HStack(spacing: OverviewCompactAccountRow.columnSpacing) {
+            Color.clear.frame(width: OverviewCompactAccountRow.nameColumn, height: 1)
+            self.caption("5h")
+            self.caption("7d")
+        }
+        .font(.system(size: 10))
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, OverviewCompactAccountRow.horizontalPadding)
+        .padding(.top, 4)
+        .frame(width: self.width, alignment: .leading)
+    }
+
+    private func caption(_ text: String) -> some View {
+        Text(text).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
     }
 }

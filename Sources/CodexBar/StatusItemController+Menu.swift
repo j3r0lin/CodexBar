@@ -477,6 +477,14 @@ extension StatusItemController {
         // A provider with several accounts gets one grey caption; a lone account is its own row.
         let accountCounts = Dictionary(rows.map { ($0.provider, 1) }, uniquingKeysWith: +)
         let hidePersonalInfo = self.settings.hidePersonalInfo
+        let captions = self.makeMenuCardItem(
+            OverviewColumnCaptions(width: menuWidth),
+            id: "overviewColumnCaptions",
+            width: menuWidth,
+            heightCacheScope: "overviewColumnCaptions",
+            heightCacheFingerprint: "captions")
+        captions.isEnabled = false
+        menu.addItem(captions)
         for (index, row) in rows.enumerated() {
             let isGrouped = (accountCounts[row.provider] ?? 1) > 1
             let startsProvider = index == 0 || rows[index - 1].provider != row.provider
