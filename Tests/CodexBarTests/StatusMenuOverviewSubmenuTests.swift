@@ -200,7 +200,8 @@ extension StatusMenuTests {
         settings.selectedMenuProvider = .claude
         settings.mergedMenuLastSelectedWasOverview = true
 
-        enableTestProviders([.claude], settings: settings)
+        // Overview only exists once more than one provider is enabled.
+        enableTestProviders([.claude, .codex], settings: settings)
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
