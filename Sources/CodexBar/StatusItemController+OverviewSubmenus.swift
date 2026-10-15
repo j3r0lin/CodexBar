@@ -6,7 +6,8 @@ extension StatusItemController {
     /// then the provider's history chart and its own actions. The chart and actions are built on first
     /// open so unopened rows stay cheap.
     func makeOverviewDetailSubmenu(
-        title: String,
+        providerName: String,
+        accountName: String? = nil,
         snapshot: UsageSnapshot?,
         provider: UsageProvider,
         model: UsageMenuCardView.Model,
@@ -23,8 +24,13 @@ extension StatusItemController {
         submenu.minimumWidth = width
         submenu.appearance = StatusMenuAppearance.menuAppearance
         submenu.addItem(self.makeMenuCardItem(
-            AccountUsageDetailView(name: title, snapshot: snapshot, width: width),
-            id: "overviewDetail-\(title)",
+            AccountUsageDetailView(
+                provider: provider,
+                providerName: providerName,
+                accountName: accountName,
+                snapshot: snapshot,
+                width: width),
+            id: "overviewDetail-\(providerName)" + (accountName.map { "-\($0)" } ?? ""),
             width: width,
             // The pool holds the parent menu's row views; a detail card built first would take one of them.
             recyclesView: false))

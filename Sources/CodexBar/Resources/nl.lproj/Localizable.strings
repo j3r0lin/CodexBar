@@ -2608,3 +2608,7 @@
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Geldt voor het geselecteerde tokenaccount ‘%@’. Elk account behoudt zijn eigen limieten.";
 "Applies to the OpenAI API key, not to token accounts." = "Geldt voor de OpenAI API-sleutel, niet voor tokenaccounts.";
 "No providers enabled" = "Geen providers ingeschakeld";
+"5-hour limit" = "Limiet van 5 uur";
+"Weekly limit" = "Weeklimiet";
+"account_detail_usage_title" = "Gebruik van %@";
+"account_detail_used" = "%@ gebruikt";

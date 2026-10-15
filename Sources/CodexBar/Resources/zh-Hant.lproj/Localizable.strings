@@ -2589,3 +2589,7 @@
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "適用於所選權杖帳戶「%@」。每個帳戶保留各自的限制。";
 "Applies to the OpenAI API key, not to token accounts." = "適用於 OpenAI API 金鑰，不適用於權杖帳戶。";
 "No providers enabled" = "未啟用任何提供者";
+"5-hour limit" = "5 小時限額";
+"Weekly limit" = "每週限額";
+"account_detail_usage_title" = "%@ 用量";
+"account_detail_used" = "已用 %@";

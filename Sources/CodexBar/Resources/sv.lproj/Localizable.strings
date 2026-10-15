@@ -2610,3 +2610,7 @@
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Gäller det valda tokenkontot ”%@”. Varje konto behåller sina egna gränser.";
 "Applies to the OpenAI API key, not to token accounts." = "Gäller OpenAI API-nyckeln, inte tokenkonton.";
 "No providers enabled" = "Inga leverantörer aktiverade";
+"5-hour limit" = "5-timmarsgräns";
+"Weekly limit" = "Veckogräns";
+"account_detail_usage_title" = "Användning av %@";
+"account_detail_used" = "%@ använt";

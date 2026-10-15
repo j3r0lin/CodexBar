@@ -2611,3 +2611,7 @@
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "選択中のトークンアカウント「%@」に適用されます。各アカウントは独自の上限を保持します。";
 "Applies to the OpenAI API key, not to token accounts." = "OpenAI APIキーに適用されます。トークンアカウントには適用されません。";
 "No providers enabled" = "有効なプロバイダがありません";
+"5-hour limit" = "5時間の上限";
+"Weekly limit" = "週間の上限";
+"account_detail_usage_title" = "%@ の使用状況";
+"account_detail_used" = "%@ 使用済み";

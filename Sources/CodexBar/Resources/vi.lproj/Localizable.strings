@@ -2612,3 +2612,7 @@
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Áp dụng cho tài khoản token đã chọn “%@”. Mỗi tài khoản giữ giới hạn riêng.";
 "Applies to the OpenAI API key, not to token accounts." = "Áp dụng cho khóa API OpenAI, không áp dụng cho các tài khoản token.";
 "No providers enabled" = "Chưa bật nhà cung cấp nào";
+"5-hour limit" = "Giới hạn 5 giờ";
+"Weekly limit" = "Giới hạn hằng tuần";
+"account_detail_usage_title" = "Mức dùng %@";
+"account_detail_used" = "Đã dùng %@";

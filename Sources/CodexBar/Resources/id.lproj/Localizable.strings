@@ -2614,3 +2614,7 @@
 "%lld accounts" = "%lld akun";
 "Refresh Claude usage" = "Segarkan penggunaan Claude";
 "No providers enabled" = "Tidak ada penyedia yang diaktifkan";
+"5-hour limit" = "Batas 5 jam";
+"Weekly limit" = "Batas mingguan";
+"account_detail_usage_title" = "Penggunaan %@";
+"account_detail_used" = "%@ terpakai";

@@ -2579,3 +2579,7 @@
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "선택한 토큰 계정 “%@”에 적용됩니다. 각 계정은 자체 한도를 유지합니다.";
 "Applies to the OpenAI API key, not to token accounts." = "토큰 계정이 아닌 OpenAI API 키에 적용됩니다.";
 "No providers enabled" = "활성화된 제공자가 없습니다";
+"5-hour limit" = "5시간 한도";
+"Weekly limit" = "주간 한도";
+"account_detail_usage_title" = "%@ 사용량";
+"account_detail_used" = "%@ 사용됨";

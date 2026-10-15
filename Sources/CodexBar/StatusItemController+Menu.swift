@@ -502,7 +502,8 @@ extension StatusItemController {
             let account = self.store.claudeAccountSource.accounts.first { $0.id == row.claudeAccountID }
             let accountName = account.map { Self.claudeAccountShortName($0, hidePersonalInfo: hidePersonalInfo) }
             let submenu = self.makeOverviewDetailSubmenu(
-                title: accountName.map { "\(providerName) · \($0)" } ?? providerName,
+                providerName: providerName,
+                accountName: accountName,
                 snapshot: row.snapshot,
                 provider: row.provider,
                 model: row.model,

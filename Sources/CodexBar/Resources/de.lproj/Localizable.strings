@@ -2609,3 +2609,7 @@
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Gilt für das ausgewählte Token-Konto „%@“. Jedes Konto behält seine eigenen Limits.";
 "Applies to the OpenAI API key, not to token accounts." = "Gilt für den OpenAI-API-Schlüssel, nicht für Token-Konten.";
 "No providers enabled" = "Keine Anbieter aktiviert";
+"5-hour limit" = "5-Stunden-Limit";
+"Weekly limit" = "Wochenlimit";
+"account_detail_usage_title" = "%@-Nutzung";
+"account_detail_used" = "%@ genutzt";

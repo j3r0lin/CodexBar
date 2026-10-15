@@ -2615,3 +2615,7 @@
 "%lld accounts" = "%lld comptes";
 "Refresh Claude usage" = "Actualitza l'ús de Claude";
 "No providers enabled" = "Cap proveïdor activat";
+"5-hour limit" = "Límit de 5 hores";
+"Weekly limit" = "Límit setmanal";
+"account_detail_usage_title" = "Ús de %@";
+"account_detail_used" = "%@ utilitzat";
