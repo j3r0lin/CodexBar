@@ -34,6 +34,7 @@ extension StatusItemController {
             self.lastMergedSwitcherSelection = .overview
             self.refreshProviderSelectionDependentUI(deferRendering: true)
         }
+        self.clearMenuHighlight(ObjectIdentifier(menu))
         self.requestProviderSwitcherMenuRebuild(menu, provider: self.resolvedMenuProvider())
     }
 
@@ -103,6 +104,7 @@ extension StatusItemController {
         }
         // Custom-view clicks stay open and rebuild next turn. Standard menu-item activation can close;
         // menuWillOpen then renders the saved provider without doing structural work inside the action.
+        self.clearMenuHighlight(ObjectIdentifier(menu))
         self.requestProviderSwitcherMenuRebuild(menu, provider: provider)
     }
 }
