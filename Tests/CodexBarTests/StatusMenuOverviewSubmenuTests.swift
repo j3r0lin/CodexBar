@@ -189,7 +189,6 @@ extension StatusMenuTests {
             ($0.representedObject as? String) == "overviewRow-zai"
         })
     }
-}
 
     @Test
     func `magpie overview row offers refresh for that account`() throws {
@@ -242,8 +241,11 @@ extension StatusMenuTests {
         let row = try #require(menu.items.first {
             ($0.representedObject as? String) == "overviewRow-claude#\(accountID.opaqueID)"
         })
-        let refresh = try #require(row.submenu?.items.first { $0.action == #selector(StatusItemController.refreshClaudeAccount(_:)) })
+        let refresh = try #require(row.submenu?.items.first {
+            $0.action == #selector(StatusItemController.refreshClaudeAccount(_:))
+        })
         #expect(refresh.title == L("Refresh this account"))
         #expect(refresh.representedObject as? String == accountID.opaqueID)
         #expect(refresh.target as? StatusItemController === controller)
     }
+}
