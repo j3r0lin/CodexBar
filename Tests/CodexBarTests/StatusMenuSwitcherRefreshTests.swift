@@ -84,7 +84,7 @@ struct StatusMenuSwitcherRefreshTests {
 
         let expectedWidth = controller.renderedMenuWidth(for: menu)
         #expect(expectedWidth == 420)
-        let refreshView = try #require(menu.items.first { $0.title == "Refresh" }?.view as? PersistentRefreshMenuView)
+        let refreshView = try #require(menu.items.first { $0.view is MenuFooterBarView }?.view)
         #expect(abs(refreshView.frame.width - expectedWidth) <= 0.5)
     }
 
@@ -120,17 +120,18 @@ struct StatusMenuSwitcherRefreshTests {
         controller.menuWillOpen(menu)
         let cache = try #require(
             controller.mergedSwitcherContentCaches[ObjectIdentifier(menu)]?[.provider(.codex)])
-        let refreshItem = try #require(cache.items.first { $0.title == "Refresh" })
+        let refreshItem = try #require(cache.items.first { $0.view is MenuFooterBarView })
 
         controller.manualRefreshTasks[.global] = Task {}
         controller.updatePersistentRefreshItemsEnabled()
-        #expect(!refreshItem.isEnabled)
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
 
         menu.removeAllItems()
         #expect(refreshItem.menu == nil)
         controller.manualRefreshTasks[.global] = nil
         controller.updatePersistentRefreshItemsEnabled()
-        #expect(!refreshItem.isEnabled)
+        // Detached from its menu, the bar cannot see the refresh finish.
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
 
         #expect(controller.addCachedMergedSwitcherContent(
             for: .provider(.codex),
@@ -139,7 +140,7 @@ struct StatusMenuSwitcherRefreshTests {
             codexAccountDisplay: cache.codexAccountDisplay,
             tokenAccountDisplay: cache.tokenAccountDisplay))
         #expect(refreshItem.menu === menu)
-        #expect(refreshItem.isEnabled)
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
     }
 
     @Test

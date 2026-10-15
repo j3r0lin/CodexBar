@@ -12,6 +12,8 @@ extension StatusItemController {
     static let overviewRowIdentifierPrefix = "overviewRow-"
     static let overviewGroupHeadingIdentifierPrefix = "overviewHeading-"
     static let persistentRefreshMenuItemID = "persistentRefreshAction"
+    static let menuFooterBarItemID = "menuFooterBar"
+    static let menuFooterActions: [MenuDescriptor.MenuAction] = [.refresh, .settings, .about, .quit]
     private static let defaultMenuOpenRefreshDelay: Duration = .seconds(1.2)
     #if DEBUG
     private static var menuOpenRefreshDelayForTesting: Duration = .seconds(1.2)
@@ -828,7 +830,11 @@ extension StatusItemController {
     {
         let actionableSections = sections.filter { section in section.entries.contains(where: \ .isActionable) }
         for (index, section) in actionableSections.enumerated() {
-            for entry in section.entries {
+            let entries = section.entries.filter { entry in
+                self.appendMenuFooterBarIfNeeded(
+                    entry: entry, section: section, to: menu, width: width, captureMenu: captureMenu) == false
+            }
+            for entry in entries {
                 switch entry {
                 case let .text(text, style):
                     if style == .secondary {
@@ -916,7 +922,7 @@ extension StatusItemController {
                     submenu.autoenablesItems = false
                     for submenuItem in submenuItems {
                         let child = NSMenuItem(title: submenuItem.title, action: nil, keyEquivalent: "")
-                        child.state = submenuItem.isChecked ? .on : .off
+                        child.state = submenuItem.isChecked ? NSControl.StateValue.on : NSControl.StateValue.off
                         child.isEnabled = submenuItem.isEnabled
                         if let action = submenuItem.action {
                             let (selector, represented) = self.selector(for: action)

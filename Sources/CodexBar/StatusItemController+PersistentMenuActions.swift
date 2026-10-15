@@ -17,6 +17,28 @@ extension StatusItemController {
             item.isEnabled = enabled
             (item.view as? PersistentRefreshMenuView)?.setEnabled(enabled)
         }
+        self.updateMenuFooterBars()
+    }
+
+    /// A spinning refresh icon stands in for the old disabled Refresh row, which also dropped its
+    /// highlight so a manual refresh could restore the menu viewport.
+    private func clearFooterHighlightWhileRefreshing(in menu: NSMenu) {
+        guard let highlighted = self.highlightedMenuItems[ObjectIdentifier(menu)],
+              highlighted.view is MenuFooterBarView
+        else { return }
+        self.highlightedMenuItems.removeValue(forKey: ObjectIdentifier(menu))
+    }
+
+    /// Spins the refresh icon in every footer bar whose menu currently has a refresh in flight.
+    func updateMenuFooterBars() {
+        for bar in self.menuFooterBars.allObjects {
+            guard let menu = bar.enclosingMenuItem?.menu else { continue }
+            let spinning = self.isRefreshActionInFlight(for: menu)
+            if spinning {
+                self.clearFooterHighlightWhileRefreshing(in: menu)
+            }
+            bar.setSpinning(spinning, systemImageName: MenuDescriptor.MenuAction.refresh.systemImageName ?? "")
+        }
     }
 
     func isRefreshActionInFlight(for menu: NSMenu) -> Bool {

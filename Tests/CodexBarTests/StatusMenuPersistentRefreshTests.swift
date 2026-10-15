@@ -144,7 +144,7 @@ struct StatusMenuPersistentRefreshTests {
     }
 
     @Test
-    func `refresh row is custom and appears above settings`() throws {
+    func `footer bar appears above nothing and below the actions`() throws {
         let previousRendering = StatusItemController.menuCardRenderingEnabled
         StatusItemController.menuCardRenderingEnabled = true
         defer { StatusItemController.menuCardRenderingEnabled = previousRendering }
@@ -158,20 +158,10 @@ struct StatusMenuPersistentRefreshTests {
         let menu = controller.makeMenu(for: .codex)
         controller.menuWillOpen(menu)
 
-        let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
-        let settingsItem = try #require(menu.items.first { $0.title == "Settings..." })
-        let refreshIndex = try #require(menu.items.firstIndex(where: { $0 === refreshItem }))
-        let settingsIndex = try #require(menu.items.firstIndex(where: { $0 === settingsItem }))
-
-        #expect(refreshItem.action == nil)
-        #expect(refreshItem.target == nil)
-        let refreshView = try #require(refreshItem.view)
-        #expect(refreshView is any MenuCardHighlighting)
-        #expect(refreshView.fittingSize.height > 0)
-        #expect(controller.isPersistentRefreshItem(refreshItem))
-        #expect(refreshItem.keyEquivalent.isEmpty)
-        #expect(refreshItem.keyEquivalentModifierMask.isEmpty)
-        #expect(refreshIndex < settingsIndex)
+        let footerItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
+        let footerIndex = try #require(menu.items.firstIndex(where: { $0 === footerItem }))
+        #expect(footerIndex == menu.items.count - 1)
+        #expect(footerItem.keyEquivalent.isEmpty)
     }
 
     @Test
@@ -186,8 +176,7 @@ struct StatusMenuPersistentRefreshTests {
         controller.menuWillOpen(menu)
         defer { controller.menuDidClose(menu) }
 
-        let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
-        #expect(controller.isPersistentRefreshItem(refreshItem))
+        let refreshItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
         #expect(controller.providerSwitcherShortcutEventMonitor != nil)
         #expect(controller.providerSwitcherShortcutMenuID == ObjectIdentifier(menu))
         #expect(refreshItem.keyEquivalent.isEmpty)
@@ -200,17 +189,17 @@ struct StatusMenuPersistentRefreshTests {
         }
 
         let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
-        #expect(!refreshItem.isEnabled)
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
 
         gate.resume()
         await task.value
 
         #expect(controller.manualRefreshTasks[.provider(.codex)] == nil)
-        #expect(refreshItem.isEnabled)
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
     }
 
     @Test
-    func `only refresh uses a custom row while standard actions stay native`() throws {
+    func `footer replaces the meta rows while other actions stay native`() throws {
         let previousRendering = StatusItemController.menuCardRenderingEnabled
         StatusItemController.menuCardRenderingEnabled = true
         defer { StatusItemController.menuCardRenderingEnabled = previousRendering }
@@ -224,30 +213,26 @@ struct StatusMenuPersistentRefreshTests {
         controller.menuWillOpen(menu)
 
         let updateItem = try #require(menu.items.first { $0.title == "Update ready, restart now?" })
-        let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
+        let footer = try #require(menu.items.first { $0.view is MenuFooterBarView }?.view as? MenuFooterBarView)
         #expect(MenuDescriptor.MenuAction.installUpdate.systemImageName == "arrow.down.circle")
         #expect(MenuDescriptor.MenuAction.dashboard.systemImageName == "chart.xyaxis.line")
         #expect(updateItem.image != nil)
-        #expect(refreshItem.view is any MenuCardHighlighting)
-        #expect(refreshItem.action == nil)
-        #expect(controller.isPersistentRefreshItem(refreshItem))
-        #expect(refreshItem.keyEquivalent.isEmpty)
-        #expect(refreshItem.keyEquivalentModifierMask.isEmpty)
-
         #expect(updateItem.view == nil)
         #expect(updateItem.action != nil)
         #expect(updateItem.target === controller)
 
-        for (title, key) in [("Settings...", ","), ("About CodexBar", ""), ("Quit", "q")] {
-            let item = try #require(menu.items.first { $0.title == title })
-            #expect(item.view == nil)
-            #expect(item.action != nil)
-            #expect(item.target === controller)
-            #expect(item.keyEquivalent == key)
-            if !key.isEmpty {
-                #expect(item.keyEquivalentModifierMask == [.command])
-            }
+        // The meta rows are gone; their shortcuts are answered by the menu itself.
+        for title in ["Settings...", "Quit"] {
+            #expect(menu.items.contains { $0.title == title } == false)
         }
+        #expect(menu.items.contains { $0.title.hasPrefix("About CodexBar") } == false)
+        #expect(footer.button(labeled: "Settings...") != nil)
+        #expect(footer.button(labeled: "Quit") != nil)
+        let statusMenu = try #require(menu as? StatusItemMenu)
+        let settingsKey = try self.keyEvent(",", keyCode: 43)
+        let quitKey = try self.keyEvent("q", keyCode: 12)
+        #expect(statusMenu.performKeyEquivalent(with: settingsKey))
+        #expect(statusMenu.performKeyEquivalent(with: quitKey))
     }
 
     @Test
@@ -264,55 +249,48 @@ struct StatusMenuPersistentRefreshTests {
         let menu = controller.makeMenu(for: .codex)
         controller.menuWillOpen(menu)
 
-        let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
-        #expect(controller.isPersistentRefreshItem(refreshItem))
-        #expect(controller.persistentRefreshItems.allObjects.contains { $0 === refreshItem })
-        #expect(refreshItem.isEnabled)
+        let refreshItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
 
         controller.store.refreshingProviders.insert(.claude)
         controller.updatePersistentRefreshItemsEnabled()
-        #expect(refreshItem.isEnabled)
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
 
         controller.store.refreshingProviders.insert(.codex)
         controller.updatePersistentRefreshItemsEnabled()
-        #expect(!refreshItem.isEnabled)
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
 
         controller.store.refreshingProviders.removeAll()
         controller.store.isRefreshing = true
         controller.updatePersistentRefreshItemsEnabled()
-        #expect(!refreshItem.isEnabled)
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
 
         controller.store.isRefreshing = false
 
         // A manual refresh scoped to another provider must not grey out this provider's row.
         controller.manualRefreshTasks[.provider(.claude)] = Task {}
         controller.updatePersistentRefreshItemsEnabled()
-        #expect(refreshItem.isEnabled)
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
 
         // This provider's own manual refresh does disable its row.
         controller.manualRefreshTasks[.provider(.codex)] = Task {}
         controller.updatePersistentRefreshItemsEnabled()
-        #expect(!refreshItem.isEnabled)
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
 
         controller.manualRefreshTasks[.provider(.codex)] = nil
         controller.manualRefreshTasks[.provider(.claude)] = nil
         controller.updatePersistentRefreshItemsEnabled()
-        #expect(refreshItem.isEnabled)
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
 
         // An all-providers refresh greys every row.
         controller.manualRefreshTasks[.global] = Task {}
         controller.updatePersistentRefreshItemsEnabled()
-        #expect(!refreshItem.isEnabled)
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
 
         controller.manualRefreshTasks[.global] = nil
         controller.updatePersistentRefreshItemsEnabled()
-        #expect(refreshItem.isEnabled)
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
 
-        refreshItem.representedObject = "notRefresh"
-        controller.manualRefreshTasks[.global] = Task {}
-        controller.updatePersistentRefreshItemsEnabled()
-        #expect(refreshItem.isEnabled)
-        #expect(!controller.persistentRefreshItems.allObjects.contains { $0 === refreshItem })
         controller.manualRefreshTasks[.global] = nil
     }
 
@@ -1008,10 +986,9 @@ extension StatusMenuPersistentRefreshTests {
 
         let mouseGate = ManualRefreshGate()
         controller._test_manualRefreshOperation = { await mouseGate.wait() }
-        let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
-        #expect(controller.isPersistentRefreshItem(refreshItem))
-        let refreshView = try #require(refreshItem.view as? PersistentRefreshMenuView)
-        #expect(refreshView.accessibilityPerformPress())
+        let refreshItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
+        let refreshButton = try #require((refreshItem.view as? MenuFooterBarView)?.button(labeled: "Refresh"))
+        #expect(refreshButton.accessibilityPerformPress())
         for _ in 0..<20 where controller.manualRefreshTasks[.provider(.claude)] == nil {
             await Task.yield()
         }
@@ -1051,8 +1028,7 @@ extension StatusMenuPersistentRefreshTests {
         var requestCount = 0
         controller._test_manualRefreshOperation = { requestCount += 1 }
 
-        let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
-        #expect(controller.isPersistentRefreshItem(refreshItem))
+        let refreshItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
         controller.performPersistentRefreshAction(in: ObjectIdentifier(menu))
         #expect(try menu.performKeyEquivalent(with: self.keyEvent("r", keyCode: 15)))
         for _ in 0..<20 {
@@ -1079,8 +1055,7 @@ extension StatusMenuPersistentRefreshTests {
 
         let overviewGate = ManualRefreshGate()
         controller._test_manualRefreshOperation = { await overviewGate.wait() }
-        let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
-        #expect(controller.isPersistentRefreshItem(refreshItem))
+        let refreshItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
         controller.performPersistentRefreshAction(in: ObjectIdentifier(menu))
         for _ in 0..<20 where controller.manualRefreshTasks[.global] == nil {
             await Task.yield()
@@ -1139,7 +1114,7 @@ extension StatusMenuPersistentRefreshTests {
         let controller = self.makeController(settings: settings)
         let menu = controller.makeMenu(for: .codex)
         controller.menuWillOpen(menu)
-        let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
+        let refreshItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
         let gate = ManualRefreshGate()
 
         controller._test_manualRefreshOperation = {
@@ -1149,13 +1124,13 @@ extension StatusMenuPersistentRefreshTests {
 
         controller.refreshNow()
         let task = try #require(controller.manualRefreshTasks[.global])
-        #expect(!refreshItem.isEnabled)
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") == true)
 
         gate.resume()
         await task.value
 
         #expect(controller.manualRefreshTasks[.global] == nil)
-        #expect(refreshItem.isEnabled)
+        #expect((refreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
         let fallback = MenuCardLiveSubtitle(text: "Fallback", style: .info)
         #expect(controller.menuCardRefreshMonitor.subtitle(for: .codex, fallback: fallback).style == .error)
     }
@@ -1226,8 +1201,9 @@ extension StatusMenuPersistentRefreshTests {
         let menu = controller.makeMenu(for: .codex)
         controller.menuWillOpen(menu)
 
-        let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
-        let refreshView = try #require(refreshItem.view as? PersistentRefreshMenuView)
+        // The footer no longer shows a shortcut column; the old row's column stays stable on its own.
+        let refreshView = PersistentRefreshMenuView(
+            title: "Refresh", systemImageName: nil, shortcutText: "⌘ R")
         refreshView.applySize(width: 320, height: PersistentRefreshRowMetrics.defaults.rowHeight)
         refreshView.layoutSubtreeIfNeeded()
 
