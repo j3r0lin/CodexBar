@@ -472,7 +472,8 @@ struct StatusMenuSwitcherRefreshTests {
         await Self.waitForRebuildCount(2, rebuildCount: { rebuildCount })
 
         let restoredRefreshItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
-        #expect((restoredRefreshItem.view as? MenuFooterBarView)?.isSpinning(systemImageName: "arrow.clockwise") != true)
+        let restoredBar = restoredRefreshItem.view as? MenuFooterBarView
+        #expect(restoredBar?.isSpinning(systemImageName: "arrow.clockwise") != true)
     }
 
     @Test

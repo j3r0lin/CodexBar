@@ -785,7 +785,7 @@ struct StatusMenuTests {
 
 @MainActor
 extension StatusMenuTests {
-    fileprivate func footerKeyEvent(_ characters: String) throws -> NSEvent {
+    private func footerKeyEvent(_ characters: String) throws -> NSEvent {
         try #require(NSEvent.keyEvent(
             with: .keyDown,
             location: .zero,
