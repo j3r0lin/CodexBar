@@ -426,7 +426,7 @@ struct StatusItemAnimationSignatureTests {
     }
 
     @Test
-    func `merged icon render defers while merged menu is tracking`() async throws {
+    func `merged icon render defers while merged menu is tracking`() throws {
         let suite = "StatusItemAnimationSignatureTests-merged-icon-defers-during-tracking"
         let settings = testSettingsStore(suiteName: suite)
         settings.statusChecksEnabled = false
