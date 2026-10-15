@@ -40,18 +40,59 @@ extension StatusItemController {
         menu: NSMenu? = nil)
     {
         guard self.shouldMergeIcons else { return }
-        let visibleMenu = menu ?? self.providerSwitcherShortcutMenuID.flatMap { self.openMenus[$0] }
-        // Right opens the highlighted account; left (and Escape, routed here) returns to the list.
-        if direction == .next {
-            if let visibleMenu, let item = self.highlightedMenuItems[ObjectIdentifier(visibleMenu)],
-               item.action != nil
-            {
-                _ = NSApp.sendAction(item.action!, to: item.target, from: item)
+        let enabledProviders = self.store.enabledFirstPartyProvidersForDisplay()
+        let switcherProviderIDs = self.switcherProviderIDs(enabledFirstPartyProviders: enabledProviders)
+        guard switcherProviderIDs.count > 1 else { return }
+
+        let includesOverview = self.includesOverviewTab(enabledProviders: enabledProviders)
+        var selections = switcherProviderIDs.map { ProviderSwitcherSelection.provider($0) }
+        if includesOverview {
+            selections.insert(.overview, at: 0)
+        }
+
+        let current = self.resolvedSwitcherSelection(
+            enabledProviders: enabledProviders,
+            includesOverview: includesOverview)
+        guard let currentIndex = selections.firstIndex(of: current) else { return }
+
+        let delta = direction == .next ? 1 : -1
+        let nextIndex = (currentIndex + delta + selections.count) % selections.count
+        let selection = selections[nextIndex]
+        let menuProvider: UsageProvider? = switch selection {
+        case .overview:
+            self.navigationResolvedProvider(enabledProviders: enabledProviders) ?? .codex
+        case let .provider(instanceID):
+            instanceID.firstPartyProvider
+        }
+        self.preservingMergedSwitcherContentCachesDuringInvalidation {
+            switch selection {
+            case .overview:
+                self.settings.mergedMenuLastSelectedWasOverview = true
+                self.lastMenuProvider =
+                    (self.navigationResolvedProvider(enabledProviders: enabledProviders) ?? .codex).instanceID
+            case let .provider(provider):
+                self.settings.mergedMenuLastSelectedWasOverview = false
+                self.selectedMenuProvider = provider
+                self.lastMenuProvider = provider
             }
-            return
+            self.lastMergedSwitcherSelection = selection
+            self.refreshProviderSelectionDependentUI(deferRendering: true)
         }
-        if let visibleMenu {
-            self.showOverviewHome(menu: visibleMenu)
+        let trackedMenu = menu ?? self.providerSwitcherShortcutMenuID.flatMap { self.openMenus[$0] }
+        if let trackedMenu {
+            self.requestProviderSwitcherMenuRebuild(
+                trackedMenu,
+                provider: menuProvider)
         }
+    }
+
+    private func navigationResolvedProvider(enabledProviders: [UsageProvider]) -> UsageProvider? {
+        if enabledProviders.isEmpty {
+            return .codex
+        }
+        if let selected = self.selectedMenuProvider?.firstPartyProvider, enabledProviders.contains(selected) {
+            return selected
+        }
+        return enabledProviders.first(where: { self.store.isProviderAvailable($0) }) ?? enabledProviders.first
     }
 }

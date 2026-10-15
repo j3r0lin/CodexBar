@@ -13,23 +13,24 @@ struct OverviewCompactAccountRow: View {
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 10) {
             Text(self.name)
                 .font(.system(size: 12, weight: .medium))
                 .lineLimit(1)
+                .frame(width: 60 - self.indent, alignment: .leading)
                 .padding(.leading, self.indent)
-                .frame(width: 96, alignment: .leading)
-            HStack(spacing: 4) {
+            HStack(spacing: 3) {
                 if let used = Self.used(self.shortWindow) {
                     OverviewUsageRing(usedPercent: used)
-                        .frame(width: 13, height: 13)
+                        .frame(width: 16, height: 16)
                     Text("\(Int(used.rounded()))%")
                         .font(.system(size: 11).monospacedDigit())
                         .foregroundStyle(Color(nsColor: UsageSeverityPalette.color(usedPercent: used)))
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                 }
             }
-            .frame(width: 50, alignment: .leading)
-            HStack(spacing: 4) {
+            .frame(width: 49, alignment: .leading)
+            HStack(spacing: 6) {
                 if let used = Self.used(self.longWindow) {
                     GeometryReader { proxy in
                         ZStack(alignment: .leading) {
@@ -42,7 +43,7 @@ struct OverviewCompactAccountRow: View {
                     .frame(height: 5)
                     Text("\(Int(used.rounded()))%")
                         .font(.system(size: 11).monospacedDigit())
-                        .frame(width: 32, alignment: .trailing)
+                        .frame(width: 34, alignment: .trailing)
                 } else {
                     Spacer(minLength: 0)
                 }
@@ -51,10 +52,7 @@ struct OverviewCompactAccountRow: View {
             Text(self.longWindow?.resetsAt.map { Self.countdown(to: $0, now: self.now) } ?? "")
                 .font(.system(size: 11).monospacedDigit())
                 .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
-                .frame(width: 48, alignment: .trailing)
-            Image(systemName: "chevron.right")
-                .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
+                .frame(width: 44, alignment: .trailing)
         }
         .padding(.horizontal, UsageMenuCardLayout.horizontalPadding)
         .padding(.vertical, 5)
@@ -91,32 +89,6 @@ struct OverviewAccountGroupHeading: View {
             .padding(.top, 6)
             .padding(.bottom, 1)
             .frame(width: self.width, alignment: .leading)
-    }
-}
-
-/// Top row of an account detail page: back to the account list, with the account centred.
-struct OverviewDetailHeaderRow: View {
-    let title: String
-    let width: CGFloat
-    @Environment(\.menuItemHighlighted) private var isHighlighted
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Text("‹ \(L("All"))")
-                .font(.system(size: 12))
-                .foregroundStyle(self.isHighlighted ? Color.white : Color.accentColor)
-            Text(self.title)
-                .font(.system(size: 12, weight: .semibold))
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .center)
-            // Balances the back label so the title stays centred.
-            Text("‹ \(L("All"))")
-                .font(.system(size: 12))
-                .hidden()
-        }
-        .padding(.horizontal, UsageMenuCardLayout.horizontalPadding)
-        .padding(.vertical, 5)
-        .frame(width: self.width, alignment: .leading)
     }
 }
 

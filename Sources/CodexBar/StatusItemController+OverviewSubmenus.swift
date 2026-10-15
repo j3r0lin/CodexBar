@@ -2,40 +2,29 @@ import AppKit
 import CodexBarCore
 
 extension StatusItemController {
-    /// Detail pages open under the account list, so each one starts with a row that returns to it.
-    func addOverviewDetailHeader(title: String, width: CGFloat, to menu: NSMenu, captureMenu: NSMenu?) {
-        let interactionMenu = captureMenu ?? menu
-        let item = self.makeMenuCardItem(
-            OverviewDetailHeaderRow(title: title, width: width),
-            id: Self.overviewDetailBackIdentifier,
-            width: width,
-            heightCacheScope: "overviewDetailHeader",
-            heightCacheFingerprint: title,
-            usesGPUSelection: true,
-            onClick: { [weak self, weak interactionMenu] in
-                guard let self, let interactionMenu else { return }
-                self.showOverviewHome(menu: interactionMenu)
-            })
-        item.target = self
-        item.action = #selector(self.showOverviewHome(_:))
-        menu.addItem(item)
-        menu.addItem(.separator())
-    }
-
-    @objc func showOverviewHome(_ sender: NSMenuItem) {
-        guard let menu = sender.menu else { return }
-        self.showOverviewHome(menu: menu)
-    }
-
-    func showOverviewHome(menu: NSMenu) {
-        guard !self.settings.mergedMenuLastSelectedWasOverview else { return }
-        self.preservingMergedSwitcherContentCachesDuringInvalidation {
-            self.settings.mergedMenuLastSelectedWasOverview = true
-            self.lastMergedSwitcherSelection = .overview
-            self.refreshProviderSelectionDependentUI(deferRendering: true)
+    /// Hover submenu of an Overview row: the same usage detail the menu-bar ring card shows,
+    /// followed by the provider's history chart when it has one.
+    func makeOverviewDetailSubmenu(
+        title: String,
+        snapshot: UsageSnapshot?,
+        provider: UsageProvider,
+        model: UsageMenuCardView.Model,
+        width: CGFloat) -> NSMenu
+    {
+        let submenu = NSMenu()
+        submenu.autoenablesItems = false
+        submenu.appearance = StatusMenuAppearance.menuAppearance
+        submenu.addItem(self.makeMenuCardItem(
+            AccountUsageDetailView(name: title, snapshot: snapshot, width: AccountUsageDetailView.defaultWidth),
+            id: "overviewDetail-\(title)",
+            width: AccountUsageDetailView.defaultWidth))
+        if let chartMenu = self.makeOverviewRowSubmenu(provider: provider, model: model, width: width) {
+            submenu.addItem(.separator())
+            let chartItem = NSMenuItem(title: L("Usage history (30 days)"), action: nil, keyEquivalent: "")
+            chartItem.submenu = chartMenu
+            submenu.addItem(chartItem)
         }
-        self.clearMenuHighlight(ObjectIdentifier(menu))
-        self.requestProviderSwitcherMenuRebuild(menu, provider: self.resolvedMenuProvider())
+        return submenu
     }
 
     func makeOverviewRowSubmenu(
@@ -104,7 +93,6 @@ extension StatusItemController {
         }
         // Custom-view clicks stay open and rebuild next turn. Standard menu-item activation can close;
         // menuWillOpen then renders the saved provider without doing structural work inside the action.
-        self.clearMenuHighlight(ObjectIdentifier(menu))
         self.requestProviderSwitcherMenuRebuild(menu, provider: provider)
     }
 }

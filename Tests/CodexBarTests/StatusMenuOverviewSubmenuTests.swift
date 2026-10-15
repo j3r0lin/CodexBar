@@ -54,10 +54,14 @@ extension StatusMenuTests {
         let openAIRow = try #require(menu.items.first {
             ($0.representedObject as? String) == "overviewRow-openai"
         })
-        #expect(openAIRow.submenu == nil)
-        controller.selectOverviewProvider(openAIRow)
-        #expect(settings.selectedMenuProvider == .openai)
-        #expect(!settings.mergedMenuLastSelectedWasOverview)
+        let openAIDetail = try #require(openAIRow.submenu)
+        #expect(openAIRow.action == nil)
+        #expect((openAIDetail.items.first?.representedObject as? String)?.hasPrefix("overviewDetail-") == true)
+        #expect(openAIDetail.items.contains {
+            $0.submenu?.items.contains {
+                ($0.representedObject as? String) == StatusItemController.costHistoryChartID
+            } == true
+        })
     }
 
     @Test
@@ -116,10 +120,11 @@ extension StatusMenuTests {
         let opencodegoRow = try #require(menu.items.first {
             ($0.representedObject as? String) == "overviewRow-opencodego"
         })
-        #expect(opencodegoRow.submenu == nil)
-        controller.selectOverviewProvider(opencodegoRow)
-        #expect(settings.selectedMenuProvider == .opencodego)
-        #expect(!settings.mergedMenuLastSelectedWasOverview)
+        let chartIDs = opencodegoRow.submenu?.items.flatMap {
+            $0.submenu?.items.compactMap { $0.representedObject as? String } ?? []
+        } ?? []
+        #expect(chartIDs.contains(StatusItemController.usageHistoryChartID))
+        #expect(!chartIDs.contains(StatusItemController.costHistoryChartID))
     }
 
     @Test
@@ -183,135 +188,5 @@ extension StatusMenuTests {
         #expect(menu.items.contains {
             ($0.representedObject as? String) == "overviewRow-zai"
         })
-    }
-
-    @Test
-    func `selecting overview row defers provider detail rebuild`() async throws {
-        let previousMenuCardRendering = StatusItemController.menuCardRenderingEnabled
-        let previousMenuRefresh = StatusItemController.menuRefreshEnabled
-        StatusItemController.menuCardRenderingEnabled = false
-        StatusItemController.setMenuRefreshEnabledForTesting(true)
-        defer {
-            StatusItemController.menuCardRenderingEnabled = previousMenuCardRendering
-            StatusItemController.setMenuRefreshEnabledForTesting(previousMenuRefresh)
-        }
-
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        settings.mergedMenuLastSelectedWasOverview = true
-
-        enableTestProviders([.codex, .cursor], settings: settings)
-
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: self.makeStatusBarForTesting())
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let menu = controller.makeMenu()
-        controller.menuWillOpen(menu)
-        defer { controller.menuDidClose(menu) }
-
-        let cursorRow = try #require(menu.items.first {
-            ($0.representedObject as? String) == "overviewRow-cursor"
-        })
-        var rebuildCount = 0
-        controller._test_openMenuRebuildObserver = { _ in
-            rebuildCount += 1
-        }
-        defer { controller._test_openMenuRebuildObserver = nil }
-
-        let action = try #require(cursorRow.action)
-        let target = try #require(cursorRow.target as? StatusItemController)
-        _ = target.perform(action, with: cursorRow)
-
-        #expect(settings.mergedMenuLastSelectedWasOverview == false)
-        #expect(settings.selectedMenuProvider == .cursor)
-        #expect(rebuildCount == 0)
-        #expect(menu.items.contains {
-            ($0.representedObject as? String)?.hasPrefix("overviewRow-") == true
-        })
-
-        for _ in 0..<100 where rebuildCount == 0 {
-            await Task.yield()
-            try? await Task.sleep(for: .milliseconds(10))
-        }
-
-        let representedIDs = menu.items.compactMap { $0.representedObject as? String }
-        #expect(rebuildCount == 1)
-        #expect(representedIDs.contains("menuCard"))
-        #expect(representedIDs.contains(StatusItemController.overviewDetailBackIdentifier))
-        #expect(representedIDs.contains(where: { $0.hasPrefix("overviewRow-") }) == false)
-    }
-
-    @Test
-    func `overview row action close renders selected provider on next open`() async throws {
-        let previousMenuCardRendering = StatusItemController.menuCardRenderingEnabled
-        let previousMenuRefresh = StatusItemController.menuRefreshEnabled
-        StatusItemController.menuCardRenderingEnabled = false
-        StatusItemController.setMenuRefreshEnabledForTesting(true)
-        defer {
-            StatusItemController.menuCardRenderingEnabled = previousMenuCardRendering
-            StatusItemController.setMenuRefreshEnabledForTesting(previousMenuRefresh)
-        }
-
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        settings.mergedMenuLastSelectedWasOverview = true
-
-        enableTestProviders([.codex, .cursor], settings: settings)
-
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: self.makeStatusBarForTesting())
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let menu = controller.makeMenu()
-        controller.menuWillOpen(menu)
-
-        let cursorRow = try #require(menu.items.first {
-            ($0.representedObject as? String) == "overviewRow-cursor"
-        })
-        var rebuildCount = 0
-        controller._test_openMenuRebuildObserver = { _ in
-            rebuildCount += 1
-        }
-        defer { controller._test_openMenuRebuildObserver = nil }
-
-        let action = try #require(cursorRow.action)
-        let target = try #require(cursorRow.target as? StatusItemController)
-        _ = target.perform(action, with: cursorRow)
-        controller.menuDidClose(menu)
-
-        await Task.yield()
-        await Task.yield()
-        #expect(rebuildCount == 0)
-        #expect(settings.selectedMenuProvider == .cursor)
-
-        controller.menuWillOpen(menu)
-        defer { controller.menuDidClose(menu) }
-
-        // A fresh open always returns to the account list, even after a detail page was open.
-        let representedIDs = menu.items.compactMap { $0.representedObject as? String }
-        #expect(representedIDs.contains(where: { $0.hasPrefix("overviewRow-") }))
-        #expect(representedIDs.contains("menuCard") == false)
-        #expect(settings.mergedMenuLastSelectedWasOverview == true)
     }
 }

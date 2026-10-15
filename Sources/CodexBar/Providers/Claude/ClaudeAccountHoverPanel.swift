@@ -13,13 +13,15 @@ final class ClaudeAccountHoverPanelController {
     private var isSuppressed: () -> Bool = { false }
     private static let grace: TimeInterval = 0.3
 
-    func show(_ card: ClaudeAccountHoverCard, below button: NSView, isSuppressed: @escaping () -> Bool) {
+    func show(_ card: some View, below button: NSView, isSuppressed: @escaping () -> Bool) {
         guard let window = button.window else { return }
         self.isSuppressed = isSuppressed
         self.anchorRect = window.convertToScreen(button.convert(button.bounds, to: nil))
         let panel = self.panel ?? Self.makePanel()
         self.panel = panel
-        let hosting = NSHostingView(rootView: card)
+        let hosting = NSHostingView(rootView: card
+            .padding(.vertical, 4)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10)))
         hosting.frame.size = hosting.fittingSize
         panel.contentView = hosting
         let size = hosting.fittingSize
@@ -78,66 +80,7 @@ final class ClaudeAccountHoverPanelController {
         panel.backgroundColor = .clear
         panel.hidesOnDeactivate = false
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        panel.appearance = StatusMenuAppearance.menuAppearance
         return panel
-    }
-}
-
-struct ClaudeAccountHoverCard: View {
-    let name: String
-    let snapshot: UsageSnapshot?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(self.name).font(.system(size: 13, weight: .semibold))
-            if let snapshot {
-                self.windowRow(snapshot.primary)
-                self.windowRow(snapshot.secondary)
-                Text(Self.ageText(snapshot.updatedAt))
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-            } else {
-                Text("No usage data").font(.system(size: 11)).foregroundStyle(.secondary)
-            }
-        }
-        .padding(12)
-        .frame(width: 240, alignment: .leading)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
-    }
-
-    @ViewBuilder
-    private func windowRow(_ window: RateWindow?) -> some View {
-        if let window, let used = OverviewCompactAccountRow.used(window) {
-            VStack(alignment: .leading, spacing: 3) {
-                HStack {
-                    Text(Self.windowTitle(window)).font(.system(size: 11))
-                    Spacer()
-                    Text("\(Int(used.rounded()))%"
-                        + (window.resetsAt.map { " · resets in " + OverviewCompactAccountRow.countdown(to: $0, now: Date()) } ?? ""))
-                        .font(.system(size: 11).monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-                GeometryReader { proxy in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(Color.secondary.opacity(0.22))
-                        Capsule()
-                            .fill(Color(nsColor: UsageSeverityPalette.color(usedPercent: used)))
-                            .frame(width: proxy.size.width * used / 100)
-                    }
-                }
-                .frame(height: 5)
-            }
-        }
-    }
-
-    private static func windowTitle(_ window: RateWindow) -> String {
-        guard let minutes = window.windowMinutes else { return "Window" }
-        if minutes % 1440 == 0 { return "\(minutes / 1440) days" }
-        if minutes % 60 == 0 { return "\(minutes / 60) hours" }
-        return "\(minutes) minutes"
-    }
-
-    private static func ageText(_ date: Date) -> String {
-        let minutes = Int(Date().timeIntervalSince(date) / 60)
-        return minutes < 1 ? "Updated just now" : "Updated \(minutes)m ago"
     }
 }

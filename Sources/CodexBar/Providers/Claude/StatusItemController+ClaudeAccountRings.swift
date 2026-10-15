@@ -70,16 +70,43 @@ extension StatusItemController {
             return
         }
         self.selectClaudeAccountTab(account.id)
-        self.opensClaudeAccountDetailOnce = true
-        self.selectedMenuProvider = UsageProvider.claude.instanceID
-        self.lastMenuProvider = UsageProvider.claude.instanceID
-        self.settings.mergedMenuLastSelectedWasOverview = false
-        self.lastMergedSwitcherSelection = .provider(UsageProvider.claude.instanceID)
         self.invalidateMenus()
         let menu = self.shouldMergeIcons ? (self.mergedMenu ?? self.makeMenu()) : self.makeMenu(for: .claude)
+        if self.shouldMergeIcons {
+            self.openClaudeAccountRowSubmenu(account.id, in: menu)
+        }
         // Anchor under the ring that was clicked rather than under the main status item.
         let y: CGFloat = sender.isFlipped ? sender.bounds.maxY + 4 : -4
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: y), in: sender)
+    }
+
+    /// NSMenu has no API to open a submenu, so once tracking starts a synthetic mouse move lands on the
+    /// account's row; AppKit then highlights it and opens its submenu as if the pointer hovered there.
+    private func openClaudeAccountRowSubmenu(_ id: ProviderAccountIdentity, in menu: NSMenu) {
+        let identifier = "\(Self.overviewRowIdentifierPrefix)\(UsageProvider.claude.rawValue)#\(id.opaqueID)"
+        let timer = Timer(timeInterval: 0.05, repeats: false) { [weak self, weak menu] _ in
+            MainActor.assumeIsolated {
+                guard let self, let menu,
+                      let item = menu.items.first(where: { ($0.representedObject as? String) == identifier }),
+                      let view = item.view, let window = view.window
+                else { return }
+                self.menu(menu, willHighlight: item, eventType: .mouseMoved)
+                let location = view.convert(NSPoint(x: view.bounds.midX, y: view.bounds.midY), to: nil)
+                guard let event = NSEvent.mouseEvent(
+                    with: .mouseMoved,
+                    location: location,
+                    modifierFlags: [],
+                    timestamp: ProcessInfo.processInfo.systemUptime,
+                    windowNumber: window.windowNumber,
+                    context: nil,
+                    eventNumber: 0,
+                    clickCount: 0,
+                    pressure: 0)
+                else { return }
+                NSApp.postEvent(event, atStart: false)
+            }
+        }
+        RunLoop.main.add(timer, forMode: .eventTracking)
     }
 
     /// magpie serves every account from one quotas call, so refreshing one account refreshes the source.
@@ -102,7 +129,7 @@ extension StatusItemController {
         else { return }
         let name = "Claude · " + Self.claudeAccountShortName(account, hidePersonalInfo: self.settings.hidePersonalInfo)
         self.claudeAccountHoverPanel.show(
-            ClaudeAccountHoverCard(name: name, snapshot: account.snapshot),
+            AccountUsageDetailView(name: name, snapshot: account.snapshot),
             below: button,
             isSuppressed: { [weak self] in !(self?.openMenus.isEmpty ?? true) })
     }

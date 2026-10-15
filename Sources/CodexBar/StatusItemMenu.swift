@@ -16,9 +16,6 @@ protocol StatusItemMenuPersistentActionDelegate: AnyObject {
 }
 
 final class StatusItemMenu: NSMenu {
-    /// Matches `StatusItemController.overviewDetailBackIdentifier`; duplicated because key handling
-    /// here runs off the main actor and cannot read the controller's constant.
-    nonisolated static let overviewDetailBackIdentifier = "overviewDetailBack"
     weak var persistentActionDelegate: StatusItemMenuPersistentActionDelegate?
     var menuInteractionGeneration: Int?
     var switcherShortcuts: () -> [String: String] = { ProviderSwitcherShortcuts.defaults }
@@ -42,16 +39,10 @@ final class StatusItemMenu: NSMenu {
             }
             return true
         }
-        // The account list is the home page, so the old left/right tab shortcuts now move between
-        // that list and the open account's detail page.
-        if let direction = Self.providerNavigationDirection(for: event, mapping: self.switcherShortcuts()) {
+        if let direction = Self.providerNavigationDirection(for: event, mapping: self.switcherShortcuts()),
+           self.items.first?.view is ProviderSwitcherView
+        {
             self.persistentActionDelegate?.performProviderNavigation(direction)
-            return true
-        }
-        if event.keyCode == 53, self.items.contains(where: {
-            ($0.representedObject as? String) == Self.overviewDetailBackIdentifier
-        }) {
-            self.persistentActionDelegate?.performProviderNavigation(.previous)
             return true
         }
 

@@ -367,13 +367,6 @@ final class ProviderSwitcherView: NSView {
         return self.convert(viewWindow.convertPoint(fromScreen: screenLocation), from: nil)
     }
 
-    func selectAdjacentSegment(delta: Int) -> Bool {
-        guard self.segments.count > 1 else { return false }
-        let current = self.selectedSegmentIndex ?? 0
-        self.applySelection(at: (current + delta + self.segments.count) % self.segments.count)
-        return true
-    }
-
     func handleKeyboardSelection(at index: Int) -> Bool {
         guard self.segments.indices.contains(index) else { return false }
         self.applySelection(at: index)

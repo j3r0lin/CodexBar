@@ -36,6 +36,7 @@ extension StatusItemController {
         heightCacheScope: String? = nil,
         heightCacheFingerprint: String? = nil,
         submenu: NSMenu? = nil,
+        showsSubmenuIndicator: Bool = true,
         submenuIndicatorAlignment: Alignment = .topTrailing,
         submenuIndicatorTopPadding: CGFloat = 8,
         containsInteractiveControls: Bool = false,
@@ -72,7 +73,7 @@ extension StatusItemController {
             content: AnyView(view
                 .environment(\.providerMenuChartSettings, self.settings)
                 .environment(\.providerCardAction, cardAction)),
-            showsSubmenuIndicator: submenu != nil,
+            showsSubmenuIndicator: submenu != nil && showsSubmenuIndicator,
             submenuIndicatorAlignment: submenuIndicatorAlignment,
             submenuIndicatorTopPadding: submenuIndicatorTopPadding,
             allowsMenuHighlight: allowsMenuHighlight,
@@ -100,17 +101,6 @@ extension StatusItemController {
             self.menuCardHeight(for: hosting, width: width)
         }
         hosting.applyMeasuredSize(width: width, height: height)
-        if let deadline = self.switcherFadeDeadline, deadline > Date() {
-            hosting.alphaValue = 0
-            DispatchQueue.main.async {
-                NSAnimationContext.runAnimationGroup { context in
-                    context.duration = 0.18
-                    hosting.animator().alphaValue = 1
-                }
-            }
-        } else {
-            hosting.alphaValue = 1
-        }
         let item = self.makeMenuCardNSMenuItem(
             hosting: hosting,
             id: id,
