@@ -10,6 +10,7 @@ extension StatusItemController {
     static let menuCardBaseWidth: CGFloat = 310
     private static let maxOverviewProviders = SettingsStore.mergedOverviewProviderLimit
     static let overviewRowIdentifierPrefix = "overviewRow-"
+    static let overviewDetailBackIdentifier = "overviewDetailBack"
     static let persistentRefreshMenuItemID = "persistentRefreshAction"
     private static let defaultMenuOpenRefreshDelay: Duration = .seconds(1.2)
     #if DEBUG
@@ -113,6 +114,11 @@ extension StatusItemController {
 
         var provider: UsageProvider?
         if self.shouldMergeIcons {
+            // The account list is the home page, so a fresh open never resumes a detail page.
+            if menuTrackingWasIdle {
+                self.settings.mergedMenuLastSelectedWasOverview = true
+                self.lastMergedSwitcherSelection = .overview
+            }
             let enabledProviders = self.store.enabledFirstPartyProvidersForDisplay()
             let selection = self.resolvedMergedMenuSelection(enabledProviders: enabledProviders)
             if Self.isUserPluginSelection(selection), let pluginID = selection?.instanceID {
@@ -279,9 +285,6 @@ extension StatusItemController {
             guard let view = item.view else { return false }
             return abs(view.frame.width - menuWidth) <= 0.5
         }
-        let providerSwitcherWidthMatches = (menu.items.first?.view as? ProviderSwitcherView).map { view in
-            abs(view.frame.width - menuWidth) <= 0.5
-        } ?? false
         let canSmartUpdate = self.shouldMergeIcons &&
             switcherProviderIDs.count > 1 &&
             !isOverviewSelected &&
@@ -293,8 +296,7 @@ extension StatusItemController {
             tokenSwitcherCompatible &&
             codexSwitcherCompatible &&
             reusableRowWidthsMatch &&
-            !menu.items.isEmpty &&
-            menu.items.first?.view is ProviderSwitcherView
+            !menu.items.isEmpty
 
         #if DEBUG
         if self.openMenus[ObjectIdentifier(menu)] != nil {
@@ -329,15 +331,12 @@ extension StatusItemController {
             switcherUsageBarsShowUsedMatch &&
             switcherOverviewAvailabilityMatches &&
             menuLocalizationMatches &&
-            providerSwitcherWidthMatches &&
-            !menu.items.isEmpty &&
-            menu.items.first?.view is ProviderSwitcherView
+            !menu.items.isEmpty
 
         #if DEBUG
         if self.openMenus[ObjectIdentifier(menu)] != nil {
             self.menuLogger.debug(
-                "populateMenu(open): preserveSwitcher=\(canPreserveProviderSwitcher) " +
-                    "widthMatch=\(providerSwitcherWidthMatches)")
+                "populateMenu(open): preserveSwitcher=\(canPreserveProviderSwitcher)")
         }
         #endif
 
@@ -357,8 +356,8 @@ extension StatusItemController {
         }
 
         #if DEBUG
-        if self.openMenus[ObjectIdentifier(menu)] != nil, menu.items.first?.view is ProviderSwitcherView {
-            self.menuLogger.debug("populateMenu(open): rebuilding whole menu and replacing provider switcher")
+        if self.openMenus[ObjectIdentifier(menu)] != nil {
+            self.menuLogger.debug("populateMenu(open): rebuilding whole menu")
         }
         #endif
         MenuSwitchFlickerProbe.debugLog("full-rebuild-path \(String(describing: switcherSelection))")
@@ -382,9 +381,6 @@ extension StatusItemController {
 
         var reusableRows: [NSMenuItem] = []
         var index = self.providerSwitcherContentStartIndex(in: menu)
-        if index > 0 {
-            reusableRows.append(menu.items[0])
-        }
         if menu.items.count > index,
            menu.items[index].view is CodexAccountSwitcherView
         {
@@ -614,7 +610,10 @@ extension StatusItemController {
             menu.addItem(.separator())
         }
 
+        // A provider with several accounts gets one grey caption; a lone account is its own row.
+        let accountCounts = Dictionary(rows.map { ($0.provider, 1) }, uniquingKeysWith: +)
         for (index, row) in rows.enumerated() {
+            let isGrouped = (accountCounts[row.provider] ?? 1) > 1
             let identifier = "\(Self.overviewRowIdentifierPrefix)\(row.provider.rawValue)"
                 + (row.claudeAccountID.map { "#\($0.opaqueID)" } ?? "")
             let submenu = row.claudeAccountID == nil
@@ -622,12 +621,30 @@ extension StatusItemController {
                 : nil
             let shortWindow = row.snapshot?.primary
             let longWindow = row.snapshot?.secondary
+            if isGrouped, index == 0 || rows[index - 1].provider != row.provider {
+                let heading = self.makeMenuCardItem(
+                    OverviewAccountGroupHeading(
+                        title: "\(L(ProviderDescriptorRegistry.descriptor(for: row.provider).metadata.displayName)) · "
+                            + L("%lld accounts", accountCounts[row.provider] ?? 0),
+                        width: menuWidth),
+                    id: "\(Self.overviewRowIdentifierPrefix)heading-\(row.provider.rawValue)",
+                    width: menuWidth,
+                    heightCacheScope: "overviewAccountGroupHeading",
+                    heightCacheFingerprint: "heading")
+                heading.isEnabled = false
+                menu.addItem(heading)
+            }
+            let account = self.store.claudeAccountSource.accounts.first { $0.id == row.claudeAccountID }
             let item = self.makeMenuCardItem(
                 OverviewCompactAccountRow(
-                    name: row.model.providerName,
+                    name: isGrouped
+                        ? account.map { Self.claudeAccountShortName($0, hidePersonalInfo: self.settings.hidePersonalInfo) }
+                            ?? row.model.providerName
+                        : L(ProviderDescriptorRegistry.descriptor(for: row.provider).metadata.displayName),
                     shortWindow: shortWindow,
                     longWindow: longWindow,
-                    width: menuWidth),
+                    width: menuWidth,
+                    indent: isGrouped ? 10 : 0),
                 id: identifier,
                 width: menuWidth,
                 heightCacheScope: "overviewCompactRow",
@@ -814,6 +831,11 @@ extension StatusItemController {
         if case let .provider(instanceID) = switcherSelection,
            UserProviderPluginRegistry.plugin(for: instanceID) != nil
         {
+            self.addOverviewDetailHeader(
+                title: UserProviderPluginRegistry.plugin(for: instanceID)?.manifest.name ?? instanceID.rawValue,
+                width: context.menuWidth,
+                to: menu,
+                captureMenu: captureMenu)
             self.addUserPluginMenuCards(
                 to: menu,
                 width: context.menuWidth,
@@ -834,6 +856,15 @@ extension StatusItemController {
                 menu.addItem(.separator())
             }
         } else {
+            self.addOverviewDetailHeader(
+                title: context.currentProvider == .claude
+                    ? self.selectedClaudeTabAccount.map {
+                        "Claude · " + Self.claudeAccountShortName($0, hidePersonalInfo: self.settings.hidePersonalInfo)
+                    } ?? L(ProviderDescriptorRegistry.descriptor(for: .claude).metadata.displayName)
+                    : L(ProviderDescriptorRegistry.descriptor(for: context.currentProvider).metadata.displayName),
+                width: context.menuWidth,
+                to: menu,
+                captureMenu: captureMenu)
             let addedOpenAIWebItems = self.addMenuCards(to: menu, context: context, captureMenu: captureMenu)
             self.addOpenAIWebItemsIfNeeded(
                 to: menu,

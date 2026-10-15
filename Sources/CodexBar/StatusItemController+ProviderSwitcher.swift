@@ -231,7 +231,11 @@ extension StatusItemController {
         guard self.isMenuRefreshEnabled else {
             return
         }
-        let hasProviderSwitcher = self.shouldMergeIcons && menu.items.first?.view is ProviderSwitcherView
+        // The account list replaced the top switcher, so keyboard handling covers the merged menu.
+        // The menu is not registered as open yet when this runs from menuWillOpen.
+        let hasProviderSwitcher = self.shouldMergeIcons &&
+            self.switcherProviderIDs(
+                enabledFirstPartyProviders: self.store.enabledFirstPartyProvidersForDisplay()).count > 1
         let hasPersistentRefresh = menu.items.contains { self.isPersistentRefreshItem($0) }
         guard hasProviderSwitcher || hasPersistentRefresh else {
             return
@@ -282,12 +286,12 @@ extension StatusItemController {
             }
             return true
         }
-        guard menu.items.first?.view is ProviderSwitcherView else { return false }
         return self.handleProviderSwitcherTrackingEvent(event, menu: menu)
     }
 
     func providerSwitcherContentStartIndex(in menu: NSMenu) -> Int {
-        menu.items.first?.view is ProviderSwitcherView ? 2 : 0
+        // The top switcher row is gone; account rows start at the first item.
+        0
     }
 
     @discardableResult
@@ -381,13 +385,18 @@ extension StatusItemController {
         self.pendingProviderSwitcherPointerRebuild = nil
     }
 
+    /// Command-number now picks the Nth account row of the home list instead of a top-bar tab.
     @discardableResult
     private func selectProviderSwitcherSegment(at index: Int, menu: NSMenu) -> Bool {
-        guard let switcherView = menu.items.first?.view as? ProviderSwitcherView,
-              switcherView.handleKeyboardSelection(at: index)
-        else {
-            return false
+        guard self.settings.mergedMenuLastSelectedWasOverview else { return false }
+        let rows = menu.items.filter {
+            ($0.representedObject as? String)?.hasPrefix(Self.overviewRowIdentifierPrefix) == true &&
+                ($0.representedObject as? String)?.contains("heading-") != true
         }
+        guard rows.indices.contains(index) else { return false }
+        let item = rows[index]
+        guard let action = item.action else { return false }
+        _ = NSApp.sendAction(action, to: item.target, from: item)
         return true
     }
 }

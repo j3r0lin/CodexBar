@@ -23,10 +23,6 @@ extension StatusItemController {
         self.performMenuMutationWithoutAnimation {
             defer { self.flushHostedMenuRowRendering(in: menu) }
             let contentStartIndex = self.providerSwitcherContentStartIndex(in: menu)
-            if let switcherView = menu.items.first?.view as? ProviderSwitcherView {
-                switcherView.updateSelection(context.switcherSelection)
-                switcherView.updateQuotaIndicators()
-            }
             let outgoingSelection = self.lastMergedMenuContentSelection
             let isSelectionSwitch = outgoingSelection != nil && outgoingSelection != context.switcherSelection
             let enabledProviders = self.store.enabledFirstPartyProvidersForDisplay()

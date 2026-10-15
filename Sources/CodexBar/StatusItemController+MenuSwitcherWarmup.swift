@@ -39,7 +39,8 @@ extension StatusItemController {
     }
 
     func warmMergedSwitcherSiblingContent(in menu: NSMenu) {
-        guard menu.items.first?.view is ProviderSwitcherView else { return }
+        // The top switcher is gone; the merged menu itself is what gets warmed.
+        guard menu === self.mergedMenu else { return }
         let enabledProviders = self.store.enabledFirstPartyProvidersForDisplay()
         let switcherProviderIDs = self.switcherProviderIDs(enabledFirstPartyProviders: enabledProviders)
         guard switcherProviderIDs.count > 1 else { return }

@@ -55,7 +55,6 @@ extension StatusItemController {
         contentVersion: Int? = nil)
     {
         guard self.shouldMergeIcons else { return }
-        guard menu.items.first?.view is ProviderSwitcherView else { return }
         guard contentStartIndex < menu.items.count else { return }
         let items = Array(menu.items[contentStartIndex...])
         self.cacheMergedSwitcherContent(

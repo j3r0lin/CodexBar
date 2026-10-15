@@ -7,6 +7,8 @@ struct OverviewCompactAccountRow: View {
     let shortWindow: RateWindow?
     let longWindow: RateWindow?
     let width: CGFloat
+    /// Account rows under a provider heading sit further right than a lone provider row.
+    var indent: CGFloat = 0
     var now = Date()
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
@@ -15,6 +17,7 @@ struct OverviewCompactAccountRow: View {
             Text(self.name)
                 .font(.system(size: 12, weight: .medium))
                 .lineLimit(1)
+                .padding(.leading, self.indent)
                 .frame(width: 96, alignment: .leading)
             HStack(spacing: 4) {
                 if let used = Self.used(self.shortWindow) {
@@ -49,6 +52,9 @@ struct OverviewCompactAccountRow: View {
                 .font(.system(size: 11).monospacedDigit())
                 .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
                 .frame(width: 48, alignment: .trailing)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
         }
         .padding(.horizontal, UsageMenuCardLayout.horizontalPadding)
         .padding(.vertical, 5)
@@ -67,6 +73,50 @@ struct OverviewCompactAccountRow: View {
         if days > 0 { return "\(days)d \(hours)h" }
         if hours > 0 { return "\(hours)h \(mins)m" }
         return "\(mins)m"
+    }
+}
+
+/// Grey caption above a provider's account rows. It is not a row: no usage, no highlight, no action.
+struct OverviewAccountGroupHeading: View {
+    let title: String
+    let width: CGFloat
+
+    var body: some View {
+        Text(self.title)
+            .font(.system(size: 11))
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, UsageMenuCardLayout.horizontalPadding)
+            .padding(.top, 6)
+            .padding(.bottom, 1)
+            .frame(width: self.width, alignment: .leading)
+    }
+}
+
+/// Top row of an account detail page: back to the account list, with the account centred.
+struct OverviewDetailHeaderRow: View {
+    let title: String
+    let width: CGFloat
+    @Environment(\.menuItemHighlighted) private var isHighlighted
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text("‹ \(L("All"))")
+                .font(.system(size: 12))
+                .foregroundStyle(self.isHighlighted ? Color.white : Color.accentColor)
+            Text(self.title)
+                .font(.system(size: 12, weight: .semibold))
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .center)
+            // Balances the back label so the title stays centred.
+            Text("‹ \(L("All"))")
+                .font(.system(size: 12))
+                .hidden()
+        }
+        .padding(.horizontal, UsageMenuCardLayout.horizontalPadding)
+        .padding(.vertical, 5)
+        .frame(width: self.width, alignment: .leading)
     }
 }
 

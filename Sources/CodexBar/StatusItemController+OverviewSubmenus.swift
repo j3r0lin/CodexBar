@@ -2,6 +2,41 @@ import AppKit
 import CodexBarCore
 
 extension StatusItemController {
+    /// Detail pages open under the account list, so each one starts with a row that returns to it.
+    func addOverviewDetailHeader(title: String, width: CGFloat, to menu: NSMenu, captureMenu: NSMenu?) {
+        let interactionMenu = captureMenu ?? menu
+        let item = self.makeMenuCardItem(
+            OverviewDetailHeaderRow(title: title, width: width),
+            id: Self.overviewDetailBackIdentifier,
+            width: width,
+            heightCacheScope: "overviewDetailHeader",
+            heightCacheFingerprint: title,
+            usesGPUSelection: true,
+            onClick: { [weak self, weak interactionMenu] in
+                guard let self, let interactionMenu else { return }
+                self.showOverviewHome(menu: interactionMenu)
+            })
+        item.target = self
+        item.action = #selector(self.showOverviewHome(_:))
+        menu.addItem(item)
+        menu.addItem(.separator())
+    }
+
+    @objc func showOverviewHome(_ sender: NSMenuItem) {
+        guard let menu = sender.menu else { return }
+        self.showOverviewHome(menu: menu)
+    }
+
+    func showOverviewHome(menu: NSMenu) {
+        guard !self.settings.mergedMenuLastSelectedWasOverview else { return }
+        self.preservingMergedSwitcherContentCachesDuringInvalidation {
+            self.settings.mergedMenuLastSelectedWasOverview = true
+            self.lastMergedSwitcherSelection = .overview
+            self.refreshProviderSelectionDependentUI(deferRendering: true)
+        }
+        self.requestProviderSwitcherMenuRebuild(menu, provider: self.resolvedMenuProvider())
+    }
+
     func makeOverviewRowSubmenu(
         provider: UsageProvider,
         model: UsageMenuCardView.Model,

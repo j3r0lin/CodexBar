@@ -39,10 +39,16 @@ final class StatusItemMenu: NSMenu {
             }
             return true
         }
-        if let direction = Self.providerNavigationDirection(for: event, mapping: self.switcherShortcuts()),
-           self.items.first?.view is ProviderSwitcherView
-        {
+        // The account list is the home page, so the old left/right tab shortcuts now move between
+        // that list and the open account's detail page.
+        if let direction = Self.providerNavigationDirection(for: event, mapping: self.switcherShortcuts()) {
             self.persistentActionDelegate?.performProviderNavigation(direction)
+            return true
+        }
+        if event.keyCode == 53, self.items.contains(where: {
+            ($0.representedObject as? String) == StatusItemController.overviewDetailBackIdentifier
+        }) {
+            self.persistentActionDelegate?.performProviderNavigation(.previous)
             return true
         }
 
