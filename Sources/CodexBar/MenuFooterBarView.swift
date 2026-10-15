@@ -19,6 +19,8 @@ struct MenuFooterButton: Equatable {
 final class MenuFooterBarView: NSView {
     static let barHeight: CGFloat = 36
     private static let buttonSide: CGFloat = 28
+    /// The buttons stay in a cluster in the middle of the bar rather than spreading across it.
+    private static let buttonGap: CGFloat = 22
     private static let iconSide: CGFloat = 15
     private static let highlightCornerRadius: CGFloat = 6
     private static let idleTint = NSColor(white: 0.78, alpha: 1)
@@ -69,10 +71,11 @@ final class MenuFooterBarView: NSView {
         super.layout()
         let count = CGFloat(self.buttons.count)
         guard count > 0 else { return }
-        let slot = self.bounds.width / count
+        let cluster = count * Self.buttonSide + (count - 1) * Self.buttonGap
+        let firstX = (self.bounds.width - cluster) / 2
         for (index, button) in self.buttons.enumerated() {
             button.frame = NSRect(
-                x: floor(slot * CGFloat(index) + (slot - Self.buttonSide) / 2),
+                x: floor(firstX + (Self.buttonSide + Self.buttonGap) * CGFloat(index)),
                 y: floor((self.bounds.height - Self.buttonSide) / 2),
                 width: Self.buttonSide,
                 height: Self.buttonSide)
@@ -98,15 +101,21 @@ final class MenuFooterBarView: NSView {
             self.highlight.isHidden = true
             self.addSubview(self.highlight)
 
-            if let image = NSImage(systemSymbolName: model.systemImageName, accessibilityDescription: nil) {
-                image.isTemplate = true
+            if let image = Self.icon(named: model.systemImageName) {
                 self.iconView.image = image
                 self.iconView.contentTintColor = MenuFooterBarView.idleTint
-                self.iconView.imageScaling = .scaleProportionallyDown
-                let config = NSImage.SymbolConfiguration(pointSize: MenuFooterBarView.iconSide, weight: .medium)
-                self.iconView.symbolConfiguration = config
+                self.iconView.imageScaling = .scaleProportionallyUpOrDown
             }
             self.addSubview(self.iconView)
+        }
+
+        /// One point size and one box for every symbol, so no button reads heavier than its neighbours.
+        private static func icon(named name: String) -> NSImage? {
+            guard let image = NSImage(systemSymbolName: name, accessibilityDescription: nil) else { return nil }
+            let config = NSImage.SymbolConfiguration(pointSize: MenuFooterBarView.iconSide, weight: .medium)
+            let configured = image.withSymbolConfiguration(config) ?? image
+            configured.isTemplate = true
+            return configured
         }
 
         @available(*, unavailable)

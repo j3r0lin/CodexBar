@@ -147,7 +147,6 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     private let hosting: NSHostingView<MenuCardSectionContainerView<AnyView>>
     private var measuredSize: NSSize?
     private var selectionView: NSVisualEffectView?
-    private var tintFilter: CIFilter?
     private(set) var allowsMenuHighlight: Bool
     private var onClick: (() -> Void)?
     private var containsInteractiveControls: Bool
@@ -410,25 +409,20 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     private func configureSelectionMode(animated: Bool) {
         if self.rowPayload.usesGPUSelection {
             _ = self.ensureSelectionView()
-            self.refreshTintFilter()
         } else {
-            self.hosting.layer?.filters = []
             self.selectionView?.removeFromSuperview()
             self.selectionView = nil
-            self.tintFilter = nil
         }
         self.applyHighlight(animated: animated)
         self.needsLayout = true
     }
 
     private func applyHighlight(animated: Bool) {
-        guard self.rowPayload.usesGPUSelection else {
-            self.highlightState.isHighlighted = self.isRowHighlighted
-            return
-        }
+        // A GPU-selected row draws its blue behind the content and leaves the content alone, so the
+        // usage bars keep the colour that carries their reading. Only the text follows the selection.
+        self.highlightState.isHighlighted = self.isRowHighlighted
+        guard self.rowPayload.usesGPUSelection else { return }
 
-        self.highlightState.isHighlighted = false
-        self.hosting.layer?.filters = self.isRowHighlighted ? self.tintFilter.map { [$0] } ?? [] : []
         let layer = self.ensureSelectionView().layer
         let targetOpacity: Float = self.isRowHighlighted ? 1 : 0
         if animated {
@@ -458,30 +452,6 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
         self.addSubview(selectionView, positioned: .below, relativeTo: self.hosting)
         self.selectionView = selectionView
         return selectionView
-    }
-
-    private func refreshTintFilter() {
-        guard self.rowPayload.usesGPUSelection else { return }
-        self.tintFilter = Self.makeSelectedTextTintFilter(appearance: self.effectiveAppearance)
-        if self.isRowHighlighted {
-            self.hosting.layer?.filters = self.tintFilter.map { [$0] } ?? []
-        }
-    }
-
-    private static func makeSelectedTextTintFilter(appearance: NSAppearance) -> CIFilter? {
-        guard let filter = CIFilter(name: "CIColorMatrix") else { return nil }
-        var tint: NSColor = .white
-        appearance.performAsCurrentDrawingAppearance {
-            tint = NSColor.selectedMenuItemTextColor.usingColorSpace(.deviceRGB) ?? .white
-        }
-        filter.setValue(CIVector(x: 0, y: 0, z: 0, w: 0), forKey: "inputRVector")
-        filter.setValue(CIVector(x: 0, y: 0, z: 0, w: 0), forKey: "inputGVector")
-        filter.setValue(CIVector(x: 0, y: 0, z: 0, w: 0), forKey: "inputBVector")
-        filter.setValue(CIVector(x: 0, y: 0, z: 0, w: 1), forKey: "inputAVector")
-        filter.setValue(
-            CIVector(x: tint.redComponent, y: tint.greenComponent, z: tint.blueComponent, w: 0),
-            forKey: "inputBiasVector")
-        return filter
     }
 
     private static func makeRootView(

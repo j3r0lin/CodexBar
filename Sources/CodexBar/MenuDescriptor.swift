@@ -52,7 +52,7 @@ struct MenuDescriptor {
         case loginToProvider = "arrow.right.square"
         case settings = "gearshape"
         case about = "info.circle"
-        case quit = "xmark.rectangle"
+        case quit = "power"
         case copyError = "doc.on.doc"
     }
 
