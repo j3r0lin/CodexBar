@@ -32,8 +32,8 @@ struct MenuFooterBarTests {
         #expect(labels.contains { $0.hasPrefix("About CodexBar") })
 
         // Shortcuts are not carried by menu items anymore; the menu itself answers them.
-        let keyEquivalents = menu.items.map(\.keyEquivalent)
-        #expect(keyEquivalents.allSatisfy(\.isEmpty))
+        let hasShortcut = menu.items.contains { $0.keyEquivalent.isEmpty == false }
+        #expect(hasShortcut == false)
         let statusMenu = try #require(menu as? StatusItemMenu)
         let refreshKey = try self.keyEvent("r")
         let settingsKey = try self.keyEvent(",")
