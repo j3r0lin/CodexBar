@@ -607,9 +607,6 @@
 "menu_bar_style_critters" = "크리터";
 "menu_bar_style_bars" = "미터 막대";
 "menu_bar_style_icon_percent" = "아이콘 및 백분율";
-"switcher_rows_title" = "전환기 행";
-"switcher_rows_icons" = "공급자 아이콘";
-"switcher_rows_progress" = "주간 진행률";
 "usage_bars_fill_title" = "사용량 막대 채우기";
 "usage_bars_fill_remaining" = "남은 양 기준";
 "usage_bars_fill_used" = "사용량 기준";

@@ -615,9 +615,6 @@
 "menu_bar_style_critters" = "Kreaturen";
 "menu_bar_style_bars" = "Messleisten";
 "menu_bar_style_icon_percent" = "Symbol und Prozent";
-"switcher_rows_title" = "Umschalterzeilen";
-"switcher_rows_icons" = "Anbietersymbole";
-"switcher_rows_progress" = "Wöchentlicher Fortschritt";
 "usage_bars_fill_title" = "Füllung der Nutzungsbalken";
 "usage_bars_fill_remaining" = "Verbleibend";
 "usage_bars_fill_used" = "Verbraucht";

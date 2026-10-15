@@ -115,13 +115,15 @@ struct PreferencesDocumentTests {
     }
 
     @Test
-    func `older exports with switcher shortcuts still import`() throws {
+    func `older exports with switcher settings still import`() throws {
         let settings = self.store("legacy-shortcuts")
-        let json = #"{"version":1,"preferences":{"hidePersonalInfo":true,"switcherShortcuts":{"next":"shift+right"}}}"#
+        let json = #"{"version":1,"preferences":{"hidePersonalInfo":true,"switcherShowsIcons":false,"#
+            + #""switcherShortcuts":{"next":"shift+right"}}}"#
         try settings.importPreferences(PreferencesDocument(data: Data(json.utf8)))
         #expect(settings.hidePersonalInfo)
         let exported = try String(bytes: settings.exportPreferences().encoded(), encoding: .utf8)
         #expect(exported?.contains("switcherShortcuts") == false)
+        #expect(exported?.contains("switcherShowsIcons") == false)
     }
 
     @Test(arguments: [

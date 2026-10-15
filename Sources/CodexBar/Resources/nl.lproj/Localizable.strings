@@ -617,9 +617,6 @@
 "menu_bar_style_critters" = "Beestjes";
 "menu_bar_style_bars" = "Meterbalken";
 "menu_bar_style_icon_percent" = "Pictogram en percentage";
-"switcher_rows_title" = "Switcher-rijen";
-"switcher_rows_icons" = "Providerpictogrammen";
-"switcher_rows_progress" = "Wekelijkse voortgang";
 "usage_bars_fill_title" = "Vulling gebruiksbalken";
 "usage_bars_fill_remaining" = "Als resterend";
 "usage_bars_fill_used" = "Als gebruikt";

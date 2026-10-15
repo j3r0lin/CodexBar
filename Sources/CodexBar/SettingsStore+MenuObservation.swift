@@ -107,7 +107,6 @@ extension SettingsStore {
         _ = self.ollamaCookieSource
         _ = self.mergeIcons
         _ = self.mergedOverviewLayout
-        _ = self.switcherShowsIcons
         _ = self.mergeIconsStacked
         _ = self.mergeIconStackedTopProviderRaw
         _ = self.mergeIconStackedBottomProviderRaw

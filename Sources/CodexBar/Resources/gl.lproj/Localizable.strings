@@ -591,9 +591,6 @@
 "menu_bar_style_critters" = "Animaliños";
 "menu_bar_style_bars" = "Barras de medición";
 "menu_bar_style_icon_percent" = "Icona e porcentaxe";
-"switcher_rows_title" = "Filas do selector";
-"switcher_rows_icons" = "Iconas de provedores";
-"switcher_rows_progress" = "Progreso semanal";
 "usage_bars_fill_title" = "Recheo das barras de uso";
 "usage_bars_fill_remaining" = "Como restante";
 "usage_bars_fill_used" = "Como consumido";

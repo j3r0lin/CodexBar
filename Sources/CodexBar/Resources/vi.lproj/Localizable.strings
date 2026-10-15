@@ -613,9 +613,6 @@
 "menu_bar_style_critters" = "Sinh vật";
 "menu_bar_style_bars" = "Thanh đo";
 "menu_bar_style_icon_percent" = "Biểu tượng & phần trăm";
-"switcher_rows_title" = "Các hàng của trình chuyển đổi";
-"switcher_rows_icons" = "Biểu tượng nhà cung cấp";
-"switcher_rows_progress" = "Tiến độ hằng tuần";
 "usage_bars_fill_title" = "Cách lấp đầy thanh sử dụng";
 "usage_bars_fill_remaining" = "Theo mức còn lại";
 "usage_bars_fill_used" = "Theo mức đã sử dụng";

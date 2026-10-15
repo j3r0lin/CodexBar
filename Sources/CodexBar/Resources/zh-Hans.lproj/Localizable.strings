@@ -595,9 +595,6 @@
 "menu_bar_style_critters" = "小动物";
 "menu_bar_style_bars" = "进度条";
 "menu_bar_style_icon_percent" = "图标和百分比";
-"switcher_rows_title" = "切换器行";
-"switcher_rows_icons" = "提供商图标";
-"switcher_rows_progress" = "每周进度";
 "usage_bars_fill_title" = "用量条填充方式";
 "usage_bars_fill_remaining" = "按剩余量";
 "usage_bars_fill_used" = "按已用量";

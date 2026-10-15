@@ -15,18 +15,6 @@ enum MenuBarIconStyle: String, CaseIterable {
     }
 }
 
-enum SwitcherRowsOption: String, CaseIterable {
-    case icons
-    case progress
-
-    var label: String {
-        switch self {
-        case .icons: L("switcher_rows_icons")
-        case .progress: L("switcher_rows_progress")
-        }
-    }
-}
-
 enum MergedIconDisplayStyle: String, CaseIterable {
     case switcher
     case stacked
@@ -166,11 +154,6 @@ extension SettingsStore {
                 self.menuBarShowsBrandIconWithPercent = true
             }
         }
-    }
-
-    var switcherRowsOption: SwitcherRowsOption {
-        get { self.switcherShowsIcons ? .icons : .progress }
-        set { self.switcherShowsIcons = newValue == .icons }
     }
 
     var mergedIconDisplayStyle: MergedIconDisplayStyle {

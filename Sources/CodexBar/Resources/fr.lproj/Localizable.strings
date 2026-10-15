@@ -617,9 +617,6 @@
 "menu_bar_style_critters" = "Créatures";
 "menu_bar_style_bars" = "Barres de mesure";
 "menu_bar_style_icon_percent" = "Icône et pourcentage";
-"switcher_rows_title" = "Lignes du sélecteur";
-"switcher_rows_icons" = "Icônes des fournisseurs";
-"switcher_rows_progress" = "Progression hebdomadaire";
 "usage_bars_fill_title" = "Remplissage des barres d’utilisation";
 "usage_bars_fill_remaining" = "Selon le quota restant";
 "usage_bars_fill_used" = "Selon le quota utilisé";

@@ -606,9 +606,6 @@
 "menu_bar_style_critters" = "Critters";
 "menu_bar_style_bars" = "Meter bars";
 "menu_bar_style_icon_percent" = "Icon & percent";
-"switcher_rows_title" = "Switcher rows";
-"switcher_rows_icons" = "Provider icons";
-"switcher_rows_progress" = "Weekly progress";
 "usage_bars_fill_title" = "Usage bars fill";
 "usage_bars_fill_remaining" = "As remaining";
 "usage_bars_fill_used" = "As used";

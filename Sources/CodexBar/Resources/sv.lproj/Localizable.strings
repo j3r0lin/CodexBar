@@ -616,9 +616,6 @@
 "menu_bar_style_critters" = "Figurer";
 "menu_bar_style_bars" = "Mätarstaplar";
 "menu_bar_style_icon_percent" = "Ikon och procent";
-"switcher_rows_title" = "Växlarrader";
-"switcher_rows_icons" = "Leverantörsikoner";
-"switcher_rows_progress" = "Veckoförlopp";
 "usage_bars_fill_title" = "Fyllning av användningsstaplar";
 "usage_bars_fill_remaining" = "Återstående";
 "usage_bars_fill_used" = "Förbrukat";

@@ -623,9 +623,6 @@
 "menu_bar_style_critters" = "ตัวการ์ตูน";
 "menu_bar_style_bars" = "แถบวัด";
 "menu_bar_style_icon_percent" = "ไอคอนและเปอร์เซ็นต์";
-"switcher_rows_title" = "แถวในตัวสลับ";
-"switcher_rows_icons" = "ไอคอนผู้ให้บริการ";
-"switcher_rows_progress" = "ความคืบหน้ารายสัปดาห์";
 "usage_bars_fill_title" = "รูปแบบการเติมแถบการใช้งาน";
 "usage_bars_fill_remaining" = "ตามปริมาณคงเหลือ";
 "usage_bars_fill_used" = "ตามปริมาณที่ใช้ไป";

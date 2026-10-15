@@ -52,12 +52,6 @@ struct MergedIconSettingsLabelTests {
                             },
                             optionLabel: { Text($0.label) })
                             .disabled(!presentation.canStack)
-                        SettingsMenuPicker(
-                            selection: .constant(MenuBarSettingsMenuOptions.switcherRows[0]),
-                            options: MenuBarSettingsMenuOptions.switcherRows,
-                            label: { SettingsRowLabel(L("switcher_rows_title")) },
-                            optionLabel: { Text($0.label) })
-                            .disabled(!merged)
                         UnifiedIconSourcePicker(selection: .constant(.frontmostApp))
                             .disabled(!merged || presentation.effectiveStyle == .stacked)
                         SettingsRowLabel(
@@ -80,7 +74,7 @@ struct MergedIconSettingsLabelTests {
                     hosting.layoutSubtreeIfNeeded()
                     let text = MenuLayoutScreenshotRenderTests.accessibilityText(hosting)
                     for key in [
-                        "merge_icons_title", "merged_icon_style_title", "switcher_rows_title",
+                        "merge_icons_title", "merged_icon_style_title",
                         "merged_icon_source_title", "merged_icon_source_frontmost_app", "overview_tab_providers_title",
                         "menu_bar_layout_size", "menu_bar_layout_gap",
                     ] {

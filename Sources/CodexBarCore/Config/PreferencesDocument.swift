@@ -25,7 +25,7 @@ public struct PreferencesDocument: Codable, Sendable {
         "hidePersonalInfo", "randomBlinkEnabled", "confettiOnSessionLimitResetsEnabled",
         "confettiOnWeeklyLimitResetsEnabled", "limitResetNotificationsEnabled", "menuBarShowsHighestUsage",
         "showOptionalCreditsAndExtraUsage", "providerChangelogLinksEnabled", "providersSortedAlphabetically",
-        "refreshAllProvidersOnMenuOpen", "mergeIcons", "mergeIconsStacked", "switcherShowsIcons",
+        "refreshAllProvidersOnMenuOpen", "mergeIcons", "mergeIconsStacked",
         "menuBarColorByProvider",
     ])
     private static let stringChoices: [String: [String]] = [
@@ -132,7 +132,8 @@ public struct PreferencesDocument: Codable, Sendable {
         guard self.version == 1 else { throw Error.invalid("Unsupported preferences version") }
         for (key, value) in self.preferences {
             let valid: Bool = switch value {
-            case .bool: Self.boolKeys.contains(key)
+            // Older exports carry the removed switcher-icons choice; it still imports and is ignored.
+            case .bool: Self.boolKeys.contains(key) || key == "switcherShowsIcons"
             case let .string(raw):
                 Self.stringChoices[key]?.contains(raw)
                     ??

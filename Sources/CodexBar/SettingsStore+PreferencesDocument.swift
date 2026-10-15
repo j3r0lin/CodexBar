@@ -8,7 +8,6 @@ extension SettingsStore {
         try document.set("limitResetNotificationsEnabled", self.limitResetNotificationsEnabled)
         try document.set("mergeIcons", self.mergeIcons)
         try document.set("mergeIconsStacked", self.mergeIconsStacked)
-        try document.set("switcherShowsIcons", self.switcherShowsIcons)
         try document.set("menuBarColorByProvider", self.menuBarColorByProvider)
         try document.set("mergedOverviewLayout", self.mergedOverviewLayout.rawValue)
         if self.userDefaults.object(forKey: "mergedOverviewSelectedProviders") != nil {
@@ -34,7 +33,6 @@ extension SettingsStore {
         }
         if let value: Bool = try document.value("mergeIcons") { self.mergeIcons = value }
         if let value: Bool = try document.value("mergeIconsStacked") { self.mergeIconsStacked = value }
-        if let value: Bool = try document.value("switcherShowsIcons") { self.switcherShowsIcons = value }
         if let value: Bool = try document.value("menuBarColorByProvider") { self.menuBarColorByProvider = value }
         if let value: String = try document.value("mergedOverviewLayout"),
            let layout = MergedOverviewLayout(rawValue: value)

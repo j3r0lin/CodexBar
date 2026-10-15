@@ -617,9 +617,6 @@
 "menu_bar_style_critters" = "Тварини";
 "menu_bar_style_bars" = "Смуги-індикатори";
 "menu_bar_style_icon_percent" = "Значок і відсоток";
-"switcher_rows_title" = "Рядки перемикача";
-"switcher_rows_icons" = "Значки провайдерів";
-"switcher_rows_progress" = "Тижневий прогрес";
 "usage_bars_fill_title" = "Заповнення смуг використання";
 "usage_bars_fill_remaining" = "За залишком";
 "usage_bars_fill_used" = "За використанням";

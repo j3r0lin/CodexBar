@@ -604,9 +604,6 @@
 "menu_bar_style_critters" = "Bichitos";
 "menu_bar_style_bars" = "Barras de medición";
 "menu_bar_style_icon_percent" = "Icono y porcentaje";
-"switcher_rows_title" = "Filas del selector";
-"switcher_rows_icons" = "Iconos de proveedor";
-"switcher_rows_progress" = "Progreso semanal";
 "usage_bars_fill_title" = "Relleno de las barras de uso";
 "usage_bars_fill_remaining" = "Según lo restante";
 "usage_bars_fill_used" = "Según lo usado";

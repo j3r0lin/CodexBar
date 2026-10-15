@@ -600,9 +600,6 @@
 "menu_bar_style_critters" = "Bestioles";
 "menu_bar_style_bars" = "Barres de mesura";
 "menu_bar_style_icon_percent" = "Icona i percentatge";
-"switcher_rows_title" = "Files del selector";
-"switcher_rows_icons" = "Icones de proveïdor";
-"switcher_rows_progress" = "Progrés setmanal";
 "usage_bars_fill_title" = "Ompliment de les barres d'ús";
 "usage_bars_fill_remaining" = "Com a restant";
 "usage_bars_fill_used" = "Com a consumit";

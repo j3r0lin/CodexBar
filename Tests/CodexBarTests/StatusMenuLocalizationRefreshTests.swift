@@ -28,7 +28,6 @@ struct StatusMenuLocalizationRefreshTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.switcherShowsIcons = false
         settings.selectedMenuProvider = .codex
         settings.costUsageEnabled = true
         settings.costSummaryDisplayStyle = .both

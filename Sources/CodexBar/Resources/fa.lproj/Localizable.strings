@@ -623,9 +623,6 @@
 "menu_bar_style_critters" = "موجودات";
 "menu_bar_style_bars" = "نوارهای اندازه‌گیری";
 "menu_bar_style_icon_percent" = "آیکون و درصد";
-"switcher_rows_title" = "ردیف‌های سوئیچر";
-"switcher_rows_icons" = "آیکون‌های ارائه‌دهنده";
-"switcher_rows_progress" = "پیشرفت هفتگی";
 "usage_bars_fill_title" = "پرشدن نوارهای استفاده";
 "usage_bars_fill_remaining" = "بر اساس باقی‌مانده";
 "usage_bars_fill_used" = "بر اساس استفاده‌شده";

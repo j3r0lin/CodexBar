@@ -614,9 +614,6 @@
 "menu_bar_style_critters" = "クリッター";
 "menu_bar_style_bars" = "メーターバー";
 "menu_bar_style_icon_percent" = "アイコンとパーセント";
-"switcher_rows_title" = "切替バーの表示";
-"switcher_rows_icons" = "プロバイダアイコン";
-"switcher_rows_progress" = "週間進捗";
 "usage_bars_fill_title" = "使用量バーの表示";
 "usage_bars_fill_remaining" = "残量として";
 "usage_bars_fill_used" = "消費量として";

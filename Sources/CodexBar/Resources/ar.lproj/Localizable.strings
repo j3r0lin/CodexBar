@@ -623,9 +623,6 @@
 "menu_bar_style_critters" = "الكائنات الصغيرة";
 "menu_bar_style_bars" = "أشرطة القياس";
 "menu_bar_style_icon_percent" = "الأيقونة والنسبة المئوية";
-"switcher_rows_title" = "صفوف المحوّل";
-"switcher_rows_icons" = "أيقونات المزودين";
-"switcher_rows_progress" = "التقدم الأسبوعي";
 "usage_bars_fill_title" = "تعبئة أشرطة الاستخدام";
 "usage_bars_fill_remaining" = "حسب المتبقي";
 "usage_bars_fill_used" = "حسب المستهلك";

@@ -623,9 +623,6 @@
 "menu_bar_style_critters" = "Canavarlar";
 "menu_bar_style_bars" = "Ölçüm çubukları";
 "menu_bar_style_icon_percent" = "Simge ve yüzde";
-"switcher_rows_title" = "Değiştirici satırları";
-"switcher_rows_icons" = "Sağlayıcı simgeleri";
-"switcher_rows_progress" = "Haftalık ilerleme";
 "usage_bars_fill_title" = "Kullanım çubuklarının dolumu";
 "usage_bars_fill_remaining" = "Kalan miktara göre";
 "usage_bars_fill_used" = "Harcanan miktara göre";

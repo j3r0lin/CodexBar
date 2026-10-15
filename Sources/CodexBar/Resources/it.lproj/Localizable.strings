@@ -625,9 +625,6 @@
 "menu_bar_style_critters" = "Creature";
 "menu_bar_style_bars" = "Barre di livello";
 "menu_bar_style_icon_percent" = "Icona + percentuale";
-"switcher_rows_title" = "Righe selettore";
-"switcher_rows_icons" = "Icone provider";
-"switcher_rows_progress" = "Progresso settimanale";
 "usage_bars_fill_title" = "Riempimento delle barre di utilizzo";
 "usage_bars_fill_remaining" = "In base al residuo";
 "usage_bars_fill_used" = "In base all'utilizzo";

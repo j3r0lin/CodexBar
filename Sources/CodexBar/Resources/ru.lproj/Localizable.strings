@@ -618,9 +618,6 @@
 "menu_bar_style_critters" = "Декоративные индикаторы";
 "menu_bar_style_bars" = "Полосы-индикаторы";
 "menu_bar_style_icon_percent" = "Значок и процент";
-"switcher_rows_title" = "Строки переключателя";
-"switcher_rows_icons" = "Значки провайдеров";
-"switcher_rows_progress" = "Недельный прогресс";
 "usage_bars_fill_title" = "Заполнение индикаторов использования";
 "usage_bars_fill_remaining" = "По остатку";
 "usage_bars_fill_used" = "По расходу";

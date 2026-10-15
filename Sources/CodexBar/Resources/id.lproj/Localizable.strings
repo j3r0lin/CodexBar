@@ -625,9 +625,6 @@
 "menu_bar_style_critters" = "Critter";
 "menu_bar_style_bars" = "Bilah meter";
 "menu_bar_style_icon_percent" = "Ikon & persentase";
-"switcher_rows_title" = "Baris pengalih";
-"switcher_rows_icons" = "Ikon penyedia";
-"switcher_rows_progress" = "Progres mingguan";
 "usage_bars_fill_title" = "Pengisian bilah penggunaan";
 "usage_bars_fill_remaining" = "Berdasarkan sisa kuota";
 "usage_bars_fill_used" = "Berdasarkan kuota terpakai";

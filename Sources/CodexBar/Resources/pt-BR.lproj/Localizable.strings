@@ -614,9 +614,6 @@
 "menu_bar_style_critters" = "Bichinhos";
 "menu_bar_style_bars" = "Barras de medição";
 "menu_bar_style_icon_percent" = "Ícone e porcentagem";
-"switcher_rows_title" = "Linhas do alternador";
-"switcher_rows_icons" = "Ícones dos provedores";
-"switcher_rows_progress" = "Progresso semanal";
 "usage_bars_fill_title" = "Preenchimento das barras de uso";
 "usage_bars_fill_remaining" = "Como restante";
 "usage_bars_fill_used" = "Como consumido";

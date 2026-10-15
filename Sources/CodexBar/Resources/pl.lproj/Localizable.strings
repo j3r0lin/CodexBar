@@ -625,9 +625,6 @@
 "menu_bar_style_critters" = "Stworki";
 "menu_bar_style_bars" = "Paski miernika";
 "menu_bar_style_icon_percent" = "Ikona i procent";
-"switcher_rows_title" = "Wiersze przełącznika";
-"switcher_rows_icons" = "Ikony dostawców";
-"switcher_rows_progress" = "Postęp tygodniowy";
 "usage_bars_fill_title" = "Wypełnienie pasków użycia";
 "usage_bars_fill_remaining" = "Pozostały limit";
 "usage_bars_fill_used" = "Wykorzystany limit";
