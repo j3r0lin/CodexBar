@@ -191,6 +191,7 @@ extension UsageStore {
         let ownership = self.codexOwnershipContext()
         let publicationRevision = self.providerPublicationRevision(for: .codex)
         let dataset = await Self.loadHistoricalDataset(from: self.historicalUsageHistoryStore, ownership: ownership)
+        // Provider-specific by design: a late native Codex history load must not cross takeover.
         guard self.providerSourceRoute(for: .codex).isNative,
               self.providerPublicationRevisionIsCurrent(publicationRevision, for: .codex)
         else { return }
