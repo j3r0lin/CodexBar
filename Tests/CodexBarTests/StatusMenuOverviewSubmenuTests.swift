@@ -108,12 +108,6 @@ extension StatusMenuTests {
             ],
             updatedAt: Date())
         store._setSnapshotForTesting(opencodegoSnapshot.toUsageSnapshot(), provider: .opencodego)
-        store.planUtilizationHistory[.opencodego] = PlanUtilizationHistoryBuckets(unscoped: [
-            PlanUtilizationSeriesHistory(
-                name: .session,
-                windowMinutes: 300,
-                entries: [PlanUtilizationHistoryEntry(capturedAt: Date(), usedPercent: 20, resetsAt: nil)]),
-        ])
 
         let controller = StatusItemController(
             store: store,
