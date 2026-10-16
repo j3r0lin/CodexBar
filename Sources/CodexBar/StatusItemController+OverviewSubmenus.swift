@@ -93,6 +93,11 @@ extension StatusItemController {
         extras.autoenablesItems = false
         extras.minimumWidth = width
         self.addTokenAccountSwitcherIfNeeded(
+        self.addCodexAccountSwitcherIfNeeded(
+            to: extras,
+            display: self.codexAccountMenuDisplay(for: provider),
+            width: width,
+            captureMenu: submenu)
             to: extras,
             display: self.tokenAccountMenuDisplay(for: provider),
             width: width,
