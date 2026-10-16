@@ -16,7 +16,7 @@ extension StatusMenuTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
         settings.mergedMenuLastSelectedWasOverview = true
-        enableTestProviders(providers, settings: settings)
+        enableTestProviders(Set(providers), settings: settings)
         configure(settings)
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
