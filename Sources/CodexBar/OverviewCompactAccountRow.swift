@@ -8,6 +8,8 @@ enum OverviewPalette {
     static let warning = Color(red: 1, green: 0xB3 / 255, blue: 0x40 / 255)
     static let critical = Color(red: 1, green: 0x5A / 255, blue: 0x4F / 255)
     static let caption = Color(red: 0x6B / 255, green: 0x71 / 255, blue: 0x80 / 255)
+    /// Reset countdowns read one step brighter than the window labels.
+    static let reset = Color(red: 0x8E / 255, green: 0x90 / 255, blue: 0x99 / 255)
 
     static func color(usedPercent used: Double) -> Color {
         if used >= 90 { return self.critical }
@@ -34,11 +36,14 @@ enum OverviewBlockPosition {
 }
 
 extension View {
-    /// Draws this item's part of its provider block, leaving a 3pt gap above the first and below the last
-    /// item so blocks read as separate without separator lines.
+    /// Draws this item's part of its provider block. The block's own padding lives inside the
+    /// background so consecutive items paint one continuous panel; a 6pt transparent gap below
+    /// the last item keeps blocks apart without separator lines.
     func overviewBlock(_ position: OverviewBlockPosition) -> some View {
         let radius: CGFloat = 8
         return self
+            .padding(.top, position.roundsTop ? 6 : 0)
+            .padding(.bottom, position.roundsBottom ? 4 : 0)
             .background(
                 UnevenRoundedRectangle(
                     topLeadingRadius: position.roundsTop ? radius : 0,
@@ -47,8 +52,7 @@ extension View {
                     topTrailingRadius: position.roundsTop ? radius : 0)
                     .fill(Color.white.opacity(0.035)))
             .padding(.horizontal, OverviewCompactAccountRow.blockInset)
-            .padding(.top, position.roundsTop ? 3 : 0)
-            .padding(.bottom, position.roundsBottom ? 3 : 0)
+            .padding(.bottom, position.roundsBottom ? 6 : 0)
     }
 
     /// Accent-coloured, upper-case, slightly tracked label used for provider and group names.
@@ -86,18 +90,17 @@ struct OverviewCompactAccountRow: View {
     }
 
     /// Every line puts the same element in the same column, so each part is sized here and the bar takes
-    /// whatever the line has left: at 340pt that is 148pt.
-    static let blockInset: CGFloat = 4
-    static let horizontalPadding: CGFloat = 6
+    /// whatever the line has left.
+    static let blockInset: CGFloat = 2
+    static let horizontalPadding: CGFloat = 8
     /// Fits "KIMI CODE" in the section-title style.
     static let nameColumn: CGFloat = 66
     static let labelWidth: CGFloat = 20
     /// Fits "100%" at 13pt semibold with monospaced digits.
     static let percentWidth: CGFloat = 38
-    /// Fits "6d22h" at 10pt.
-    static let resetWidth: CGFloat = 32
-    private static let lineHeight: CGFloat = 16
-    private static let lineSpacing: CGFloat = 2
+    static let resetWidth: CGFloat = 40
+    /// Every window line keeps this height so lines pitch evenly within and across accounts.
+    static let lineHeight: CGFloat = 22
 
     /// The windows that have a reading, short first. A window the provider did not report gets no line.
     var lines: [Line] {
@@ -109,16 +112,10 @@ struct OverviewCompactAccountRow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Self.lineSpacing) {
+        VStack(alignment: .leading, spacing: 0) {
             let lines = self.lines
             if let errorText {
-                self.line(named: true) {
-                    Text(errorText)
-                        .font(.system(size: 11))
-                        .foregroundStyle(MenuHighlightStyle.error(self.isHighlighted))
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
+                self.errorLines(errorText)
             } else if lines.isEmpty {
                 self.line(named: true) { Spacer(minLength: 0) }
             } else {
@@ -128,13 +125,29 @@ struct OverviewCompactAccountRow: View {
             }
         }
         .padding(.horizontal, Self.horizontalPadding)
-        .padding(.vertical, 3)
         .overviewBlock(self.block)
         .frame(width: self.width, alignment: .leading)
     }
 
+    /// An error-only provider names itself in full on the first line and wraps the message below it,
+    /// so neither the name nor the message is truncated into the narrow name column.
+    private func errorLines(_ errorText: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(self.name)
+                .overviewSectionTitleStyle()
+                .lineLimit(1)
+            Text(errorText)
+                .font(.system(size: 10))
+                .foregroundStyle(MenuHighlightStyle.error(self.isHighlighted))
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.vertical, 4)
+    }
+
     private func line(named: Bool, @ViewBuilder content: () -> some View) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             Group {
                 if named {
                     self.nameLabel
@@ -155,13 +168,15 @@ struct OverviewCompactAccountRow: View {
         if self.namesProvider {
             Text(self.name).overviewSectionTitleStyle()
         } else {
-            Text(self.name).font(.system(size: 12, weight: .medium))
+            Text(self.name)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(MenuHighlightStyle.primary(self.isHighlighted))
         }
     }
 
     private func reading(_ line: Line) -> some View {
         let color = Self.severityColor(line.used)
-        return HStack(spacing: 0) {
+        return HStack(spacing: 8) {
             Text(line.label)
                 .font(.system(size: 10))
                 .foregroundStyle(OverviewPalette.caption)
@@ -173,19 +188,18 @@ struct OverviewCompactAccountRow: View {
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
                 .frame(width: Self.percentWidth, alignment: .trailing)
-                .padding(.leading, 4)
             Text(line.resetsAt.map { Self.countdown(to: $0, now: self.now) } ?? "")
                 .font(.system(size: 10).monospacedDigit())
-                .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
+                .foregroundStyle(
+                    self.isHighlighted ? MenuHighlightStyle.selectionText : OverviewPalette.reset)
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
                 .frame(width: Self.resetWidth, alignment: .leading)
-                .padding(.leading, 6)
         }
     }
 
     /// Menus are pinned dark, so the empty part of a bar is drawn light enough to read there.
-    static let trackColor = Color.white.opacity(0.18)
+    static let trackColor = Color.white.opacity(0.14)
 
     /// The bar and its number share one colour, and a highlighted row keeps it: the selection is painted
     /// behind the row, so the reading survives the highlight.
@@ -232,9 +246,9 @@ struct OverviewAccountGroupHeading: View {
             .overviewSectionTitleStyle()
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: 16)
             .padding(.horizontal, OverviewCompactAccountRow.horizontalPadding)
-            .padding(.top, 6)
-            .padding(.bottom, 1)
+            .padding(.bottom, 2)
             .overviewBlock(.top)
             .frame(width: self.width, alignment: .leading)
     }

@@ -40,6 +40,7 @@ extension StatusItemController {
         submenuIndicatorTopPadding: CGFloat = 8,
         containsInteractiveControls: Bool = false,
         usesGPUSelection: Bool = false,
+        tightVerticalFit: Bool = false,
         recyclesView: Bool = true,
         onClick: (() -> Void)? = nil) -> NSMenuItem
     {
@@ -79,6 +80,7 @@ extension StatusItemController {
             allowsMenuHighlight: allowsMenuHighlight,
             containsInteractiveControls: containsInteractiveControls,
             usesGPUSelection: usesGPUSelection,
+            tightVerticalFit: tightVerticalFit,
             onClick: onClick)
         let hosting: ErasedMenuCardHostingView
         if recyclesView,
@@ -135,16 +137,18 @@ extension StatusItemController {
     }
 
     private func menuCardHeight(for view: NSView, width: CGFloat) -> CGFloat {
-        let basePadding: CGFloat = 6
-        let descenderSafety: CGFloat = 1
+        // Tight-fit rows (Overview provider blocks) draw a continuous background across items, so the
+        // standard air would read as a seam inside the block.
+        let tight = (view as? MenuRowContainerView)?.rowPayload.tightVerticalFit ?? false
+        let verticalPadding: CGFloat = tight ? 0 : 7 // 6pt of air plus 1pt of descender safety
 
         if let measured = view as? MenuCardMeasuring {
-            return max(1, ceil(measured.measuredHeight(width: width) + basePadding + descenderSafety))
+            return max(1, ceil(measured.measuredHeight(width: width) + verticalPadding))
         }
 
         view.frame = NSRect(origin: .zero, size: NSSize(width: width, height: 1))
         let fitted = view.fittingSize
-        return max(1, ceil(fitted.height + basePadding + descenderSafety))
+        return max(1, ceil(fitted.height + verticalPadding))
     }
 }
 

@@ -499,7 +499,8 @@ extension StatusItemController {
                     id: "\(Self.overviewGroupHeadingIdentifierPrefix)\(row.provider.rawValue)",
                     width: menuWidth,
                     heightCacheScope: "overviewAccountGroupHeading",
-                    heightCacheFingerprint: "heading")
+                    heightCacheFingerprint: "heading",
+                    tightVerticalFit: true)
                 heading.isEnabled = false
                 menu.addItem(heading)
             }
@@ -531,7 +532,8 @@ extension StatusItemController {
                 heightCacheFingerprint: "compact-\(block)-\(max(1, rowView.lines.count))",
                 submenu: submenu,
                 showsSubmenuIndicator: false,
-                usesGPUSelection: true)
+                usesGPUSelection: true,
+                tightVerticalFit: true)
             menu.addItem(item)
         }
         return true
