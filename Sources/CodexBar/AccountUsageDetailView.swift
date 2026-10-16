@@ -38,18 +38,7 @@ struct AccountUsageDetailView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             self.header
-            let blocks = self.namedWindows.map { named in
-                named.map { window in
-                    Block(
-                        title: window.title,
-                        window: RateWindow(
-                            usedPercent: window.used,
-                            windowMinutes: nil,
-                            resetsAt: window.resetsAt,
-                            resetDescription: nil),
-                        used: window.used)
-                }
-            } ?? Self.blocks(of: self.snapshot, model: self.model)
+            let blocks = self.namedWindows.map(Self.blocks(of:)) ?? Self.blocks(of: self.snapshot, model: self.model)
             if blocks.isEmpty, !self.hasSupplementalContent, self.errorText == nil {
                 Text(L("No data"))
                     .font(.system(size: 13))
@@ -278,6 +267,21 @@ struct AccountUsageDetailView: View {
         case "secondary": snapshot?.secondary
         case "tertiary": snapshot?.tertiary
         default: snapshot?.extraRateWindows?.first { $0.id == id }?.window
+        }
+    }
+
+    /// One block per window a magpie account reported, each under its own name with its reset time.
+    static func blocks(of named: [OverviewUsageRow.NamedWindow]) -> [Block] {
+        named.map { window in
+            Block(
+                title: window.title,
+                window: RateWindow(
+                    usedPercent: window.used,
+                    windowMinutes: nil,
+                    resetsAt: window.resetsAt,
+                    resetDescription: nil),
+                used: window.used,
+                resetText: window.resetsAt.map(Self.resetText))
         }
     }
 

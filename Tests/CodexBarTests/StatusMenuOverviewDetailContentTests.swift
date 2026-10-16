@@ -244,6 +244,20 @@ extension StatusMenuTests {
     }
 
     @Test
+    func `magpie detail blocks keep each window's name and reset time`() {
+        let reset = Date(timeIntervalSince1970: 1_800_000_000)
+        let windows = [
+            OverviewUsageRow.NamedWindow(window: MagpieQuotaWindow(name: "Month", usedPercent: 62, resetsAt: reset)),
+            OverviewUsageRow.NamedWindow(window: MagpieQuotaWindow(name: "Daily", usedPercent: 30, resetsAt: nil)),
+        ]
+        let blocks = AccountUsageDetailView.blocks(of: windows)
+        #expect(blocks.map(\.title) == ["Monthly limit", "Daily"])
+        #expect(blocks.map(\.used) == [62, 30])
+        #expect(blocks[0].resetText == AccountUsageDetailView.resetText(reset))
+        #expect(blocks[1].resetText == nil)
+    }
+
+    @Test
     func `overview row height follows a row going from usage to error and back`() throws {
         let previous = StatusItemController.menuCardRenderingEnabled
         defer { StatusItemController.menuCardRenderingEnabled = previous }
