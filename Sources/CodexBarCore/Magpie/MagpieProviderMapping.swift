@@ -22,8 +22,8 @@ public struct MagpieProviderReference: Hashable, Sendable {
 }
 
 public enum MagpieProviderMapping {
-    // Wire IDs whose rows CodexBar presents through the native provider's identity.
-    // Provider-specific by design: these verified gateway wire IDs name the matching native providers.
+    /// Wire IDs whose rows CodexBar presents through the native provider's identity.
+    /// Provider-specific by design: these verified gateway wire IDs name the matching native providers.
     public static let nativeProviders: [String: UsageProvider] = [
         "claude": .claude,
         "codex": .codex,
