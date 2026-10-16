@@ -190,4 +190,13 @@ extension StatusItemController {
             liveItem.subtitle = newItem.subtitle
         }
     }
+
+    /// Rebuilds the hosting view's container around its own highlight state and
+    /// interactive-region store with the given payload's content and behavior.
+    func replantMenuCardRowPayload(
+        _ payload: MenuCardRowPayload,
+        into hosting: ErasedMenuCardHostingView)
+    {
+        hosting.replant(payload, refreshMonitor: self.menuCardRefreshMonitor)
+    }
 }
