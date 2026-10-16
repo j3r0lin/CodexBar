@@ -29,6 +29,7 @@ extension CodexBarCLI {
         let output = CLIOutputPreferences.from(values: values)
         #if os(macOS)
         let config = Self.loadConfig(output: output)
+        // Provider-specific by design: managed accounts and system auth are native Codex-only state.
         let route = await CLIMagpieSource().route(for: .codex, configuration: config.magpie)
         guard route.isNative else {
             Self.exit(

@@ -10,6 +10,7 @@ extension CodexBarCLI {
         let output = CLIOutputPreferences.from(values: values)
         if values.flags.contains("identifiedOnly") || values.options["identifiedEnd"] != nil {
             let config = Self.loadConfig(output: output)
+            // Provider-specific by design: identified-only usage reads native Codex session logs only.
             let route = await CLIMagpieSource().route(for: .codex, configuration: config.magpie)
             guard route.isNative else {
                 Self.exit(
