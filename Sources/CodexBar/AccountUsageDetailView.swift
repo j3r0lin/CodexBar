@@ -34,8 +34,7 @@ struct AccountUsageDetailView: View {
         VStack(alignment: .leading, spacing: 18) {
             self.header
             let blocks = Self.blocks(of: self.snapshot, model: self.model)
-            let hasDetails = !(self.model?.providerDetails.isEmpty ?? true)
-            if blocks.isEmpty, !hasDetails {
+            if blocks.isEmpty, !self.hasSupplementalContent {
                 Text(L("No data"))
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
@@ -127,6 +126,13 @@ struct AccountUsageDetailView: View {
                 self.noteText(model.usageNotes[index])
             }
         }
+    }
+
+    /// "No data" only stands in when the card has no usage windows and nothing else to say.
+    private var hasSupplementalContent: Bool {
+        guard let model else { return false }
+        return !model.providerDetails.isEmpty || !(model.creditsText ?? "").isEmpty
+            || !model.usageNotes.isEmpty || model.subtitleStyle == .error
     }
 
     private func noteText(_ text: String) -> some View {

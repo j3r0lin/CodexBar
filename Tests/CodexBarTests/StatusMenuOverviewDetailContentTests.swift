@@ -8,13 +8,16 @@ import Vision
 extension StatusMenuTests {
     private func makeOverviewController(
         providers: [UsageProvider],
+        rendersCards: Bool = false,
         configure: (SettingsStore) -> Void = { _ in }) -> (StatusItemController, UsageStore, SettingsStore)
     {
         self.disableMenuCardsForTesting()
+        StatusItemController.menuCardRenderingEnabled = rendersCards
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
+        settings.selectedMenuProvider = providers.first
         settings.mergedMenuLastSelectedWasOverview = true
         enableTestProviders(Set(providers), settings: settings)
         configure(settings)
@@ -239,9 +242,8 @@ extension StatusMenuTests {
     func `overview row height follows a row going from usage to error and back`() throws {
         let previous = StatusItemController.menuCardRenderingEnabled
         defer { StatusItemController.menuCardRenderingEnabled = previous }
-        let (controller, store, _) = self.makeOverviewController(providers: [.zai, .claude])
+        let (controller, store, _) = self.makeOverviewController(providers: [.zai, .claude], rendersCards: true)
         defer { controller.releaseStatusItemsForTesting() }
-        StatusItemController.menuCardRenderingEnabled = true
 
         let usage = UsageSnapshot(
             primary: RateWindow(usedPercent: 12, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
