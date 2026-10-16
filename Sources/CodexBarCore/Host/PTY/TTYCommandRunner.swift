@@ -559,8 +559,8 @@ public struct TTYCommandRunner {
         var launchedProcess: SpawnedProcessGroup?
         var didExceedOutputLimit = false
         var didTerminateSynchronously = false
-        /// Always tear down the PTY child (and its process group) even if we throw early
-        /// while bootstrapping the CLI (e.g. when it prompts for login/telemetry).
+        // Always tear down the PTY child (and its process group) even if we throw early
+        // while bootstrapping the CLI (e.g. when it prompts for login/telemetry).
         func cleanup() {
             if !didExceedOutputLimit, let launchedProcess, launchedProcess.isRunning {
                 Self.log.debug("PTY stopping", metadata: ["binary": binaryName])

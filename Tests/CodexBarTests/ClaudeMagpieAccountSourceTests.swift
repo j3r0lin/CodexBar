@@ -75,10 +75,11 @@ struct MagpieSourceTransitionTests {
                 : ClaudeMagpieFixture.transport(data: Data(#"{"data":[]}"#.utf8))
             await store.refreshMagpieAccounts()
         }
-        await NativeProviderIOTestBoundary.$intercept.withValue({ kind in
+        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
             spy.record(kind)
             throw CancellationError()
-        }, operation: {
+        }
+        await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
             for provider: UsageProvider in [.claude, .codex, .kimi, .opencodego] {
                 await store.refreshProvider(provider, allowDisabled: true)
                 _ = await store.debugLog(for: provider)
@@ -87,7 +88,7 @@ struct MagpieSourceTransitionTests {
                     #expect(spy.count(kind) == 0)
                 }
             }
-        })
+        }
     }
 
     @Test
@@ -98,10 +99,11 @@ struct MagpieSourceTransitionTests {
         store._test_providerFetchOutcomeOverride = { provider in
             ProviderFetchOutcome(result: .failure(ProviderFetchError.noAvailableStrategy(provider)), attempts: [])
         }
-        await NativeProviderIOTestBoundary.$intercept.withValue({ kind in
+        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
             spy.record(kind)
             throw CancellationError()
-        }, operation: {
+        }
+        await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
             for provider: UsageProvider in [.claude, .codex, .kimi, .opencodego] {
                 #expect(store.providerSourceRoute(for: provider).isNative)
                 await store.refreshProvider(provider, allowDisabled: true)
@@ -114,7 +116,7 @@ struct MagpieSourceTransitionTests {
             _ = try? KimiCookieImporter.importSessions(browserDetection: BrowserDetection(cacheTTL: 0))
             _ = try? await SubprocessRunner.run(
                 binary: "/fixture/tool", arguments: [], environment: [:], timeout: 1, label: "fixture")
-        })
+        }
         for kind in NativeProviderIOTestBoundary.Kind.allCases {
             #expect(spy.count(kind) > 0)
         }

@@ -18,7 +18,8 @@ actor CLIMagpieSource {
         guard configuration?.enabled == true else { return .native }
         var discoverySucceeded = false
         do {
-            _ = try await self.rows(quotasURL: configuration?.quotasURL)
+            let rows = try await self.rows(quotasURL: configuration?.quotasURL)
+            self.ownedWireIDs.formUnion(rows.map(\.provider))
             discoverySucceeded = true
         } catch {}
         return ProviderSourceRoute.resolve(
