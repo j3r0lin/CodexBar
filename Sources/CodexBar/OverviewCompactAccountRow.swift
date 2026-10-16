@@ -77,6 +77,7 @@ struct OverviewCompactAccountRow: View {
     var indent: CGFloat = 0
     /// A lone provider row names its provider in the section-title style; an account row names its account.
     var namesProvider = false
+    var provider: UsageProvider?
     var block: OverviewBlockPosition = .single
     /// A provider that only has an error shows it in place of its usage.
     var errorText: String?
@@ -105,9 +106,9 @@ struct OverviewCompactAccountRow: View {
     /// The windows that have a reading, short first. A window the provider did not report gets no line.
     var lines: [Line] {
         guard self.errorText == nil else { return [] }
-        return [("5h", self.shortWindow), ("7d", self.longWindow)].compactMap { label, window in
+        return [self.shortWindow, self.longWindow].compactMap { window in
             guard let window, let used = Self.used(window) else { return nil }
-            return Line(label: Self.windowLabel(window, fallback: label), used: used, resetsAt: window.resetsAt)
+            return Line(label: Self.windowLabel(window, provider: self.provider), used: used, resetsAt: window.resetsAt)
         }
     }
 
@@ -207,33 +208,41 @@ struct OverviewCompactAccountRow: View {
         OverviewPalette.color(usedPercent: used)
     }
 
-    /// Places windows by duration: up to a day is the short slot, longer is the long slot. Only a window
-    /// without a duration falls back to its position (primary short, secondary long), because a provider
-    /// with a single weekly window still reports it as primary.
-    static func slots(of snapshot: UsageSnapshot?) -> (short: RateWindow?, long: RateWindow?) {
+    /// Explicit durations determine the slots. Untyped readings use only provider-owned semantics;
+    /// an unknown reading occupies the long slot first and keeps a duration-free label.
+    static func slots(
+        of snapshot: UsageSnapshot?,
+        provider: UsageProvider? = nil) -> (short: RateWindow?, long: RateWindow?)
+    {
         guard let snapshot else { return (nil, nil) }
         let windows = [snapshot.primary, snapshot.secondary, snapshot.tertiary].compactMap(\.self)
-        let short = windows.first { (Self.semanticMinutes($0) ?? .max) <= 1440 }
-            ?? snapshot.primary.flatMap { Self.semanticMinutes($0) == nil ? $0 : nil }
-        let long = windows.first { (Self.semanticMinutes($0) ?? 0) > 1440 }
-            ?? snapshot.secondary.flatMap { Self.semanticMinutes($0) == nil ? $0 : nil }
+        var short = windows.first { (Self.nativeMinutes($0, provider: provider) ?? .max) <= 1440 }
+        var long = windows.first { (Self.nativeMinutes($0, provider: provider) ?? 0) > 1440 }
+        let unknown = windows.filter { Self.nativeMinutes($0, provider: provider) == nil }
+        for window in unknown {
+            if long == nil {
+                long = window
+            } else if short == nil {
+                short = window
+            }
+        }
         return (short, long)
     }
 
-    /// Some adapters preserve a provider's window name as its description when duration is absent.
-    /// Recognise that name before falling back to primary/secondary position.
-    static func semanticMinutes(_ window: RateWindow) -> Int? {
+    /// Grok's descriptor owns the fallback for its untyped credit pool; human-readable reset
+    /// descriptions never determine the quota period.
+    static func nativeMinutes(_ window: RateWindow, provider: UsageProvider?) -> Int? {
         if let minutes = window.windowMinutes { return minutes }
-        let name = (window.resetDescription ?? "").lowercased().trimmingCharacters(in: .whitespaces)
-        if ["7 days", "7 day", "7d", "weekly", "week"].contains(name) { return 10080 }
-        if ["month", "monthly", "30 days", "30d"].contains(name) { return 43200 }
-        if ["5 hours", "5 hour", "5h", "5-hour"].contains(name) { return 300 }
-        if ["day", "daily", "24 hours", "24h"].contains(name) { return 1440 }
-        return nil
+        guard provider == .grok else { return nil }
+        switch GrokProviderDescriptor.displayLabel(window: window) {
+        case "Weekly": return 10080
+        case "Monthly": return 43200
+        default: return nil
+        }
     }
 
-    static func windowLabel(_ window: RateWindow, fallback: String) -> String {
-        guard let minutes = semanticMinutes(window) else { return fallback }
+    static func windowLabel(_ window: RateWindow, provider: UsageProvider?) -> String {
+        guard let minutes = nativeMinutes(window, provider: provider) else { return "—" }
         if minutes >= 28 * 1440 { return "Mo" }
         if minutes >= 1440 { return "\(minutes / 1440)d" }
         return "\(max(1, minutes / 60))h"

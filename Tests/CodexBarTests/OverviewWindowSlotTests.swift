@@ -29,31 +29,45 @@ struct OverviewWindowSlotTests {
     }
 
     @Test
-    func `windows without a duration keep their position`() {
+    func `untyped windows reserve neutral slots without implying a short period`() {
         let first = self.window(nil, used: 10)
         let second = self.window(nil, used: 40)
         let slots = OverviewCompactAccountRow.slots(
             of: UsageSnapshot(primary: first, secondary: second, updatedAt: Date()))
-        #expect(slots.short == first)
-        #expect(slots.long == second)
+        #expect(slots.short == second)
+        #expect(slots.long == first)
     }
 
     @Test
-    func `a named seven day window without duration is a weekly reading`() {
+    func `a native Grok untyped credit pool keeps its weekly label`() {
         let weekly = RateWindow(
             usedPercent: 30,
             windowMinutes: nil,
-            resetsAt: nil,
-            resetDescription: "7 days")
+            resetsAt: Date().addingTimeInterval(3600),
+            resetDescription: "Localized reset prose")
         let slots = OverviewCompactAccountRow.slots(
-            of: UsageSnapshot(primary: weekly, secondary: nil, updatedAt: Date()))
+            of: UsageSnapshot(primary: weekly, secondary: nil, updatedAt: Date()), provider: .grok)
         let row = OverviewCompactAccountRow(
             name: "Grok",
             shortWindow: slots.short,
             longWindow: slots.long,
-            width: 340)
+            width: 340,
+            provider: .grok)
         #expect(slots.short == nil)
         #expect(row.lines.map(\.label) == ["7d"])
+    }
+
+    @Test
+    func `an unknown untyped window never claims a five hour period`() {
+        let reading = RateWindow(
+            usedPercent: 30, windowMinutes: nil, resetsAt: nil, resetDescription: "7 days")
+        let slots = OverviewCompactAccountRow.slots(
+            of: UsageSnapshot(primary: reading, secondary: nil, updatedAt: Date()))
+        let row = OverviewCompactAccountRow(
+            name: "Provider", shortWindow: slots.short, longWindow: slots.long, width: 340)
+        #expect(slots.short == nil)
+        #expect(row.lines.count == 1)
+        #expect(row.lines.first?.label == "—")
     }
 
     @Test

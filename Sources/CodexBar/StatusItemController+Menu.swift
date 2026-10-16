@@ -514,7 +514,7 @@ extension StatusItemController {
                 model: row.model,
                 width: menuWidth,
                 claudeAccountID: row.claudeAccountID)
-            let slots = OverviewCompactAccountRow.slots(of: row.snapshot)
+            let slots = OverviewCompactAccountRow.slots(of: row.snapshot, provider: row.provider)
             let rowView = OverviewCompactAccountRow(
                 name: isGrouped ? accountName ?? row.model.providerName : providerName,
                 shortWindow: slots.short,
@@ -522,6 +522,7 @@ extension StatusItemController {
                 width: menuWidth,
                 indent: isGrouped ? 10 : 0,
                 namesProvider: !isGrouped,
+                provider: row.provider,
                 block: block,
                 errorText: row.errorText)
             let item = self.makeMenuCardItem(
