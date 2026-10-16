@@ -98,8 +98,8 @@ extension StatusMenuTests {
             $0.multiAccountMenuLayout = .segmented
         }
         defer { controller.releaseStatusItemsForTesting() }
-        let managed = ManagedCodexAccount(
-            id: try #require(UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-111111111111")),
+        let managed = try ManagedCodexAccount(
+            id: #require(UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-111111111111")),
             email: "managed@example.com",
             managedHomePath: "/tmp/managed-home",
             createdAt: 1,
@@ -214,7 +214,7 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `detail windows follow the hidden usage items and the optional usage switch`() throws {
+    func `detail windows follow the hidden usage items and the optional usage switch`() {
         let now = Date()
         let spark = NamedRateWindow(
             id: "codex-spark",

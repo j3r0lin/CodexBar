@@ -233,7 +233,7 @@ struct AccountUsageDetailView: View {
     /// lanes the raw snapshot lacks (Codex monthly credits). A metric that matches a raw window keeps the
     /// window's absolute reset date.
     static func blocks(of snapshot: UsageSnapshot?, model: UsageMenuCardView.Model? = nil) -> [Block] {
-        guard let model else { return Self.snapshotBlocks(of: snapshot) }
+        guard let model else { return self.snapshotBlocks(of: snapshot) }
         let raw = Self.snapshotBlocks(of: snapshot)
         return model.metrics.compactMap { metric -> Block? in
             guard metric.statusText == nil else { return nil }
