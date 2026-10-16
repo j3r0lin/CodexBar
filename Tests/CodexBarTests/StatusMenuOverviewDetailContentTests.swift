@@ -33,9 +33,7 @@ extension StatusMenuTests {
         return (controller, store, settings)
     }
 
-    private func openDetail(of provider: UsageProvider, in controller: StatusItemController) throws -> NSMenu {
-        let menu = controller.makeMenu()
-        controller.menuWillOpen(menu)
+    private func openDetail(of provider: UsageProvider, in menu: NSMenu) throws -> NSMenu {
         let row = try #require(menu.items.first {
             ($0.representedObject as? String) == "overviewRow-\(provider.rawValue)"
         })
@@ -73,8 +71,10 @@ extension StatusMenuTests {
         // The global memory of the last provider-page selection points at another provider.
         controller.lastMenuProvider = UsageProvider.codex.instanceID
 
+        let menu = controller.makeMenu()
+        controller.menuWillOpen(menu)
         for provider in [UsageProvider.claude, .kimi] {
-            let detail = try self.openDetail(of: provider, in: controller)
+            let detail = try self.openDetail(of: provider, in: menu)
             let actions = [
                 controller.selector(for: .dashboard, provider: provider).0,
                 controller.selector(for: .statusPage, provider: provider).0,
@@ -119,9 +119,11 @@ extension StatusMenuTests {
         settings.codexActiveSource = .liveSystem
         _ = settings.codexVisibleAccountProjection
 
-        let codexDetail = try self.openDetail(of: .codex, in: controller)
+        let menu = controller.makeMenu()
+        controller.menuWillOpen(menu)
+        let codexDetail = try self.openDetail(of: .codex, in: menu)
         #expect(codexDetail.items.contains { $0.view is CodexAccountSwitcherView })
-        let claudeDetail = try self.openDetail(of: .claude, in: controller)
+        let claudeDetail = try self.openDetail(of: .claude, in: menu)
         #expect(!claudeDetail.items.contains { $0.view is CodexAccountSwitcherView })
     }
 
@@ -252,9 +254,10 @@ extension StatusMenuTests {
         let longError = "The provider could not refresh usage because the saved session has expired. "
             + "Sign in again to continue."
 
+        let menu = controller.makeMenu()
         func rowHeight() throws -> CGFloat {
-            let menu = controller.makeMenu()
             controller.menuWillOpen(menu)
+            defer { controller.menuDidClose(menu) }
             let row = try #require(menu.items.first { ($0.representedObject as? String) == "overviewRow-zai" })
             let view = try #require(row.view)
             view.layoutSubtreeIfNeeded()
