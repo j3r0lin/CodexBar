@@ -817,7 +817,7 @@ extension StatusItemController {
                         child.state = submenuItem.isChecked ? NSControl.StateValue.on : NSControl.StateValue.off
                         child.isEnabled = submenuItem.isEnabled
                         if let action = submenuItem.action {
-                            let (selector, represented) = self.selector(for: action)
+                            let (selector, represented) = self.selector(for: action, provider: provider)
                             child.action = selector
                             child.target = self
                             child.representedObject = represented
