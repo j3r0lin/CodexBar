@@ -3,7 +3,6 @@ import Foundation
 
 actor CLIMagpieSource {
     private var task: Task<[MagpieQuotaRow], Error>?
-    private var completedAt: Date?
     private var ownedWireIDs: Set<String> = []
     private let transport: MagpieQuotasReader.Transport
 
@@ -15,11 +14,22 @@ actor CLIMagpieSource {
         self.ownedWireIDs.contains(wireID)
     }
 
-    func rows(quotasURL: String?) async throws -> [MagpieQuotaRow] {
-        if let completedAt, Date().timeIntervalSince(completedAt) > 1 {
-            self.task = nil
-            self.completedAt = nil
+    func route(for provider: UsageProvider, configuration: MagpieSourceConfig?) async -> ProviderSourceRoute {
+        guard configuration?.enabled == true,
+              let wireID = MagpieProviderMapping.wireID(for: provider)
+        else { return .native }
+        do {
+            let rows = try await self.rows(quotasURL: configuration?.quotasURL)
+            if self.ownedWireIDs.contains(wireID) || rows.contains(where: { $0.provider == wireID }) {
+                return .magpie(MagpieProviderMapping.reference(for: wireID))
+            }
+            return .native
+        } catch {
+            return .waitingForMagpieDiscovery
         }
+    }
+
+    func rows(quotasURL: String?) async throws -> [MagpieQuotaRow] {
         if let task { return try await task.value }
         let transport = self.transport
         let task = Task { try await MagpieQuotasReader.readRows(quotasURL: quotasURL, transport: transport) }
@@ -27,10 +37,8 @@ actor CLIMagpieSource {
         do {
             let rows = try await task.value
             self.ownedWireIDs.formUnion(rows.map(\.provider))
-            self.completedAt = Date()
             return rows
         } catch {
-            self.completedAt = Date()
             throw error
         }
     }

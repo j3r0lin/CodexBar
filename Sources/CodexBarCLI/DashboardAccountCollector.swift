@@ -5,18 +5,21 @@ extension CodexBarCLI {
     static func serveUsageOutput(
         selection: ProviderSelection,
         context: ServeUsageContext,
+        magpieSource: CLIMagpieSource = CLIMagpieSource(),
         fetchUsage: @escaping ServeUsageFetcher = CodexBarCLI
             .fetchServeProviderUsage) async throws -> UsageCommandOutput
     {
         let tokenContext = try TokenAccountCLIContext(
             selection: TokenAccountCLISelection(label: nil, index: nil, allAccounts: false),
             config: context.config,
-            verbose: false)
+            verbose: false,
+            magpieSource: magpieSource)
 
         let allTokenContext = try TokenAccountCLIContext(
             selection: TokenAccountCLISelection(label: nil, index: nil, allAccounts: true),
             config: context.config,
-            verbose: false)
+            verbose: false,
+            magpieSource: magpieSource)
         let browserDetection = BrowserDetection()
         let command = UsageCommandContext(
             format: .json,

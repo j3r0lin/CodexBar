@@ -5,7 +5,7 @@ import Testing
 
 struct CLIMagpieTests {
     @Test(arguments: [UsageProvider.claude, .codex, .kimi, .opencodego])
-    func `managed providers do not resolve configured token accounts or import cookies`(
+    func `managed providers do not import cookies`(
         provider: UsageProvider) async throws
     {
         let context = try TokenAccountCLIContext(
@@ -14,13 +14,38 @@ struct CLIMagpieTests {
                 providers: [ProviderConfig(id: provider.instanceID)],
                 magpie: MagpieSourceConfig(enabled: true)),
             verbose: false,
-            baseEnvironment: [:])
-        #expect(try context.resolvedAccounts(for: provider).isEmpty)
+            baseEnvironment: [:],
+            magpieSource: CLIMagpieSource(transport: ClaudeMagpieFixture.transport(data: Data("""
+            {"data":[{"provider":"claude","windows":[]},{"provider":"codex","windows":[]},
+              {"provider":"kimi-code","windows":[]},{"provider":"opencode-go","windows":[]}]}
+            """.utf8))))
         let result = await CodexBarCLI.refreshCookie(
             descriptor: ProviderDescriptorRegistry.descriptor(for: provider),
             tokenContext: context,
             browserDetection: BrowserDetection(cacheTTL: 0))
         #expect(result.status == .skipped)
+    }
+
+    @Test
+    func `provider and account consumers share one discovery request`() async throws {
+        let counter = MagpieRequestCounter()
+        let source = CLIMagpieSource { request in
+            await counter.record()
+            return (
+                ClaudeMagpieFixture.quotasData,
+                HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+        }
+        let configuration = MagpieSourceConfig(enabled: true)
+        async let claude = source.route(for: .claude, configuration: configuration)
+        async let codex = source.route(for: .codex, configuration: configuration)
+        async let kimi = source.route(for: .kimi, configuration: configuration)
+        let routes = await [claude, codex, kimi]
+        #expect(!routes[0].isNative)
+        #expect(!routes[1].isNative)
+        #expect(routes[2].isNative)
+        _ = try await source.rows(quotasURL: nil)
+        let requestCount = await counter.count
+        #expect(requestCount == 1)
     }
 
     @Test
@@ -40,5 +65,13 @@ struct CLIMagpieTests {
     func `legacy disabled configuration does not enable unified ownership`() throws {
         let data = Data(#"{"version":1,"providers":[{"id":"claude","claudeMagpieEnabled":false}]}"#.utf8)
         #expect(try CodexBarConfig.decode(from: data).magpie?.enabled != true)
+    }
+}
+
+private actor MagpieRequestCounter {
+    private(set) var count = 0
+
+    func record() {
+        self.count += 1
     }
 }

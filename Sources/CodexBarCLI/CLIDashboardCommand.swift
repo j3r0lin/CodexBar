@@ -100,19 +100,26 @@ struct DashboardSnapshotProducer: Sendable {
     }
 
     static func live(context: DashboardSnapshotContext) -> Self {
-        Self(
+        let magpieSource = CLIMagpieSource()
+        return Self(
             collectUsage: { providers in
                 try await CodexBarCLI.serveUsageOutput(
                     selection: .custom(providers),
-                    context: context.usage)
+                    context: context.usage,
+                    magpieSource: magpieSource)
             },
             collectCost: { providers, config in
+                var nativeProviders: [UsageProvider] = []
+                for provider in providers {
+                    let route = await magpieSource.route(for: provider, configuration: config.magpie)
+                    if route.isNative { nativeProviders.append(provider) }
+                }
                 let costFetcher = CostUsageFetcher()
                 let piSessionProcessContexts = await CodexBarCLI.piSessionProcessContextsForCost(
-                    providers: providers,
+                    providers: nativeProviders,
                     includePiSessions: true)
                 return await CodexBarCLI.collectConfiguredCostPayloads(
-                    providers: providers,
+                    providers: nativeProviders,
                     config: config,
                     context: context.costCollection)
                 { provider, cursorCookieHeaderOverride in
@@ -139,6 +146,8 @@ struct DashboardSnapshotProducer: Sendable {
             },
             now: { Date() },
             collectAccounts: { config, provider in
+                let route = await magpieSource.route(for: provider, configuration: config.magpie)
+                guard route.isNative else { return nil }
                 // Provider-specific by design: Codex projects saved metadata; Claude uses its opt-in adapter.
                 if provider == .codex {
                     return context.usage.includeAllAccounts ? nil : DashboardManagedCodexAccounts

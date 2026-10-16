@@ -218,12 +218,12 @@ extension CodexBarCLI {
         browserDetection: BrowserDetection) async -> CookieRefreshResult
     {
         let provider = descriptor.id
-        // Provider-specific by design: magpie owns Claude accounts, so Claude browser cookies are never refreshed.
-        if tokenContext.config.magpie?.enabled == true, MagpieProviderMapping.wireID(for: provider) != nil {
+        let route = await tokenContext.magpieSource.route(for: provider, configuration: tokenContext.config.magpie)
+        if !route.isNative {
             return CookieRefreshResult(
                 provider: descriptor.cli.name,
                 status: .skipped,
-                message: "magpie owns Claude accounts; browser cookies are not used.")
+                message: "magpie supplies usage or discovery is pending; browser cookies are not used.")
         }
         return await Self.withCookieRefreshCacheSuppressed(provider: provider, providerName: descriptor.cli.name) {
             let environment = tokenContext.environment(
