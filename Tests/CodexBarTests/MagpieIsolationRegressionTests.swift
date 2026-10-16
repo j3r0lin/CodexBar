@@ -259,14 +259,14 @@ struct MagpieIsolationRegressionTests {
 
     @Test
     func `hooks watch observation reaches native IO when magpie is off`() async {
-        let config = CodexBarConfig(providers: [ProviderConfig(id: UsageProvider.claude.instanceID)])
+        let config = CodexBarConfig(providers: [ProviderConfig(id: UsageProvider.codex.instanceID)])
         let spy = MagpieRegressionIOSpy()
         let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
             spy.record(kind)
             throw CancellationError()
         }
         _ = await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
-            await CodexBarCLI.hooksWatchObservation(provider: .claude, config: config, verbose: false, webTimeout: 5)
+            await CodexBarCLI.hooksWatchObservation(provider: .codex, config: config, verbose: false, webTimeout: 5)
         }
         let total = NativeProviderIOTestBoundary.Kind.allCases.reduce(0) { $0 + spy.count($1) }
         #expect(total > 0)
