@@ -101,8 +101,8 @@ struct OverviewCompactAccountRow: View {
     /// whatever the line has left.
     static let blockInset: CGFloat = 2
     static let horizontalPadding: CGFloat = 8
-    /// Fits "KIMI CODE" in the section-title style.
-    static let nameColumn: CGFloat = 88
+    /// Fits "OPENCODE GO" in the section-title style.
+    static let nameColumn: CGFloat = 104
     static let labelWidth: CGFloat = 20
     /// Fits "100%" at 13pt semibold with monospaced digits.
     static let percentWidth: CGFloat = 38

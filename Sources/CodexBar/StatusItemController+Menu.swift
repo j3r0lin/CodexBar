@@ -512,7 +512,7 @@ extension StatusItemController {
     /// Native rows for every visible provider still natively owned, plus one row per magpie
     /// account: magpie-owned providers contribute their account rows in place of the native row,
     /// and providers the native side never enabled (including unknown wire IDs) append after.
-    private func overviewUsageRows(visibleProviders: [UsageProvider]) -> [OverviewUsageRow] {
+    func overviewUsageRows(visibleProviders: [UsageProvider]) -> [OverviewUsageRow] {
         var rows: [OverviewUsageRow] = []
         var coveredWireIDs = Set<String>()
         let hidePersonalInfo = self.settings.hidePersonalInfo

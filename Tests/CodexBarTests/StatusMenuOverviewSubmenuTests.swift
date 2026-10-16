@@ -269,6 +269,62 @@ extension StatusMenuTests {
     }
 
     @Test
+    func `magpie Overview includes disabled and unknown providers with every named window`() throws {
+        self.disableMenuCardsForTesting()
+        let settings = self.makeSettings()
+        settings.statusChecksEnabled = false
+        settings.refreshFrequency = .manual
+        settings.mergeIcons = true
+        settings.mergedMenuLastSelectedWasOverview = true
+        enableTestProviders([.claude, .codex], settings: settings)
+        let fetcher = UsageFetcher(environment: [:])
+        let store = UsageStore(
+            fetcher: fetcher,
+            browserDetection: BrowserDetection(cacheTTL: 0),
+            settings: settings,
+            startupBehavior: .testing,
+            environmentBase: [:])
+        store.magpieTransport = { _ in throw CancellationError() }
+        settings.magpieSourceEnabled = true
+        let accounts = MagpieAccountProjection.snapshots(from: [
+            MagpieQuotaRow(
+                provider: "opencode-go",
+                email: "",
+                organization: "",
+                alias: nil,
+                isLast: false,
+                readAt: nil,
+                windows: [
+                    MagpieQuotaWindow(name: "5 hours", usedPercent: 12, resetsAt: nil),
+                    MagpieQuotaWindow(name: "7 days", usedPercent: 63, resetsAt: nil),
+                    MagpieQuotaWindow(name: "Month", usedPercent: 8, resetsAt: nil),
+                ],
+                error: nil),
+        ])
+        store.magpieAccountSnapshots = accounts
+        settings.magpieTakeoverWireIDs = ["opencode-go"]
+        let controller = StatusItemController(
+            store: store,
+            settings: settings,
+            account: fetcher.loadAccountInfo(),
+            updater: DisabledUpdaterController(),
+            preferencesSelection: PreferencesSelection(),
+            statusBar: self.makeStatusBarForTesting())
+        defer { controller.releaseStatusItemsForTesting() }
+        let rows = controller.overviewUsageRows(visibleProviders: [.opencodego])
+        let row = try #require(rows.first)
+        #expect(rows.count == 1)
+        #expect(row.isMagpie)
+        #expect(row.namedWindows?.map(\.label) == ["5h", "7d", "Mo"])
+        #expect(row.namedWindows?.count == 3)
+        #expect(row.errorText == nil)
+        #expect(controller.overviewUsageRows(visibleProviders: []).count == 1)
+        let submenu = controller.makeOverviewDetailSubmenu(row: row, width: 340)
+        submenu.delegate?.menuNeedsUpdate?(submenu)
+        #expect(submenu.items.count == 1)
+    }
+
+    @Test
     func `overview detail submenu ends with the provider's own actions`() throws {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
