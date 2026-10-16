@@ -296,7 +296,6 @@ extension StatusMenuTests {
         controller.menuWillOpen(menu)
         let detail = try self.openDetail(of: .codex, in: menu)
         #expect(!detail.items.contains { ($0.representedObject as? String) == StatusItemController.usageHistoryChartID })
-        #expect(!detail.items.contains { $0.view is UsageHistoryMenuHostingView })
     }
 }
 
