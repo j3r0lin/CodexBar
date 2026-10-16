@@ -85,8 +85,11 @@ public enum CodexCredentialFileAccess {
 
     public static func permits(_ url: URL) -> Bool {
         #if DEBUG
-        do { try NativeProviderIOTestBoundary.intercept?(.file) }
-        catch { return false }
+        do {
+            try NativeProviderIOTestBoundary.intercept?(.file)
+        } catch {
+            return false
+        }
         #endif
         guard self.isTestContext else { return true }
         if let fixtureScope { return fixtureScope.permits(url) }

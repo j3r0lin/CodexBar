@@ -99,8 +99,11 @@ public enum KeychainCacheStore {
         as type: Entry.Type = Entry.self) -> LoadResult<Entry>
     {
         #if DEBUG
-        do { try NativeProviderIOTestBoundary.intercept?(.credential) }
-        catch { return .missing }
+        do {
+            try NativeProviderIOTestBoundary.intercept?(.credential)
+        } catch {
+            return .missing
+        }
         self.operationRecorder?.record(.load)
         #endif
         #if DEBUG && os(macOS)

@@ -121,7 +121,9 @@ struct OverviewCompactAccountRow: View {
     }
 
     /// All providers share one label column, including model-scoped windows.
-    var labelColumnWidth: CGFloat { Self.labelWidth }
+    var labelColumnWidth: CGFloat {
+        Self.labelWidth
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {

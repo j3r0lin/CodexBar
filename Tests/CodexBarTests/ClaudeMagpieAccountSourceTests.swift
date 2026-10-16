@@ -1,9 +1,8 @@
-import CodexBarCore
 import Foundation
-import Testing
 import Security
-@testable import CodexBarCore
+import Testing
 @testable import CodexBar
+@testable import CodexBarCore
 
 @MainActor
 struct MagpieSourceTransitionTests {
@@ -79,7 +78,7 @@ struct MagpieSourceTransitionTests {
         await NativeProviderIOTestBoundary.$intercept.withValue({ kind in
             spy.record(kind)
             throw CancellationError()
-        }) {
+        }, operation: {
             for provider: UsageProvider in [.claude, .codex, .kimi, .opencodego] {
                 await store.refreshProvider(provider, allowDisabled: true)
                 _ = await store.debugLog(for: provider)
@@ -88,7 +87,7 @@ struct MagpieSourceTransitionTests {
                     #expect(spy.count(kind) == 0)
                 }
             }
-        }
+        })
     }
 
     @Test
@@ -96,12 +95,16 @@ struct MagpieSourceTransitionTests {
         let store = self.makeStore()
         store.settings.magpieSourceEnabled = false
         let spy = NativeIOSpy()
+        store._test_providerFetchOutcomeOverride = { provider in
+            ProviderFetchOutcome(result: .failure(ProviderFetchError.noAvailableStrategy(provider)), attempts: [])
+        }
         await NativeProviderIOTestBoundary.$intercept.withValue({ kind in
             spy.record(kind)
             throw CancellationError()
-        }) {
+        }, operation: {
             for provider: UsageProvider in [.claude, .codex, .kimi, .opencodego] {
                 #expect(store.providerSourceRoute(for: provider).isNative)
+                await store.refreshProvider(provider, allowDisabled: true)
                 _ = store.makeFetchContext(provider: provider, override: nil)
             }
             _ = KimiSettingsReader.hasKimiCodeCredential(environment: ["HOME": "/fixture"])
@@ -111,7 +114,7 @@ struct MagpieSourceTransitionTests {
             _ = try? KimiCookieImporter.importSessions(browserDetection: BrowserDetection(cacheTTL: 0))
             _ = try? await SubprocessRunner.run(
                 binary: "/fixture/tool", arguments: [], environment: [:], timeout: 1, label: "fixture")
-        }
+        })
         for kind in NativeProviderIOTestBoundary.Kind.allCases {
             #expect(spy.count(kind) > 0)
         }

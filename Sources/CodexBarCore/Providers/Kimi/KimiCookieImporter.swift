@@ -16,8 +16,11 @@ public enum KimiCookieImporter {
         homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser) -> KimiWebCredential?
     {
         #if DEBUG
-        do { try NativeProviderIOTestBoundary.intercept?(.credential) }
-        catch { return nil }
+        do {
+            try NativeProviderIOTestBoundary.intercept?(.credential)
+        } catch {
+            return nil
+        }
         #endif
         if region == .china {
             return KimiDesktopSessionDiscovery.live.credential(
