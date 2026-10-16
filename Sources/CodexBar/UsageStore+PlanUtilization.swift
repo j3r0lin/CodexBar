@@ -18,7 +18,9 @@ extension UsageStore {
 
     func supportsPlanUtilizationHistory(for provider: UsageProvider) -> Bool {
         let capability = ProviderDescriptorRegistry.descriptor(for: provider).history
-        guard capability.supportsPlanUtilization else { return false }
+        guard capability.supportsPlanUtilization, self.providerSourceRoute(for: provider).isNative else {
+            return false
+        }
         if capability.alwaysTracksPlanUtilization {
             return true
         }
@@ -57,7 +59,9 @@ extension UsageStore {
     func planUtilizationHistorySelection(for provider: UsageProvider, readOnly: Bool = false)
         -> PlanUtilizationHistorySelection
     {
-        guard ProviderDescriptorRegistry.descriptor(for: provider).history.supportsPlanUtilization else {
+        guard ProviderDescriptorRegistry.descriptor(for: provider).history.supportsPlanUtilization,
+              self.providerSourceRoute(for: provider).isNative
+        else {
             return .unavailable
         }
         // The persisted history has not been read yet. Return the in-memory
@@ -111,6 +115,7 @@ extension UsageStore {
         account: ProviderTokenAccount) -> PlanUtilizationHistorySelection
     {
         guard ProviderDescriptorRegistry.descriptor(for: provider).history.supportsPlanUtilization,
+              self.providerSourceRoute(for: provider).isNative,
               self.planUtilizationHistoryLoaded,
               let accountKey = Self.planUtilizationAccountKey(provider: provider, account: account)
         else {
@@ -161,6 +166,7 @@ extension UsageStore {
         // Same gate as `planUtilizationHistorySelection`: defer ownership
         // migration until the persisted history has been read. Unlike the live
         // selection, an explicit account must never borrow unscoped startup data.
+        guard self.canReadNativeCodexSource else { return .unavailable }
         if !self.planUtilizationHistoryLoaded {
             return .unavailable
         }
@@ -349,6 +355,7 @@ extension UsageStore {
     }
 
     private func shouldRecordPlanUtilizationHistory(for provider: UsageProvider) -> Bool {
+        guard self.providerSourceRoute(for: provider).isNative else { return false }
         let capability = ProviderDescriptorRegistry.descriptor(for: provider).history
         return capability.supportsPlanUtilization &&
             (capability.alwaysTracksPlanUtilization || self.settings.historicalTrackingEnabled)

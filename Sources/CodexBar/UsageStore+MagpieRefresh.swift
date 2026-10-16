@@ -234,10 +234,9 @@ extension UsageStore {
                 } else {
                     snapshots = snapshots.map { account in
                         guard account.provider.wireID == wireID, account.windows.isEmpty,
-                              account.error == nil,
                               let prior = previous.first(where: { $0.id == account.id })
                         else { return account }
-                        return prior.retainedAsLastKnown(error: nil)
+                        return prior.retainedAsLastKnown(error: account.error)
                     }
                 }
             }
@@ -379,7 +378,8 @@ extension UsageStore {
             self.codexHistoricalDatasetAccountKey = nil
             self.historicalPaceRevision &+= 1
         }
-        self.planUtilizationHistory.removeValue(forKey: provider.instanceID)
+        // Plan history stays in the persisted dictionary (saving it would delete the file); the
+        // read and write paths skip it while magpie owns the provider.
         self.planUtilizationHistoryRevision &+= 1
         self.diagnostics[provider.instanceID] = nil
         self.lastFetchAttempts.removeValue(forKey: provider.instanceID)

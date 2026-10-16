@@ -2,6 +2,7 @@ import CodexBarCore
 import Foundation
 import Testing
 @testable import CodexBar
+@testable import CodexBarCLI
 
 @MainActor
 struct MagpieIsolationRegressionTests {
@@ -12,7 +13,7 @@ struct MagpieIsolationRegressionTests {
       {"provider":"opencode-go","user":"o@example.com","windows":[{"name":"5 hours","used":1}]}]}
     """.utf8)
 
-    private func makeStore(enabled: Bool) -> UsageStore {
+    private func makeStore(enabled: Bool, historyStore: PlanUtilizationHistoryStore? = nil) -> UsageStore {
         let home = FileManager.default.temporaryDirectory
             .appendingPathComponent("review-magpie-\(UUID().uuidString)", isDirectory: true)
         try? FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
@@ -35,6 +36,7 @@ struct MagpieIsolationRegressionTests {
             fetcher: UsageFetcher(environment: environment),
             browserDetection: BrowserDetection(homeDirectory: home.path, cacheTTL: 0),
             settings: settings,
+            planUtilizationHistoryStore: historyStore,
             startupBehavior: .testing,
             environmentBase: environment)
         settings.setProviderEnabled(provider: .codex, metadata: store.metadata(for: .codex), enabled: true)
@@ -93,6 +95,83 @@ struct MagpieIsolationRegressionTests {
         let codex = store.magpieAccountSnapshots.filter { $0.provider.wireID == "codex" }
         #expect(codex.allSatisfy { $0.error == nil })
         #expect(store.magpieLastError == nil)
+    }
+
+    private static func historyBuckets(_ percent: Double) -> PlanUtilizationHistoryBuckets {
+        PlanUtilizationHistoryBuckets(unscoped: [
+            PlanUtilizationSeriesHistory(
+                name: .session,
+                windowMinutes: 300,
+                entries: [
+                    PlanUtilizationHistoryEntry(
+                        capturedAt: Date(timeIntervalSince1970: 1_700_000_000),
+                        usedPercent: percent,
+                        resetsAt: nil),
+                ]),
+        ])
+    }
+
+    @Test
+    func `takeover keeps plan history on disk and shows it again after the switch is off`() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("magpie-history-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let historyStore = PlanUtilizationHistoryStore(directoryURL: directory)
+        historyStore.save([.codex: Self.historyBuckets(20), .claude: Self.historyBuckets(30)])
+        let store = self.makeStore(enabled: false, historyStore: historyStore)
+        store.planUtilizationHistory = historyStore.load()
+        store.planUtilizationHistoryLoaded = true
+        store.reconcileMagpieSourceConfiguration()
+        #expect(!store.planUtilizationHistory(for: .codex).isEmpty)
+
+        store.settings.magpieSourceEnabled = true
+        store.reconcileMagpieSourceConfiguration()
+        await store.awaitMagpieRefresh()
+        #expect(!store.providerSourceRoute(for: .codex).isNative)
+        #expect(store.planUtilizationHistory(for: .codex).isEmpty)
+
+        await store.planUtilizationPersistenceCoordinator.enqueue(store.planUtilizationHistory)
+        try await Task.sleep(for: .milliseconds(300))
+        let onDisk = historyStore.load()
+        #expect(onDisk[.codex] != nil)
+        #expect(onDisk[.claude] != nil)
+
+        store.settings.magpieSourceEnabled = false
+        store.reconcileMagpieSourceConfiguration()
+        #expect(store.providerSourceRoute(for: .codex).isNative)
+        #expect(!store.planUtilizationHistory(for: .codex).isEmpty)
+    }
+
+    @Test
+    func `empty window with upstream error keeps last known usage and shows the error`() async {
+        let store = self.makeStore(enabled: true)
+        await store.refreshMagpieAccounts()
+        store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
+        {"data":[{"provider":"claude","user":"a@example.com","windows":[{"name":"5 hours","used":1}]},
+          {"provider":"codex","user":"c@example.com","windows":[],"error":"upstream timeout"},
+          {"provider":"kimi-code","user":"k@example.com","windows":[{"name":"5 hours","used":1}]},
+          {"provider":"opencode-go","user":"o@example.com","windows":[{"name":"5 hours","used":1}]}]}
+        """.utf8))
+        await store.refreshMagpieAccounts()
+        let codex = store.magpieAccountSnapshots.filter { $0.provider.wireID == "codex" }
+        #expect(codex.count == 1)
+        #expect(codex.allSatisfy { !$0.windows.isEmpty && $0.usesLastKnownUsage })
+        #expect(codex.allSatisfy { $0.error == "upstream timeout" })
+    }
+
+    @Test
+    func `hooks watch keys alert state by token account id and falls back to email`() {
+        let usage = UsageSnapshot(
+            primary: nil,
+            secondary: nil,
+            updatedAt: Date(),
+            identity: ProviderIdentitySnapshot(
+                providerID: .claude, accountEmail: "a@example.com", accountOrganization: nil, loginMethod: nil))
+        let id = UUID()
+        #expect(CodexBarCLI.hooksWatchAccountDiscriminator(
+            tokenAccountID: id, usage: usage, provider: .claude) == id.uuidString)
+        #expect(CodexBarCLI.hooksWatchAccountDiscriminator(
+            tokenAccountID: nil, usage: usage, provider: .claude) == "a@example.com")
     }
 
     @Test
