@@ -28,6 +28,12 @@ extension CodexBarCLI {
     static func runCodexAccounts(path: [String], values: ParsedValues) async {
         let output = CLIOutputPreferences.from(values: values)
         #if os(macOS)
+        let config = Self.loadConfig(output: output)
+        let route = await CLIMagpieSource().route(for: .codex, configuration: config.magpie)
+        guard route.isNative else {
+            Self.exit(code: .failure, message: "Native Codex accounts are unavailable while magpie owns Codex.",
+                      output: output, kind: .runtime)
+        }
         do {
             let store = FileManagedCodexAccountStore()
             let liveHome = CodexHomeScope.ambientHomeURL(env: ProcessInfo.processInfo.environment)

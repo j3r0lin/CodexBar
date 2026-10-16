@@ -83,6 +83,8 @@ struct MagpieSourceTransitionTests {
             for provider: UsageProvider in [.claude, .codex, .kimi, .opencodego] {
                 await store.refreshProvider(provider, allowDisabled: true)
                 _ = await store.debugLog(for: provider)
+                await store.refreshCodexAccountScopedState(allowDisabled: true)
+                _ = SpendDashboardSource.configuration(settings: store.settings, store: store)
                 #expect(!store.providerSourceRoute(for: provider).isNative)
                 for kind in NativeProviderIOTestBoundary.Kind.allCases {
                     #expect(spy.count(kind) == 0)

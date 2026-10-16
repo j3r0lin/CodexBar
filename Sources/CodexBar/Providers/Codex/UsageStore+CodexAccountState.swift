@@ -42,6 +42,7 @@ extension UsageStore {
         phaseDidChange: (@MainActor (CodexAccountScopedRefreshPhase) -> Void)? = nil)
         async
     {
+        guard self.canReadNativeCodexSource else { return }
         let refreshStartedAt = Date()
         self.prepareRefreshState(for: .codex)
         if self.prepareCodexAccountScopedRefreshIfNeeded() {
@@ -49,8 +50,10 @@ extension UsageStore {
         }
 
         await self.refreshProvider(.codex, allowDisabled: allowDisabled)
+        guard self.canReadNativeCodexSource else { return }
         phaseDidChange?(.usage)
         await self.refreshCreditsIfNeeded(minimumSnapshotUpdatedAt: refreshStartedAt)
+        guard self.canReadNativeCodexSource else { return }
         phaseDidChange?(.credits)
 
         if self.settings.codexCookieSource.isEnabled {
@@ -65,8 +68,10 @@ extension UsageStore {
 
         if self.openAIDashboardRequiresLogin {
             await self.refreshProvider(.codex, allowDisabled: allowDisabled)
+            guard self.canReadNativeCodexSource else { return }
             phaseDidChange?(.usage)
             await self.refreshCreditsIfNeeded(minimumSnapshotUpdatedAt: refreshStartedAt)
+            guard self.canReadNativeCodexSource else { return }
             phaseDidChange?(.credits)
         }
 

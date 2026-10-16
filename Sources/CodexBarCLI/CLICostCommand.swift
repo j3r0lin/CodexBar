@@ -9,6 +9,12 @@ extension CodexBarCLI {
     static func runCost(_ values: ParsedValues) async {
         let output = CLIOutputPreferences.from(values: values)
         if values.flags.contains("identifiedOnly") || values.options["identifiedEnd"] != nil {
+            let config = Self.loadConfig(output: output)
+            let route = await CLIMagpieSource().route(for: .codex, configuration: config.magpie)
+            guard route.isNative else {
+                Self.exit(code: .failure, message: "Local cost is unavailable while magpie owns this provider.",
+                          output: output, kind: .runtime)
+            }
             await Self.runCodexIdentifiedUsage(values, output: output)
             return
         }
@@ -18,7 +24,12 @@ extension CodexBarCLI {
     private static func runStandardCost(_ values: ParsedValues, output: CLIOutputPreferences) async {
         let config = CodexBarCLI.loadConfig(output: output)
         let selection = CodexBarCLI.decodeProvider(from: values, config: config)
-        let providers = Self.costProviders(from: selection)
+        let source = CLIMagpieSource()
+        var providers: [UsageProvider] = []
+        for provider in Self.costProviders(from: selection) {
+            let route = await source.route(for: provider, configuration: config.magpie)
+            if route.isNative { providers.append(provider) }
+        }
         let unsupported = selection.asList.filter { !Self.costSupportedProviders.contains($0) }
         if !unsupported.isEmpty {
             let names = unsupported

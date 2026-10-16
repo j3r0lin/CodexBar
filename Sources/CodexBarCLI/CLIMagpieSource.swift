@@ -6,7 +6,12 @@ actor CLIMagpieSource {
     private var ownedWireIDs: Set<String> = []
     private let transport: MagpieQuotasReader.Transport
 
-    init(transport: @escaping MagpieQuotasReader.Transport = MagpieQuotasReader.urlSessionTransport) {
+    init(
+        transport: @escaping MagpieQuotasReader.Transport = MagpieQuotasReader.urlSessionTransport,
+        ownedWireIDs: Set<String>? = nil)
+    {
+        self.ownedWireIDs = ownedWireIDs ?? Set(
+            CodexBarCLI.valueFromAppDefaults("magpieTakeoverProviderIDs") as [String]? ?? [])
         self.transport = transport
     }
 
@@ -45,6 +50,27 @@ actor CLIMagpieSource {
 }
 
 extension CodexBarCLI {
+    static func fetchRoutedProviderUsage(
+        provider: UsageProvider,
+        tokenContext: TokenAccountCLIContext,
+        native: () async -> ProviderFetchOutcome) async -> ProviderFetchOutcome
+    {
+        let route = await tokenContext.magpieSource.route(for: provider, configuration: tokenContext.config.magpie)
+        guard !route.isNative else { return await native() }
+        do {
+            let rows = try await tokenContext.magpieSource.rows(quotasURL: tokenContext.config.magpie?.quotasURL)
+            let accounts = MagpieAccountProjection.snapshots(from: rows)
+            guard let account = accounts.first(where: { $0.provider.nativeProvider == provider && $0.isActive }),
+                  let usage = MagpieUsageProjection.usageSnapshot(for: account)
+            else { throw UsageError.noRateLimitsFound }
+            return ProviderFetchOutcome(result: .success(ProviderFetchResult(
+                usage: usage, credits: nil, dashboard: nil, sourceLabel: "magpie",
+                strategyID: "magpie", strategyKind: .web)), attempts: [])
+        } catch {
+            return ProviderFetchOutcome(result: .failure(error), attempts: [])
+        }
+    }
+
     static func fetchMagpieUsageIfOwned(
         provider: UsageProvider,
         status: ProviderStatusPayload?,

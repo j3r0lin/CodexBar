@@ -137,54 +137,52 @@ extension CodexBarCLI {
                 refreshFailureStatus: "auth_required")
         }
 
-        let account: ProviderTokenAccount?
-        do {
-            account = try tokenContext.resolvedAccounts(for: provider).first
-        } catch {
-            return HookProviderObservation(
-                provider: provider.rawValue,
-                status: status,
-                refreshFailureStatus: "auth_required")
+        let outcome = await Self.fetchRoutedProviderUsage(provider: provider, tokenContext: tokenContext) {
+            let account: ProviderTokenAccount?
+            do {
+                account = try tokenContext.resolvedAccounts(for: provider).first
+            } catch {
+                return ProviderFetchOutcome(result: .failure(error), attempts: [])
+            }
+
+            let browserDetection = BrowserDetection()
+            let fetcher = UsageFetcher()
+            let claudeFetcher = ClaudeUsageFetcher(browserDetection: browserDetection)
+            let env = tokenContext.environment(
+                base: ProcessInfo.processInfo.environment,
+                provider: provider,
+                account: account)
+            let settings = tokenContext.settingsSnapshot(for: provider, account: account)
+            let effectiveSourceMode = tokenContext.effectiveSourceMode(
+                base: tokenContext.preferredSourceMode(for: provider),
+                provider: provider,
+                account: account)
+
+            let fetchContext = ProviderFetchContext(
+                runtime: .cli,
+                sourceMode: effectiveSourceMode,
+                includeCredits: false,
+                webTimeout: webTimeout,
+                webDebugDumpHTML: false,
+                verbose: verbose,
+                env: env,
+                settings: settings,
+                fetcher: tokenContext.fetcher(base: fetcher, provider: provider, env: env),
+                claudeFetcher: claudeFetcher,
+                browserDetection: browserDetection,
+                // Watch is read-only, like `guard`: no updater callbacks, so refresh-dependent
+                // credentials report unavailable instead of prompting.
+                selectedTokenAccountID: account?.id)
+
+            return await ProviderInteractionContext.$current.withValue(.background) {
+                await Self.fetchProviderUsage(provider: provider, context: fetchContext)
+            }
         }
-
-        let browserDetection = BrowserDetection()
-        let fetcher = UsageFetcher()
-        let claudeFetcher = ClaudeUsageFetcher(browserDetection: browserDetection)
-        let env = tokenContext.environment(
-            base: ProcessInfo.processInfo.environment,
-            provider: provider,
-            account: account)
-        let settings = tokenContext.settingsSnapshot(for: provider, account: account)
-        let effectiveSourceMode = tokenContext.effectiveSourceMode(
-            base: tokenContext.preferredSourceMode(for: provider),
-            provider: provider,
-            account: account)
-
-        let fetchContext = ProviderFetchContext(
-            runtime: .cli,
-            sourceMode: effectiveSourceMode,
-            includeCredits: false,
-            webTimeout: webTimeout,
-            webDebugDumpHTML: false,
-            verbose: verbose,
-            env: env,
-            settings: settings,
-            fetcher: tokenContext.fetcher(base: fetcher, provider: provider, env: env),
-            claudeFetcher: claudeFetcher,
-            browserDetection: browserDetection,
-            // Watch is read-only, like `guard`: no updater callbacks, so refresh-dependent
-            // credentials report unavailable instead of prompting.
-            selectedTokenAccountID: account?.id)
-
-        let outcome = await ProviderInteractionContext.$current.withValue(.background) {
-            await Self.fetchProviderUsage(provider: provider, context: fetchContext)
-        }
-
         switch outcome.result {
         case let .success(result):
             let usage = result.usage.scoped(to: provider)
             let hidesPersonalInfo = Self.hidePersonalInfoFromDefaults()
-            let accountDiscriminator = account?.id.uuidString ?? usage.accountEmail(for: provider)
+            let accountDiscriminator = usage.accountEmail(for: provider)
             return HookProviderObservation(
                 provider: provider.rawValue,
                 lanes: Self.hooksWatchLanes(

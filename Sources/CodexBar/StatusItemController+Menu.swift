@@ -563,7 +563,8 @@ extension StatusItemController {
         let visible = enabledProviders
         var seenSpendProviders = Set<UsageProvider>()
         let spend = enabledProviders.filter { provider in
-            seenSpendProviders.insert(provider).inserted &&
+            self.store.providerSourceRoute(for: provider).isNative &&
+                seenSpendProviders.insert(provider).inserted &&
                 self.settings.costSummaryShowsInline(for: provider)
         }
         return (

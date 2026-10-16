@@ -642,7 +642,7 @@ enum SpendDashboardSource {
     @MainActor
     static func costCapableProviders(store: UsageStore) -> [UsageProvider] {
         store.enabledFirstPartyProvidersForDisplay().filter {
-            store.settings.isCostUsageEffectivelyEnabled(for: $0)
+            store.providerSourceRoute(for: $0).isNative && store.settings.isCostUsageEffectivelyEnabled(for: $0)
         }
     }
 
@@ -666,6 +666,7 @@ enum SpendDashboardSource {
         settings: SettingsStore,
         store: UsageStore) -> [(account: CodexVisibleAccount?, homePath: String?)]
     {
+        guard store.canReadNativeCodexSource else { return [] }
         let ambientHome = CodexHomeScope.ambientHomeURL(env: store.environmentBase).standardizedFileURL.path
         var homes = settings.codexVisibleAccountProjection.visibleAccounts.map { account in
             let homePath: String? = switch account.selectionSource {

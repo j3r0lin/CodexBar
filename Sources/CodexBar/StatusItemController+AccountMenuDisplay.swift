@@ -119,16 +119,17 @@ extension StatusItemController {
     }
 
     func scheduleCodexAccountMenuProjectionRevalidationIfNeeded(for providers: [UsageProvider]) {
+        guard self.store.canReadNativeCodexSource else { return }
         guard Self.codexAccountMenuProjectionRevalidationEnabled else { return }
         guard providers.contains(.codex) else { return }
         guard self.settings.codexAccountMenuProjectionNeedsRevalidation else { return }
         guard self.codexAccountMenuProjectionRevalidationTask == nil else { return }
 
         self.codexAccountMenuProjectionRevalidationTask = Task { @MainActor [weak self] in
-            guard let settings = self?.settings else { return }
+            guard let self, self.store.canReadNativeCodexSource else { return }
+            let settings = self.settings
             let result = await settings.revalidateCodexAccountMenuProjection()
-            guard let self else { return }
-            guard !Task.isCancelled else {
+            guard !Task.isCancelled, self.store.canReadNativeCodexSource else {
                 self.codexAccountMenuProjectionRevalidationTask = nil
                 return
             }

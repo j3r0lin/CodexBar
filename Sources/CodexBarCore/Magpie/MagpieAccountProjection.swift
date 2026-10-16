@@ -8,8 +8,8 @@ import Foundation
 /// One magpie-reported account row for one provider, in the narrow magpie model.
 ///
 /// Identified accounts use an opaque fingerprint of provider, email, and organization. A sole
-/// anonymous row uses a provider-level fingerprint; ambiguous anonymous rows have ephemeral IDs
-/// and display an identity error.
+/// anonymous row uses a provider-level fingerprint; ambiguous anonymous rows use display-only
+/// ordinal fingerprints and cannot own ambient usage.
 public struct MagpieAccountSnapshot: Identifiable, Sendable, Equatable {
     public let id: ProviderAccountIdentity
     public let provider: MagpieProviderReference
@@ -49,7 +49,7 @@ public struct MagpieAccountSnapshot: Identifiable, Sendable, Equatable {
     }
 
     /// The same account, with its usage marked as a last-known measurement and an explanatory error.
-    public func retainedAsLastKnown(error: String) -> MagpieAccountSnapshot {
+    public func retainedAsLastKnown(error: String?) -> MagpieAccountSnapshot {
         MagpieAccountSnapshot(
             id: self.id,
             provider: self.provider,
@@ -120,7 +120,7 @@ public enum MagpieAccountProjection {
             let providerIdentity = row.email.isEmpty && allRows.count == 1
             let ambiguousIdentity = row.email.isEmpty && !providerIdentity
             let fingerprint = ambiguousIdentity
-                ? UUID().uuidString
+                ? self.identityFingerprint(wireID: reference.wireID, email: "\u{0}anonymous:\(index)", organization: "")
                 : self.identityFingerprint(
                     wireID: reference.wireID,
                     email: providerIdentity ? "\u{0}provider" : row.email,
@@ -136,7 +136,7 @@ public enum MagpieAccountProjection {
                 ordinal: index + 1,
                 windows: row.windows,
                 readAt: row.readAt,
-                isActive: index == activeIndex,
+                isActive: !ambiguousIdentity && index == activeIndex,
                 error: identityError ?? row.error)
         }
         return projected.filter(\.isActive) + projected.filter { !$0.isActive }

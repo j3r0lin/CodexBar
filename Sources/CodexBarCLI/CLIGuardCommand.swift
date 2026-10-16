@@ -234,46 +234,48 @@ extension CodexBarCLI {
             return .unavailable(.accountResolution)
         }
 
-        // Resolve the configured token account the same way `usage` does, so token-only
-        // providers (e.g. Claude, z.ai, OpenAI) fetch their quota instead of returning unknown.
-        let account: ProviderTokenAccount?
-        do {
-            account = try tokenContext.resolvedAccounts(for: provider).first
-        } catch {
-            return .unavailable(.accountResolution)
+        let outcome = await Self.fetchRoutedProviderUsage(provider: provider, tokenContext: tokenContext) {
+            // Resolve the configured token account the same way `usage` does, so token-only
+            // providers (e.g. Claude, z.ai, OpenAI) fetch their quota instead of returning unknown.
+            let account: ProviderTokenAccount?
+            do {
+                account = try tokenContext.resolvedAccounts(for: provider).first
+            } catch {
+                return ProviderFetchOutcome(result: .failure(error), attempts: [])
+            }
+
+            let browserDetection = BrowserDetection()
+            let fetcher = UsageFetcher()
+            let claudeFetcher = ClaudeUsageFetcher(browserDetection: browserDetection)
+
+            let env = tokenContext.environment(
+                base: ProcessInfo.processInfo.environment,
+                provider: provider,
+                account: account)
+            let settings = tokenContext.settingsSnapshot(for: provider, account: account)
+            let baseSource = tokenContext.preferredSourceMode(for: provider)
+            let effectiveSourceMode = tokenContext.effectiveSourceMode(
+                base: baseSource,
+                provider: provider,
+                account: account)
+
+            let fetchContext = ProviderFetchContext(
+                runtime: .cli,
+                sourceMode: effectiveSourceMode,
+                includeCredits: false,
+                webTimeout: webTimeout,
+                webDebugDumpHTML: false,
+                verbose: verbose,
+                env: env,
+                settings: settings,
+                fetcher: tokenContext.fetcher(base: fetcher, provider: provider, env: env),
+                claudeFetcher: claudeFetcher,
+                browserDetection: browserDetection,
+                // Guard is read-only: omit updater callbacks so refresh-dependent credentials fail unavailable.
+                selectedTokenAccountID: account?.id)
+
+            return await Self.fetchProviderUsage(provider: provider, context: fetchContext)
         }
-
-        let browserDetection = BrowserDetection()
-        let fetcher = UsageFetcher()
-        let claudeFetcher = ClaudeUsageFetcher(browserDetection: browserDetection)
-
-        let env = tokenContext.environment(
-            base: ProcessInfo.processInfo.environment,
-            provider: provider,
-            account: account)
-        let settings = tokenContext.settingsSnapshot(for: provider, account: account)
-        let baseSource = tokenContext.preferredSourceMode(for: provider)
-        let effectiveSourceMode = tokenContext.effectiveSourceMode(
-            base: baseSource,
-            provider: provider,
-            account: account)
-
-        let fetchContext = ProviderFetchContext(
-            runtime: .cli,
-            sourceMode: effectiveSourceMode,
-            includeCredits: false,
-            webTimeout: webTimeout,
-            webDebugDumpHTML: false,
-            verbose: verbose,
-            env: env,
-            settings: settings,
-            fetcher: tokenContext.fetcher(base: fetcher, provider: provider, env: env),
-            claudeFetcher: claudeFetcher,
-            browserDetection: browserDetection,
-            // Guard is read-only: omit updater callbacks so refresh-dependent credentials fail unavailable.
-            selectedTokenAccountID: account?.id)
-
-        let outcome = await Self.fetchProviderUsage(provider: provider, context: fetchContext)
         if verbose {
             Self.printFetchAttempts(provider: provider, attempts: outcome.attempts)
         }

@@ -147,6 +147,14 @@ extension UsageStore {
         self.magpieRefreshTask?.cancel()
         self.magpieRefreshTask = nil
         self.magpieRefreshInFlight = false
+        for (wireID, provider) in MagpieProviderMapping.nativeProviders {
+            guard self.magpieTakeoverWireIDs.contains(wireID),
+                  self.lastSourceLabels[provider.instanceID] == MagpieAccountProjection.sourceLabel
+            else { continue }
+            self.snapshots.removeValue(forKey: provider.instanceID)
+            self.errors.removeValue(forKey: provider.instanceID)
+            self.lastSourceLabels.removeValue(forKey: provider.instanceID)
+        }
         self.magpieAccountSnapshots = []
         self.magpieLastRefreshAt = nil
         self.magpieLastError = nil
@@ -213,17 +221,25 @@ extension UsageStore {
             var snapshots = incoming
             var retainedProviders: [String] = []
             for wireID in Set(self.magpieAccountSnapshots.map(\.provider.wireID)) {
-                let previous = self.magpieAccountSnapshots.filter { $0.provider.wireID == wireID }
+                let previous = self.magpieAccountSnapshots.filter {
+                    $0.provider.wireID == wireID && !$0.windows.isEmpty &&
+                        $0.error != MagpieAccountProjection.unstableIdentityError
+                }
                 let current = incoming.filter { $0.provider.wireID == wireID }
-                guard previous.contains(where: { !$0.windows.isEmpty }),
-                      !current.contains(where: { !$0.windows.isEmpty && $0.error == nil })
-                else { continue }
-                let message = "magpie returned no usable quota rows for \(wireID)."
-                snapshots.removeAll { $0.provider.wireID == wireID }
-                snapshots.append(contentsOf: previous.filter { !$0.windows.isEmpty }.map {
-                    $0.retainedAsLastKnown(error: message)
-                })
-                retainedProviders.append(wireID)
+                guard !previous.isEmpty else { continue }
+                if current.isEmpty {
+                    let message = "magpie returned no usable quota rows for \(wireID)."
+                    snapshots.append(contentsOf: previous.map { $0.retainedAsLastKnown(error: message) })
+                    retainedProviders.append(wireID)
+                } else {
+                    snapshots = snapshots.map { account in
+                        guard account.provider.wireID == wireID, account.windows.isEmpty,
+                              account.error == nil,
+                              let prior = previous.first(where: { $0.id == account.id })
+                        else { return account }
+                        return prior.retainedAsLastKnown(error: nil)
+                    }
+                }
             }
             self.magpieDiscoveryCompleted = true
             self.magpieAccountSnapshots = snapshots
@@ -236,6 +252,12 @@ extension UsageStore {
             takeover.formUnion(rows.map(\.provider))
             if takeover != self.settings.magpieTakeoverWireIDs {
                 self.settings.magpieTakeoverWireIDs = takeover
+            }
+            if self.canReadNativeCodexSource, self.codexAccountSnapshots.isEmpty,
+               let snapshotStore = self.codexAccountUsageSnapshotStore
+            {
+                self.codexAccountSnapshots = snapshotStore.load(
+                    for: self.freshCodexVisibleAccountsForSnapshotHydration())
             }
             self.publishMagpieAmbientSnapshots(error: nil)
             self.magpieRevision &+= 1
@@ -250,7 +272,9 @@ extension UsageStore {
             // Keep the last successful accounts, but as last-known usage so age-less surfaces stop
             // presenting them as current; cards and settings show the error.
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            let retained = self.magpieAccountSnapshots.map {
+            let retained = self.magpieAccountSnapshots.filter {
+                $0.error != MagpieAccountProjection.unstableIdentityError
+            }.map {
                 $0.usesLastKnownUsage ? $0 : $0.retainedAsLastKnown(error: "magpie refresh failed: \(message)")
             }
             self.magpieAccountSnapshots = retained
@@ -269,7 +293,7 @@ extension UsageStore {
             guard self.isEnabled(provider) else { continue }
             let accounts = MagpieUsageProjection.providerAccountSnapshots(
                 for: provider, in: self.magpieAccountSnapshots)
-            let active = accounts.first(where: \.isActive) ?? accounts.first
+            let active = accounts.first(where: \.isActive)
             if let usage = active?.snapshot {
                 self.snapshots[provider.instanceID] = usage
                 self.errors[provider.instanceID] = nil
@@ -339,6 +363,10 @@ extension UsageStore {
         }
         self.clearProviderRuntimeState(provider)
         if provider == .codex {
+            self.cancelScheduledCreditsRefresh()
+            self.cancelCodexPlanHistoryBackfill()
+            self.invalidateOpenAIDashboardRefreshTask()
+            self.codexAccountSnapshots = []
             self.credits = nil
             self.lastCreditsError = nil
             self.lastCreditsSnapshot = nil
@@ -351,6 +379,8 @@ extension UsageStore {
             self.codexHistoricalDatasetAccountKey = nil
             self.historicalPaceRevision &+= 1
         }
+        self.planUtilizationHistory.removeValue(forKey: provider.instanceID)
+        self.planUtilizationHistoryRevision &+= 1
         self.diagnostics[provider.instanceID] = nil
         self.lastFetchAttempts.removeValue(forKey: provider.instanceID)
         self.accountSnapshots.removeValue(forKey: provider.instanceID)

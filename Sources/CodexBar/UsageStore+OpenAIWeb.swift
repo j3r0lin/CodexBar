@@ -107,6 +107,7 @@ extension UsageStore {
         refreshTaskToken: UUID? = nil,
         allowCodexUsageBackfill: Bool = true) async -> Bool
     {
+        guard self.canReadNativeCodexSource else { return false }
         guard self.shouldApplyOpenAIDashboardRefreshTask(token: refreshTaskToken) else { return false }
         self.settings.invalidateCodexAccountReconciliationSnapshotCache()
         let authority = self.evaluateCodexDashboardAuthority(
@@ -235,6 +236,7 @@ extension UsageStore {
         attachedAccountEmail: String?,
         allowCodexUsageBackfill: Bool) async
     {
+        guard self.canReadNativeCodexSource else { return }
         switch decision.disposition {
         case .attach:
             self.openAIDashboard = dashboard
@@ -1014,6 +1016,7 @@ extension UsageStore {
     }
 
     private func shouldApplyOpenAIDashboardRefreshTask(token: UUID?) -> Bool {
+        guard self.canReadNativeCodexSource else { return false }
         guard let token else { return true }
         return self.openAIDashboardRefreshTaskToken == token
     }

@@ -48,6 +48,45 @@ struct CLIMagpieTests {
         #expect(requestCount == 1)
     }
 
+    @Test(arguments: [UsageProvider.claude, .codex, .kimi, .opencodego],
+          ["enabling", "firstFailure", "laterFailure", "disappeared"])
+    func `routed CLI consumers skip native construction across discovery outcomes`(
+        provider: UsageProvider, state: String) async throws
+    {
+        let source = CLIMagpieSource(
+            transport: ClaudeMagpieFixture.transport(
+                data: state == "disappeared" ? Data(#"{"data":[]}"#.utf8) : Data("""
+                {"data":[{"provider":"claude","windows":[]},{"provider":"codex","windows":[]},
+                  {"provider":"kimi-code","windows":[]},{"provider":"opencode-go","windows":[]}]}
+                """.utf8),
+                status: state == "firstFailure" || state == "laterFailure" ? 503 : 200),
+            ownedWireIDs: state == "laterFailure" || state == "disappeared"
+                ? ["claude", "codex", "kimi-code", "opencode-go"] : [])
+        let context = try TokenAccountCLIContext(
+            selection: TokenAccountCLISelection(label: nil, index: nil, allAccounts: false),
+            config: CodexBarConfig(providers: [], magpie: MagpieSourceConfig(enabled: true)),
+            verbose: false, baseEnvironment: [:], magpieSource: source)
+        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { _ in
+            Issue.record("Native IO crossed the magpie route")
+            throw CancellationError()
+        }
+        await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
+            _ = await CodexBarCLI.fetchRoutedProviderUsage(provider: provider, tokenContext: context) {
+                Issue.record("Native context construction crossed the magpie route")
+                return ProviderFetchOutcome(result: .failure(UsageError.noRateLimitsFound), attempts: [])
+            }
+        }
+    }
+
+    @Test
+    func `CLI keeps persisted ownership when provider disappears`() async {
+        let source = CLIMagpieSource(
+            transport: ClaudeMagpieFixture.transport(data: Data(#"{"data":[]}"#.utf8)),
+            ownedWireIDs: ["codex"])
+        let route = await source.route(for: .codex, configuration: MagpieSourceConfig(enabled: true))
+        #expect(!route.isNative)
+    }
+
     @Test
     func `legacy enabled migration writes only the unified config`() throws {
         let data = Data(

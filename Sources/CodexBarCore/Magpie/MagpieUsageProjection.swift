@@ -10,7 +10,8 @@ public enum MagpieUsageProjection {
         for account: MagpieAccountSnapshot,
         now: Date = Date()) -> UsageSnapshot?
     {
-        guard let provider = account.provider.nativeProvider else { return nil }
+        guard account.error != MagpieAccountProjection.unstableIdentityError,
+              let provider = account.provider.nativeProvider else { return nil }
         let session = account.windows.first { $0.semantics == .session }
         let weekly = account.windows.first { $0.semantics == .weekly }
         let monthly = account.windows.first { $0.semantics == .monthly }
