@@ -79,6 +79,20 @@ struct MagpieSourceTransitionTests {
     }
 
     @Test
+    func `unmanaged providers remain native after a later gateway failure`() async {
+        let store = self.makeStore()
+        await store.refreshMagpieAccounts()
+        #expect(store.providerSourceRoute(for: .kimi).isNative)
+        #expect(store.providerSourceRoute(for: .opencodego).isNative)
+        store.magpieTransport = ClaudeMagpieFixture.transport(status: 503)
+        await store.refreshMagpieAccounts()
+        #expect(store.providerSourceRoute(for: .kimi).isNative)
+        #expect(store.providerSourceRoute(for: .opencodego).isNative)
+        #expect(!store.providerSourceRoute(for: .claude).isNative)
+        #expect(!store.providerSourceRoute(for: .codex).isNative)
+    }
+
+    @Test
     func `first discovery failure blocks native reads`() async {
         let store = self.makeStore()
         store.magpieTransport = ClaudeMagpieFixture.transport(status: 503)

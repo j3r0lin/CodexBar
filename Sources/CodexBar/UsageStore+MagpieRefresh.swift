@@ -57,7 +57,7 @@ extension UsageStore {
         if self.magpieTakeoverWireIDs.contains(wireID) {
             return .magpie(MagpieProviderMapping.reference(for: wireID))
         }
-        return self.magpieDiscoveryCompleted && self.magpieLastError == nil
+        return self.magpieDiscoveryCompleted && self.magpieLastRefreshAt != nil
             ? .native : .waitingForMagpieDiscovery
     }
 
@@ -141,6 +141,7 @@ extension UsageStore {
         self.magpieRefreshEpoch &+= 1
         self.magpieRefreshTask?.cancel()
         self.magpieRefreshTask = nil
+        self.magpieRefreshInFlight = false
         self.magpieAccountSnapshots = []
         self.magpieLastRefreshAt = nil
         self.magpieLastError = nil
@@ -151,16 +152,17 @@ extension UsageStore {
         }
     }
 
-    /// Schedules a magpie refresh, cancelling any pending one. The fetch itself is single-flight:
+    /// Starts the next refresh round when no request is in flight. The fetch itself is single-flight:
     /// concurrent provider passes in one refresh round share the same GET.
     func scheduleMagpieAccountRefresh(generation: UInt64? = nil) {
-        self.magpieRefreshTask?.cancel()
+        if let task = self.magpieRefreshTask, !task.isCancelled, self.magpieRefreshInFlight { return }
         self.magpieRefreshTask = nil
         guard self.shouldFetchMagpieAccounts() else {
             self.clearMagpieAccountState()
             return
         }
         let epoch = self.magpieRefreshEpoch
+        self.magpieRefreshInFlight = true
         self.magpieRefreshTask = Task { @MainActor [weak self] in
             guard let self else { return }
             await self.performMagpieRefresh(generation: generation, epoch: epoch)
@@ -176,6 +178,7 @@ extension UsageStore {
         }
         guard self.shouldFetchMagpieAccounts() else { return }
         let epoch = self.magpieRefreshEpoch
+        self.magpieRefreshInFlight = true
         let task = Task { @MainActor [weak self] in
             guard let self else { return }
             await self.performMagpieRefresh(generation: generation, epoch: epoch)
@@ -185,11 +188,16 @@ extension UsageStore {
     }
 
     func refreshMagpieAccounts(generation: UInt64? = nil) async {
-        self.magpieRefreshTask = nil
+        self.scheduleMagpieAccountRefresh(generation: generation)
         await self.awaitMagpieRefresh(generation: generation)
     }
 
     private func performMagpieRefresh(generation: UInt64?, epoch: UInt64) async {
+        defer {
+            if epoch == self.magpieRefreshEpoch {
+                self.magpieRefreshInFlight = false
+            }
+        }
         let quotasURL = self.settings.magpieQuotasURL
         do {
             let rows = try await MagpieQuotasReader.readRows(
@@ -333,6 +341,9 @@ extension UsageStore {
             self.lastOpenAIDashboardError = nil
             self.openAIDashboardRequiresLogin = false
             self.lastOpenAIDashboardSnapshot = nil
+            self.codexHistoricalDataset = nil
+            self.codexHistoricalDatasetAccountKey = nil
+            self.historicalPaceRevision &+= 1
         }
         self.diagnostics[provider.instanceID] = nil
         self.lastFetchAttempts.removeValue(forKey: provider.instanceID)

@@ -183,6 +183,7 @@ final class UsageStore {
     /// Bumped on every state clear so a late fetch from a previous configuration cannot publish.
     @ObservationIgnored var magpieRefreshEpoch: UInt64 = 0
     @ObservationIgnored var magpieRefreshTask: Task<Void, Never>?
+    @ObservationIgnored var magpieRefreshInFlight = false
     @ObservationIgnored var magpieTransport: MagpieQuotasReader.Transport =
         MagpieQuotasReader.urlSessionTransport
     @ObservationIgnored var lastMagpieSourceConfiguration: (enabled: Bool, quotasURL: String)?

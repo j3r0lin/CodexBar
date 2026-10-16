@@ -100,6 +100,19 @@ struct MagpieAccountProjectionTests {
     }
 
     @Test
+    func `endpoint credentials are rejected before transport`() async {
+        do {
+            _ = try await MagpieQuotasReader.readRows(quotasURL: "http://user:password@localhost:3425/quotas") { _ in
+                Issue.record("An endpoint containing credentials must not reach transport")
+                throw MagpieQuotasReaderError.invalidURL
+            }
+            Issue.record("An endpoint containing credentials must fail")
+        } catch {
+            #expect(error is MagpieQuotasReaderError)
+        }
+    }
+
+    @Test
     func `reader sends one unauthenticated GET for every provider`() async throws {
         let rows = try await MagpieQuotasReader.readRows(quotasURL: nil) { request in
             #expect(request.httpMethod == "GET")

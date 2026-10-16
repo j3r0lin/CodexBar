@@ -71,7 +71,8 @@ public enum MagpieQuotasReader {
         let raw = configured?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let text = raw.isEmpty ? self.defaultQuotasURL : raw
         guard let url = URL(string: text), let scheme = url.scheme?.lowercased(),
-              scheme == "http" || scheme == "https", url.host != nil
+              scheme == "http" || scheme == "https", url.host != nil,
+              url.user == nil, url.password == nil
         else { return nil }
         return url
     }
@@ -110,7 +111,13 @@ public enum MagpieQuotasReader {
     }
 
     public static let urlSessionTransport: Transport = { request in
-        try await URLSession.shared.data(for: request)
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.httpShouldSetCookies = false
+        configuration.httpCookieStorage = nil
+        configuration.urlCredentialStorage = nil
+        let session = URLSession(configuration: configuration)
+        defer { session.invalidateAndCancel() }
+        return try await session.data(for: request)
     }
 
     // MARK: - Wire format
