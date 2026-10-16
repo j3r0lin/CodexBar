@@ -9,6 +9,7 @@ extension SettingsStore {
     var magpieSourceEnabled: Bool {
         get { self.configSnapshot.magpie?.enabled ?? false }
         set {
+            guard self.magpieSourceEnabled != newValue else { return }
             self.updateConfig(reason: "magpie-source", affectsBackgroundWork: true) { config in
                 var magpie = config.magpie ?? MagpieSourceConfig()
                 magpie.enabled = newValue
@@ -25,6 +26,8 @@ extension SettingsStore {
     var magpieQuotasURL: String {
         get { self.configSnapshot.magpie?.sanitizedQuotasURL ?? "" }
         set {
+            let normalized = self.normalizedConfigValue(newValue)
+            guard self.configSnapshot.magpie?.sanitizedQuotasURL != normalized else { return }
             self.updateConfig(reason: "magpie-source", affectsBackgroundWork: true) { config in
                 var magpie = config.magpie ?? MagpieSourceConfig()
                 magpie.quotasURL = self.normalizedConfigValue(newValue)
