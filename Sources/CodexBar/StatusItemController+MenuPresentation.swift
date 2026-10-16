@@ -270,7 +270,7 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
         super.layout()
         self.hosting.frame = self.bounds
         self.selectionView?.frame = Self.selectionFrame(in: self.bounds, block: self.rowPayload.selectionBlock)
-        self.selectionView?.layer?.cornerRadius = Self.selectionCornerRadius
+        self.updateSelectionShape()
     }
 
     /// Overview rows highlight exactly their piece of the provider block; other rows keep the
@@ -476,9 +476,20 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
         }
         // A brightened overlay keeps the block's colour language readable; the system selection
         // material would hide the severity colours it is meant to complement.
-        let selectionView = NSView()
-        selectionView.wantsLayer = true
-        selectionView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.10).cgColor
+        let selectionView: NSView
+        if self.rowPayload.selectionBlock != nil {
+            selectionView = NSView()
+            selectionView.wantsLayer = true
+            selectionView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.10).cgColor
+        } else {
+            let material = NSVisualEffectView()
+            material.material = .selection
+            material.blendingMode = .withinWindow
+            material.state = .active
+            material.isEmphasized = true
+            material.wantsLayer = true
+            selectionView = material
+        }
         selectionView.layer?.masksToBounds = true
         selectionView.layer?.opacity = 0
         selectionView.autoresizingMask = [.width, .height]
@@ -628,21 +639,10 @@ struct MenuCardSectionContainerView<Content: View>: View {
             .foregroundStyle(MenuHighlightStyle.primary(self.highlightState.isHighlighted))
             .background(alignment: .topLeading) {
                 if self.highlightState.isHighlighted {
-                    UnevenRoundedRectangle(
-                        topLeadingRadius: self.selectionBlock?.roundsTop == false ? 0 : 6,
-                        bottomLeadingRadius: self.selectionBlock?.roundsBottom == false ? 0 : 6,
-                        bottomTrailingRadius: self.selectionBlock?.roundsBottom == false ? 0 : 6,
-                        topTrailingRadius: self.selectionBlock?.roundsTop == false ? 0 : 6,
-                        style: .continuous)
-                        .fill(Color.white.opacity(0.10))
-                        .padding(
-                            .horizontal,
-                            self.selectionBlock == nil ? 6 : OverviewCompactAccountRow.blockInset)
-                        .padding(
-                            .bottom,
-                            self.selectionBlock?.roundsBottom == true
-                                ? 6 : self.selectionBlock == nil ? 2 : 0)
-                        .padding(.top, self.selectionBlock == nil ? 2 : 0)
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(MenuHighlightStyle.selectionBackground(true))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
                 }
             }
             .overlay(alignment: self.submenuIndicatorAlignment) {

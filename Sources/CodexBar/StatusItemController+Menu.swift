@@ -534,7 +534,7 @@ extension StatusItemController {
                 showsSubmenuIndicator: false,
                 usesGPUSelection: true,
                 tightVerticalFit: true,
-                selectionBlock: block)
+                selectionBlock: isGrouped && startsProvider ? .top : block)
             menu.addItem(item)
         }
         return true
