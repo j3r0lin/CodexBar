@@ -36,7 +36,8 @@ extension StatusItemController {
                 accountName: accountName,
                 snapshot: snapshot,
                 width: width,
-                history: history),
+                history: history,
+                model: model),
             id: "overviewDetail-\(providerName)" + (accountName.map { "-\($0)" } ?? ""),
             width: width,
             // The pool holds the parent menu's row views; a detail card built first would take one of them.
@@ -92,12 +93,12 @@ extension StatusItemController {
         let extras = NSMenu()
         extras.autoenablesItems = false
         extras.minimumWidth = width
-        self.addTokenAccountSwitcherIfNeeded(
         self.addCodexAccountSwitcherIfNeeded(
             to: extras,
             display: self.codexAccountMenuDisplay(for: provider),
             width: width,
             captureMenu: submenu)
+        self.addTokenAccountSwitcherIfNeeded(
             to: extras,
             display: self.tokenAccountMenuDisplay(for: provider),
             width: width,
