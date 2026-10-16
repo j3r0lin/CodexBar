@@ -69,7 +69,7 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `overview row shows plan usage not cost history for opencodego`() throws {
+    func `overview row shows no cost history chart for opencodego and no empty usage chart`() throws {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
@@ -127,7 +127,8 @@ extension StatusMenuTests {
         let opencodegoDetail = try #require(opencodegoRow.submenu)
         opencodegoDetail.delegate?.menuNeedsUpdate?(opencodegoDetail)
         let chartIDs = opencodegoDetail.items.compactMap { $0.representedObject as? String }
-        #expect(chartIDs.contains(StatusItemController.usageHistoryChartID))
+        // Nothing was recorded, so no usage history chart either; cost history stays out as well.
+        #expect(!chartIDs.contains(StatusItemController.usageHistoryChartID))
         #expect(!chartIDs.contains(StatusItemController.costHistoryChartID))
     }
 
