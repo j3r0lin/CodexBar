@@ -233,7 +233,7 @@ struct OverviewCompactAccountRow: View {
     }
 
     static func windowLabel(_ window: RateWindow, fallback: String) -> String {
-        guard let minutes = Self.semanticMinutes(window) else { return fallback }
+        guard let minutes = semanticMinutes(window) else { return fallback }
         if minutes >= 28 * 1440 { return "Mo" }
         if minutes >= 1440 { return "\(minutes / 1440)d" }
         return "\(max(1, minutes / 60))h"
