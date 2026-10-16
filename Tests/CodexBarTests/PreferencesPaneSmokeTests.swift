@@ -11,7 +11,7 @@ struct PreferencesPaneSmokeTests {
         let settings = Self.makeSettingsStore(suite: "PreferencesPaneSmokeTests-default")
         let store = Self.makeUsageStore(settings: settings)
 
-        _ = GeneralPane(settings: settings).body
+        _ = GeneralPane(settings: settings, store: store).body
         _ = ICloudSyncPane(settings: settings, state: CloudSyncState()).body
         _ = NotificationsPane(settings: settings).body
         _ = MenuBarPane(settings: settings, store: store).body
@@ -45,7 +45,7 @@ struct PreferencesPaneSmokeTests {
         let store = Self.makeUsageStore(settings: settings)
         store._setErrorForTesting("Example error", provider: .codex)
 
-        _ = GeneralPane(settings: settings).body
+        _ = GeneralPane(settings: settings, store: store).body
         _ = ICloudSyncPane(settings: settings, state: CloudSyncState()).body
         _ = NotificationsPane(settings: settings).body
         _ = MenuBarPane(settings: settings, store: store).body
