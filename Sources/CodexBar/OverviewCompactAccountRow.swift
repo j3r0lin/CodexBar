@@ -190,8 +190,7 @@ struct OverviewCompactAccountRow: View {
                 .frame(width: Self.percentWidth, alignment: .trailing)
             Text(line.resetsAt.map { Self.countdown(to: $0, now: self.now) } ?? "")
                 .font(.system(size: 10).monospacedDigit())
-                .foregroundStyle(
-                    self.isHighlighted ? MenuHighlightStyle.selectionText : OverviewPalette.reset)
+                .foregroundStyle(OverviewPalette.reset)
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
                 .frame(width: Self.resetWidth, alignment: .leading)

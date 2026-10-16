@@ -533,7 +533,8 @@ extension StatusItemController {
                 submenu: submenu,
                 showsSubmenuIndicator: false,
                 usesGPUSelection: true,
-                tightVerticalFit: true)
+                tightVerticalFit: true,
+                selectionBlock: block)
             menu.addItem(item)
         }
         return true

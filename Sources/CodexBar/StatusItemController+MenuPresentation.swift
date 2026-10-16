@@ -137,6 +137,9 @@ struct MenuCardRowPayload {
     /// Rows that draw a continuous background across neighbouring items (Overview provider blocks)
     /// opt out of the standard vertical air so the panels meet without a seam.
     var tightVerticalFit: Bool = false
+    /// When the row is part of an Overview block, this keeps the hover highlight on that row's
+    /// piece of the block instead of the whole menu item.
+    var selectionBlock: OverviewBlockPosition?
     let onClick: (() -> Void)?
 }
 
@@ -148,7 +151,7 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     let interactiveRegionStore: MenuCardInteractiveRegionStore
     private let hosting: NSHostingView<MenuCardSectionContainerView<AnyView>>
     private var measuredSize: NSSize?
-    private var selectionView: NSVisualEffectView?
+    private var selectionView: NSView?
     private(set) var allowsMenuHighlight: Bool
     private var onClick: (() -> Void)?
     private var containsInteractiveControls: Bool
@@ -239,6 +242,7 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
             refreshMonitor: refreshMonitor,
             interactiveRegionStore: self.interactiveRegionStore)
         self.configureSelectionMode(animated: false)
+        self.updateSelectionShape()
         self.invalidateIntrinsicContentSize()
     }
 
@@ -265,10 +269,36 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     override func layout() {
         super.layout()
         self.hosting.frame = self.bounds
-        self.selectionView?.frame = self.bounds.insetBy(
-            dx: Self.selectionHorizontalInset,
-            dy: Self.selectionVerticalInset)
+        self.selectionView?.frame = Self.selectionFrame(in: self.bounds, block: self.rowPayload.selectionBlock)
         self.selectionView?.layer?.cornerRadius = Self.selectionCornerRadius
+    }
+
+    /// Overview rows highlight exactly their piece of the provider block; other rows keep the
+    /// standard inset selection frame.
+    static func selectionFrame(in bounds: NSRect, block: OverviewBlockPosition?) -> NSRect {
+        guard let block else {
+            return bounds.insetBy(dx: self.selectionHorizontalInset, dy: self.selectionVerticalInset)
+        }
+        // The bottom margin below a provider block stays outside the highlight.
+        let height = bounds.height - (block.roundsBottom ? 6 : 0)
+        return NSRect(
+            x: OverviewCompactAccountRow.blockInset,
+            y: bounds.height - height,
+            width: bounds.width - 2 * OverviewCompactAccountRow.blockInset,
+            height: height)
+    }
+
+    private static func selectionMaskCorners(for block: OverviewBlockPosition) -> CACornerMask {
+        switch block {
+        case .single:
+            [.layerMinXMinYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+        case .top:
+            [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+        case .middle:
+            []
+        case .bottom:
+            [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        }
     }
 
     override func hitTest(_ point: NSPoint) -> NSView? {
@@ -406,6 +436,7 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     private func configureSelectionMode(animated: Bool) {
         if self.rowPayload.usesGPUSelection {
             _ = self.ensureSelectionView()
+            self.updateSelectionShape()
         } else {
             self.selectionView?.removeFromSuperview()
             self.selectionView = nil
@@ -420,11 +451,13 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
             return
         }
 
-        // The blue selection is drawn behind the row and the row keeps its own colours, so a usage bar
-        // stays readable on it. The SwiftUI highlight state stays false so hovering never re-invalidates
-        // the hosted graph.
+        // The selection is drawn behind the row and the row keeps its own colours, so a usage bar
+        // stays readable on it. The SwiftUI highlight state stays false so hovering never
+        // re-invalidates the hosted graph.
         self.highlightState.isHighlighted = false
-        let layer = self.ensureSelectionView().layer
+        let selectionView = self.ensureSelectionView()
+        selectionView.frame = Self.selectionFrame(in: self.bounds, block: self.rowPayload.selectionBlock)
+        let layer = selectionView.layer
         let targetOpacity: Float = self.isRowHighlighted ? 1 : 0
         if animated {
             let fade = CABasicAnimation(keyPath: "opacity")
@@ -437,22 +470,36 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
         layer?.opacity = targetOpacity
     }
 
-    private func ensureSelectionView() -> NSVisualEffectView {
+    private func ensureSelectionView() -> NSView {
         if let selectionView {
             return selectionView
         }
-        let selectionView = NSVisualEffectView()
-        selectionView.material = .selection
-        selectionView.blendingMode = .withinWindow
-        selectionView.state = .active
-        selectionView.isEmphasized = true
+        // A brightened overlay keeps the block's colour language readable; the system selection
+        // material would hide the severity colours it is meant to complement.
+        let selectionView = NSView()
         selectionView.wantsLayer = true
+        selectionView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.10).cgColor
         selectionView.layer?.masksToBounds = true
         selectionView.layer?.opacity = 0
         selectionView.autoresizingMask = [.width, .height]
         self.addSubview(selectionView, positioned: .below, relativeTo: self.hosting)
         self.selectionView = selectionView
+        self.updateSelectionShape()
         return selectionView
+    }
+
+    private func updateSelectionShape() {
+        guard let layer = self.selectionView?.layer else { return }
+        if let block = self.rowPayload.selectionBlock {
+            layer.maskedCorners = Self.selectionMaskCorners(for: block)
+            layer.cornerRadius = block == .middle ? 0 : 8
+        } else {
+            layer.maskedCorners = [
+                .layerMinXMinYCorner, .layerMaxXMinYCorner,
+                .layerMinXMaxYCorner, .layerMaxXMaxYCorner,
+            ]
+            layer.cornerRadius = Self.selectionCornerRadius
+        }
     }
 
     private static func makeRootView(
@@ -467,7 +514,8 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
             submenuIndicatorAlignment: payload.submenuIndicatorAlignment,
             submenuIndicatorTopPadding: payload.submenuIndicatorTopPadding,
             refreshMonitor: refreshMonitor,
-            interactiveRegionStore: interactiveRegionStore)
+            interactiveRegionStore: interactiveRegionStore,
+            selectionBlock: payload.selectionBlock)
         {
             payload.content
         }
@@ -546,6 +594,7 @@ struct MenuCardSectionContainerView<Content: View>: View {
     let submenuIndicatorTopPadding: CGFloat
     var refreshMonitor: MenuCardRefreshMonitor?
     var interactiveRegionStore: MenuCardInteractiveRegionStore?
+    var selectionBlock: OverviewBlockPosition?
     @ViewBuilder let content: () -> Content
 
     init(
@@ -555,6 +604,7 @@ struct MenuCardSectionContainerView<Content: View>: View {
         submenuIndicatorTopPadding: CGFloat,
         refreshMonitor: MenuCardRefreshMonitor?,
         interactiveRegionStore: MenuCardInteractiveRegionStore? = nil,
+        selectionBlock: OverviewBlockPosition? = nil,
         @ViewBuilder content: @escaping () -> Content)
     {
         self.highlightState = highlightState
@@ -563,6 +613,7 @@ struct MenuCardSectionContainerView<Content: View>: View {
         self.submenuIndicatorTopPadding = submenuIndicatorTopPadding
         self.refreshMonitor = refreshMonitor
         self.interactiveRegionStore = interactiveRegionStore
+        self.selectionBlock = selectionBlock
         self.content = content
     }
 
@@ -577,10 +628,21 @@ struct MenuCardSectionContainerView<Content: View>: View {
             .foregroundStyle(MenuHighlightStyle.primary(self.highlightState.isHighlighted))
             .background(alignment: .topLeading) {
                 if self.highlightState.isHighlighted {
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(MenuHighlightStyle.selectionBackground(true))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: self.selectionBlock?.roundsTop == false ? 0 : 6,
+                        bottomLeadingRadius: self.selectionBlock?.roundsBottom == false ? 0 : 6,
+                        bottomTrailingRadius: self.selectionBlock?.roundsBottom == false ? 0 : 6,
+                        topTrailingRadius: self.selectionBlock?.roundsTop == false ? 0 : 6,
+                        style: .continuous)
+                        .fill(Color.white.opacity(0.10))
+                        .padding(
+                            .horizontal,
+                            self.selectionBlock == nil ? 6 : OverviewCompactAccountRow.blockInset)
+                        .padding(
+                            .bottom,
+                            self.selectionBlock?.roundsBottom == true
+                                ? 6 : self.selectionBlock == nil ? 2 : 0)
+                        .padding(.top, self.selectionBlock == nil ? 2 : 0)
                 }
             }
             .overlay(alignment: self.submenuIndicatorAlignment) {
