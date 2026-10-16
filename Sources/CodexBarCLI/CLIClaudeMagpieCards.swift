@@ -11,6 +11,7 @@ enum CLIClaudeMagpieCards {
         var output = UsageCommandOutput()
         do {
             let rows = try await MagpieQuotasReader.readRows(quotasURL: quotasURL, transport: transport)
+            // Provider-specific by design: this legacy cards command renders only Claude account cards.
             let accounts = MagpieUsageProjection.providerAccountSnapshots(
                 for: .claude, in: MagpieAccountProjection.snapshots(from: rows), now: renderOptions.now)
             output.cards = accounts.map { account in

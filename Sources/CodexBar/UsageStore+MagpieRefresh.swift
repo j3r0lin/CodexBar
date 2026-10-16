@@ -82,6 +82,7 @@ extension UsageStore {
         if self.settings.magpieSourceEnabled {
             // magpie replaces the ambient account entirely, so even one account is shown as a card.
             return ClaudeAccountSource(
+                // Provider-specific by design: the Claude account bridge also serves claude-swap consumers.
                 accounts: MagpieUsageProjection.providerAccountSnapshots(
                     for: .claude,
                     in: self.magpieAccountSnapshots),
@@ -327,6 +328,7 @@ extension UsageStore {
     /// ambient usage, account snapshots, diagnostics, token cost, and Codex credits/dashboard
     /// state. Disk-backed user data is never touched.
     func clearCredentialDerivedStateForMagpie(_ provider: UsageProvider) {
+        // Provider-specific by design: Claude and Codex own additional credential-derived caches to clear.
         if provider == .claude {
             // Same coverage as a credential swap, including local token cost.
             self.clearClaudeCredentialDerivedStateForCredentialSwap(keepsLocalTokenCost: false)

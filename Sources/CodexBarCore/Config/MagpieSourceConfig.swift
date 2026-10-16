@@ -20,6 +20,7 @@ public struct MagpieSourceConfig: Codable, Sendable, Equatable {
     /// Legacy Claude-only keys migrated into this config. Migration runs only when the legacy
     /// switch was explicitly on; an explicit off stays off by simply not creating the config.
     static func migrating(from providers: [ProviderConfig]) -> MagpieSourceConfig? {
+        // Provider-specific by design: only the former Claude source switch has legacy keys to migrate.
         guard let claude = providers.first(where: { $0.id.firstPartyProvider == .claude }),
               claude.claudeMagpieEnabled == true
         else { return nil }

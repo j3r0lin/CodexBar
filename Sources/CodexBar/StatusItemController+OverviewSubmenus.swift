@@ -42,6 +42,7 @@ extension StatusItemController {
             width: width,
             // The pool holds the parent menu's row views; a detail card built first would take one of them.
             recyclesView: false))
+        // Provider-specific by design: Claude retains its existing per-account refresh action.
         if row.isMagpie, row.nativeProvider == .claude, let accountID = row.accountID {
             submenu.addItem(.separator())
             submenu.addItem(self.makeRefreshClaudeAccountItem(accountID))

@@ -421,6 +421,7 @@ extension UsageStore {
         bypassCoalescing: Bool = false,
         allowCodexUsageBackfill: Bool = true) async
     {
+        // Provider-specific by design: OpenAI dashboard and cookie reads belong only to native Codex.
         guard self.providerSourceRoute(for: .codex).isNative else { return }
         self.syncOpenAIWebState()
         guard self.isEnabled(.codex),
@@ -500,6 +501,7 @@ extension UsageStore {
     }
 
     func scheduleOpenAIDashboardRefreshIfNeeded(expectedGuard: CodexAccountScopedRefreshGuard? = nil) {
+        // Provider-specific by design: OpenAI dashboard and cookie reads belong only to native Codex.
         guard self.providerSourceRoute(for: .codex).isNative else { return }
         self.syncOpenAIWebState()
         let allowCurrentSnapshotFallback = expectedGuard?.source == .liveSystem && expectedGuard?
@@ -886,6 +888,7 @@ extension UsageStore {
     }
 
     func importOpenAIDashboardBrowserCookiesNow() async {
+        // Provider-specific by design: OpenAI dashboard and cookie reads belong only to native Codex.
         guard self.providerSourceRoute(for: .codex).isNative else { return }
         self.resetOpenAIWebDebugLog(context: "manual import")
         let targetEmail = self.currentCodexOpenAIWebTargetEmail(
@@ -1183,6 +1186,7 @@ extension UsageStore {
     }
 
     private var canReadNativeCodexCookies: Bool {
+        // Provider-specific by design: native Codex owns all OpenAI browser-cookie reads.
         self.providerSourceRoute(for: .codex).isNative && !Task.isCancelled
     }
 
@@ -1526,6 +1530,7 @@ extension UsageStore {
     }
 
     func syncOpenAIWebState() {
+        // Provider-specific by design: OpenAI dashboard and cookie reads belong only to native Codex.
         guard self.providerSourceRoute(for: .codex).isNative else { return }
         // Provider-specific by design: the OpenAI WKWebView lifecycle is enabled only for Codex consumer access.
         guard self.isEnabled(.codex),

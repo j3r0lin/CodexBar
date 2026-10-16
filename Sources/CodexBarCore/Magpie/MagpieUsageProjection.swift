@@ -29,6 +29,7 @@ public enum MagpieUsageProjection {
         let primary: RateWindow?
         let secondary: RateWindow?
         switch provider {
+        // Provider-specific by design: Kimi native slots are weekly first, session second.
         case .kimi:
             // Kimi's native layout is primary=weekly, secondary=session.
             primary = weekly.map(self.rateWindow)
