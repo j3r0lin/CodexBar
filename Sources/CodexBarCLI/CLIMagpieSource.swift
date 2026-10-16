@@ -63,9 +63,14 @@ extension CodexBarCLI {
             guard let account = accounts.first(where: { $0.provider.nativeProvider == provider && $0.isActive }),
                   let usage = MagpieUsageProjection.usageSnapshot(for: account)
             else { throw UsageError.noRateLimitsFound }
-            return ProviderFetchOutcome(result: .success(ProviderFetchResult(
-                usage: usage, credits: nil, dashboard: nil, sourceLabel: "magpie",
-                strategyID: "magpie", strategyKind: .web)), attempts: [])
+            let result = ProviderFetchResult(
+                usage: usage,
+                credits: nil,
+                dashboard: nil,
+                sourceLabel: "magpie",
+                strategyID: "magpie",
+                strategyKind: .web)
+            return ProviderFetchOutcome(result: .success(result), attempts: [])
         } catch {
             return ProviderFetchOutcome(result: .failure(error), attempts: [])
         }

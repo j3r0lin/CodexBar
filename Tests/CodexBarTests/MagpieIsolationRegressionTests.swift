@@ -151,7 +151,9 @@ private actor MagpieRegressionGate {
 
     func enterAndWait() async {
         self.entered = true
-        for waiter in self.enteredWaiters { waiter.resume() }
+        for waiter in self.enteredWaiters {
+            waiter.resume()
+        }
         self.enteredWaiters = []
         if self.released { return }
         await withCheckedContinuation { self.releaseWaiter = $0 }

@@ -31,8 +31,11 @@ extension CodexBarCLI {
         let config = Self.loadConfig(output: output)
         let route = await CLIMagpieSource().route(for: .codex, configuration: config.magpie)
         guard route.isNative else {
-            Self.exit(code: .failure, message: "Native Codex accounts are unavailable while magpie owns Codex.",
-                      output: output, kind: .runtime)
+            Self.exit(
+                code: .failure,
+                message: "Native Codex accounts are unavailable while magpie owns Codex.",
+                output: output,
+                kind: .runtime)
         }
         do {
             let store = FileManagedCodexAccountStore()

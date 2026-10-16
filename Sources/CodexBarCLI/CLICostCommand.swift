@@ -12,8 +12,11 @@ extension CodexBarCLI {
             let config = Self.loadConfig(output: output)
             let route = await CLIMagpieSource().route(for: .codex, configuration: config.magpie)
             guard route.isNative else {
-                Self.exit(code: .failure, message: "Local cost is unavailable while magpie owns this provider.",
-                          output: output, kind: .runtime)
+                Self.exit(
+                    code: .failure,
+                    message: "Local cost is unavailable while magpie owns this provider.",
+                    output: output,
+                    kind: .runtime)
             }
             await Self.runCodexIdentifiedUsage(values, output: output)
             return
@@ -21,15 +24,23 @@ extension CodexBarCLI {
         await Self.runStandardCost(values, output: output)
     }
 
-    private static func runStandardCost(_ values: ParsedValues, output: CLIOutputPreferences) async {
-        let config = CodexBarCLI.loadConfig(output: output)
-        let selection = CodexBarCLI.decodeProvider(from: values, config: config)
+    private static func nativeCostProviders(
+        _ candidates: [UsageProvider],
+        config: CodexBarConfig) async -> [UsageProvider]
+    {
         let source = CLIMagpieSource()
         var providers: [UsageProvider] = []
-        for provider in Self.costProviders(from: selection) {
+        for provider in candidates {
             let route = await source.route(for: provider, configuration: config.magpie)
             if route.isNative { providers.append(provider) }
         }
+        return providers
+    }
+
+    private static func runStandardCost(_ values: ParsedValues, output: CLIOutputPreferences) async {
+        let config = CodexBarCLI.loadConfig(output: output)
+        let selection = CodexBarCLI.decodeProvider(from: values, config: config)
+        let providers = await Self.nativeCostProviders(Self.costProviders(from: selection), config: config)
         let unsupported = selection.asList.filter { !Self.costSupportedProviders.contains($0) }
         if !unsupported.isEmpty {
             let names = unsupported
