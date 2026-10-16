@@ -263,13 +263,17 @@ struct AccountUsageDetailView: View {
         let lanes = [snapshot.primary, snapshot.secondary, snapshot.tertiary].compactMap { window -> Block? in
             guard let window, let used = OverviewCompactAccountRow.used(window) else { return nil }
             return Block(
-                title: Self.windowTitle(window), window: window, used: used,
+                title: Self.windowTitle(window),
+                window: window,
+                used: used,
                 resetText: window.resetsAt.map(Self.resetText))
         }
         let extras = (snapshot.extraRateWindows ?? []).compactMap { named -> Block? in
             guard named.usageKnown, let used = OverviewCompactAccountRow.used(named.window) else { return nil }
             return Block(
-                title: named.title, window: named.window, used: used,
+                title: named.title,
+                window: named.window,
+                used: used,
                 resetText: named.window.resetsAt.map(Self.resetText))
         }
         return lanes + extras
