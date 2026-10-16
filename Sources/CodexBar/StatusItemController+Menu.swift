@@ -764,7 +764,7 @@ extension StatusItemController {
                             width: width))
                         continue
                     }
-                    let (selector, represented) = self.selector(for: action)
+                    let (selector, represented) = self.selector(for: action, provider: provider)
                     let item = NSMenuItem(title: localizedTitle, action: selector, keyEquivalent: "")
                     item.target = self
                     item.representedObject = represented

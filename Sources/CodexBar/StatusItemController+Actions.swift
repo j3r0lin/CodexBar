@@ -333,6 +333,22 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
         self.updater.checkForUpdates(nil)
     }
 
+    func actionProvider(for sender: NSMenuItem) -> UsageProvider {
+        (sender.representedObject as? String).flatMap(UsageProvider.init(rawValue:))
+            ?? self.lastMenuProvider?.firstPartyProvider ?? .codex
+    }
+
+    @objc func openDashboardFromMenuItem(_ sender: NSMenuItem) {
+        guard let url = self.dashboardURL(for: self.actionProvider(for: sender)) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    @objc func openChangelogFromMenuItem(_ sender: NSMenuItem) {
+        let metadata = self.store.metadata(for: self.actionProvider(for: sender))
+        guard let value = metadata.changelogURL, let url = URL(string: value) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
     @objc func openDashboard() {
         // Provider-specific by design: Codex remains the historical action fallback when no provider is selected.
         let preferred = self.lastMenuProvider?.firstPartyProvider
@@ -461,7 +477,8 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
     }
 
     @objc func openStatusPageFromMenuItem(_ sender: NSMenuItem) {
-        let provider = (sender.identifier?.rawValue).flatMap(UsageProvider.init(rawValue:))
+        let provider = (sender.representedObject as? String).flatMap(UsageProvider.init(rawValue:))
+            ?? (sender.identifier?.rawValue).flatMap(UsageProvider.init(rawValue:))
             ?? self.lastMenuProvider?.firstPartyProvider
             ?? .codex
         self.openStatusPage(for: provider)
