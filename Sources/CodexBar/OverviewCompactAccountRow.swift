@@ -85,6 +85,9 @@ struct OverviewCompactAccountRow: View {
     /// The account keeps its readings alongside an error (last-known retention, unstable
     /// identity); the name warns instead of the readings disappearing.
     var showsErrorFlag = false
+    /// Magpie rows pass every window the gateway reported, each under its own label, instead of
+    /// the short/long slots a native snapshot fills.
+    var namedLines: [Line]? = nil
     var now = Date()
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
@@ -93,10 +96,6 @@ struct OverviewCompactAccountRow: View {
         let used: Double
         let resetsAt: Date?
     }
-
-    /// Magpie rows pass every window the gateway reported, each under its own label, instead of
-    /// the short/long slots a native snapshot fills.
-    var namedLines: [Line]? = nil
 
     /// Every line puts the same element in the same column, so each part is sized here and the bar takes
     /// whatever the line has left.
