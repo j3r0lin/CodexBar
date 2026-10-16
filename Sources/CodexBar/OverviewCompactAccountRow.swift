@@ -170,7 +170,7 @@ struct OverviewCompactAccountRow: View {
         } else {
             Text(self.name)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(MenuHighlightStyle.primary(self.isHighlighted))
+                .foregroundStyle(Color.white)
         }
     }
 
