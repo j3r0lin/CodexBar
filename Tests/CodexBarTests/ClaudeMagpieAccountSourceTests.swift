@@ -59,8 +59,6 @@ struct MagpieSourceTransitionTests {
     @Test(arguments: ["enabling", "firstFailure", "laterFailure", "disappeared"])
     func `managed refresh performs no sensitive native IO before context construction`(state: String) async {
         let store = self.makeStore()
-        var constructedContexts: [UsageProvider] = []
-        store._test_fetchContextWillBuild = { constructedContexts.append($0) }
         let spy = NativeIOSpy()
         store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
         {"data":[{"provider":"claude","windows":[]},{"provider":"codex","windows":[]},
@@ -85,7 +83,6 @@ struct MagpieSourceTransitionTests {
             for provider: UsageProvider in [.claude, .codex, .kimi, .opencodego] {
                 await store.refreshProvider(provider, allowDisabled: true)
                 _ = await store.debugLog(for: provider)
-                #expect(constructedContexts.isEmpty)
                 #expect(!store.providerSourceRoute(for: provider).isNative)
                 for kind in NativeProviderIOTestBoundary.Kind.allCases {
                     #expect(spy.count(kind) == 0)
@@ -98,8 +95,6 @@ struct MagpieSourceTransitionTests {
     func `native IO spies intercept real APIs when unified source is off`() async {
         let store = self.makeStore()
         store.settings.magpieSourceEnabled = false
-        var constructedContexts: [UsageProvider] = []
-        store._test_fetchContextWillBuild = { constructedContexts.append($0) }
         let spy = NativeIOSpy()
         store._test_providerFetchOutcomeOverride = { provider in
             ProviderFetchOutcome(result: .failure(ProviderFetchError.noAvailableStrategy(provider)), attempts: [])
@@ -122,7 +117,6 @@ struct MagpieSourceTransitionTests {
             _ = try? await SubprocessRunner.run(
                 binary: "/fixture/tool", arguments: [], environment: [:], timeout: 1, label: "fixture")
         }
-        #expect(Set(constructedContexts) == Set([UsageProvider.claude, .codex, .kimi, .opencodego]))
         for kind in NativeProviderIOTestBoundary.Kind.allCases {
             #expect(spy.count(kind) > 0)
         }

@@ -34,6 +34,7 @@ public enum ProviderSourceRoute: Sendable, Equatable {
 /// Substitutes sensitive native IO before any real access in boundary tests.
 public enum NativeProviderIOTestBoundary {
     public enum Kind: String, Sendable, CaseIterable {
+        case context
         case file
         case credential
         case keychain
