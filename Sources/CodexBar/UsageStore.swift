@@ -590,7 +590,9 @@ final class UsageStore {
             defaultsKey: Self.sessionLimitResetDetectorDefaultsKey,
             logName: "session")
         self.weeklyLimitResetDetectorStates = Self.loadWeeklyLimitResetDetectorStates(from: settings.userDefaults)
-        if let codexAccountUsageSnapshotStore = self.codexAccountUsageSnapshotStore {
+        if self.providerSourceRoute(for: .codex).isNative,
+           let codexAccountUsageSnapshotStore = self.codexAccountUsageSnapshotStore
+        {
             self.codexAccountSnapshots = codexAccountUsageSnapshotStore.load(
                 for: self.freshCodexVisibleAccountsForSnapshotHydration())
         }

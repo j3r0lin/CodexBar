@@ -71,7 +71,7 @@ public enum MagpieUsageProjection {
                 canActivate: false,
                 usesLastKnownUsage: account.usesLastKnownUsage,
                 snapshot: snapshot,
-                error: account.error ?? (snapshot == nil ? "No usage windows reported." : nil),
+                error: account.error,
                 sourceLabel: MagpieAccountProjection.sourceLabel,
                 sourceOrdinal: account.ordinal)
         }

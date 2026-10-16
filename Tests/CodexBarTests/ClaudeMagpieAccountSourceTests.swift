@@ -100,6 +100,31 @@ struct MagpieSourceTransitionTests {
         #expect(!store.providerSourceRoute(for: .opencodego).isNative)
     }
 
+    @Test(arguments: [UsageProvider.claude, .codex, .kimi, .opencodego])
+    func `managed refresh debug and cost paths never enter native work`(provider: UsageProvider) async {
+        let store = self.makeStore()
+        store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
+        {"data":[{"provider":"claude","windows":[{"name":"5 hours","used":1}]},
+          {"provider":"codex","windows":[{"name":"5 hours","used":1}]},
+          {"provider":"kimi-code","windows":[{"name":"5 hours","used":1}]},
+          {"provider":"opencode-go","windows":[{"name":"5 hours","used":1}]}]}
+        """.utf8))
+        var nativeRefreshes = 0
+        var nativeCostReads = 0
+        store._test_providerRefreshOverride = { _ in nativeRefreshes += 1 }
+        store._test_tokenUsageRefreshOverride = { _, _ in nativeCostReads += 1 }
+        store.reconcileMagpieSourceConfiguration()
+        await store.awaitMagpieRefresh()
+        await store.refreshProvider(provider)
+        await store.refreshTokenUsage(provider, force: true)
+        let note = await store.debugLog(for: provider)
+        #expect(nativeRefreshes == 0)
+        #expect(nativeCostReads == 0)
+        if !store.providerSourceRoute(for: provider).isNative {
+            #expect(note.contains("magpie"))
+        }
+    }
+
     @Test
     func `turning the switch off restores native routing`() async {
         let store = self.makeStore()

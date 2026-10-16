@@ -221,30 +221,23 @@ extension StatusMenuTests {
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         // Enabling magpie clears snapshots and schedules a refresh. A transport that never completes keeps
         // that refresh from replacing the fixture with whatever the local magpie happens to serve.
-        store.claudeMagpieTransport = { _ in
+        store.magpieTransport = { _ in
             try await Task.sleep(for: .seconds(3600))
             throw CancellationError()
         }
-        settings.claudeMagpieEnabled = true
+        settings.magpieSourceEnabled = true
         let accountID = ProviderAccountIdentity(source: "magpie", opaqueID: "claude:first@example.com")
-        store.claudeMagpieAccountSnapshots = [
-            ProviderAccountUsageSnapshot(
+        store.magpieAccountSnapshots = [
+            MagpieAccountSnapshot(
                 id: accountID,
-                provider: .claude,
+                provider: MagpieProviderMapping.reference(for: "claude"),
                 displayLabel: "main",
                 accountEmail: "first@example.com",
+                ordinal: 1,
+                windows: [MagpieQuotaWindow(name: "5 hours", usedPercent: 12, resetsAt: nil)],
+                readAt: Date(timeIntervalSince1970: 1_700_000_000),
                 isActive: true,
-                snapshot: UsageSnapshot(
-                    primary: RateWindow(
-                        usedPercent: 12,
-                        windowMinutes: 300,
-                        resetsAt: nil,
-                        resetDescription: nil),
-                    secondary: nil,
-                    updatedAt: Date(timeIntervalSince1970: 1_700_000_000),
-                    identity: nil),
-                error: nil,
-                sourceLabel: "magpie"),
+                error: nil),
         ]
 
         let controller = StatusItemController(

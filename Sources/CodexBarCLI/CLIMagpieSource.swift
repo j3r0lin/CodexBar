@@ -3,12 +3,36 @@ import Foundation
 
 actor CLIMagpieSource {
     private var task: Task<[MagpieQuotaRow], Error>?
+    private var completedAt: Date?
+    private var ownedWireIDs: Set<String> = []
+    private let transport: MagpieQuotasReader.Transport
+
+    init(transport: @escaping MagpieQuotasReader.Transport = MagpieQuotasReader.urlSessionTransport) {
+        self.transport = transport
+    }
+
+    func owns(_ wireID: String) -> Bool {
+        self.ownedWireIDs.contains(wireID)
+    }
 
     func rows(quotasURL: String?) async throws -> [MagpieQuotaRow] {
+        if let completedAt, Date().timeIntervalSince(completedAt) > 1 {
+            self.task = nil
+            self.completedAt = nil
+        }
         if let task { return try await task.value }
-        let task = Task { try await MagpieQuotasReader.readRows(quotasURL: quotasURL) }
+        let transport = self.transport
+        let task = Task { try await MagpieQuotasReader.readRows(quotasURL: quotasURL, transport: transport) }
         self.task = task
-        return try await task.value
+        do {
+            let rows = try await task.value
+            self.ownedWireIDs.formUnion(rows.map(\.provider))
+            self.completedAt = Date()
+            return rows
+        } catch {
+            self.completedAt = Date()
+            throw error
+        }
     }
 }
 
@@ -25,7 +49,8 @@ extension CodexBarCLI {
         var output = UsageCommandOutput()
         do {
             let rows = try await tokenContext.magpieSource.rows(quotasURL: tokenContext.config.magpie?.quotasURL)
-            guard rows.contains(where: { $0.provider == wireID }) else { return nil }
+            let previouslyOwned = await tokenContext.magpieSource.owns(wireID)
+            guard rows.contains(where: { $0.provider == wireID }) || previouslyOwned else { return nil }
             let accounts = MagpieUsageProjection.providerAccountSnapshots(
                 for: provider, in: MagpieAccountProjection.snapshots(from: rows))
             for account in accounts {

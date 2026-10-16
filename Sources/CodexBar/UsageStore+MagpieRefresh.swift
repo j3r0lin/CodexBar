@@ -299,6 +299,7 @@ extension UsageStore {
         let mappedProviders = MagpieProviderMapping.nativeProviders.values
 
         if configuration.enabled {
+            self.clearMagpieAccountState()
             for provider in mappedProviders {
                 self.invalidateProviderRefreshRequests(provider)
                 self.clearCredentialDerivedStateForMagpie(provider)

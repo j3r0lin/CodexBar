@@ -37,7 +37,8 @@ public struct CodexBarConfig: Codable, Sendable {
         self.version = version
         self.providers = providers
         self.hooks = hooks
-        self.magpie = magpie
+        self.magpie = magpie ?? MagpieSourceConfig.migrating(from: providers)
+        MagpieSourceConfig.stripLegacyKeys(from: &self.providers)
     }
 
     public init(from decoder: any Decoder) throws {

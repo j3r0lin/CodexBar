@@ -26,7 +26,7 @@ public struct PreferencesDocument: Codable, Sendable {
         "confettiOnWeeklyLimitResetsEnabled", "limitResetNotificationsEnabled", "menuBarShowsHighestUsage",
         "showOptionalCreditsAndExtraUsage", "providerChangelogLinksEnabled", "providersSortedAlphabetically",
         "refreshAllProvidersOnMenuOpen", "mergeIcons", "mergeIconsStacked",
-        "menuBarColorByProvider",
+        "menuBarColorByProvider", "magpieSourceEnabled",
     ])
     private static let stringChoices: [String: [String]] = [
         "refreshFrequency": [
@@ -49,7 +49,7 @@ public struct PreferencesDocument: Codable, Sendable {
     ])
     private static var keys: Set<String> {
         self.boolKeys.union(self.stringChoices.keys).union(self.thresholdKeys).union([
-            "weeklyProgressWorkDays", "preferredCurrencyCode", "mergedOverviewSelectedProviders",
+            "weeklyProgressWorkDays", "preferredCurrencyCode", "mergedOverviewSelectedProviders", "magpieQuotasURL",
         ])
     }
 
@@ -111,6 +111,7 @@ public struct PreferencesDocument: Codable, Sendable {
         // Optional fields omitted by the encoder still belong to the sync projection.
         let keys = Set(values.keys).union([
             "weeklyProgressWorkDays", "paceVisible", "workdayTickAppearance", "unifiedIconSource",
+            "magpieSourceEnabled", "magpieQuotasURL",
         ])
         values.merge(self.importingPreferences.filter { keys.contains($0.key) }) { _, new in new }
         return try JSONDecoder().decode(SyncedPreferences.self, from: JSONEncoder().encode(values))
@@ -135,10 +136,13 @@ public struct PreferencesDocument: Codable, Sendable {
             // Older exports carry the removed switcher-icons choice; it still imports and is ignored.
             case .bool: Self.boolKeys.contains(key) || key == "switcherShowsIcons"
             case let .string(raw):
-                Self.stringChoices[key]?.contains(raw)
-                    ??
-                    (key == "preferredCurrencyCode" &&
-                        (raw == "auto" || (raw.count == 3 && raw.utf8.allSatisfy { (65...90).contains($0) })))
+                if key == "magpieQuotasURL" {
+                    MagpieQuotasReader.quotasURL(from: raw) != nil
+                } else {
+                    Self.stringChoices[key]?.contains(raw)
+                        ?? (key == "preferredCurrencyCode" &&
+                            (raw == "auto" || (raw.count == 3 && raw.utf8.allSatisfy { (65...90).contains($0) })))
+                }
             case let .integer(number): key == "weeklyProgressWorkDays" && (1...7).contains(number)
             case .null: key == "weeklyProgressWorkDays"
             case let .array(values):
