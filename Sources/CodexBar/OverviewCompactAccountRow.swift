@@ -87,7 +87,7 @@ struct OverviewCompactAccountRow: View {
     var showsErrorFlag = false
     /// Magpie rows pass every window the gateway reported, each under its own label, instead of
     /// the short/long slots a native snapshot fills.
-    var namedLines: [Line]? = nil
+    var namedLines: [Line]?
     var now = Date()
     @Environment(\.menuItemHighlighted) private var isHighlighted
 

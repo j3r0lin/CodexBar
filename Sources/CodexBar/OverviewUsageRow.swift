@@ -67,7 +67,9 @@ struct OverviewUsageRow {
     /// Shown in the detail card under the window blocks, e.g. a last-known retention note.
     let detailErrorText: String?
 
-    var isMagpie: Bool { self.namedWindows != nil }
+    var isMagpie: Bool {
+        self.namedWindows != nil
+    }
 
     static func native(
         provider: UsageProvider,

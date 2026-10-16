@@ -16,9 +16,9 @@ struct AccountUsageDetailView: View {
     let snapshot: UsageSnapshot?
     /// Magpie rows pass every window the gateway reported, each under its own name (Month,
     /// model-scoped weekly, unknown wire names included), instead of the snapshot's lanes.
-    var namedWindows: [OverviewUsageRow.NamedWindow]? = nil
+    var namedWindows: [OverviewUsageRow.NamedWindow]?
     /// Shown under the window blocks, e.g. a last-known retention note on a magpie row.
-    var errorText: String? = nil
+    var errorText: String?
     var width: CGFloat = Self.defaultWidth
     /// Daily peaks, oldest first; nil marks a day without a sample. Empty hides the history.
     var history: [Double?] = []
