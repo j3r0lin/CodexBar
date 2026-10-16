@@ -112,12 +112,7 @@ extension StatusMenuTests {
             PlanUtilizationSeriesHistory(
                 name: .session,
                 windowMinutes: 300,
-                entries: [
-                    PlanUtilizationHistoryEntry(
-                        capturedAt: Date().addingTimeInterval(-3600),
-                        usedPercent: 20,
-                        resetsAt: Date().addingTimeInterval(4 * 3600)),
-                ]),
+                entries: [PlanUtilizationHistoryEntry(capturedAt: Date(), usedPercent: 20, resetsAt: nil)]),
         ])
 
         let controller = StatusItemController(
