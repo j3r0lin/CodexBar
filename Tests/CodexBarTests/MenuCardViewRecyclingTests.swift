@@ -810,3 +810,4 @@ extension StatusMenuTests {
         controller.menu(menu, willHighlight: menu.items[1], eventType: .mouseMoved)
         #expect(updatedView.highlightState.isHighlighted)
     }
+}
