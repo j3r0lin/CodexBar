@@ -82,7 +82,10 @@ extension StatusMenuTests {
             ]
             let items = detail.items.filter { item in item.action.map(actions.contains) == true }
             #expect(items.contains { $0.action == actions[0] })
-            #expect(items.contains { $0.action == actions[1] })
+            // Only some providers publish a status page.
+            if provider == .claude {
+                #expect(items.contains { $0.action == actions[1] })
+            }
             for item in items {
                 #expect(controller.actionProvider(for: item) == provider)
             }
