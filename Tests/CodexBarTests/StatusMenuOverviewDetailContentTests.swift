@@ -353,4 +353,3 @@ extension StatusMenuTests {
         }
     }
 }
-
