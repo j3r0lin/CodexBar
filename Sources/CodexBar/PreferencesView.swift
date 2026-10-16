@@ -188,7 +188,7 @@ struct PreferencesView: View {
     private var detailView: some View {
         switch self.selection.pane {
         case .general:
-            GeneralPane(settings: self.settings)
+            GeneralPane(settings: self.settings, store: self.store)
         case .iCloudSync:
             ICloudSyncPane(settings: self.settings, state: self.cloudSyncState)
         case .usageSpend:

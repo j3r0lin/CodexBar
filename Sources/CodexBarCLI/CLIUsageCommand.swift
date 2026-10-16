@@ -184,6 +184,11 @@ extension CodexBarCLI {
         publishPartial: CLIServeOperationCoordinator<UsageCommandOutput>
             .PublishPartial? = nil) async -> UsageCommandOutput
     {
+        if let output = await Self.fetchMagpieUsageIfOwned(
+            provider: provider, status: status, tokenContext: tokenContext, command: command)
+        {
+            return output
+        }
         // Provider-specific by design: Codex can enumerate reconciled live, managed, and profile-home accounts.
         if provider == .codex, command.includeAllCodexAccounts {
             let projection = tokenContext.visibleCodexAccounts()

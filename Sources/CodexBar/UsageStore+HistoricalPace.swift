@@ -149,6 +149,7 @@ extension UsageStore {
     }
 
     func recordCodexHistoricalSampleIfNeeded(snapshot: UsageSnapshot) {
+        guard self.providerSourceRoute(for: .codex).isNative else { return }
         guard self.settings.historicalTrackingEnabled else { return }
         let projection = self.codexConsumerProjection(
             surface: .liveCard,
@@ -172,6 +173,10 @@ extension UsageStore {
     }
 
     func refreshHistoricalDatasetIfNeeded() async {
+        guard self.providerSourceRoute(for: .codex).isNative else {
+            self.setCodexHistoricalDataset(nil, accountKey: nil)
+            return
+        }
         if !self.settings.historicalTrackingEnabled {
             self.setCodexHistoricalDataset(nil, accountKey: nil)
             return

@@ -219,7 +219,7 @@ extension CodexBarCLI {
     {
         let provider = descriptor.id
         // Provider-specific by design: magpie owns Claude accounts, so Claude browser cookies are never refreshed.
-        if tokenContext.settingsSnapshot(for: provider, account: nil)?.claude?.magpieQuotasURL != nil {
+        if tokenContext.config.magpie?.enabled == true && MagpieProviderMapping.wireID(for: provider) != nil {
             return CookieRefreshResult(
                 provider: descriptor.cli.name,
                 status: .skipped,

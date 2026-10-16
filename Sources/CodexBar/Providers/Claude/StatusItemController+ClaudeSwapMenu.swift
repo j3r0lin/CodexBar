@@ -219,7 +219,7 @@ extension StatusItemController {
 
     /// While magpie owns Claude, each magpie account gets its own Overview row.
     var claudeAccountTabsEnabled: Bool {
-        self.settings.claudeMagpieEnabled && !self.store.claudeAccountSource.accounts.isEmpty
+        self.settings.magpieSourceEnabled && !self.store.claudeAccountSource.accounts.isEmpty
     }
 
     var selectedClaudeTabAccount: ProviderAccountUsageSnapshot? {
@@ -264,7 +264,7 @@ extension StatusItemController {
               self.store.claudeAccountSource.accounts.contains(where: { $0.id.opaqueID == opaqueID })
         else { return }
         Task { @MainActor [weak self] in
-            await self?.store.refreshClaudeMagpieAccounts()
+            await self?.store.refreshMagpieAccounts()
         }
     }
 }

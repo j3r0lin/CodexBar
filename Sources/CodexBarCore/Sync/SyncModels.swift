@@ -328,6 +328,9 @@ public struct SyncedPreferences: Codable, Sendable {
     public var providersSortedAlphabetically: Bool
     public var refreshFrequency: String
     public var refreshAllProvidersOnMenuOpen: Bool
+    /// Three-state like accentColor: nil means an older sender that predates the magpie switch.
+    public var magpieSourceEnabled: Bool?
+    public var magpieQuotasURL: String?
 
     public init(
         statusChecksEnabled: Bool,
@@ -361,7 +364,9 @@ public struct SyncedPreferences: Codable, Sendable {
         preferredCurrencyCode: String,
         providersSortedAlphabetically: Bool,
         refreshFrequency: String,
-        refreshAllProvidersOnMenuOpen: Bool)
+        refreshAllProvidersOnMenuOpen: Bool,
+        magpieSourceEnabled: Bool? = nil,
+        magpieQuotasURL: String? = nil)
     {
         self.statusChecksEnabled = statusChecksEnabled
         self.sessionQuotaNotificationsEnabled = sessionQuotaNotificationsEnabled
@@ -395,6 +400,8 @@ public struct SyncedPreferences: Codable, Sendable {
         self.providersSortedAlphabetically = providersSortedAlphabetically
         self.refreshFrequency = refreshFrequency
         self.refreshAllProvidersOnMenuOpen = refreshAllProvidersOnMenuOpen
+        self.magpieSourceEnabled = magpieSourceEnabled
+        self.magpieQuotasURL = magpieQuotasURL
     }
 }
 

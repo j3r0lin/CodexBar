@@ -77,6 +77,7 @@ extension UsageStore {
     func prepareRefreshState(for provider: UsageProvider? = nil) {
         // Provider-specific by design: Codex active-source correction reconciles managed profile filesystem state.
         guard provider == nil || provider == .codex else { return }
+        guard self.providerSourceRoute(for: .codex).isNative else { return }
         _ = self.settings.persistResolvedCodexActiveSourceCorrectionIfNeeded()
     }
 
@@ -101,6 +102,11 @@ extension UsageStore {
     {
         // Codex source reconciliation can persist a settings correction. Perform it before
         // capturing the publication revision so the request cannot invalidate itself.
+        self.reconcileMagpieSourceConfiguration()
+        if !self.providerSourceRoute(for: provider).isNative {
+            await self.awaitMagpieRefresh()
+            guard self.providerSourceRoute(for: provider).isNative else { return }
+        }
         self.prepareRefreshState(for: provider)
         while coalesceIfRefreshing,
               let existingState = self.providerRefreshCoordinator.coalescingState(for: provider.instanceID)
@@ -297,6 +303,10 @@ extension UsageStore {
         retryMode: ProviderRefreshRetryMode?,
         codexAccountIDs: Set<String>?) async -> ProviderRefreshRetryMode?
     {
+        guard self.providerSourceRoute(for: provider).isNative else {
+            await self.awaitMagpieRefresh()
+            return nil
+        }
         guard let spec = await self.providerRefreshSpec(provider) else { return nil }
         guard self.isCurrentProviderRefreshGeneration(provider, generation: generation) else { return nil }
         let codexExplicitPAT = provider == .codex && self.settings.codexUsageDataSource == .pat
@@ -329,11 +339,6 @@ extension UsageStore {
         }
 
         if provider == .claude {
-            guard !self.settings.claudeMagpieEnabled else {
-                // magpie owns Claude accounts: never run the ambient Claude Code credential fetch or claude-swap.
-                self.scheduleClaudeMagpieAccountRefresh(generation: generation)
-                return nil
-            }
             self.scheduleClaudeSwapAccountRefresh(generation: generation)
         }
 

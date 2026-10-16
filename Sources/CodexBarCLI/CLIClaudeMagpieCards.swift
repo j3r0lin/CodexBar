@@ -5,15 +5,14 @@ enum CLIClaudeMagpieCards {
     static func fetch(
         quotasURL: String?,
         renderOptions: CLIClaudeSwapCardsRenderOptions,
-        transport: @escaping ClaudeMagpieAccountReader.Transport = ClaudeMagpieAccountReader.urlSessionTransport)
+        transport: @escaping MagpieQuotasReader.Transport = MagpieQuotasReader.urlSessionTransport)
         async -> UsageCommandOutput
     {
         var output = UsageCommandOutput()
         do {
-            let accounts = try await ClaudeMagpieAccountReader.readAccounts(
-                quotasURL: quotasURL,
-                now: renderOptions.now,
-                transport: transport)
+            let rows = try await MagpieQuotasReader.readRows(quotasURL: quotasURL, transport: transport)
+            let accounts = MagpieUsageProjection.providerAccountSnapshots(
+                for: .claude, in: MagpieAccountProjection.snapshots(from: rows), now: renderOptions.now)
             output.cards = accounts.map { account in
                 CLICardsRenderer.makeClaudeSwapCard(account: account, renderOptions: renderOptions)
             }
@@ -23,7 +22,7 @@ enum CLIClaudeMagpieCards {
             output.cardFailures.append(CLICardFailure(
                 // Provider-specific by design: a magpie read failure is attached to the Claude card lane.
                 provider: .claude,
-                accountLabel: ClaudeMagpieAccountProjection.sourceLabel,
+                accountLabel: MagpieAccountProjection.sourceLabel,
                 message: diagnostic.isEmpty ? "magpie quota read failed." : diagnostic))
             output.exitCode = .failure
         }

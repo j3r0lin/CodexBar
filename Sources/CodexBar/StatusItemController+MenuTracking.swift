@@ -433,7 +433,7 @@ extension StatusItemController {
 
             if target == .claude {
                 parts.append(Self.menuIdentityField(self.store.claudeSwapLastError ?? ""))
-                parts.append(Self.menuIdentityField(self.store.claudeMagpieLastError ?? ""))
+                parts.append(Self.menuIdentityField(self.store.magpieLastError ?? ""))
                 for accountSnapshot in self.store.claudeAccountSource.accounts {
                     parts.append(Self.menuIdentityField(accountSnapshot.id.opaqueID))
                     parts.append(accountSnapshot.isActive ? "active" : "inactive")

@@ -31,24 +31,10 @@ extension CodexBarCLI {
 
         for provider in providerList {
             let status = setup.includeStatus ? await Self.fetchStatus(for: provider) : nil
-            let claudeMagpieEligible = CLIClaudeSwapCards.isEligible(
-                provider: provider,
-                integrationEnabled: claudeConfig?.claudeMagpieEnabled == true,
-                hasExplicitAccountSelection: setup.tokenSelection.usesOverride,
-                sourceModeOverride: command.sourceModeOverride)
-            if claudeMagpieEligible {
-                // magpie owns Claude accounts, so the ambient credential fetch and claude-swap never run.
-                let result = await CLIClaudeMagpieCards.fetch(
-                    quotasURL: claudeConfig?.sanitizedClaudeMagpieQuotasURL,
-                    renderOptions: CLIClaudeSwapCardsRenderOptions(
-                        status: status,
-                        useColor: command.useColor,
-                        resetStyle: command.resetStyle,
-                        weeklyWorkDays: command.weeklyWorkDays,
-                        now: Date()))
-                if result.exitCode != .success {
-                    exitCode = result.exitCode
-                }
+            if let result = await Self.fetchMagpieUsageIfOwned(
+                provider: provider, status: status, tokenContext: tokenContext, command: command)
+            {
+                if result.exitCode != .success { exitCode = result.exitCode }
                 cards.append(contentsOf: result.cards)
                 failures.append(contentsOf: result.cardFailures)
                 continue

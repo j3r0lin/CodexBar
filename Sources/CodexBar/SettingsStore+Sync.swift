@@ -60,7 +60,9 @@ extension SettingsStore {
             preferredCurrencyCode: self.preferredCurrencyCode,
             providersSortedAlphabetically: self.providersSortedAlphabetically,
             refreshFrequency: self.refreshFrequency.rawValue,
-            refreshAllProvidersOnMenuOpen: self.refreshAllProvidersOnMenuOpen)
+            refreshAllProvidersOnMenuOpen: self.refreshAllProvidersOnMenuOpen,
+            magpieSourceEnabled: self.magpieSourceEnabled,
+            magpieQuotasURL: self.magpieQuotasURL)
     }
 
     func applySyncedPreferences(_ preferences: SyncedPreferences) {
@@ -104,6 +106,13 @@ extension SettingsStore {
             self.refreshFrequency = refreshFrequency
         }
         self.refreshAllProvidersOnMenuOpen = preferences.refreshAllProvidersOnMenuOpen
+        // Nil means the sender predates the magpie switch and must not change the local value.
+        if let magpieSourceEnabled = preferences.magpieSourceEnabled {
+            self.magpieSourceEnabled = magpieSourceEnabled
+        }
+        if let magpieQuotasURL = preferences.magpieQuotasURL {
+            self.magpieQuotasURL = magpieQuotasURL
+        }
     }
 
     func canEnableProviderFromSync(_ provider: UsageProvider, localConfig: ProviderConfig) -> Bool {

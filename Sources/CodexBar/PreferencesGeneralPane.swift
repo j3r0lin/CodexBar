@@ -86,6 +86,7 @@ enum PreferredCurrencyOption {
 @MainActor
 struct GeneralPane: View {
     @Bindable var settings: SettingsStore
+    @Bindable var store: UsageStore
 
     var body: some View {
         Form {
@@ -145,6 +146,27 @@ struct GeneralPane: View {
                     optionLabel: { option in Text(option.label) })
 
                 Toggle(L("refresh_on_open_title"), isOn: self.$settings.refreshAllProvidersOnMenuOpen)
+
+                Toggle("Use magpie for gateway providers", isOn: self.$settings.magpieSourceEnabled)
+                Text("Gateway providers do not require local login. Cost, credits, and history are unavailable. " +
+                    "The previous Claude-only switch now applies to every provider reported by magpie.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if self.settings.magpieSourceEnabled {
+                    TextField("magpie quotas URL", text: self.$settings.magpieQuotasURL,
+                              prompt: Text(MagpieQuotasReader.defaultQuotasURL))
+                    Text(self.store.magpieTakeoverWireIDs.sorted().map {
+                        MagpieProviderMapping.reference(for: $0).displayName
+                    }.joined(separator: ", "))
+                        .font(.caption)
+                    if let error = self.store.magpieLastError {
+                        Text(error).foregroundStyle(.secondary)
+                    } else if let date = self.store.magpieLastRefreshAt {
+                        Text("Updated \(date.relativeDescription())").font(.caption)
+                    } else {
+                        Text("Waiting for magpie discovery").font(.caption)
+                    }
+                }
 
                 SettingsMenuPicker(
                     selection: self.$settings.backgroundWorkLowPowerModePreference,

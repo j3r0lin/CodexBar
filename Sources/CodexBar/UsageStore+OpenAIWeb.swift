@@ -421,6 +421,7 @@ extension UsageStore {
         bypassCoalescing: Bool = false,
         allowCodexUsageBackfill: Bool = true) async
     {
+        guard self.providerSourceRoute(for: .codex).isNative else { return }
         self.syncOpenAIWebState()
         guard self.isEnabled(.codex),
               self.settings.openAIWebAccessEnabled,
@@ -499,6 +500,7 @@ extension UsageStore {
     }
 
     func scheduleOpenAIDashboardRefreshIfNeeded(expectedGuard: CodexAccountScopedRefreshGuard? = nil) {
+        guard self.providerSourceRoute(for: .codex).isNative else { return }
         self.syncOpenAIWebState()
         let allowCurrentSnapshotFallback = expectedGuard?.source == .liveSystem && expectedGuard?
             .identity == .unresolved
@@ -884,6 +886,7 @@ extension UsageStore {
     }
 
     func importOpenAIDashboardBrowserCookiesNow() async {
+        guard self.providerSourceRoute(for: .codex).isNative else { return }
         self.resetOpenAIWebDebugLog(context: "manual import")
         let targetEmail = self.currentCodexOpenAIWebTargetEmail(
             allowCurrentSnapshotFallback: true,
@@ -1519,6 +1522,7 @@ extension UsageStore {
     }
 
     func syncOpenAIWebState() {
+        guard self.providerSourceRoute(for: .codex).isNative else { return }
         // Provider-specific by design: the OpenAI WKWebView lifecycle is enabled only for Codex consumer access.
         guard self.isEnabled(.codex),
               self.settings.openAIWebAccessEnabled,

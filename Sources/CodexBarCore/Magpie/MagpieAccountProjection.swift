@@ -1,0 +1,159 @@
+#if canImport(CryptoKit)
+import CryptoKit
+#else
+import Crypto
+#endif
+import Foundation
+
+/// One magpie-reported account row for one provider, in the narrow magpie model.
+///
+/// Identity is always the opaque fingerprint of (wire provider, lowercased email, lowercased
+/// organization); aliases and row order never participate, so reordered rows and renamed aliases
+/// keep their identity and the same email under different organizations stays distinct without
+/// leaking across providers. Rows without a stable user keep their windows but surface an error
+/// instead of a fabricated identity.
+public struct MagpieAccountSnapshot: Identifiable, Sendable, Equatable {
+    public let id: ProviderAccountIdentity
+    public let provider: MagpieProviderReference
+    /// Display-only label (may contain personal data such as an email); UI redacts in privacy mode.
+    public let displayLabel: String
+    public let accountEmail: String?
+    /// 1-based position within this provider's own listing; privacy-safe `Account N` labels use it.
+    public let ordinal: Int
+    public let windows: [MagpieQuotaWindow]
+    public let readAt: Date?
+    public let isActive: Bool
+    public let usesLastKnownUsage: Bool
+    public let error: String?
+
+    public init(
+        id: ProviderAccountIdentity,
+        provider: MagpieProviderReference,
+        displayLabel: String,
+        accountEmail: String?,
+        ordinal: Int,
+        windows: [MagpieQuotaWindow],
+        readAt: Date?,
+        isActive: Bool,
+        usesLastKnownUsage: Bool = false,
+        error: String?)
+    {
+        self.id = id
+        self.provider = provider
+        self.displayLabel = displayLabel
+        self.accountEmail = accountEmail
+        self.ordinal = ordinal
+        self.windows = windows
+        self.readAt = readAt
+        self.isActive = isActive
+        self.usesLastKnownUsage = usesLastKnownUsage
+        self.error = error
+    }
+
+    /// The same account, with its usage marked as a last-known measurement and an explanatory error.
+    public func retainedAsLastKnown(error: String) -> MagpieAccountSnapshot {
+        MagpieAccountSnapshot(
+            id: self.id,
+            provider: self.provider,
+            displayLabel: self.displayLabel,
+            accountEmail: self.accountEmail,
+            ordinal: self.ordinal,
+            windows: self.windows,
+            readAt: self.readAt,
+            isActive: self.isActive,
+            usesLastKnownUsage: !self.windows.isEmpty,
+            error: error)
+    }
+}
+
+public enum MagpieAccountProjection {
+    public static let sourceName = "magpie"
+    public static let sourceLabel = "magpie"
+
+    /// Error shown for rows whose wire `user` carries no email, so identity cannot be derived.
+    public static let unstableIdentityError = "magpie did not report a stable account identity for this row."
+
+    /// Opaque fingerprint of (wire provider, lowercased email, lowercased organization). Persisted
+    /// surfaces (widgets) store this instead of any email-bearing identifier.
+    public static func identityFingerprint(wireID: String, email: String, organization: String) -> String {
+        let key = "\(self.sourceName)\u{0}\(wireID)\u{0}\(email.lowercased())\u{0}\(organization.lowercased())"
+        return SHA256.hash(data: Data(key.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+
+    public static func ownershipFingerprint(for account: MagpieAccountSnapshot) -> String? {
+        guard account.id.source == self.sourceName else { return nil }
+        return account.id.opaqueID
+    }
+
+    /// Projects all rows into account snapshots, preserving every provider magpie returns,
+    /// including unknown ones. Rows are grouped by provider; within a provider the active row
+    /// comes first, matching the source's own order otherwise.
+    public static func snapshots(from rows: [MagpieQuotaRow]) -> [MagpieAccountSnapshot] {
+        var wireOrder: [String] = []
+        var rowsByWire: [String: [MagpieQuotaRow]] = [:]
+        for row in rows {
+            if rowsByWire[row.provider] == nil { wireOrder.append(row.provider) }
+            rowsByWire[row.provider, default: []].append(row)
+        }
+        return wireOrder.flatMap { wireID in
+            self.snapshots(
+                for: MagpieProviderMapping.reference(for: wireID),
+                rows: rowsByWire[wireID] ?? [])
+        }
+    }
+
+    private static func snapshots(
+        for reference: MagpieProviderReference,
+        rows allRows: [MagpieQuotaRow]) -> [MagpieAccountSnapshot]
+    {
+        // The same email and organization (compared case-insensitively) is the same account and
+        // keeps its first row. Distinct organizations under one email stay separate accounts.
+        var seenRows: Set<String> = []
+        let uniqueRows = allRows.filter { row in
+            row.email.isEmpty ||
+                seenRows.insert("\(row.email.lowercased())\u{0}\(row.organization.lowercased())").inserted
+        }
+        let emailCounts = uniqueRows.reduce(into: [String: Int]()) { counts, row in
+            counts[row.email.lowercased(), default: 0] += 1
+        }
+        let activeIndex = uniqueRows.firstIndex(where: \.isLast) ?? (uniqueRows.isEmpty ? nil : 0)
+        let projected = uniqueRows.enumerated().map { index, row -> MagpieAccountSnapshot in
+            let duplicated = !row.email.isEmpty && emailCounts[row.email.lowercased(), default: 0] > 1
+            let providerIdentity = row.email.isEmpty && allRows.count == 1
+            let ambiguousIdentity = row.email.isEmpty && !providerIdentity
+            let fingerprint = ambiguousIdentity
+                ? UUID().uuidString
+                : self.identityFingerprint(
+                    wireID: reference.wireID,
+                    email: providerIdentity ? "\u{0}provider" : row.email,
+                    organization: providerIdentity ? "" : row.organization)
+            let identityError = ambiguousIdentity ? self.unstableIdentityError : nil
+            return MagpieAccountSnapshot(
+                id: ProviderAccountIdentity(source: self.sourceName, opaqueID: fingerprint),
+                provider: reference,
+                displayLabel: row.email.isEmpty
+                    ? reference.displayName
+                    : self.displayLabel(for: row, reference: reference, duplicated: duplicated),
+                accountEmail: row.email.isEmpty ? nil : row.email,
+                ordinal: index + 1,
+                windows: row.windows,
+                readAt: row.readAt,
+                isActive: index == activeIndex,
+                error: identityError ?? row.error)
+        }
+        return projected.filter(\.isActive) + projected.filter { !$0.isActive }
+    }
+
+    private static func displayLabel(
+        for row: MagpieQuotaRow,
+        reference: MagpieProviderReference,
+        duplicated: Bool) -> String
+    {
+        if let alias = row.alias { return alias }
+        if duplicated, !row.organization.isEmpty {
+            return "\(row.email) · \(row.organization)"
+        }
+        if !row.email.isEmpty { return row.email }
+        return reference.displayName
+    }
+}

@@ -30,8 +30,8 @@ struct ClaudeProviderImplementation: ProviderImplementation {
         _ = settings.claudeSwapEnabled
         _ = settings.claudeSwapShowSingleAccount
         _ = settings.claudeSwapExecutablePath
-        _ = settings.claudeMagpieEnabled
-        _ = settings.claudeMagpieQuotasURL
+        _ = settings.magpieSourceEnabled
+        _ = settings.magpieQuotasURL
     }
 
     @MainActor
@@ -100,16 +100,6 @@ struct ClaudeProviderImplementation: ProviderImplementation {
             actions: [],
             isVisible: nil)
 
-        let claudeMagpieURLField = ProviderSettingsFieldDescriptor(
-            id: "claude-magpie-quotas-url",
-            title: "magpie quotas URL",
-            subtitle: "Leave empty for the local magpie gateway.",
-            kind: .plain,
-            placeholder: ClaudeMagpieAccountReader.defaultQuotasURL,
-            binding: context.binding(\.claudeMagpieQuotasURL),
-            actions: [],
-            isVisible: nil)
-
         return [
             ProviderSettingsToggleDescriptor(
                 id: "claude-workspace-spend",
@@ -163,20 +153,6 @@ struct ClaudeProviderImplementation: ProviderImplementation {
                 onAppDidBecomeActive: nil,
                 onAppearWhenEnabled: nil),
             ProviderSettingsToggleDescriptor(
-                id: "claude-magpie-accounts",
-                title: "Read accounts from magpie",
-                subtitle: "Shows every Claude account from the local magpie gateway. While on, CodexBar does not " +
-                    "read Claude Code's credentials and claude-swap is off.",
-                binding: context.binding(\.claudeMagpieEnabled),
-                statusText: { Self.claudeMagpieStatusText(store: context.store, settings: context.settings) },
-                actions: [],
-                inlineFields: [claudeMagpieURLField],
-                isVisible: nil,
-                isEnabled: nil,
-                onChange: nil,
-                onAppDidBecomeActive: nil,
-                onAppearWhenEnabled: nil),
-            ProviderSettingsToggleDescriptor(
                 id: "claude-swap-accounts",
                 title: "Read accounts from claude-swap",
                 subtitle: "Shows usage and lets you switch accounts through `cswap`. " +
@@ -186,7 +162,7 @@ struct ClaudeProviderImplementation: ProviderImplementation {
                 actions: [],
                 inlineFields: [claudeSwapExecutableField],
                 isVisible: nil,
-                isEnabled: { !context.settings.claudeMagpieEnabled },
+                isEnabled: { !context.settings.magpieSourceEnabled },
                 onChange: nil,
                 onAppDidBecomeActive: nil,
                 onAppearWhenEnabled: nil),
@@ -207,19 +183,19 @@ struct ClaudeProviderImplementation: ProviderImplementation {
 
     @MainActor
     private static func claudeMagpieStatusText(store: UsageStore, settings: SettingsStore) -> String? {
-        guard settings.claudeMagpieEnabled else { return nil }
-        if let error = store.claudeMagpieLastError {
+        guard settings.magpieSourceEnabled else { return nil }
+        if let error = store.magpieLastError {
             return error
         }
-        guard let refreshedAt = store.claudeMagpieLastRefreshAt else { return nil }
-        let accounts = store.claudeMagpieAccountSnapshots.count
+        guard let refreshedAt = store.magpieLastRefreshAt else { return nil }
+        let accounts = store.claudeAccountSource.accounts.count
         let accountsText = accounts == 1 ? "1 account" : "\(accounts) accounts"
         return "\(accountsText), updated \(refreshedAt.relativeDescription())"
     }
 
     @MainActor
     private static func claudeSwapStatusText(store: UsageStore, settings: SettingsStore) -> String? {
-        if settings.claudeMagpieEnabled {
+        if settings.magpieSourceEnabled {
             return "Off while magpie accounts are on."
         }
         guard settings.claudeSwapEnabled else { return nil }
@@ -366,7 +342,7 @@ struct ClaudeProviderImplementation: ProviderImplementation {
         -> (label: String, action: MenuDescriptor.MenuAction)?
     {
         // magpie owns Claude accounts; every action below works on Claude Code's own credentials.
-        guard !context.settings.claudeMagpieEnabled else { return nil }
+        guard !context.settings.magpieSourceEnabled else { return nil }
         if self.shouldOfferDirectKeychainReadConsent(context: context) {
             // Terminal unreadable state (#2634/#2650): OAuth cannot recover until the user either opts in
             // to reading Claude Code's Keychain item or usage arrives via the Claude CLI fallback.

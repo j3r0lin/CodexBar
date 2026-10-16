@@ -56,7 +56,7 @@ struct ProvidersPane: View {
         let unfilteredModel = UsageMenuCardView.Model.make(self.store.menuCardInput(
             for: self.provider, context: .settings))
         // Provider-specific by design: only Codex has managed OAuth account snapshots for this shared settings view.
-        let overview = self.provider == .codex ? self.store.codexAccountUsageOverview { accountIDs in
+        let overview = self.provider == .codex && self.store.providerSourceRoute(for: .codex).isNative ? self.store.codexAccountUsageOverview { accountIDs in
             Task { @MainActor in
                 await ProviderSettingsRefreshInteraction.perform {
                     await self.store.refreshCodexAccountsForSettings(accountIDs)

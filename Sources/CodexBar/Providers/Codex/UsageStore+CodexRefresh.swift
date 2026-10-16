@@ -54,6 +54,7 @@ extension UsageStore {
     }
 
     func scheduleCreditsRefreshIfNeeded(minimumSnapshotUpdatedAt: Date? = nil) {
+        guard self.providerSourceRoute(for: .codex).isNative else { return }
         let refreshKey = self.codexCreditsRefreshKey(
             expectedGuard: self.freshCodexAccountScopedRefreshGuard())
         if let existing = self.creditsRefreshTask,
@@ -90,6 +91,7 @@ extension UsageStore {
     }
 
     func refreshCreditsNow(minimumSnapshotUpdatedAt: Date? = nil) async {
+        guard self.providerSourceRoute(for: .codex).isNative else { return }
         self.cancelScheduledCreditsRefresh()
         await self.refreshCreditsIfNeeded(minimumSnapshotUpdatedAt: minimumSnapshotUpdatedAt)
     }
@@ -122,6 +124,7 @@ extension UsageStore {
     }
 
     func refreshCreditsIfNeeded(minimumSnapshotUpdatedAt: Date? = nil) async {
+        guard self.providerSourceRoute(for: .codex).isNative else { return }
         guard self.isEnabled(.codex) else { return }
         var expectedGuard = self.freshCodexAccountScopedRefreshGuard()
         if expectedGuard.identity == .unresolved,

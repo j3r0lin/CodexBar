@@ -57,7 +57,6 @@ extension UsageStore {
         if provider == .claude {
             self.widgetUsagePreservationBlockedProviders.insert(provider.instanceID)
             self.clearClaudeSwapAccountState()
-            self.clearClaudeMagpieAccountState()
         }
         self.clearTokenSnapshot(for: provider)
         self.clearSpendDashboardTokenSnapshot(for: provider)

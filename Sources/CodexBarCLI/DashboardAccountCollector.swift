@@ -89,7 +89,7 @@ extension CodexBarCLI {
         // Provider-specific by design: Claude-swap supplies account rows; keep normal provider-level usage only.
         if provider == .claude,
            dashboardClaudeSwapIsEligible(config: config)
-           || config.providerConfig(for: .claude)?.claudeMagpieEnabled == true
+           || config.magpie?.enabled == true
         {
             return false
         }

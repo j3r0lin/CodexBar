@@ -7,6 +7,7 @@ public struct CodexBarConfig: Codable, Sendable {
         case version
         case providers
         case hooks
+        case magpie
     }
 
     private enum ProviderCodingKeys: String, CodingKey {
@@ -24,15 +25,19 @@ public struct CodexBarConfig: Codable, Sendable {
     public var providers: [ProviderConfig]
     /// Optional external event hooks. Absent (nil) or disabled means no hooks run.
     public var hooks: HooksConfig?
+    /// Top-level magpie unified-source switch. Absent means magpie owns nothing.
+    public var magpie: MagpieSourceConfig?
 
     public init(
         version: Int = Self.currentVersion,
         providers: [ProviderConfig],
-        hooks: HooksConfig? = nil)
+        hooks: HooksConfig? = nil,
+        magpie: MagpieSourceConfig? = nil)
     {
         self.version = version
         self.providers = providers
         self.hooks = hooks
+        self.magpie = magpie
     }
 
     public init(from decoder: any Decoder) throws {
@@ -69,12 +74,19 @@ public struct CodexBarConfig: Codable, Sendable {
         }
         self.providers = providers
         self.hooks = try container.decodeIfPresent(HooksConfig.self, forKey: .hooks)
+        // Read compat: the legacy Claude-scoped magpie keys migrate to the top-level config only
+        // when the legacy switch was on. Legacy keys are stripped either way so saves write only
+        // the new config.
+        self.magpie = try container.decodeIfPresent(MagpieSourceConfig.self, forKey: .magpie)
+            ?? MagpieSourceConfig.migrating(from: self.providers)
+        MagpieSourceConfig.stripLegacyKeys(from: &self.providers)
     }
 
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(self.version, forKey: .version)
         try container.encodeIfPresent(self.hooks, forKey: .hooks)
+        try container.encodeIfPresent(self.magpie, forKey: .magpie)
         var entries = container.nestedUnkeyedContainer(forKey: .providers)
         var providers = self.providers.makeIterator()
         for unknown in self.unknownProviders {
