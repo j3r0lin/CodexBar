@@ -2436,7 +2436,7 @@ struct ProviderArchitectureGatekeeperTests {
             anchor: "?? (self.store.isEnabled(.codex) ? .codex : self.store.enabledFirstPartyProviders().first)",
             expectedProviderIDs: ["codex"],
             expectedReferenceCount: 4,
-            expectedReferenceFingerprint: ["codex@0", "codex@0", "codex@2", "codex@9"],
+            expectedReferenceFingerprint: ["codex@0", "codex@0", "codex@2", "codex@8"],
             reason: "This exact app-runtime bridge coordinates provider-owned state through the shared controller."),
         AllowedProviderConstruct(
             path: "Sources/CodexBar/StatusItemController+Actions.swift",
