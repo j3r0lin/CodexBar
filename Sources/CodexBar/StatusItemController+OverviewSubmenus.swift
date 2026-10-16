@@ -73,8 +73,15 @@ extension StatusItemController {
             includesUsageHistory: includesUsageHistory)
         else { return nil }
         self.hydrateHostedSubviewMenuIfNeeded(chartMenu, width: width)
-        let chartItems = chartMenu.items
-        // An empty history hydrates to a lone "No data available" row; show no chart at all then.
+        // An empty history hydrates to a lone "No data available" row or a chart of empty-state text;
+        // show no chart at all then.
+        let hasHistory = self.usageHistoryHasPoints(for: provider)
+        var chartItems = chartMenu.items.filter {
+            ($0.representedObject as? String) != Self.usageHistoryChartID || hasHistory
+        }
+        while chartItems.last?.isSeparatorItem == true {
+            chartItems.removeLast()
+        }
         guard chartItems.contains(where: { $0.identifier != Self.hostedSubviewUnavailableItemID }) else { return nil }
         chartMenu.removeAllItems()
         submenu.addItem(.separator())

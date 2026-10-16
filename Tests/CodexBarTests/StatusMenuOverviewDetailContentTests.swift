@@ -280,4 +280,23 @@ extension StatusMenuTests {
         store._setSnapshotForTesting(usage, provider: .zai)
         #expect(try rowHeight() == normal)
     }
+
+    @Test
+    func `detail leaves out the usage history chart when nothing was recorded`() throws {
+        let (controller, store, _) = self.makeOverviewController(providers: [.codex, .claude], rendersCards: true)
+        defer { controller.releaseStatusItemsForTesting() }
+        store._setSnapshotForTesting(
+            UsageSnapshot(
+                primary: RateWindow(usedPercent: 31, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
+                secondary: nil,
+                updatedAt: Date()),
+            provider: .codex)
+
+        let menu = controller.makeMenu()
+        controller.menuWillOpen(menu)
+        let detail = try self.openDetail(of: .codex, in: menu)
+        #expect(!detail.items.contains { ($0.representedObject as? String) == StatusItemController.usageHistoryChartID })
+        #expect(!detail.items.contains { $0.view is UsageHistoryMenuHostingView })
+    }
 }
+
