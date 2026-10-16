@@ -160,6 +160,7 @@ extension UsageStore {
         let sampledAt = snapshot.updatedAt
         let ownership = self.codexOwnershipContext(preferredEmail: snapshot.accountEmail(for: .codex))
         let historyStore = self.historicalUsageHistoryStore
+        // Provider-specific by design: Codex weekly history publishes only for the captured account revision.
         let publicationRevision = self.providerPublicationRevision(for: .codex)
         Task.detached(priority: .utility) { [weak self] in
             _ = await historyStore.recordCodexWeekly(
@@ -186,6 +187,7 @@ extension UsageStore {
             return
         }
         let ownership = self.codexOwnershipContext()
+        // Provider-specific by design: Codex weekly history publishes only for the captured account revision.
         let publicationRevision = self.providerPublicationRevision(for: .codex)
         let dataset = await Self.loadHistoricalDataset(from: self.historicalUsageHistoryStore, ownership: ownership)
         guard self.canReadNativeCodexSource,
@@ -244,6 +246,7 @@ extension UsageStore {
         }
 
         let historyStore = self.historicalUsageHistoryStore
+        // Provider-specific by design: Codex weekly history publishes only for the captured account revision.
         let publicationRevision = self.providerPublicationRevision(for: .codex)
         Task.detached(priority: .utility) { [weak self] in
             _ = await historyStore.backfillCodexWeeklyFromUsageBreakdown(
