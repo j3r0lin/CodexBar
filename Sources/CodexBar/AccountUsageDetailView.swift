@@ -115,7 +115,9 @@ struct AccountUsageDetailView: View {
             ForEach(model.providerDetails.indices, id: \.self) { index in
                 let section = model.providerDetails[index]
                 VStack(alignment: .leading, spacing: 6) {
-                    self.sectionHeader(section.title, trailing: nil)
+                    if let title = section.title {
+                        self.sectionHeader(title, trailing: nil)
+                    }
                     ForEach(section.rows.indices, id: \.self) { rowIndex in
                         self.detailRow(section.rows[rowIndex])
                     }
