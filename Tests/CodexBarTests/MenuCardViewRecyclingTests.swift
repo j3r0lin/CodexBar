@@ -940,7 +940,8 @@ extension StatusMenuTests {
         }
         let overviewView = try #require(overview.view as? MenuRowContainerView)
         let providerView = try #require(provider.view as? MenuRowContainerView)
-        let selection = try #require(overviewView.subviews.compactMap { $0 as? NSVisualEffectView }.first)
+        // GPU selection now uses a plain overlay: the system selection material hid severity colours.
+        let selection = try #require(overviewView.subviews.first { $0 !== overviewView.subviews.last })
 
         controller.menu(menu, willHighlight: overview)
         #expect(controller.highlightedMenuItems[ObjectIdentifier(menu)] === overview)
