@@ -34,7 +34,8 @@ struct MagpieSourceTransitionTests {
         await store.refreshMagpieAccounts()
         #expect(store.magpieOverviewSnapshots.count == before.count)
         #expect(Set(store.magpieOverviewSnapshots.map(\.id)) == Set(before.map(\.id)))
-        #expect(store.magpieOverviewSnapshots.allSatisfy(\.usesLastKnownUsage))
+        let allRetained = store.magpieOverviewSnapshots.allSatisfy(\.usesLastKnownUsage)
+        #expect(allRetained)
         #expect(store.magpieLastError != nil)
         for old in before {
             #expect(store.magpieOverviewSnapshots.first { $0.id == old.id }?.windows == old.windows)
@@ -61,7 +62,8 @@ struct MagpieSourceTransitionTests {
         let after = store.magpieAccountSnapshots.filter { $0.provider.wireID == "codex" }
         #expect(after.count == before.count)
         #expect(after.first?.windows == before.first?.windows)
-        #expect(after.allSatisfy(\.usesLastKnownUsage))
+        let allRetained = after.allSatisfy(\.usesLastKnownUsage)
+        #expect(allRetained)
     }
 
     @Test
