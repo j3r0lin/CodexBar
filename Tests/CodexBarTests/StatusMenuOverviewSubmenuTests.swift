@@ -300,9 +300,25 @@ extension StatusMenuTests {
                     MagpieQuotaWindow(name: "Month", usedPercent: 8, resetsAt: nil),
                 ],
                 error: nil),
+            MagpieQuotaRow(
+                provider: "future-provider",
+                email: "",
+                organization: "",
+                alias: nil,
+                isLast: false,
+                readAt: nil,
+                windows: [MagpieQuotaWindow(name: "Burst", usedPercent: 24, resetsAt: nil)]),
+            MagpieQuotaRow(
+                provider: "grok-plugin",
+                email: "",
+                organization: "",
+                alias: nil,
+                isLast: false,
+                readAt: nil,
+                windows: [MagpieQuotaWindow(name: "7 days", usedPercent: 42, resetsAt: nil)]),
         ])
         store.magpieAccountSnapshots = accounts
-        settings.magpieTakeoverWireIDs = ["opencode-go"]
+        settings.magpieTakeoverWireIDs = ["opencode-go", "future-provider", "grok-plugin"]
         let controller = StatusItemController(
             store: store,
             settings: settings,
@@ -313,15 +329,22 @@ extension StatusMenuTests {
         defer { controller.releaseStatusItemsForTesting() }
         let rows = controller.overviewUsageRows(visibleProviders: [.opencodego])
         let row = try #require(rows.first)
-        #expect(rows.count == 1)
+        #expect(rows.count == 3)
         #expect(row.isMagpie)
         #expect(row.namedWindows?.map(\.label) == ["5h", "7d", "Mo"])
         #expect(row.namedWindows?.count == 3)
         #expect(row.errorText == nil)
-        #expect(controller.overviewUsageRows(visibleProviders: []).count == 1)
-        let submenu = controller.makeOverviewDetailSubmenu(row: row, width: 340)
-        submenu.delegate?.menuNeedsUpdate?(submenu)
-        #expect(submenu.items.count == 1)
+        #expect(controller.overviewUsageRows(visibleProviders: []).count == 3)
+        let unknown = try #require(rows.first { $0.providerName == "future-provider" })
+        #expect(unknown.nativeProvider == nil)
+        #expect(unknown.namedWindows?.map(\.label) == ["Burst"])
+        let grok = try #require(rows.first { $0.providerName == "Grok" })
+        #expect(grok.nativeProvider == nil)
+        for detailRow in rows {
+            let submenu = controller.makeOverviewDetailSubmenu(row: detailRow, width: 340)
+            submenu.delegate?.menuNeedsUpdate?(submenu)
+            #expect(submenu.items.count == 1)
+        }
     }
 
     @Test
