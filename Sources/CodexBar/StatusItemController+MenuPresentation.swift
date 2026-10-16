@@ -136,7 +136,7 @@ struct MenuCardRowPayload {
     let usesGPUSelection: Bool
     /// Rows that draw a continuous background across neighbouring items (Overview provider blocks)
     /// opt out of the standard vertical air so the panels meet without a seam.
-    let tightVerticalFit: Bool = false
+    var tightVerticalFit: Bool = false
     let onClick: (() -> Void)?
 }
 
