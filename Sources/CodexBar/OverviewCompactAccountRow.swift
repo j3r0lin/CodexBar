@@ -233,6 +233,7 @@ struct OverviewCompactAccountRow: View {
     /// descriptions never determine the quota period.
     static func nativeMinutes(_ window: RateWindow, provider: UsageProvider?) -> Int? {
         if let minutes = window.windowMinutes { return minutes }
+        // Provider-specific by design: Grok owns the weekly fallback for its untyped credit pool.
         guard provider == .grok else { return nil }
         switch GrokProviderDescriptor.displayLabel(window: window) {
         case "Weekly": return 10080
