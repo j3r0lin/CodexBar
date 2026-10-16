@@ -17,7 +17,7 @@ extension StatusMenuTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
-        settings.selectedMenuProvider = providers.first
+        settings.selectedMenuProvider = providers.first?.instanceID
         settings.mergedMenuLastSelectedWasOverview = true
         enableTestProviders(Set(providers), settings: settings)
         configure(settings)
