@@ -1187,6 +1187,7 @@ extension UsageStore {
         force: Bool,
         preferCachedCookieHeader: Bool? = nil) async -> String?
     {
+        guard self.providerSourceRoute(for: .codex).isNative else { return nil }
         guard !Task.isCancelled else { return nil }
         if await self.openAIWebCookieImportShouldFailClosed() {
             return nil

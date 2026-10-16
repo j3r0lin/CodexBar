@@ -734,6 +734,7 @@ final class UsageStore {
     }
 
     func isProviderAvailable(_ provider: UsageProvider, now: Date = Date()) -> Bool {
+        guard self.providerSourceRoute(for: provider).isNative else { return true }
         guard provider != .codex else { return true }
 
         let configRevision = self.settings.configRevision

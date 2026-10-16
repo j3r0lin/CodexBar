@@ -27,7 +27,7 @@ public struct MagpieSourceConfig: Codable, Sendable, Equatable {
     }
 
     /// Removes the legacy Claude-scoped keys so saves write only the new top-level config.
-    static func stripLegacyKeys(from providers: inout [ProviderConfig]) {
+    public static func stripLegacyKeys(from providers: inout [ProviderConfig]) {
         for index in providers.indices where providers[index].id.firstPartyProvider == .claude {
             providers[index].claudeMagpieEnabled = nil
             providers[index].claudeMagpieQuotasURL = nil

@@ -207,7 +207,9 @@ extension UsageStore {
                 else { continue }
                 let message = "magpie returned no usable quota rows for \(wireID)."
                 snapshots.removeAll { $0.provider.wireID == wireID }
-                snapshots.append(contentsOf: previous.map { $0.retainedAsLastKnown(error: message) })
+                snapshots.append(contentsOf: previous.filter { !$0.windows.isEmpty }.map {
+                    $0.retainedAsLastKnown(error: message)
+                })
                 retainedProviders.append(wireID)
             }
             self.magpieDiscoveryCompleted = true
@@ -287,7 +289,11 @@ extension UsageStore {
         let configuration = (
             enabled: self.settings.magpieSourceEnabled,
             quotasURL: self.settings.magpieQuotasURL)
-        guard configuration != self.lastMagpieSourceConfiguration else { return }
+        if let last = self.lastMagpieSourceConfiguration,
+           last.enabled == configuration.enabled, last.quotasURL == configuration.quotasURL
+        {
+            return
+        }
         let previous = self.lastMagpieSourceConfiguration
         self.lastMagpieSourceConfiguration = configuration
         let mappedProviders = MagpieProviderMapping.nativeProviders.values

@@ -24,7 +24,7 @@ extension UsageStore {
     /// ambient Claude refresh. Listing is read-only; explicit account activation
     /// stays external-process-owned and never exposes credentials to CodexBar.
     func shouldFetchClaudeSwapAccounts() -> Bool {
-        self.isEnabled(.claude) && self.settings.claudeSwapEffectivelyEnabled &&
+        self.providerSourceRoute(for: .claude).isNative && self.isEnabled(.claude) && self.settings.claudeSwapEnabled &&
             !self.settings.claudeSwapExecutablePath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
@@ -232,7 +232,7 @@ extension UsageStore {
         executablePath: String,
         configurationGeneration: UInt64? = nil) -> Bool
     {
-        self.isEnabled(.claude) && self.settings.claudeSwapEffectivelyEnabled &&
+        self.providerSourceRoute(for: .claude).isNative && self.isEnabled(.claude) && self.settings.claudeSwapEnabled &&
             self.settings.claudeSwapExecutablePath == executablePath &&
             (configurationGeneration == nil ||
                 self.claudeSwapTransientState.configurationGeneration == configurationGeneration)

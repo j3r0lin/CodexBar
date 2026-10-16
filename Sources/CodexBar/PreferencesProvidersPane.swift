@@ -257,6 +257,7 @@ struct ProvidersPane: View {
     }
 
     func codexAccountsSectionState(for provider: UsageProvider) -> CodexAccountsSectionState? {
+        guard self.store.providerSourceRoute(for: provider).isNative else { return nil }
         // Provider-specific by design: managed Codex profiles own app-only account promotion and reauthentication
         // state.
         guard provider == .codex else { return nil }
@@ -393,6 +394,7 @@ struct ProvidersPane: View {
     }
 
     private func extraSettingsToggles(for provider: UsageProvider) -> [ProviderSettingsToggleDescriptor] {
+        guard self.store.providerSourceRoute(for: provider).isNative else { return [] }
         guard let impl = ProviderCatalog.implementation(for: provider) else { return [] }
         let context = self.makeSettingsContext(provider: provider)
         return impl.settingsToggles(context: context)
@@ -400,6 +402,7 @@ struct ProvidersPane: View {
     }
 
     private func extraSettingsPickers(for provider: UsageProvider) -> [ProviderSettingsPickerDescriptor] {
+        guard self.store.providerSourceRoute(for: provider).isNative else { return [] }
         guard let impl = ProviderCatalog.implementation(for: provider) else { return [] }
         let context = self.makeSettingsContext(provider: provider)
         // The token layout editor is the only text-style menu bar UI. Legacy metric keys remain persisted solely for
@@ -409,6 +412,7 @@ struct ProvidersPane: View {
     }
 
     private func extraSettingsFields(for provider: UsageProvider) -> [ProviderSettingsFieldDescriptor] {
+        guard self.store.providerSourceRoute(for: provider).isNative else { return [] }
         guard let impl = ProviderCatalog.implementation(for: provider) else { return [] }
         let context = self.makeSettingsContext(provider: provider)
         return impl.settingsFields(context: context)
@@ -441,6 +445,7 @@ struct ProvidersPane: View {
     }
 
     func tokenAccountDescriptor(for provider: UsageProvider) -> ProviderSettingsTokenAccountsDescriptor? {
+        guard self.store.providerSourceRoute(for: provider).isNative else { return nil }
         guard let support = TokenAccountSupportCatalog.support(for: provider) else { return nil }
         let context = self.makeSettingsContext(provider: provider)
         let implementation = ProviderCatalog.implementation(for: provider)

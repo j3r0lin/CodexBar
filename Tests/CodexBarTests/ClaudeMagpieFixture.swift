@@ -34,7 +34,7 @@ enum ClaudeMagpieFixture {
 
     static func transport(
         data: Data = Self.quotasData,
-        status: Int = 200) -> ClaudeMagpieAccountReader.Transport
+        status: Int = 200) -> MagpieQuotasReader.Transport
     {
         { request in
             let response = HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: nil)!

@@ -7,11 +7,9 @@ import Foundation
 
 /// One magpie-reported account row for one provider, in the narrow magpie model.
 ///
-/// Identity is always the opaque fingerprint of (wire provider, lowercased email, lowercased
-/// organization); aliases and row order never participate, so reordered rows and renamed aliases
-/// keep their identity and the same email under different organizations stays distinct without
-/// leaking across providers. Rows without a stable user keep their windows but surface an error
-/// instead of a fabricated identity.
+/// Identified accounts use an opaque fingerprint of provider, email, and organization. A sole
+/// anonymous row uses a provider-level fingerprint; ambiguous anonymous rows have ephemeral IDs
+/// and display an identity error.
 public struct MagpieAccountSnapshot: Identifiable, Sendable, Equatable {
     public let id: ProviderAccountIdentity
     public let provider: MagpieProviderReference

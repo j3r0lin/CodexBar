@@ -178,6 +178,7 @@ extension UsageStore {
     }
 
     func isCurrentProviderRefreshGeneration(_ provider: UsageProvider, generation: UInt64?) -> Bool {
+        guard self.providerSourceRoute(for: provider).isNative else { return false }
         guard let generation else { return true }
         guard self.providerRefreshCoordinator.isCurrent(generation, for: provider.instanceID),
               let context = self.providerRefreshPublicationContexts[provider.instanceID],

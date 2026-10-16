@@ -2,192 +2,112 @@ import CodexBarCore
 import Foundation
 import Testing
 
-struct ClaudeMagpieAccountProjectionTests {
-    @Test
-    func `only Claude rows become account cards with the last served account first`() throws {
-        let accounts = try ClaudeMagpieAccountProjection.accountSnapshots(from: ClaudeMagpieFixture.quotasData)
-
-        #expect(accounts.map(\.accountEmail) == ["second@example.com", "first@example.com", "third@example.com"])
-        #expect(accounts.map(\.isActive) == [true, false, false])
-        #expect(accounts.allSatisfy { $0.provider == .claude && !$0.canActivate })
+struct MagpieAccountProjectionTests {
+    private func project(_ json: String) throws -> [MagpieAccountSnapshot] {
+        MagpieAccountProjection.snapshots(from: try MagpieQuotasReader.rows(from: Data(json.utf8)))
     }
 
     @Test
-    func `windows map to session weekly and model scoped lanes`() throws {
-        let accounts = try ClaudeMagpieAccountProjection.accountSnapshots(from: ClaudeMagpieFixture.quotasData)
-        let first = try #require(accounts.first { $0.accountEmail == "first@example.com" })
-        let snapshot = try #require(first.snapshot)
-
-        #expect(snapshot.primary?.usedPercent == 12)
-        #expect(snapshot.primary?.windowMinutes == 300)
-        #expect(snapshot.primary?.resetsAt == ISO8601DateFormatter().date(from: "2026-10-14T13:10:00Z"))
-        #expect(snapshot.secondary?.usedPercent == 76)
-        #expect(snapshot.secondary?.windowMinutes == 10080)
-        let scoped = try #require(snapshot.extraRateWindows)
-        #expect(scoped.count == 1)
-        #expect(scoped.first?.title.contains("Fable") == true)
-        #expect(scoped.first?.window.usedPercent == 4)
-        let readAt = try #require(ISO8601DateFormatter().date(from: "2026-10-14T08:44:16Z"))
-        #expect(abs(snapshot.updatedAt.timeIntervalSince(readAt)) < 1)
+    func `all providers and unknown windows survive malformed siblings`() throws {
+        let rows = try self.project("""
+        {"data":[{"provider":"claude","user":"one@example.com","windows":[{"name":"5 hours","used":12}]},
+          {"provider":"future-provider","user":"two@example.com","windows":[{"name":"Custom","used":9}]},
+          {"user":"broken"}, {"provider":"grok-plugin","windows":[{"name":"7 days","used":4}]}]}
+        """)
+        #expect(rows.count == 3)
+        let unknown = try #require(rows.first { $0.provider.wireID == "future-provider" })
+        #expect(unknown.provider.nativeProvider == nil)
+        #expect(unknown.provider.displayName == "future-provider")
+        #expect(unknown.provider.instanceID.rawValue.hasPrefix("magpie-"))
+        #expect(unknown.windows.first?.name == "Custom")
+        #expect(unknown.windows.first?.duration == nil)
+        #expect(rows.first { $0.provider.wireID == "grok-plugin" }?.provider.nativeProvider == nil)
     }
 
     @Test
-    func `a window without a reset time is still shown`() throws {
-        let accounts = try ClaudeMagpieAccountProjection.accountSnapshots(from: ClaudeMagpieFixture.quotasData)
-        let second = try #require(accounts.first { $0.accountEmail == "second@example.com" })
+    func `identity survives alias and order changes and includes organization and provider`() throws {
+        let original = try self.project("""
+        {"data":[{"provider":"claude","user":"ONE@example.com · Org A","alias":"first"},
+          {"provider":"claude","user":"one@example.com · Org B"},
+          {"provider":"codex","user":"one@example.com · Org A"}]}
+        """)
+        let reordered = try self.project("""
+        {"data":[{"provider":"codex","user":"one@example.com · Org A"},
+          {"provider":"claude","user":"one@example.com · Org B"},
+          {"provider":"claude","user":"one@example.com · Org A","alias":"renamed"}]}
+        """)
+        #expect(Set(original.map(\.id)).count == 3)
+        #expect(Set(original.map(\.id)) == Set(reordered.map(\.id)))
+        #expect(original.allSatisfy { !$0.id.opaqueID.contains("@") })
+    }
 
-        #expect(second.snapshot?.primary?.usedPercent == 0)
-        #expect(second.snapshot?.primary?.resetsAt == nil)
-        #expect(second.error == nil)
+    @Test(arguments: ["kimi-code", "opencode-go"])
+    func `a sole anonymous provider has stable normal quota identity`(wireID: String) throws {
+        let json = "{\"data\":[{\"provider\":\"\(wireID)\",\"windows\":[{\"name\":\"7 days\",\"used\":8}]}]}"
+        let first = try #require(self.project(json).first)
+        let second = try #require(self.project(json).first)
+        #expect(first.id == second.id)
+        #expect(first.error == nil)
+        #expect(first.accountEmail == nil)
+        #expect(first.displayLabel == first.provider.displayName)
+        #expect(first.windows.count == 1)
     }
 
     @Test
-    func `an account without known windows has no usage and reports it`() throws {
-        let accounts = try ClaudeMagpieAccountProjection.accountSnapshots(from: ClaudeMagpieFixture.quotasData)
-        let third = try #require(accounts.first { $0.accountEmail == "third@example.com" })
-
-        #expect(third.snapshot == nil)
-        #expect(third.error != nil)
+    func `ambiguous anonymous rows remain distinct error rows`() throws {
+        let rows = try self.project("""
+        {"data":[{"provider":"kimi-code","windows":[{"name":"5 hours","used":1}]},
+          {"provider":"kimi-code","windows":[{"name":"5 hours","used":2}]}]}
+        """)
+        #expect(rows.count == 2)
+        #expect(rows.allSatisfy { $0.error != nil })
+        #expect(Set(rows.map(\.id)).count == 2)
     }
 
     @Test
-    func `identity is the lowercased email and the alias wins the label`() throws {
-        let accounts = try ClaudeMagpieAccountProjection.accountSnapshots(from: ClaudeMagpieFixture.quotasData)
-        let first = try #require(accounts.first { $0.accountEmail == "first@example.com" })
-        let second = try #require(accounts.first { $0.accountEmail == "second@example.com" })
-
-        #expect(first.id == ProviderAccountIdentity(source: "magpie", opaqueID: "claude:first@example.com"))
-        #expect(first.displayLabel == "main")
-        #expect(second.displayLabel == "second@example.com")
+    func `mixed identified and anonymous rows leave the anonymous row in error`() throws {
+        let rows = try self.project("""
+        {"data":[{"provider":"codex","user":"one@example.com"},{"provider":"codex"}]}
+        """)
+        #expect(rows.first { $0.accountEmail == nil }?.error != nil)
+        #expect(rows.first { $0.accountEmail != nil }?.error == nil)
     }
 
     @Test
-    func `shared emails are told apart by organization`() throws {
-        let json = """
-        {"data":[
-          {"provider":"claude","user":"Shared@Example.com · Org A","windows":[{"name":"5 hours","used":1}]},
-          {"provider":"claude","user":"shared@example.com · Org B","windows":[{"name":"5 hours","used":2}]}
-        ]}
-        """
-        let accounts = try ClaudeMagpieAccountProjection.accountSnapshots(from: Data(json.utf8))
-
-        #expect(Set(accounts.map(\.id)).count == 2)
-        #expect(Set(accounts.map(\.displayLabel)) == ["Shared@Example.com · Org A", "shared@example.com · Org B"])
-        #expect(accounts.first?.isActive == true)
+    func `empty windows have no local error and preserve upstream errors`() throws {
+        let rows = try self.project("""
+        {"data":[{"provider":"opencode-zen-free","windows":[]},
+          {"provider":"other","error":"upstream unavailable","windows":[]}]}
+        """)
+        #expect(rows.first?.error == nil)
+        #expect(rows.last?.error == "upstream unavailable")
     }
 
     @Test
-    func `a malformed row does not discard its siblings`() throws {
-        let json = """
-        {"data":[{"user":"missing-provider@example.com"},
-                 {"provider":"claude","user":"ok@example.com","windows":[{"name":"7 days","used":"x"},
-                                                                       {"name":"7 days","used":30}]}]}
-        """
-        let accounts = try ClaudeMagpieAccountProjection.accountSnapshots(from: Data(json.utf8))
-
-        #expect(accounts.count == 1)
-        #expect(accounts.first?.snapshot?.secondary?.usedPercent == 30)
+    func `weekly and monthly names never default to the session lane`() throws {
+        let rows = try self.project("""
+        {"data":[{"provider":"kimi-code","windows":[{"name":"5 hours","used":3},
+          {"name":"7 days","used":6},{"name":"Month","used":9}]}]}
+        """)
+        let account = try #require(rows.first)
+        let usage = try #require(MagpieUsageProjection.usageSnapshot(for: account))
+        #expect(usage.primary?.usedPercent == 6)
+        #expect(usage.secondary?.usedPercent == 3)
+        #expect(usage.tertiary?.windowMinutes == nil)
+        #expect(account.windows.last?.semantics == .monthly)
+        #expect(usage.providerCost == nil)
+        #expect(usage.codexResetCredits == nil)
     }
 
     @Test
-    func `a response without a data array is rejected`() {
-        #expect(throws: ClaudeMagpieQuotasParserError.self) {
-            try ClaudeMagpieAccountProjection.accountSnapshots(from: Data(#"{"error":"nope"}"#.utf8))
+    func `reader sends one unauthenticated GET for every provider`() async throws {
+        let rows = try await MagpieQuotasReader.readRows(quotasURL: nil) { request in
+            #expect(request.httpMethod == "GET")
+            #expect(request.value(forHTTPHeaderField: "Authorization") == nil)
+            #expect(request.value(forHTTPHeaderField: "Cookie") == nil)
+            return (ClaudeMagpieFixture.quotasData,
+                    HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
         }
-    }
-}
-
-struct ClaudeMagpieAccountReaderTests {
-    @Test
-    func `reader requests the default local endpoint when no URL is configured`() async throws {
-        let requested = RequestedURL()
-        let accounts = try await ClaudeMagpieAccountReader.readAccounts(quotasURL: "") { request in
-            await requested.set(request.url)
-            return try await ClaudeMagpieFixture.transport()(request)
-        }
-
-        #expect(await requested.url?.absoluteString == ClaudeMagpieAccountReader.defaultQuotasURL)
-        #expect(accounts.count == 3)
-    }
-
-    @Test
-    func `HTTP errors fail the read`() async {
-        await #expect(throws: ClaudeMagpieAccountReaderError.self) {
-            try await ClaudeMagpieAccountReader.readAccounts(
-                quotasURL: nil,
-                transport: ClaudeMagpieFixture.transport(status: 503))
-        }
-    }
-
-    @Test
-    func `non http URLs are rejected without a request`() async {
-        await #expect(throws: ClaudeMagpieAccountReaderError.self) {
-            try await ClaudeMagpieAccountReader.readAccounts(quotasURL: "file:///etc/hosts") { _ in
-                Issue.record("transport must not run")
-                throw CancellationError()
-            }
-        }
-    }
-}
-
-private actor RequestedURL {
-    var url: URL?
-
-    func set(_ url: URL?) {
-        self.url = url
-    }
-}
-
-struct ClaudeMagpieRowRulesTests {
-    @Test
-    func `rows without an email are not shown and ordinals follow the gateway`() throws {
-        let json = """
-        {"data":[
-          {"provider":"claude","user":"","windows":[{"name":"5 hours","used":1}]},
-          {"provider":"claude","user":"a@example.com","windows":[{"name":"5 hours","used":2}]},
-          {"provider":"claude","user":"b@example.com","last":true,"windows":[{"name":"5 hours","used":3}]}
-        ]}
-        """
-        let accounts = try ClaudeMagpieAccountProjection.accountSnapshots(from: Data(json.utf8))
-
-        #expect(accounts.map(\.accountEmail) == ["b@example.com", "a@example.com"])
-        #expect(accounts.map(\.sourceOrdinal) == [2, 1])
-    }
-
-    @Test
-    func `negative usage is dropped and usage above the limit is kept`() throws {
-        let json = """
-        {"data":[{"provider":"claude","user":"a@example.com",
-          "windows":[{"name":"5 hours","used":-5},{"name":"7 days","used":130}]}]}
-        """
-        let snapshot = try #require(
-            try ClaudeMagpieAccountProjection.accountSnapshots(from: Data(json.utf8)).first?.snapshot)
-
-        #expect(snapshot.primary == nil)
-        #expect(snapshot.secondary?.usedPercent == 130)
-    }
-
-    @Test
-    func `the same email and organization keep one row and distinct organizations stay separate`() throws {
-        let json = """
-        {"data":[
-          {"provider":"claude","user":"a@example.com · Org A","windows":[{"name":"5 hours","used":1}]},
-          {"provider":"claude","user":"A@example.com · org a","windows":[{"name":"5 hours","used":2}]},
-          {"provider":"claude","user":"b@example.com · Org A","windows":[{"name":"5 hours","used":3}]}
-        ]}
-        """
-        let accounts = try ClaudeMagpieAccountProjection.accountSnapshots(from: Data(json.utf8))
-        #expect(accounts.count == 2)
-        #expect(accounts.first?.id.opaqueID == "claude:a@example.com")
-        #expect(accounts.first?.displayLabel == "a@example.com")
-
-        let split = """
-        {"data":[
-          {"provider":"claude","user":"a@example.com · Org A","windows":[{"name":"5 hours","used":1}]},
-          {"provider":"claude","user":"a@example.com · Org B","windows":[{"name":"5 hours","used":2}]}
-        ]}
-        """
-        let separate = try ClaudeMagpieAccountProjection.accountSnapshots(from: Data(split.utf8))
-        #expect(separate.map(\.displayLabel) == ["a@example.com · Org A", "a@example.com · Org B"])
+        #expect(Set(rows.map(\.provider)) == ["claude", "codex"])
     }
 }

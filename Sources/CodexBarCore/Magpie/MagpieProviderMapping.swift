@@ -65,11 +65,12 @@ public enum MagpieProviderMapping {
         {
             return candidate
         }
-        if let fallback = ProviderInstanceID(rawValue: "magpie-\(sanitized)-ext") {
-            return fallback
+        var suffix = 1
+        while true {
+            let fallback = ProviderInstanceID(rawValue: "magpie-\(sanitized)-\(suffix)")!
+            if UserProviderPluginRegistry.plugin(for: fallback) == nil { return fallback }
+            suffix += 1
         }
-        // Unreachable in practice: sanitization guarantees a valid component.
-        return ProviderInstanceID(firstPartyProvider: .codex)
     }
 
     private static func sanitizedInstanceIDComponent(_ wireID: String) -> String {
