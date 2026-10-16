@@ -530,7 +530,7 @@ extension StatusItemController {
                 id: identifier,
                 width: menuWidth,
                 heightCacheScope: "overviewCompactRow",
-                heightCacheFingerprint: "compact-\(block)-\(max(1, rowView.lines.count))",
+                heightCacheFingerprint: "compact-\(block)-\(max(1, rowView.lines.count))-\(row.errorText ?? "")",
                 submenu: submenu,
                 showsSubmenuIndicator: false,
                 usesGPUSelection: true,
