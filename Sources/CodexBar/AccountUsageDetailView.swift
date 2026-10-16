@@ -14,6 +14,11 @@ struct AccountUsageDetailView: View {
     /// Set on a magpie account row, which shows one account of the provider.
     var accountName: String?
     let snapshot: UsageSnapshot?
+    /// Magpie rows pass every window the gateway reported, each under its own name (Month,
+    /// model-scoped weekly, unknown wire names included), instead of the snapshot's lanes.
+    var namedWindows: [OverviewUsageRow.NamedWindow]? = nil
+    /// Shown under the window blocks, e.g. a last-known retention note on a magpie row.
+    var errorText: String? = nil
     var width: CGFloat = Self.defaultWidth
     /// Daily peaks, oldest first; nil marks a day without a sample. Empty hides the history.
     var history: [Double?] = []
@@ -33,8 +38,19 @@ struct AccountUsageDetailView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             self.header
-            let blocks = Self.blocks(of: self.snapshot, model: self.model)
-            if blocks.isEmpty, !self.hasSupplementalContent {
+            let blocks = self.namedWindows.map { named in
+                named.map { window in
+                    Block(
+                        title: window.title,
+                        window: RateWindow(
+                            usedPercent: window.used,
+                            windowMinutes: nil,
+                            resetsAt: window.resetsAt,
+                            resetDescription: nil),
+                        used: window.used)
+                }
+            } ?? Self.blocks(of: self.snapshot, model: self.model)
+            if blocks.isEmpty, !self.hasSupplementalContent, self.errorText == nil {
                 Text(L("No data"))
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
@@ -44,6 +60,12 @@ struct AccountUsageDetailView: View {
                 }
             }
             self.supplementalView
+            if let errorText {
+                Text(errorText)
+                    .font(.system(size: 11))
+                    .foregroundStyle(OverviewPalette.warning)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             if self.history.contains(where: { $0 != nil }) {
                 self.historyView
             }
@@ -222,7 +244,9 @@ struct AccountUsageDetailView: View {
     }
 
     private static func icon(for provider: UsageProvider?) -> Image {
-        if let provider, let image = ProviderBrandIcon.image(for: provider) {
+        // Unknown magpie providers have no brand icon and no native descriptor.
+        guard let provider else { return Image(systemName: "network") }
+        if let image = ProviderBrandIcon.image(for: provider) {
             return Image(nsImage: image)
         }
         return Image(systemName: "gauge.with.dots.needle.33percent")

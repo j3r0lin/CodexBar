@@ -230,24 +230,6 @@ extension StatusItemController {
         return accounts.first(where: \.isActive) ?? accounts.first
     }
 
-    func claudeOverviewAccountRows()
-        -> [(id: ProviderAccountIdentity, model: UsageMenuCardView.Model, snapshot: UsageSnapshot?)]
-    {
-        let hidePersonalInfo = self.settings.hidePersonalInfo
-        return self.store.claudeAccountSource.accounts.compactMap { account in
-            guard var model = self.claudeSwapCardModel(for: account) else { return nil }
-            model.providerName = "Claude · " + Self.claudeAccountShortName(account, hidePersonalInfo: hidePersonalInfo)
-            return (id: account.id, model: model, snapshot: account.snapshot)
-        }
-    }
-
-    static func claudeAccountShortName(_ account: ProviderAccountUsageSnapshot, hidePersonalInfo: Bool) -> String {
-        let label = ClaudeSwapAccountMenuDisplay.label(for: account, hidePersonalInfo: hidePersonalInfo)
-        guard !hidePersonalInfo else { return label }
-        // magpie labels are an alias, or an email when no alias is set; the local part is enough for a tab.
-        return label.split(separator: "@").first.map(String.init) ?? label
-    }
-
     /// magpie serves every account from one quotas call, so the item refreshes all Claude accounts.
     func makeRefreshClaudeAccountItem(_ id: ProviderAccountIdentity) -> NSMenuItem {
         let item = NSMenuItem(

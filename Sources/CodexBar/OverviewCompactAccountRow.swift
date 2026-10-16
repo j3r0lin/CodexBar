@@ -1,3 +1,4 @@
+import AppKit
 import CodexBarCore
 import SwiftUI
 
@@ -81,6 +82,9 @@ struct OverviewCompactAccountRow: View {
     var block: OverviewBlockPosition = .single
     /// A provider that only has an error shows it in place of its usage.
     var errorText: String?
+    /// The account keeps its readings alongside an error (last-known retention, unstable
+    /// identity); the name warns instead of the readings disappearing.
+    var showsErrorFlag = false
     var now = Date()
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
@@ -89,6 +93,10 @@ struct OverviewCompactAccountRow: View {
         let used: Double
         let resetsAt: Date?
     }
+
+    /// Magpie rows pass every window the gateway reported, each under its own label, instead of
+    /// the short/long slots a native snapshot fills.
+    var namedLines: [Line]? = nil
 
     /// Every line puts the same element in the same column, so each part is sized here and the bar takes
     /// whatever the line has left.
@@ -106,10 +114,25 @@ struct OverviewCompactAccountRow: View {
     /// The windows that have a reading, short first. A window the provider did not report gets no line.
     var lines: [Line] {
         guard self.errorText == nil else { return [] }
+        if let namedLines { return namedLines }
         return [self.shortWindow, self.longWindow].compactMap { window in
             guard let window, let used = Self.used(window) else { return nil }
             return Line(label: Self.windowLabel(window, provider: self.provider), used: used, resetsAt: window.resetsAt)
         }
+    }
+
+    /// The label column grows to fit this row's longest label (a model name, an unknown wire
+    /// name) within a cap, so named rows keep their labels readable without moving native rows.
+    var labelColumnWidth: CGFloat {
+        Self.labelColumnWidth(for: self.lines)
+    }
+
+    static func labelColumnWidth(for lines: [Line]) -> CGFloat {
+        let font = NSFont.systemFont(ofSize: 10, weight: .medium)
+        let widest = lines.map { line in
+            (line.label as NSString).size(withAttributes: [.font: font]).width
+        }.max() ?? 0
+        return min(56, max(Self.labelWidth, ceil(widest)))
     }
 
     var body: some View {
@@ -168,11 +191,13 @@ struct OverviewCompactAccountRow: View {
     @ViewBuilder
     private var nameLabel: some View {
         if self.namesProvider {
-            Text(self.name).overviewSectionTitleStyle()
+            Text(self.name)
+                .overviewSectionTitleStyle()
+                .foregroundStyle(self.showsErrorFlag ? OverviewPalette.warning : OverviewPalette.accent)
         } else {
             Text(self.name)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color.white)
+                .foregroundStyle(self.showsErrorFlag ? OverviewPalette.warning : Color.white)
         }
     }
 
@@ -182,7 +207,8 @@ struct OverviewCompactAccountRow: View {
             Text(line.label)
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(OverviewPalette.caption)
-                .frame(width: Self.labelWidth, alignment: .leading)
+                .lineLimit(1)
+                .frame(width: self.labelColumnWidth, alignment: .leading)
             UsageBar(used: line.used, color: color, trackColor: Self.trackColor, height: 6)
             Text("\(Int(line.used.rounded()))%")
                 .font(.system(size: 13, weight: .semibold).monospacedDigit())

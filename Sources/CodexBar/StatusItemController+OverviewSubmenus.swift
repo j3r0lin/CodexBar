@@ -4,20 +4,18 @@ import CodexBarCore
 extension StatusItemController {
     /// Hover submenu of an Overview row: the shared usage detail, a Claude refresh item on magpie rows,
     /// then the provider's history chart and its own actions. The chart and actions are built on first
-    /// open so unopened rows stay cheap.
+    /// open so unopened rows stay cheap. Magpie rows never build them: a magpie account holds no native
+    /// history, cost, or provider actions of its own.
     func makeOverviewDetailSubmenu(
-        providerName: String,
-        accountName: String? = nil,
-        snapshot: UsageSnapshot?,
-        provider: UsageProvider,
-        model: UsageMenuCardView.Model,
-        width: CGFloat,
-        claudeAccountID: ProviderAccountIdentity? = nil) -> NSMenu
+        row: OverviewUsageRow,
+        width: CGFloat) -> NSMenu
     {
-        // A magpie account row holds one account; the provider-level history and actions are not its own.
-        let history = claudeAccountID == nil ? self.overviewDetailHistory(for: provider) : []
+        let history = row.isMagpie || row.nativeProvider == nil
+            ? []
+            : self.overviewDetailHistory(for: row.nativeProvider!)
         let submenu = OverviewDetailMenu(controller: self) { [weak self] submenu in
-            guard let self, claudeAccountID == nil else { return }
+            guard let self, !row.isMagpie, let provider = row.nativeProvider, let model = row.model
+            else { return }
             let chartID = self.appendOverviewRowChart(
                 to: submenu,
                 provider: provider,
@@ -31,20 +29,22 @@ extension StatusItemController {
         submenu.appearance = StatusMenuAppearance.menuAppearance
         submenu.addItem(self.makeMenuCardItem(
             AccountUsageDetailView(
-                provider: provider,
-                providerName: providerName,
-                accountName: accountName,
-                snapshot: snapshot,
+                provider: row.nativeProvider,
+                providerName: row.providerName,
+                accountName: row.accountName,
+                snapshot: row.snapshot,
+                namedWindows: row.namedWindows,
+                errorText: row.isMagpie ? row.detailErrorText : nil,
                 width: width,
                 history: history,
-                model: model),
-            id: "overviewDetail-\(providerName)" + (accountName.map { "-\($0)" } ?? ""),
+                model: row.isMagpie ? nil : row.model),
+            id: "overviewDetail-\(row.providerName)" + (row.accountName.map { "-\($0)" } ?? ""),
             width: width,
             // The pool holds the parent menu's row views; a detail card built first would take one of them.
             recyclesView: false))
-        if let claudeAccountID {
+        if row.isMagpie, row.nativeProvider == .claude, let accountID = row.accountID {
             submenu.addItem(.separator())
-            submenu.addItem(self.makeRefreshClaudeAccountItem(claudeAccountID))
+            submenu.addItem(self.makeRefreshClaudeAccountItem(accountID))
         }
         return submenu
     }

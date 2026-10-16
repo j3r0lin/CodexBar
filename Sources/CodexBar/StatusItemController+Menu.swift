@@ -405,35 +405,7 @@ extension StatusItemController {
         captureMenu: NSMenu? = nil) -> Bool
     {
         let providerScopes = self.overviewProviderScopes(enabledProviders: enabledProviders)
-        struct OverviewRow {
-            let provider: UsageProvider
-            let model: UsageMenuCardView.Model
-            let claudeAccountID: ProviderAccountIdentity?
-            let snapshot: UsageSnapshot?
-            let errorText: String?
-        }
-        let rows: [OverviewRow] =
-            providerScopes.visible.flatMap { provider -> [OverviewRow] in
-                // Provider-specific by design: only Claude reads per-account rows from the magpie gateway.
-                if provider == .claude, self.claudeAccountTabsEnabled {
-                    // Each magpie account is its own row; the provider-level Claude snapshot is not magpie's data.
-                    return self.claudeOverviewAccountRows().map {
-                        OverviewRow(
-                            provider: provider,
-                            model: $0.model,
-                            claudeAccountID: $0.id,
-                            snapshot: $0.snapshot,
-                            errorText: nil)
-                    }
-                }
-                guard let model = self.menuCardModel(for: provider) else { return [] }
-                return [OverviewRow(
-                    provider: provider,
-                    model: model,
-                    claudeAccountID: nil,
-                    snapshot: self.store.snapshot(for: provider.instanceID),
-                    errorText: model.isOverviewErrorOnly ? model.subtitleText : nil)]
-            }
+        let rows = self.overviewUsageRows(visibleProviders: providerScopes.visible)
         guard !rows.isEmpty else { return false }
 
         let t0 = CACurrentMediaTime()
@@ -475,15 +447,13 @@ extension StatusItemController {
         }
 
         // A provider with several accounts gets one grey caption; a lone account is its own row.
-        let accountCounts = Dictionary(rows.map { ($0.provider, 1) }, uniquingKeysWith: +)
-        let hidePersonalInfo = self.settings.hidePersonalInfo
+        let accountCounts = Dictionary(rows.map { ($0.groupKey, 1) }, uniquingKeysWith: +)
         for (index, row) in rows.enumerated() {
-            let isGrouped = (accountCounts[row.provider] ?? 1) > 1
-            let startsProvider = index == 0 || rows[index - 1].provider != row.provider
-            let endsProvider = index == rows.count - 1 || rows[index + 1].provider != row.provider
-            let providerName = L(ProviderDescriptorRegistry.descriptor(for: row.provider).metadata.displayName)
-            let identifier = "\(Self.overviewRowIdentifierPrefix)\(row.provider.rawValue)"
-                + (row.claudeAccountID.map { "#\($0.opaqueID)" } ?? "")
+            let isGrouped = (accountCounts[row.groupKey] ?? 1) > 1
+            let startsProvider = index == 0 || rows[index - 1].groupKey != row.groupKey
+            let endsProvider = index == rows.count - 1 || rows[index + 1].groupKey != row.groupKey
+            let identifier = "\(Self.overviewRowIdentifierPrefix)\(row.groupKey)"
+                + (row.accountID.map { "#\($0.opaqueID)" } ?? "")
             // Each provider is one tinted block; a grouped provider's heading opens its block.
             let block: OverviewBlockPosition = switch (isGrouped || !startsProvider, endsProvider) {
             case (false, true): .single
@@ -494,9 +464,9 @@ extension StatusItemController {
             if isGrouped, startsProvider {
                 let heading = self.makeMenuCardItem(
                     OverviewAccountGroupHeading(
-                        title: "\(providerName) · " + L("%lld accounts", accountCounts[row.provider] ?? 0),
+                        title: "\(row.providerName) · " + L("%lld accounts", accountCounts[row.groupKey] ?? 0),
                         width: menuWidth),
-                    id: "\(Self.overviewGroupHeadingIdentifierPrefix)\(row.provider.rawValue)",
+                    id: "\(Self.overviewGroupHeadingIdentifierPrefix)\(row.groupKey)",
                     width: menuWidth,
                     heightCacheScope: "overviewAccountGroupHeading",
                     heightCacheFingerprint: "heading",
@@ -504,27 +474,25 @@ extension StatusItemController {
                 heading.isEnabled = false
                 menu.addItem(heading)
             }
-            let account = self.store.claudeAccountSource.accounts.first { $0.id == row.claudeAccountID }
-            let accountName = account.map { Self.claudeAccountShortName($0, hidePersonalInfo: hidePersonalInfo) }
-            let submenu = self.makeOverviewDetailSubmenu(
-                providerName: providerName,
-                accountName: accountName,
-                snapshot: row.snapshot,
-                provider: row.provider,
-                model: row.model,
-                width: menuWidth,
-                claudeAccountID: row.claudeAccountID)
-            let slots = OverviewCompactAccountRow.slots(of: row.snapshot, provider: row.provider)
+            let submenu = self.makeOverviewDetailSubmenu(row: row, width: menuWidth)
+            let namedLines = row.namedWindows?.map {
+                OverviewCompactAccountRow.Line(label: $0.label, used: $0.used, resetsAt: $0.resetsAt)
+            }
+            let slots = namedLines == nil
+                ? OverviewCompactAccountRow.slots(of: row.snapshot, provider: row.nativeProvider)
+                : (short: nil, long: nil)
             let rowView = OverviewCompactAccountRow(
-                name: isGrouped ? accountName ?? row.model.providerName : providerName,
+                name: isGrouped ? row.accountName ?? row.providerName : row.providerName,
                 shortWindow: slots.short,
                 longWindow: slots.long,
                 width: menuWidth,
                 indent: isGrouped ? 10 : 0,
                 namesProvider: !isGrouped,
-                provider: row.provider,
+                provider: row.nativeProvider,
                 block: block,
-                errorText: row.errorText)
+                errorText: row.errorText,
+                showsErrorFlag: row.showsErrorFlag,
+                namedLines: namedLines)
             let item = self.makeMenuCardItem(
                 rowView,
                 id: identifier,
@@ -539,6 +507,53 @@ extension StatusItemController {
             menu.addItem(item)
         }
         return true
+    }
+
+    /// Native rows for every visible provider still natively owned, plus one row per magpie
+    /// account: magpie-owned providers contribute their account rows in place of the native row,
+    /// and providers the native side never enabled (including unknown wire IDs) append after.
+    private func overviewUsageRows(visibleProviders: [UsageProvider]) -> [OverviewUsageRow] {
+        var rows: [OverviewUsageRow] = []
+        var coveredWireIDs = Set<String>()
+        let hidePersonalInfo = self.settings.hidePersonalInfo
+        let magpieAccounts = self.store.magpieOverviewSnapshots
+        for provider in visibleProviders {
+            if case let .magpie(reference) = self.store.providerSourceRoute(for: provider) {
+                coveredWireIDs.insert(reference.wireID)
+                rows += magpieAccounts
+                    .filter { $0.provider.wireID == reference.wireID }
+                    .map { self.magpieOverviewRow(for: $0, hidePersonalInfo: hidePersonalInfo) }
+                continue
+            }
+            guard let model = self.menuCardModel(for: provider) else { continue }
+            rows.append(.native(
+                provider: provider,
+                model: model,
+                snapshot: self.store.snapshot(for: provider.instanceID),
+                providerName: L(ProviderDescriptorRegistry.descriptor(for: provider).metadata.displayName)))
+        }
+        for account in magpieAccounts where !coveredWireIDs.contains(account.provider.wireID) {
+            rows.append(self.magpieOverviewRow(for: account, hidePersonalInfo: hidePersonalInfo))
+        }
+        return rows
+    }
+
+    private func magpieOverviewRow(
+        for account: MagpieAccountSnapshot,
+        hidePersonalInfo: Bool) -> OverviewUsageRow
+    {
+        OverviewUsageRow.magpie(
+            account: account,
+            providerName: L(account.provider.displayName),
+            accountName: Self.magpieAccountRowName(account, hidePersonalInfo: hidePersonalInfo))
+    }
+
+    /// The row label of one magpie account: an ordinal in privacy mode, otherwise the alias or
+    /// the email's local part; provider-level identities fall back to the provider's name.
+    static func magpieAccountRowName(_ account: MagpieAccountSnapshot, hidePersonalInfo: Bool) -> String {
+        if hidePersonalInfo { return "Account \(account.ordinal)" }
+        let label = account.displayLabel
+        return label.split(separator: "@").first.map(String.init) ?? label
     }
 
     func overviewProviderScopes(
