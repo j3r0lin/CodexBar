@@ -16,3 +16,18 @@ public enum ProviderSourceRoute: Sendable, Equatable {
         return false
     }
 }
+
+#if DEBUG
+/// Substitutes sensitive native IO before any real access in boundary tests.
+public enum NativeProviderIOTestBoundary {
+    public enum Kind: String, Sendable, CaseIterable {
+        case file
+        case credential
+        case keychain
+        case cookie
+        case process
+    }
+
+    @TaskLocal public static var intercept: (@Sendable (Kind) throws -> Void)?
+}
+#endif

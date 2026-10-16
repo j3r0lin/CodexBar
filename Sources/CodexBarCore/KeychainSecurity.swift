@@ -125,6 +125,10 @@ public enum KeychainSecurity {
         _ query: CFDictionary,
         _ result: UnsafeMutablePointer<CFTypeRef?>?) -> OSStatus
     {
+        #if DEBUG
+        do { try NativeProviderIOTestBoundary.intercept?(.keychain) }
+        catch { return errSecItemNotFound }
+        #endif
         guard self.currentItemOperationBlockReason() == nil else {
             return errSecInteractionNotAllowed
         }

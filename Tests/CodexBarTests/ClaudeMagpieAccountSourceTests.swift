@@ -1,6 +1,8 @@
 import CodexBarCore
 import Foundation
 import Testing
+import Security
+@testable import CodexBarCore
 @testable import CodexBar
 
 @MainActor
@@ -53,6 +55,65 @@ struct MagpieSourceTransitionTests {
             #expect(!store.providerSourceRoute(for: provider).isNative)
         }
         #expect(nativeDispatches.isEmpty)
+    }
+
+    @Test(arguments: ["enabling", "firstFailure", "laterFailure", "disappeared"])
+    func `managed refresh performs no sensitive native IO before context construction`(state: String) async {
+        let store = self.makeStore()
+        let spy = NativeIOSpy()
+        store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
+        {"data":[{"provider":"claude","windows":[]},{"provider":"codex","windows":[]},
+          {"provider":"kimi-code","windows":[]},{"provider":"opencode-go","windows":[]}]}
+        """.utf8))
+        if state == "firstFailure" {
+            store.magpieTransport = ClaudeMagpieFixture.transport(status: 503)
+        }
+        if state == "laterFailure" || state == "disappeared" {
+            store.reconcileMagpieSourceConfiguration()
+            await store.awaitMagpieRefresh()
+            store.magpieTransport = state == "laterFailure"
+                ? ClaudeMagpieFixture.transport(status: 503)
+                : ClaudeMagpieFixture.transport(data: Data(#"{"data":[]}"#.utf8))
+            await store.refreshMagpieAccounts()
+        }
+        await NativeProviderIOTestBoundary.$intercept.withValue({ kind in
+            spy.record(kind)
+            throw CancellationError()
+        }) {
+            for provider: UsageProvider in [.claude, .codex, .kimi, .opencodego] {
+                await store.refreshProvider(provider, allowDisabled: true)
+                _ = await store.debugLog(for: provider)
+                #expect(!store.providerSourceRoute(for: provider).isNative)
+                for kind in NativeProviderIOTestBoundary.Kind.allCases {
+                    #expect(spy.count(kind) == 0)
+                }
+            }
+        }
+    }
+
+    @Test
+    func `native IO spies intercept real APIs when unified source is off`() async {
+        let store = self.makeStore()
+        store.settings.magpieSourceEnabled = false
+        let spy = NativeIOSpy()
+        await NativeProviderIOTestBoundary.$intercept.withValue({ kind in
+            spy.record(kind)
+            throw CancellationError()
+        }) {
+            for provider: UsageProvider in [.claude, .codex, .kimi, .opencodego] {
+                #expect(store.providerSourceRoute(for: provider).isNative)
+            }
+            _ = KimiSettingsReader.hasKimiCodeCredential(environment: ["HOME": "/fixture"])
+            _ = try? ClaudeOAuthCredentialsStore.loadRecord(environment: [:], allowKeychainPrompt: false)
+            _ = KeychainSecurity.copyMatching([kSecClass: kSecClassGenericPassword] as CFDictionary, nil)
+            _ = try? OpenCodeCookieImporter.importSession(browserDetection: BrowserDetection(cacheTTL: 0))
+            _ = try? KimiCookieImporter.importSessions(browserDetection: BrowserDetection(cacheTTL: 0))
+            _ = try? await SubprocessRunner.run(
+                binary: "/fixture/tool", arguments: [], environment: [:], timeout: 1, label: "fixture")
+        }
+        for kind in NativeProviderIOTestBoundary.Kind.allCases {
+            #expect(spy.count(kind) > 0)
+        }
     }
 
     @Test
@@ -178,5 +239,18 @@ struct MagpieSourceTransitionTests {
         store.settings.magpieSourceEnabled = false
         #expect(store.providerSourceRoute(for: .claude).isNative)
         #expect(store.providerSourceRoute(for: .codex).isNative)
+    }
+}
+
+private final class NativeIOSpy: @unchecked Sendable {
+    private let lock = NSLock()
+    private var counts: [NativeProviderIOTestBoundary.Kind: Int] = [:]
+
+    func record(_ kind: NativeProviderIOTestBoundary.Kind) {
+        self.lock.withLock { self.counts[kind, default: 0] += 1 }
+    }
+
+    func count(_ kind: NativeProviderIOTestBoundary.Kind) -> Int {
+        self.lock.withLock { self.counts[kind, default: 0] }
     }
 }

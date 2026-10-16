@@ -463,6 +463,9 @@ public struct TTYCommandRunner {
         options: Options = Options(),
         onURLDetected: (@Sendable () -> Void)? = nil) throws -> Result
     {
+        #if DEBUG
+        try NativeProviderIOTestBoundary.intercept?(.process)
+        #endif
         let baseEnv = options.baseEnvironment ?? ProcessInfo.processInfo.environment
         guard let resolved = Self.which(binary, environment: baseEnv) else {
             Self.log.warning("PTY binary not found", metadata: ["binary": binary])

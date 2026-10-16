@@ -15,6 +15,10 @@ public enum KimiCookieImporter {
         region: KimiRegion = .china,
         homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser) -> KimiWebCredential?
     {
+        #if DEBUG
+        do { try NativeProviderIOTestBoundary.intercept?(.credential) }
+        catch { return nil }
+        #endif
         if region == .china {
             return KimiDesktopSessionDiscovery.live.credential(
                 settings: .init(cookieSource: .auto, manualCookieHeader: nil, region: region),
@@ -48,6 +52,9 @@ public enum KimiCookieImporter {
         browserDetection: BrowserDetection = BrowserDetection(),
         logger: ((String) -> Void)? = nil) throws -> [SessionInfo]
     {
+        #if DEBUG
+        try NativeProviderIOTestBoundary.intercept?(.cookie)
+        #endif
         var sessions: [SessionInfo] = []
         let candidates = self.cookieImportOrder.cookieImportCandidates(using: browserDetection)
         for browserSource in candidates {

@@ -103,7 +103,7 @@ struct OverviewCompactAccountRow: View {
     static let horizontalPadding: CGFloat = 8
     /// Fits "OPENCODE GO" in the section-title style.
     static let nameColumn: CGFloat = 104
-    static let labelWidth: CGFloat = 20
+    static let labelWidth: CGFloat = 28
     /// Fits "100%" at 13pt semibold with monospaced digits.
     static let percentWidth: CGFloat = 38
     static let resetWidth: CGFloat = 40
@@ -120,19 +120,8 @@ struct OverviewCompactAccountRow: View {
         }
     }
 
-    /// The label column grows to fit this row's longest label (a model name, an unknown wire
-    /// name) within a cap, so named rows keep their labels readable without moving native rows.
-    var labelColumnWidth: CGFloat {
-        Self.labelColumnWidth(for: self.lines)
-    }
-
-    static func labelColumnWidth(for lines: [Line]) -> CGFloat {
-        let font = NSFont.systemFont(ofSize: 10, weight: .medium)
-        let widest = lines.map { line in
-            (line.label as NSString).size(withAttributes: [.font: font]).width
-        }.max() ?? 0
-        return min(56, max(Self.labelWidth, ceil(widest)))
-    }
+    /// All providers share one label column, including model-scoped windows.
+    var labelColumnWidth: CGFloat { Self.labelWidth }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {

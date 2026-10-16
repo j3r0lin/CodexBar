@@ -402,6 +402,9 @@ extension BrowserCookieClient {
         for browser: Browser,
         operation: () throws -> [Record]) throws -> [Record]
     {
+        #if DEBUG
+        try NativeProviderIOTestBoundary.intercept?(.cookie)
+        #endif
         guard BrowserCookieAccessGate.cookieStoreAccessDecision(
             homeDirectories: self.configuration.homeDirectories) == .allowed
         else {

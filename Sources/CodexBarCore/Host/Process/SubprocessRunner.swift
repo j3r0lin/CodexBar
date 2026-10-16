@@ -145,6 +145,9 @@ public enum SubprocessRunner {
         reapDescendants: Bool = false,
         label: String) async throws -> SubprocessResult
     {
+        #if DEBUG
+        try NativeProviderIOTestBoundary.intercept?(.process)
+        #endif
         let executableURL = URL(fileURLWithPath: binary).standardizedFileURL
         guard FileManager.default.isExecutableFile(atPath: executableURL.path) else {
             throw SubprocessRunnerError.binaryNotFound(binary)
