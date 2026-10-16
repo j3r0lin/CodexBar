@@ -102,6 +102,7 @@ struct MagpieSourceTransitionTests {
         }) {
             for provider: UsageProvider in [.claude, .codex, .kimi, .opencodego] {
                 #expect(store.providerSourceRoute(for: provider).isNative)
+                _ = store.makeFetchContext(provider: provider, override: nil)
             }
             _ = KimiSettingsReader.hasKimiCodeCredential(environment: ["HOME": "/fixture"])
             _ = try? ClaudeOAuthCredentialsStore.loadRecord(environment: [:], allowKeychainPrompt: false)

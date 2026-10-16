@@ -52,13 +52,17 @@ extension UsageStore {
     /// Where a provider's reads come from right now. Evaluated at the front of every read path so
     /// a magpie-owned provider never touches local credentials, files, cookies, or processes.
     func providerSourceRoute(for provider: UsageProvider) -> ProviderSourceRoute {
-        guard self.settings.magpieSourceEnabled else { return .native }
-        guard let wireID = MagpieProviderMapping.wireID(for: provider) else { return .native }
-        if self.magpieTakeoverWireIDs.contains(wireID) {
-            return .magpie(MagpieProviderMapping.reference(for: wireID))
-        }
-        return self.magpieDiscoveryCompleted && self.magpieLastRefreshAt != nil
-            ? .native : .waitingForMagpieDiscovery
+        ProviderSourceRoute.resolve(
+            provider: provider,
+            enabled: self.settings.magpieSourceEnabled,
+            ownedWireIDs: self.magpieTakeoverWireIDs,
+            discoverySucceeded: self.magpieDiscoveryCompleted && self.magpieLastRefreshAt != nil)
+    }
+
+    /// OpenAI dashboard, reset credits and weekly history belong to native Codex only.
+    var canReadNativeCodexSource: Bool {
+        // Provider-specific by design: these Codex-only entry points share the same source route.
+        self.providerSourceRoute(for: .codex).isNative
     }
 
     /// Wire IDs magpie owns on this Mac: the persisted takeover set plus everything the latest

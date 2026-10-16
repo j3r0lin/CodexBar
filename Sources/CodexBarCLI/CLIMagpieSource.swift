@@ -15,18 +15,17 @@ actor CLIMagpieSource {
     }
 
     func route(for provider: UsageProvider, configuration: MagpieSourceConfig?) async -> ProviderSourceRoute {
-        guard configuration?.enabled == true,
-              let wireID = MagpieProviderMapping.wireID(for: provider)
-        else { return .native }
+        guard configuration?.enabled == true else { return .native }
+        var discoverySucceeded = false
         do {
-            let rows = try await self.rows(quotasURL: configuration?.quotasURL)
-            if self.ownedWireIDs.contains(wireID) || rows.contains(where: { $0.provider == wireID }) {
-                return .magpie(MagpieProviderMapping.reference(for: wireID))
-            }
-            return .native
-        } catch {
-            return .waitingForMagpieDiscovery
-        }
+            _ = try await self.rows(quotasURL: configuration?.quotasURL)
+            discoverySucceeded = true
+        } catch {}
+        return ProviderSourceRoute.resolve(
+            provider: provider,
+            enabled: true,
+            ownedWireIDs: self.ownedWireIDs,
+            discoverySucceeded: discoverySucceeded)
     }
 
     func rows(quotasURL: String?) async throws -> [MagpieQuotaRow] {

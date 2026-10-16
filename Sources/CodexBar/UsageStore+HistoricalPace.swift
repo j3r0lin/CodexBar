@@ -149,8 +149,7 @@ extension UsageStore {
     }
 
     func recordCodexHistoricalSampleIfNeeded(snapshot: UsageSnapshot) {
-        // Provider-specific by design: only native Codex readings belong in its local weekly history.
-        guard self.providerSourceRoute(for: .codex).isNative else { return }
+        guard self.canReadNativeCodexSource else { return }
         guard self.settings.historicalTrackingEnabled else { return }
         let projection = self.codexConsumerProjection(
             surface: .liveCard,
@@ -169,8 +168,7 @@ extension UsageStore {
                 accountKey: ownership.canonicalKey)
             let dataset = await Self.loadHistoricalDataset(from: historyStore, ownership: ownership)
             await MainActor.run { [weak self] in
-                // Provider-specific by design: late native Codex history must not cross a magpie takeover.
-                guard let self, self.providerSourceRoute(for: .codex).isNative,
+                guard let self, self.canReadNativeCodexSource,
                       self.providerPublicationRevisionIsCurrent(publicationRevision, for: .codex)
                 else { return }
                 self.setCodexHistoricalDataset(dataset, accountKey: ownership.canonicalKey)
@@ -179,8 +177,7 @@ extension UsageStore {
     }
 
     func refreshHistoricalDatasetIfNeeded() async {
-        // Provider-specific by design: Codex history loads are forbidden while magpie owns its readings.
-        guard self.providerSourceRoute(for: .codex).isNative else {
+        guard self.canReadNativeCodexSource else {
             self.setCodexHistoricalDataset(nil, accountKey: nil)
             return
         }
@@ -191,8 +188,7 @@ extension UsageStore {
         let ownership = self.codexOwnershipContext()
         let publicationRevision = self.providerPublicationRevision(for: .codex)
         let dataset = await Self.loadHistoricalDataset(from: self.historicalUsageHistoryStore, ownership: ownership)
-        // Provider-specific by design: a late native Codex history load must not cross takeover.
-        guard self.providerSourceRoute(for: .codex).isNative,
+        guard self.canReadNativeCodexSource,
               self.providerPublicationRevisionIsCurrent(publicationRevision, for: .codex)
         else { return }
         self.setCodexHistoricalDataset(dataset, accountKey: ownership.canonicalKey)
@@ -213,8 +209,7 @@ extension UsageStore {
         authorityDecision: CodexDashboardAuthorityDecision,
         attachedAccountEmail: String?)
     {
-        // Provider-specific by design: dashboard backfill belongs only to native Codex history.
-        guard self.providerSourceRoute(for: .codex).isNative else { return }
+        guard self.canReadNativeCodexSource else { return }
         guard self.settings.historicalTrackingEnabled else { return }
         guard authorityDecision.allowedEffects.contains(.historicalBackfill) else { return }
         let usageBreakdown = OpenAIDashboardDailyBreakdown.removingSkillUsageServices(
@@ -258,8 +253,7 @@ extension UsageStore {
                 accountKey: ownership.canonicalKey)
             let dataset = await Self.loadHistoricalDataset(from: historyStore, ownership: ownership)
             await MainActor.run { [weak self] in
-                // Provider-specific by design: late native Codex history must not cross a magpie takeover.
-                guard let self, self.providerSourceRoute(for: .codex).isNative,
+                guard let self, self.canReadNativeCodexSource,
                       self.providerPublicationRevisionIsCurrent(publicationRevision, for: .codex)
                 else { return }
                 self.setCodexHistoricalDataset(dataset, accountKey: ownership.canonicalKey)

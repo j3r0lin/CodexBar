@@ -11,6 +11,19 @@ public enum ProviderSourceRoute: Sendable, Equatable {
     case magpie(MagpieProviderReference)
     case native
 
+    public static func resolve(
+        provider: UsageProvider,
+        enabled: Bool,
+        ownedWireIDs: Set<String>,
+        discoverySucceeded: Bool) -> ProviderSourceRoute
+    {
+        guard enabled, let wireID = MagpieProviderMapping.wireID(for: provider) else { return .native }
+        if ownedWireIDs.contains(wireID) {
+            return .magpie(MagpieProviderMapping.reference(for: wireID))
+        }
+        return discoverySucceeded ? .native : .waitingForMagpieDiscovery
+    }
+
     public var isNative: Bool {
         if case .native = self { return true }
         return false

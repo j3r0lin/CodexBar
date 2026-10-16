@@ -591,8 +591,7 @@ final class UsageStore {
             defaultsKey: Self.sessionLimitResetDetectorDefaultsKey,
             logName: "session")
         self.weeklyLimitResetDetectorStates = Self.loadWeeklyLimitResetDetectorStates(from: settings.userDefaults)
-        // Provider-specific by design: Codex account cache hydration must precede no magpie-owned reads.
-        if self.providerSourceRoute(for: .codex).isNative,
+        if self.canReadNativeCodexSource,
            let codexAccountUsageSnapshotStore = self.codexAccountUsageSnapshotStore
         {
             self.codexAccountSnapshots = codexAccountUsageSnapshotStore.load(
