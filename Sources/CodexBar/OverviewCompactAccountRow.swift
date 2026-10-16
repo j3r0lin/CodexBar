@@ -7,9 +7,9 @@ enum OverviewPalette {
     static let accent = Color(red: 0x4F / 255, green: 0xD1 / 255, blue: 0xE8 / 255)
     static let warning = Color(red: 1, green: 0xB3 / 255, blue: 0x40 / 255)
     static let critical = Color(red: 1, green: 0x5A / 255, blue: 0x4F / 255)
-    static let caption = Color(red: 0x6B / 255, green: 0x71 / 255, blue: 0x80 / 255)
+    static let caption = Color.white.opacity(0.60)
     /// Reset countdowns read one step brighter than the window labels.
-    static let reset = Color(red: 0x8E / 255, green: 0x90 / 255, blue: 0x99 / 255)
+    static let reset = Color.white.opacity(0.60)
 
     static func color(usedPercent used: Double) -> Color {
         if used >= 90 { return self.critical }
@@ -50,7 +50,7 @@ extension View {
                     bottomLeadingRadius: position.roundsBottom ? radius : 0,
                     bottomTrailingRadius: position.roundsBottom ? radius : 0,
                     topTrailingRadius: position.roundsTop ? radius : 0)
-                    .fill(Color.white.opacity(0.035)))
+                    .fill(Color.white.opacity(0.07)))
             .padding(.horizontal, OverviewCompactAccountRow.blockInset)
             .padding(.bottom, position.roundsBottom ? 6 : 0)
     }
@@ -94,7 +94,7 @@ struct OverviewCompactAccountRow: View {
     static let blockInset: CGFloat = 2
     static let horizontalPadding: CGFloat = 8
     /// Fits "KIMI CODE" in the section-title style.
-    static let nameColumn: CGFloat = 66
+    static let nameColumn: CGFloat = 88
     static let labelWidth: CGFloat = 20
     /// Fits "100%" at 13pt semibold with monospaced digits.
     static let percentWidth: CGFloat = 38
@@ -107,7 +107,7 @@ struct OverviewCompactAccountRow: View {
         guard self.errorText == nil else { return [] }
         return [("5h", self.shortWindow), ("7d", self.longWindow)].compactMap { label, window in
             guard let window, let used = Self.used(window) else { return nil }
-            return Line(label: label, used: used, resetsAt: window.resetsAt)
+            return Line(label: Self.windowLabel(window, fallback: label), used: used, resetsAt: window.resetsAt)
         }
     }
 
@@ -156,6 +156,7 @@ struct OverviewCompactAccountRow: View {
                 }
             }
             .lineLimit(1)
+            .truncationMode(.middle)
             .frame(width: Self.nameColumn - self.indent, alignment: .leading)
             .padding(.leading, self.indent)
             content()
@@ -178,7 +179,7 @@ struct OverviewCompactAccountRow: View {
         let color = Self.severityColor(line.used)
         return HStack(spacing: 8) {
             Text(line.label)
-                .font(.system(size: 10))
+                .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(OverviewPalette.caption)
                 .frame(width: Self.labelWidth, alignment: .leading)
             UsageBar(used: line.used, color: color, trackColor: Self.trackColor, height: 6)
@@ -212,11 +213,30 @@ struct OverviewCompactAccountRow: View {
     static func slots(of snapshot: UsageSnapshot?) -> (short: RateWindow?, long: RateWindow?) {
         guard let snapshot else { return (nil, nil) }
         let windows = [snapshot.primary, snapshot.secondary, snapshot.tertiary].compactMap(\.self)
-        let short = windows.first { ($0.windowMinutes ?? .max) <= 1440 }
-            ?? snapshot.primary.flatMap { $0.windowMinutes == nil ? $0 : nil }
-        let long = windows.first { ($0.windowMinutes ?? 0) > 1440 }
-            ?? snapshot.secondary.flatMap { $0.windowMinutes == nil ? $0 : nil }
+        let short = windows.first { (Self.semanticMinutes($0) ?? .max) <= 1440 }
+            ?? snapshot.primary.flatMap { Self.semanticMinutes($0) == nil ? $0 : nil }
+        let long = windows.first { (Self.semanticMinutes($0) ?? 0) > 1440 }
+            ?? snapshot.secondary.flatMap { Self.semanticMinutes($0) == nil ? $0 : nil }
         return (short, long)
+    }
+
+    /// Some adapters preserve a provider's window name as its description when duration is absent.
+    /// Recognise that name before falling back to primary/secondary position.
+    static func semanticMinutes(_ window: RateWindow) -> Int? {
+        if let minutes = window.windowMinutes { return minutes }
+        let name = (window.resetDescription ?? "").lowercased().trimmingCharacters(in: .whitespaces)
+        if ["7 days", "7 day", "7d", "weekly", "week"].contains(name) { return 10080 }
+        if ["month", "monthly", "30 days", "30d"].contains(name) { return 43200 }
+        if ["5 hours", "5 hour", "5h", "5-hour"].contains(name) { return 300 }
+        if ["day", "daily", "24 hours", "24h"].contains(name) { return 1440 }
+        return nil
+    }
+
+    static func windowLabel(_ window: RateWindow, fallback: String) -> String {
+        guard let minutes = Self.semanticMinutes(window) else { return fallback }
+        if minutes >= 28 * 1440 { return "Mo" }
+        if minutes >= 1440 { return "\(minutes / 1440)d" }
+        return "\(max(1, minutes / 60))h"
     }
 
     /// A placeholder window stands for a lane the provider did not report, so it gets no number.

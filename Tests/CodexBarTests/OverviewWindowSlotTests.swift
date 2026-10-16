@@ -39,6 +39,24 @@ struct OverviewWindowSlotTests {
     }
 
     @Test
+    func `a named seven day window without duration is a weekly reading`() {
+        let weekly = RateWindow(
+            usedPercent: 30,
+            windowMinutes: nil,
+            resetsAt: nil,
+            resetDescription: "7 days")
+        let slots = OverviewCompactAccountRow.slots(
+            of: UsageSnapshot(primary: weekly, secondary: nil, updatedAt: Date()))
+        let row = OverviewCompactAccountRow(
+            name: "Grok",
+            shortWindow: slots.short,
+            longWindow: slots.long,
+            width: 340)
+        #expect(slots.short == nil)
+        #expect(row.lines.map(\.label) == ["7d"])
+    }
+
+    @Test
     func `a reading above zero is at least a dot and zero has no fill`() {
         #expect(UsageBar.fillWidth(used: 0, barWidth: 100, height: 5) == 0)
         #expect(UsageBar.fillWidth(used: 1, barWidth: 100, height: 5) == 5)
