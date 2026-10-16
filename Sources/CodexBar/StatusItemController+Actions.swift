@@ -333,18 +333,20 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
         self.updater.checkForUpdates(nil)
     }
 
-    func actionProvider(for sender: NSMenuItem) -> UsageProvider {
+    /// The provider a link action was built for. Nil for items made before actions carried one.
+    func actionProvider(for sender: NSMenuItem) -> UsageProvider? {
         (sender.representedObject as? String).flatMap(UsageProvider.init(rawValue:))
-            ?? self.lastMenuProvider?.firstPartyProvider ?? .codex
     }
 
     @objc func openDashboardFromMenuItem(_ sender: NSMenuItem) {
-        guard let url = self.dashboardURL(for: self.actionProvider(for: sender)) else { return }
+        guard let provider = self.actionProvider(for: sender) else { return self.openDashboard() }
+        guard let url = self.dashboardURL(for: provider) else { return }
         NSWorkspace.shared.open(url)
     }
 
     @objc func openChangelogFromMenuItem(_ sender: NSMenuItem) {
-        let metadata = self.store.metadata(for: self.actionProvider(for: sender))
+        guard let provider = self.actionProvider(for: sender) else { return self.openChangelog() }
+        let metadata = self.store.metadata(for: provider)
         guard let value = metadata.changelogURL, let url = URL(string: value) else { return }
         NSWorkspace.shared.open(url)
     }
@@ -477,8 +479,8 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
     }
 
     @objc func openStatusPageFromMenuItem(_ sender: NSMenuItem) {
-        let provider = (sender.representedObject as? String).flatMap(UsageProvider.init(rawValue:))
-            ?? (sender.identifier?.rawValue).flatMap(UsageProvider.init(rawValue:))
+        let provider = (sender.representedObject as? String ?? sender.identifier?.rawValue)
+            .flatMap(UsageProvider.init(rawValue:))
             ?? self.lastMenuProvider?.firstPartyProvider
             ?? .codex
         self.openStatusPage(for: provider)
