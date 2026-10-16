@@ -207,6 +207,70 @@ struct MagpieIsolationRegressionTests {
         await task.value
         #expect(store.credits == nil)
     }
+
+    @Test
+    func `late dashboard results do not publish after magpie takes codex`() async {
+        let store = self.makeStore(enabled: true)
+        store.reconcileMagpieSourceConfiguration()
+        await store.awaitMagpieRefresh()
+        #expect(!store.providerSourceRoute(for: .codex).isNative)
+        let magpieSnapshot = store.snapshots[.codex]
+        let dashboard = OpenAIDashboardSnapshot(
+            signedInEmail: "c@example.com",
+            codeReviewRemainingPercent: 88,
+            creditEvents: [],
+            dailyBreakdown: [],
+            usageBreakdown: [],
+            creditsPurchaseURL: nil,
+            primaryLimit: RateWindow(usedPercent: 77, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
+            secondaryLimit: nil,
+            creditsRemaining: 5,
+            accountPlan: "Pro",
+            updatedAt: Date())
+        let applied = await store.applyOpenAIDashboard(dashboard, targetEmail: "c@example.com")
+        await store.applyOpenAIDashboardFailure(message: "late failure")
+        await store.applyOpenAIDashboardLoginRequiredFailure()
+        #expect(applied == false)
+        #expect(store.openAIDashboard == nil)
+        #expect(store.lastOpenAIDashboardError == nil)
+        #expect(store.openAIDashboardRequiresLogin == false)
+        #expect(store.snapshots[.codex]?.primary?.usedPercent == magpieSnapshot?.primary?.usedPercent)
+        #expect(store.snapshots[.codex]?.primary?.usedPercent != 77)
+    }
+
+    @Test(arguments: [UsageProvider.claude, .codex, .kimi, .opencodego])
+    func `hooks watch observation does no native IO while magpie is on`(provider: UsageProvider) async {
+        // Unreachable gateway: first-discovery failure, so every mapped provider stays non-native.
+        let config = CodexBarConfig(
+            providers: [ProviderConfig(id: provider.instanceID)],
+            magpie: MagpieSourceConfig(enabled: true, quotasURL: "http://127.0.0.1:9/v1/magpie/quotas"))
+        let spy = MagpieRegressionIOSpy()
+        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
+            spy.record(kind)
+            throw CancellationError()
+        }
+        _ = await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
+            await CodexBarCLI.hooksWatchObservation(provider: provider, config: config, verbose: false, webTimeout: 5)
+        }
+        for kind in NativeProviderIOTestBoundary.Kind.allCases {
+            #expect(spy.count(kind) == 0, "\(provider.rawValue) \(kind.rawValue)")
+        }
+    }
+
+    @Test
+    func `hooks watch observation reaches native IO when magpie is off`() async {
+        let config = CodexBarConfig(providers: [ProviderConfig(id: UsageProvider.claude.instanceID)])
+        let spy = MagpieRegressionIOSpy()
+        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
+            spy.record(kind)
+            throw CancellationError()
+        }
+        _ = await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
+            await CodexBarCLI.hooksWatchObservation(provider: .claude, config: config, verbose: false, webTimeout: 5)
+        }
+        let total = NativeProviderIOTestBoundary.Kind.allCases.reduce(0) { $0 + spy.count($1) }
+        #expect(total > 0)
+    }
 }
 
 private final class MagpieRegressionIOSpy: @unchecked Sendable {
