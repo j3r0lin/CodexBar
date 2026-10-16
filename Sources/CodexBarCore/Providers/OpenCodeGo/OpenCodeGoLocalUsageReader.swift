@@ -55,6 +55,9 @@ public struct OpenCodeGoLocalUsageReader: Sendable {
     #endif
 
     public func fetch(now: Date = Date(), historyDays: Int = 30) throws -> OpenCodeGoUsageSnapshot {
+        #if DEBUG
+        try NativeProviderIOTestBoundary.intercept?(.file)
+        #endif
         let hasAuth = Self.hasAuthKey(at: self.authURL)
         guard FileManager.default.fileExists(atPath: self.databaseURL.path) else {
             if hasAuth {

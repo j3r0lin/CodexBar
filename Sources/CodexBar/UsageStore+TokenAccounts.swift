@@ -870,6 +870,7 @@ extension UsageStore {
         includeCredits: Bool = false,
         claudeOwnerCLIRecoveryOnly: Bool = false) -> ProviderFetchContext
     {
+        self._test_fetchContextWillBuild?(provider)
         let account = ProviderTokenAccountSelection.selectedAccount(
             provider: provider,
             settings: self.settings,
