@@ -184,7 +184,7 @@ extension CodexBarCLI {
         publishPartial: CLIServeOperationCoordinator<UsageCommandOutput>
             .PublishPartial? = nil) async -> UsageCommandOutput
     {
-        if let output = await Self.fetchMagpieUsageIfOwned(
+        if let output = await fetchMagpieUsageIfOwned(
             provider: provider, status: status, tokenContext: tokenContext, command: command)
         {
             return output

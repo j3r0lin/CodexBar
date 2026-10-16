@@ -1182,13 +1182,16 @@ extension UsageStore {
         }
     }
 
+    private var canReadNativeCodexCookies: Bool {
+        self.providerSourceRoute(for: .codex).isNative && !Task.isCancelled
+    }
+
     func importOpenAIDashboardCookiesIfNeeded(
         targetEmail: String?,
         force: Bool,
         preferCachedCookieHeader: Bool? = nil) async -> String?
     {
-        guard self.providerSourceRoute(for: .codex).isNative else { return nil }
-        guard !Task.isCancelled else { return nil }
+        guard self.canReadNativeCodexCookies else { return nil }
         if await self.openAIWebCookieImportShouldFailClosed() {
             return nil
         }

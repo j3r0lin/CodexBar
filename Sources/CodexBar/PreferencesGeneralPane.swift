@@ -153,8 +153,10 @@ struct GeneralPane: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if self.settings.magpieSourceEnabled {
-                    TextField("magpie quotas URL", text: self.$settings.magpieQuotasURL,
-                              prompt: Text(MagpieQuotasReader.defaultQuotasURL))
+                    TextField(
+                        "magpie quotas URL",
+                        text: self.$settings.magpieQuotasURL,
+                        prompt: Text(MagpieQuotasReader.defaultQuotasURL))
                     Text(self.store.magpieTakeoverWireIDs.sorted().map {
                         MagpieProviderMapping.reference(for: $0).displayName
                     }.joined(separator: ", "))

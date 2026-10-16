@@ -16,8 +16,11 @@ struct MagpieSourceTransitionTests {
         settings.refreshFrequency = .manual
         settings.statusChecksEnabled = false
         let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]), browserDetection: BrowserDetection(cacheTTL: 0),
-            settings: settings, startupBehavior: .testing, environmentBase: [:])
+            fetcher: UsageFetcher(environment: [:]),
+            browserDetection: BrowserDetection(cacheTTL: 0),
+            settings: settings,
+            startupBehavior: .testing,
+            environmentBase: [:])
         store.magpieTransport = ClaudeMagpieFixture.transport()
         return store
     }
@@ -89,7 +92,9 @@ struct MagpieSourceTransitionTests {
     func `empty providers are hidden but remain owned`() async {
         let store = self.makeStore()
         store.magpieTransport = ClaudeMagpieFixture.transport(
-            data: Data(#"{"data":[{"provider":"opencode-go","windows":[]},{"provider":"opencode-zen-free","windows":[]}]}"#.utf8))
+            data: Data(
+                #"{"data":[{"provider":"opencode-go","windows":[]},{"provider":"opencode-zen-free","windows":[]}]}"#
+                    .utf8))
         await store.refreshMagpieAccounts()
         #expect(store.magpieOverviewSnapshots.isEmpty)
         #expect(!store.providerSourceRoute(for: .opencodego).isNative)

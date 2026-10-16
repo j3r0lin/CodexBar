@@ -66,7 +66,7 @@ extension UsageStore {
     /// clears it and returns providers to their native sources.
     var magpieTakeoverWireIDs: Set<String> {
         var ids = self.settings.magpieTakeoverWireIDs
-        ids.formUnion(self.magpieAccountSnapshots.map { $0.provider.wireID })
+        ids.formUnion(self.magpieAccountSnapshots.map(\.provider.wireID))
         return ids
     }
 
@@ -122,7 +122,7 @@ extension UsageStore {
         case .waitingForMagpieDiscovery: "waiting for first magpie discovery"
         }
         return [
-            "magpie owns \(reference.displayName) usage; credential, Keychain, browser cookie and CLI probes are skipped.",
+            "magpie owns \(reference.displayName) usage; local credential and process reads are skipped.",
             "magpie URL: \(url)",
             "Route: \(state)",
             "Last magpie error: \(self.magpieLastError ?? "none")",
@@ -199,7 +199,7 @@ extension UsageStore {
             let incoming = MagpieAccountProjection.snapshots(from: rows)
             var snapshots = incoming
             var retainedProviders: [String] = []
-            for wireID in Set(self.magpieAccountSnapshots.map { $0.provider.wireID }) {
+            for wireID in Set(self.magpieAccountSnapshots.map(\.provider.wireID)) {
                 let previous = self.magpieAccountSnapshots.filter { $0.provider.wireID == wireID }
                 let current = incoming.filter { $0.provider.wireID == wireID }
                 guard previous.contains(where: { !$0.windows.isEmpty }),
@@ -216,7 +216,7 @@ extension UsageStore {
             self.magpieAccountSnapshots = snapshots
             self.magpieLastRefreshAt = Date()
             self.magpieLastError = retainedProviders.isEmpty
-                ? nil : "magpie returned no usable quota rows for \(retainedProviders.sorted().joined(separator: ", "))."
+                ? nil : "magpie returned no usable rows: \(retainedProviders.sorted().joined(separator: ", "))."
             // The takeover set only grows while the switch is on: a provider that disappears from
             // a later response stays magpie-owned instead of resuming native reads.
             var takeover = self.settings.magpieTakeoverWireIDs

@@ -4,7 +4,7 @@ import Testing
 
 struct MagpieAccountProjectionTests {
     private func project(_ json: String) throws -> [MagpieAccountSnapshot] {
-        MagpieAccountProjection.snapshots(from: try MagpieQuotasReader.rows(from: Data(json.utf8)))
+        try MagpieAccountProjection.snapshots(from: MagpieQuotasReader.rows(from: Data(json.utf8)))
     }
 
     @Test
@@ -105,8 +105,9 @@ struct MagpieAccountProjectionTests {
             #expect(request.httpMethod == "GET")
             #expect(request.value(forHTTPHeaderField: "Authorization") == nil)
             #expect(request.value(forHTTPHeaderField: "Cookie") == nil)
-            return (ClaudeMagpieFixture.quotasData,
-                    HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+            return (
+                ClaudeMagpieFixture.quotasData,
+                HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
         }
         #expect(Set(rows.map(\.provider)) == ["claude", "codex"])
     }

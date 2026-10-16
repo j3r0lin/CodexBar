@@ -73,7 +73,7 @@ public struct MagpieQuotaWindow: Sendable, Equatable {
         }
         let hours = duration / 3600
         if hours <= 24 { return .session }
-        let days = duration / 86_400
+        let days = duration / 86400
         if days <= 8 { return .weekly }
         return .monthly
     }

@@ -32,21 +32,39 @@ extension CodexBarCLI {
                 guard let usage = account.snapshot else { continue }
                 if command.format == .json {
                     output.payload.append(ProviderPayload(
-                        provider: provider, account: account.displayLabel,
-                        version: nil, source: "magpie", status: status,
-                        usage: usage, credits: nil, antigravityPlanInfo: nil,
-                        openaiDashboard: nil, error: nil))
+                        provider: provider,
+                        account: account.displayLabel,
+                        version: nil,
+                        source: "magpie",
+                        status: status,
+                        usage: usage,
+                        credits: nil,
+                        antigravityPlanInfo: nil,
+                        openaiDashboard: nil,
+                        error: nil))
                 } else if command.cardsLayout {
                     output.cards.append(CLICardsRenderer.makeCard(CLICardBuildInput(
-                        provider: provider, snapshot: usage, credits: nil, source: "magpie",
-                        status: status, notes: [], useColor: command.useColor,
-                        resetStyle: command.resetStyle, weeklyWorkDays: command.weeklyWorkDays, now: Date())))
+                        provider: provider,
+                        snapshot: usage,
+                        credits: nil,
+                        source: "magpie",
+                        status: status,
+                        notes: [],
+                        useColor: command.useColor,
+                        resetStyle: command.resetStyle,
+                        weeklyWorkDays: command.weeklyWorkDays,
+                        now: Date())))
                 } else {
                     output.sections.append(CLIRenderer.renderText(
-                        provider: provider, snapshot: usage, credits: nil,
-                        context: RenderContext(header: "\(provider.rawValue) · magpie", status: status,
-                                               useColor: command.useColor, resetStyle: command.resetStyle,
-                                               weeklyWorkDays: command.weeklyWorkDays)))
+                        provider: provider,
+                        snapshot: usage,
+                        credits: nil,
+                        context: RenderContext(
+                            header: "\(provider.rawValue) · magpie",
+                            status: status,
+                            useColor: command.useColor,
+                            resetStyle: command.resetStyle,
+                            weeklyWorkDays: command.weeklyWorkDays)))
                 }
             }
         } catch {
