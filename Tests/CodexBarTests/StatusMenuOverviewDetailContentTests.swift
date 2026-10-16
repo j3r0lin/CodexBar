@@ -299,4 +299,3 @@ extension StatusMenuTests {
         #expect(!detail.items.contains { ($0.representedObject as? String) == chartID })
     }
 }
-
