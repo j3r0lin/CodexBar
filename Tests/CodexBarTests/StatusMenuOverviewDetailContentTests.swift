@@ -298,4 +298,59 @@ extension StatusMenuTests {
         let chartID = StatusItemController.usageHistoryChartID
         #expect(!detail.items.contains { ($0.representedObject as? String) == chartID })
     }
+
+    @Test
+    func `status components link resolves to the provider of its submenu`() throws {
+        let (controller, _, _) = self.makeOverviewController(providers: [.claude, .codex])
+        defer { controller.releaseStatusItemsForTesting() }
+        controller.lastMenuProvider = UsageProvider.codex.instanceID
+
+        let submenu = NSMenu()
+        _ = controller.appendStatusComponentsItem(to: submenu, provider: .claude, width: 300)
+        let link = try #require(submenu.items.first {
+            $0.action == #selector(StatusItemController.openStatusPageFromMenuItem(_:))
+        })
+        #expect(controller.statusPageProvider(for: link) == .claude)
+    }
+
+    @Test
+    func `detail draws recorded history itself and adds no second usage chart`() throws {
+        func detailCardHeight(history: Bool) throws -> (CGFloat, [String]) {
+            let (controller, store, _) = self.makeOverviewController(
+                providers: [.opencodego, .codex], rendersCards: true)
+            defer { controller.releaseStatusItemsForTesting() }
+            let now = Date()
+            store._setSnapshotForTesting(
+                UsageSnapshot(
+                    primary: RateWindow(usedPercent: 20, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
+                    secondary: nil,
+                    updatedAt: now),
+                provider: .opencodego)
+            if history {
+                store.planUtilizationHistory[UsageProvider.opencodego.instanceID] = PlanUtilizationHistoryBuckets(
+                    unscoped: [PlanUtilizationSeriesHistory(
+                        name: .session,
+                        windowMinutes: 300,
+                        entries: [PlanUtilizationHistoryEntry(
+                            capturedAt: now.addingTimeInterval(-86400),
+                            usedPercent: 40,
+                            resetsAt: now.addingTimeInterval(-86400 + 3600))])])
+            }
+            let menu = controller.makeMenu()
+            controller.menuWillOpen(menu)
+            let detail = try self.openDetail(of: .opencodego, in: menu)
+            let card = try #require(detail.items.first?.view)
+            card.layoutSubtreeIfNeeded()
+            let ids = detail.items.compactMap { $0.representedObject as? String }
+            return (card.frame.height, ids)
+        }
+        let without = try detailCardHeight(history: false)
+        let with = try detailCardHeight(history: true)
+        #expect(with.0 > without.0)
+        for ids in [with.1, without.1] {
+            #expect(!ids.contains(StatusItemController.usageHistoryChartID))
+            #expect(!ids.contains(StatusItemController.costHistoryChartID))
+        }
+    }
 }
+

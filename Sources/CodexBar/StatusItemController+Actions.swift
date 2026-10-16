@@ -479,11 +479,19 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
     }
 
     @objc func openStatusPageFromMenuItem(_ sender: NSMenuItem) {
-        let provider = (sender.representedObject as? String ?? sender.identifier?.rawValue)
-            .flatMap(UsageProvider.init(rawValue:))
+        let provider = self.statusPageProvider(for: sender)
             ?? self.lastMenuProvider?.firstPartyProvider
             ?? .codex
         self.openStatusPage(for: provider)
+    }
+
+    /// The status-components link keeps its provider in the identifier and a chart tag in the represented
+    /// object; Overview detail items carry it as the represented object only.
+    func statusPageProvider(for sender: NSMenuItem) -> UsageProvider? {
+        [sender.identifier?.rawValue, sender.representedObject as? String]
+            .lazy
+            .compactMap { $0.flatMap(UsageProvider.init(rawValue:)) }
+            .first
     }
 
     private func openStatusPage(for provider: UsageProvider) {
