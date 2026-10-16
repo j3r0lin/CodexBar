@@ -25,6 +25,36 @@ struct MagpieSourceTransitionTests {
         return store
     }
 
+    @Test(arguments: ["enabling", "firstFailure", "laterFailure", "disappeared"])
+    func `native refresh dispatch stays closed across discovery outcomes`(state: String) async {
+        let store = self.makeStore()
+        let managed: [UsageProvider] = [.claude, .codex, .kimi, .opencodego]
+        var nativeDispatches: [UsageProvider] = []
+        store._test_providerRefreshOverride = { nativeDispatches.append($0) }
+        store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
+        {"data":[{"provider":"claude","windows":[]},{"provider":"codex","windows":[]},
+          {"provider":"kimi-code","windows":[]},{"provider":"opencode-go","windows":[]}]}
+        """.utf8))
+        switch state {
+        case "firstFailure":
+            store.magpieTransport = ClaudeMagpieFixture.transport(status: 503)
+        case "laterFailure", "disappeared":
+            store.reconcileMagpieSourceConfiguration()
+            await store.refreshMagpieAccounts()
+            store.magpieTransport = state == "laterFailure"
+                ? ClaudeMagpieFixture.transport(status: 503)
+                : ClaudeMagpieFixture.transport(data: Data(#"{"data":[]}"#.utf8))
+            await store.refreshMagpieAccounts()
+        default:
+            break
+        }
+        for provider in managed {
+            await store.refreshProvider(provider, allowDisabled: true)
+            #expect(!store.providerSourceRoute(for: provider).isNative)
+        }
+        #expect(nativeDispatches.isEmpty)
+    }
+
     @Test
     func `emptySuccessfulRefreshRetainsPreviousAccountsAsLastKnown`() async {
         let store = self.makeStore()
