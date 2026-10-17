@@ -89,6 +89,7 @@ struct MagpieIsolationRegressionTests {
         store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
         {"data":[{"provider":"claude","user":"a@example.com","windows":[{"name":"5 hours","used":1}]},
           {"provider":"codex","user":"c@example.com","windows":[]},
+          {"provider":"grok-plugin","user":"g@example.com","windows":[{"name":"7 days","used":1}]},
           {"provider":"kimi-code","user":"k@example.com","windows":[{"name":"5 hours","used":1}]},
           {"provider":"opencode-go","user":"o@example.com","windows":[{"name":"5 hours","used":1}]}]}
         """.utf8))
@@ -150,6 +151,7 @@ struct MagpieIsolationRegressionTests {
         store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
         {"data":[{"provider":"claude","user":"a@example.com","windows":[{"name":"5 hours","used":1}]},
           {"provider":"codex","user":"c@example.com","windows":[],"error":"upstream timeout"},
+          {"provider":"grok-plugin","user":"g@example.com","windows":[{"name":"7 days","used":1}]},
           {"provider":"kimi-code","user":"k@example.com","windows":[{"name":"5 hours","used":1}]},
           {"provider":"opencode-go","user":"o@example.com","windows":[{"name":"5 hours","used":1}]}]}
         """.utf8))
