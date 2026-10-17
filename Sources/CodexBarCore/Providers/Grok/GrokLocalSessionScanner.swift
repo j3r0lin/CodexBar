@@ -83,6 +83,22 @@ public enum GrokLocalSessionScanner {
         lookbackDays: Int = defaultLookbackDays,
         now: Date = .init()) -> GrokLocalSessionSummary
     {
+        #if DEBUG
+        // One hook stands for the whole walk: the directory enumeration and every signals.json read.
+        if let intercept = NativeProviderIOTestBoundary.intercept {
+            do {
+                try intercept(.file)
+            } catch {
+                return GrokLocalSessionSummary(
+                    sessionCount: 0,
+                    totalTokens: 0,
+                    lastSessionAt: nil,
+                    primaryModel: nil,
+                    models: [],
+                    scannedAt: now)
+            }
+        }
+        #endif
         let root = GrokCredentialsStore.grokHomeURL(env: env, fileManager: fileManager)
             .appendingPathComponent("sessions", isDirectory: true)
         let rootEnum = fileManager.enumerator(

@@ -118,6 +118,8 @@ struct MagpieSourceTransitionTests {
             _ = KeychainSecurity.copyMatching([kSecClass: kSecClassGenericPassword] as CFDictionary, nil)
             _ = try? OpenCodeCookieImporter.importSession(browserDetection: BrowserDetection(cacheTTL: 0))
             _ = try? KimiCookieImporter.importSessions(browserDetection: BrowserDetection(cacheTTL: 0))
+            _ = try? GrokCredentialsStore.load(env: ["HOME": "/fixture"])
+            _ = GrokLocalSessionScanner.summarize(env: ["HOME": "/fixture"])
             _ = try? await SubprocessRunner.run(
                 binary: "/fixture/tool", arguments: [], environment: [:], timeout: 1, label: "fixture")
         }

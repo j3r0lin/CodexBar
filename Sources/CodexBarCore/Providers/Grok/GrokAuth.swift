@@ -151,6 +151,9 @@ public enum GrokCredentialsStore {
     public static func load(env: [String: String] = ProcessInfo.processInfo.environment) throws
         -> GrokCredentials
     {
+        #if DEBUG
+        try NativeProviderIOTestBoundary.intercept?(.file)
+        #endif
         let url = self.authFileURL(env: env)
         guard FileManager.default.fileExists(atPath: url.path) else {
             throw GrokCredentialsError.notFound
