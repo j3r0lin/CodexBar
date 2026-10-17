@@ -29,12 +29,13 @@ struct MagpieSourceTransitionTests {
     @Test(arguments: ["enabling", "firstFailure", "laterFailure", "disappeared"])
     func `native refresh dispatch stays closed across discovery outcomes`(state: String) async {
         let store = self.makeStore()
-        let managed: [UsageProvider] = [.claude, .codex, .kimi, .opencodego]
+        let managed: [UsageProvider] = [.claude, .codex, .grok, .kimi, .opencodego]
         var nativeDispatches: [UsageProvider] = []
         store._test_providerRefreshOverride = { nativeDispatches.append($0) }
         store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
         {"data":[{"provider":"claude","windows":[]},{"provider":"codex","windows":[]},
-          {"provider":"kimi-code","windows":[]},{"provider":"opencode-go","windows":[]}]}
+          {"provider":"grok-plugin","windows":[]},{"provider":"kimi-code","windows":[]},
+          {"provider":"opencode-go","windows":[]}]}
         """.utf8))
         switch state {
         case "firstFailure":
@@ -62,7 +63,8 @@ struct MagpieSourceTransitionTests {
         let spy = NativeIOSpy()
         store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
         {"data":[{"provider":"claude","windows":[]},{"provider":"codex","windows":[]},
-          {"provider":"kimi-code","windows":[]},{"provider":"opencode-go","windows":[]}]}
+          {"provider":"grok-plugin","windows":[]},{"provider":"kimi-code","windows":[]},
+          {"provider":"opencode-go","windows":[]}]}
         """.utf8))
         if state == "firstFailure" {
             store.magpieTransport = ClaudeMagpieFixture.transport(status: 503)
@@ -80,7 +82,7 @@ struct MagpieSourceTransitionTests {
             throw CancellationError()
         }
         await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
-            for provider: UsageProvider in [.claude, .codex, .kimi, .opencodego] {
+            for provider: UsageProvider in [.claude, .codex, .grok, .kimi, .opencodego] {
                 await store.refreshProvider(provider, allowDisabled: true)
                 _ = await store.debugLog(for: provider)
                 await store.refreshCodexAccountScopedState(allowDisabled: true)
@@ -106,7 +108,7 @@ struct MagpieSourceTransitionTests {
             throw CancellationError()
         }
         await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
-            for provider: UsageProvider in [.claude, .codex, .kimi, .opencodego] {
+            for provider: UsageProvider in [.claude, .codex, .grok, .kimi, .opencodego] {
                 #expect(store.providerSourceRoute(for: provider).isNative)
                 await store.refreshProvider(provider, allowDisabled: true)
                 _ = store.makeFetchContext(provider: provider, override: nil)
@@ -198,7 +200,7 @@ struct MagpieSourceTransitionTests {
         let store = self.makeStore()
         store.magpieTransport = ClaudeMagpieFixture.transport(status: 503)
         await store.refreshMagpieAccounts()
-        for provider in [UsageProvider.claude, .codex, .kimi, .opencodego] {
+        for provider in [UsageProvider.claude, .codex, .grok, .kimi, .opencodego] {
             #expect(!store.providerSourceRoute(for: provider).isNative)
         }
     }
@@ -215,12 +217,13 @@ struct MagpieSourceTransitionTests {
         #expect(!store.providerSourceRoute(for: .opencodego).isNative)
     }
 
-    @Test(arguments: [UsageProvider.claude, .codex, .kimi, .opencodego])
+    @Test(arguments: [UsageProvider.claude, .codex, .grok, .kimi, .opencodego])
     func `managed refresh debug and cost paths never enter native work`(provider: UsageProvider) async {
         let store = self.makeStore()
         store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
         {"data":[{"provider":"claude","windows":[{"name":"5 hours","used":1}]},
           {"provider":"codex","windows":[{"name":"5 hours","used":1}]},
+          {"provider":"grok-plugin","windows":[{"name":"7 days","used":1}]},
           {"provider":"kimi-code","windows":[{"name":"5 hours","used":1}]},
           {"provider":"opencode-go","windows":[{"name":"5 hours","used":1}]}]}
         """.utf8))
@@ -243,10 +246,17 @@ struct MagpieSourceTransitionTests {
     @Test
     func `turning the switch off restores native routing`() async {
         let store = self.makeStore()
+        store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
+        {"data":[{"provider":"claude","windows":[{"name":"5 hours","used":1}]},
+          {"provider":"codex","windows":[{"name":"5 hours","used":1}]},
+          {"provider":"grok-plugin","windows":[{"name":"7 days","used":1}]}]}
+        """.utf8))
         await store.refreshMagpieAccounts()
+        #expect(!store.providerSourceRoute(for: .grok).isNative)
         store.settings.magpieSourceEnabled = false
         #expect(store.providerSourceRoute(for: .claude).isNative)
         #expect(store.providerSourceRoute(for: .codex).isNative)
+        #expect(store.providerSourceRoute(for: .grok).isNative)
     }
 }
 

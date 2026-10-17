@@ -9,6 +9,7 @@ struct MagpieIsolationRegressionTests {
     private static let ownedJSON = Data("""
     {"data":[{"provider":"claude","user":"a@example.com","windows":[{"name":"5 hours","used":1}]},
       {"provider":"codex","user":"c@example.com","windows":[{"name":"5 hours","used":1}]},
+      {"provider":"grok-plugin","user":"g@example.com","windows":[{"name":"7 days","used":1}]},
       {"provider":"kimi-code","user":"k@example.com","windows":[{"name":"5 hours","used":1}]},
       {"provider":"opencode-go","user":"o@example.com","windows":[{"name":"5 hours","used":1}]}]}
     """.utf8)
@@ -238,7 +239,7 @@ struct MagpieIsolationRegressionTests {
         #expect(store.snapshots[.codex]?.primary?.usedPercent != 77)
     }
 
-    @Test(arguments: [UsageProvider.claude, .codex, .kimi, .opencodego])
+    @Test(arguments: [UsageProvider.claude, .codex, .grok, .kimi, .opencodego])
     func `hooks watch observation does no native IO while magpie is on`(provider: UsageProvider) async {
         // Unreachable gateway: first-discovery failure, so every mapped provider stays non-native.
         let config = CodexBarConfig(

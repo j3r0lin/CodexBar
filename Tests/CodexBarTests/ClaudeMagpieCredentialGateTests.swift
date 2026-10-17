@@ -4,7 +4,7 @@ import Testing
 @testable import CodexBarCLI
 
 struct CLIMagpieTests {
-    @Test(arguments: [UsageProvider.claude, .codex, .kimi, .opencodego])
+    @Test(arguments: [UsageProvider.claude, .codex, .grok, .kimi, .opencodego])
     func `managed providers do not import cookies`(
         provider: UsageProvider) async throws
     {
@@ -17,7 +17,8 @@ struct CLIMagpieTests {
             baseEnvironment: [:],
             magpieSource: CLIMagpieSource(transport: ClaudeMagpieFixture.transport(data: Data("""
             {"data":[{"provider":"claude","windows":[]},{"provider":"codex","windows":[]},
-              {"provider":"kimi-code","windows":[]},{"provider":"opencode-go","windows":[]}]}
+              {"provider":"grok-plugin","windows":[]},{"provider":"kimi-code","windows":[]},
+              {"provider":"opencode-go","windows":[]}]}
             """.utf8))))
         let result = await CodexBarCLI.refreshCookie(
             descriptor: ProviderDescriptorRegistry.descriptor(for: provider),
@@ -49,7 +50,7 @@ struct CLIMagpieTests {
     }
 
     @Test(
-        arguments: [UsageProvider.claude, .codex, .kimi, .opencodego],
+        arguments: [UsageProvider.claude, .codex, .grok, .kimi, .opencodego],
         ["enabling", "firstFailure", "laterFailure", "disappeared"])
     func `routed CLI consumers skip native construction across discovery outcomes`(
         provider: UsageProvider,
@@ -57,11 +58,12 @@ struct CLIMagpieTests {
     {
         let allProviders = Data("""
         {"data":[{"provider":"claude","windows":[]},{"provider":"codex","windows":[]},
-          {"provider":"kimi-code","windows":[]},{"provider":"opencode-go","windows":[]}]}
+          {"provider":"grok-plugin","windows":[]},{"provider":"kimi-code","windows":[]},
+          {"provider":"opencode-go","windows":[]}]}
         """.utf8)
         let failing = state == "firstFailure" || state == "laterFailure"
         let previouslyOwned: Set<String> = state == "laterFailure" || state == "disappeared"
-            ? ["claude", "codex", "kimi-code", "opencode-go"]
+            ? ["claude", "codex", "grok-plugin", "kimi-code", "opencode-go"]
             : []
         let source = CLIMagpieSource(
             transport: ClaudeMagpieFixture.transport(

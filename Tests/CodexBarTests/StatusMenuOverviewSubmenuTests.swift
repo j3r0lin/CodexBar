@@ -276,7 +276,7 @@ extension StatusMenuTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
         settings.mergedMenuLastSelectedWasOverview = true
-        enableTestProviders([.claude, .codex], settings: settings)
+        enableTestProviders([.claude, .codex, .grok], settings: settings)
         let fetcher = UsageFetcher(environment: [:])
         let store = UsageStore(
             fetcher: fetcher,
@@ -327,7 +327,7 @@ extension StatusMenuTests {
             preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
-        let rows = controller.overviewUsageRows(visibleProviders: [.opencodego])
+        let rows = controller.overviewUsageRows(visibleProviders: [.opencodego, .grok])
         let row = try #require(rows.first)
         #expect(rows.count == 3)
         #expect(row.isMagpie)
@@ -338,8 +338,12 @@ extension StatusMenuTests {
         let unknown = try #require(rows.first { $0.providerName == "future-provider" })
         #expect(unknown.nativeProvider == nil)
         #expect(unknown.namedWindows?.map(\.label) == ["Burst"])
+        // grok-plugin is taken over by the native Grok provider, so it appears exactly once
+        // and never alongside a native Grok block.
+        #expect(rows.filter { $0.providerName == "Grok" }.count == 1)
         let grok = try #require(rows.first { $0.providerName == "Grok" })
-        #expect(grok.nativeProvider == nil)
+        #expect(grok.nativeProvider == .grok)
+        #expect(grok.isMagpie)
         for detailRow in rows {
             let submenu = controller.makeOverviewDetailSubmenu(row: detailRow, width: 340)
             submenu.delegate?.menuNeedsUpdate?(submenu)

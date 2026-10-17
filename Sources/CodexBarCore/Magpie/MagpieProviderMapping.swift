@@ -3,9 +3,8 @@ import Foundation
 /// Which provider a magpie wire ID stands for, and how to present it.
 ///
 /// Known wire IDs map onto their native provider so menus and widgets can reuse the native
-/// presentation. `grok-plugin` deliberately maps to no native provider: until equivalence with
-/// the native Grok provider is confirmed it renders as a generic row named "Grok" and never
-/// touches `.grok` credentials. Unknown wire IDs keep their raw ID as the display name, get a
+/// presentation; a mapped provider is magpie-owned while the switch is on and never touches
+/// local credentials. Unknown wire IDs keep their raw ID as the display name, get a
 /// `magpie-`-prefixed instance ID, and never register a fake native descriptor.
 public struct MagpieProviderReference: Hashable, Sendable {
     public let wireID: String
@@ -27,13 +26,9 @@ public enum MagpieProviderMapping {
     public static let nativeProviders: [String: UsageProvider] = [
         "claude": .claude,
         "codex": .codex,
+        "grok-plugin": .grok,
         "kimi-code": .kimi,
         "opencode-go": .opencodego,
-    ]
-
-    /// Generic rows with a fixed display name but no native provider.
-    private static let genericDisplayNames: [String: String] = [
-        "grok-plugin": "Grok",
     ]
 
     public static func wireID(for provider: UsageProvider) -> String? {
@@ -48,12 +43,11 @@ public enum MagpieProviderMapping {
                 instanceID: native.instanceID,
                 displayName: ProviderDescriptorRegistry.metadata[native]?.displayName ?? wireID)
         }
-        let displayName = self.genericDisplayNames[wireID] ?? wireID
         return MagpieProviderReference(
             wireID: wireID,
             nativeProvider: nil,
             instanceID: self.instanceID(forUnknownWireID: wireID),
-            displayName: displayName)
+            displayName: wireID)
     }
 
     /// Unknown providers get a `magpie-`-prefixed instance ID. If a user plugin already owns the

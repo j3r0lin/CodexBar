@@ -71,6 +71,59 @@ struct OverviewWindowSlotTests {
     }
 
     @Test
+    func `a magpie sourced Grok window takes its period label from the Grok descriptor`() throws {
+        let accounts = MagpieAccountProjection.snapshots(from: [
+            MagpieQuotaRow(
+                provider: "grok-plugin",
+                email: "",
+                organization: "",
+                alias: nil,
+                isLast: false,
+                readAt: nil,
+                windows: [
+                    MagpieQuotaWindow(
+                        name: "7 days",
+                        usedPercent: 93,
+                        resetsAt: Date().addingTimeInterval(3 * 86400 + 4 * 3600)),
+                ],
+                error: nil),
+        ])
+        let snapshot = try #require(MagpieUsageProjection.usageSnapshot(for: try #require(accounts.first)))
+        let slots = OverviewCompactAccountRow.slots(of: snapshot, provider: .grok)
+        let row = OverviewCompactAccountRow(
+            name: "Grok",
+            shortWindow: slots.short,
+            longWindow: slots.long,
+            width: 340,
+            provider: .grok)
+        #expect(row.lines.map(\.label) == ["7d"])
+    }
+
+    @Test
+    func `a magpie sourced Grok window whose period is unknown shows a dash`() throws {
+        let accounts = MagpieAccountProjection.snapshots(from: [
+            MagpieQuotaRow(
+                provider: "grok-plugin",
+                email: "",
+                organization: "",
+                alias: nil,
+                isLast: false,
+                readAt: nil,
+                windows: [MagpieQuotaWindow(name: "Month", usedPercent: 40, resetsAt: nil)],
+                error: nil),
+        ])
+        let snapshot = try #require(MagpieUsageProjection.usageSnapshot(for: try #require(accounts.first)))
+        let slots = OverviewCompactAccountRow.slots(of: snapshot, provider: .grok)
+        let row = OverviewCompactAccountRow(
+            name: "Grok",
+            shortWindow: slots.short,
+            longWindow: slots.long,
+            width: 340,
+            provider: .grok)
+        #expect(row.lines.map(\.label) == ["—"])
+    }
+
+    @Test
     func `a reading above zero is at least a dot and zero has no fill`() {
         #expect(UsageBar.fillWidth(used: 0, barWidth: 100, height: 5) == 0)
         #expect(UsageBar.fillWidth(used: 1, barWidth: 100, height: 5) == 5)
