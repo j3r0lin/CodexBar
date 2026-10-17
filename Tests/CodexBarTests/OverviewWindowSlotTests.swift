@@ -88,7 +88,8 @@ struct OverviewWindowSlotTests {
                 ],
                 error: nil),
         ])
-        let snapshot = try #require(MagpieUsageProjection.usageSnapshot(for: try #require(accounts.first)))
+        let account = try #require(accounts.first)
+        let snapshot = try #require(MagpieUsageProjection.usageSnapshot(for: account))
         let slots = OverviewCompactAccountRow.slots(of: snapshot, provider: .grok)
         let row = OverviewCompactAccountRow(
             name: "Grok",
@@ -112,7 +113,8 @@ struct OverviewWindowSlotTests {
                 windows: [MagpieQuotaWindow(name: "Month", usedPercent: 40, resetsAt: nil)],
                 error: nil),
         ])
-        let snapshot = try #require(MagpieUsageProjection.usageSnapshot(for: try #require(accounts.first)))
+        let account = try #require(accounts.first)
+        let snapshot = try #require(MagpieUsageProjection.usageSnapshot(for: account))
         let slots = OverviewCompactAccountRow.slots(of: snapshot, provider: .grok)
         let row = OverviewCompactAccountRow(
             name: "Grok",
