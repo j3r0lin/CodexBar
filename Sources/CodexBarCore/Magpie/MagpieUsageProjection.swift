@@ -29,17 +29,25 @@ public enum MagpieUsageProjection {
 
         let primary: RateWindow?
         let secondary: RateWindow?
+        let tertiary: RateWindow?
         switch provider {
         // Provider-specific by design: Kimi native slots are weekly first, session second.
         case .kimi:
             // Kimi's native layout is primary=weekly, secondary=session.
             primary = weekly.map(self.rateWindow)
             secondary = session.map(self.rateWindow)
+            tertiary = monthly.map(self.rateWindow)
+        // Provider-specific by design: native Grok carries its whole quota in primary
+        // (GrokStatusProbe), and every Grok label path reads only that slot.
+        case .grok:
+            primary = (weekly ?? monthly).map(self.rateWindow)
+            secondary = nil
+            tertiary = nil
         default:
             primary = session.map(self.rateWindow)
             secondary = weekly.map(self.rateWindow)
+            tertiary = monthly.map(self.rateWindow)
         }
-        let tertiary = monthly.map(self.rateWindow)
         guard primary != nil || secondary != nil || tertiary != nil || !extra.isEmpty else { return nil }
         return UsageSnapshot(
             primary: primary,

@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 @testable import CodexBar
+@testable import CodexBarCLI
 @testable import CodexBarCore
 
 @MainActor
@@ -370,6 +371,48 @@ struct GrokMenuCardModelTests {
         #expect(!lines.contains(where: { $0.hasPrefix("Credits:") }))
     }
 
+    @Test
+    func `a magpie sourced Grok weekly window keeps the native Weekly title`() throws {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let accounts = MagpieAccountProjection.snapshots(from: [
+            MagpieQuotaRow(
+                provider: "grok-plugin",
+                email: "",
+                organization: "",
+                alias: nil,
+                isLast: false,
+                readAt: now,
+                windows: [
+                    MagpieQuotaWindow(
+                        name: "7 days",
+                        usedPercent: 93,
+                        resetsAt: now.addingTimeInterval(3 * 86400)),
+                ],
+                error: nil),
+        ])
+        let account = try #require(accounts.first)
+        let snapshot = try #require(MagpieUsageProjection.usageSnapshot(for: account, now: now))
+        let model = try Self.model(now: now, snapshot: snapshot)
+        let metric = try #require(model.metrics.first { $0.id == "primary" })
+        #expect(metric.title == "Weekly")
+        #expect(metric.title != "On-demand")
+        #expect(model.metrics.allSatisfy { $0.id == "primary" })
+
+        let text = CLIRenderer.renderText(
+            provider: .grok,
+            snapshot: snapshot,
+            credits: nil,
+            context: RenderContext(
+                header: "grok · magpie",
+                status: nil,
+                useColor: false,
+                resetStyle: .countdown,
+                weeklyWorkDays: nil),
+            now: now)
+        #expect(text.contains("Weekly"))
+        #expect(!text.contains("On-demand"))
+    }
+
     private static func model(
         now: Date,
         window: RateWindow,
@@ -377,15 +420,25 @@ struct GrokMenuCardModelTests {
         resetCredits: GrokRateLimitResetCreditsSnapshot? = nil,
         showOptionalUsage: Bool = true) throws -> UsageMenuCardView.Model
     {
+        try self.model(
+            now: now,
+            snapshot: UsageSnapshot(
+                primary: window,
+                secondary: nil,
+                tertiary: nil,
+                details: details,
+                grokResetCredits: resetCredits,
+                updatedAt: now,
+                identity: nil),
+            showOptionalUsage: showOptionalUsage)
+    }
+
+    private static func model(
+        now: Date,
+        snapshot: UsageSnapshot,
+        showOptionalUsage: Bool = true) throws -> UsageMenuCardView.Model
+    {
         let metadata = try #require(ProviderDefaults.metadata[.grok])
-        let snapshot = UsageSnapshot(
-            primary: window,
-            secondary: nil,
-            tertiary: nil,
-            details: details,
-            grokResetCredits: resetCredits,
-            updatedAt: now,
-            identity: nil)
         return UsageMenuCardView.Model.make(.init(
             provider: .grok,
             metadata: metadata,
