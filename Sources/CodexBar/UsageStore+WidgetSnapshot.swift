@@ -439,8 +439,8 @@ extension UsageStore {
         // Legacy request-based Cursor plans track a request quota, not the token-based "Total" pool.
         case .cursor where snapshot.detailRow(label: "Request quota") != nil: "Requests"
         case .grok: GrokProviderDescriptor.displayLabel(
-            window: snapshot.primary,
-            infersPeriodFromReset: !snapshot.isMagpieSourced)
+                window: snapshot.primary,
+                infersPeriodFromReset: !snapshot.isMagpieSourced)
         case .doubao: DoubaoProviderDescriptor.primaryLabel(window: snapshot.primary)
         case .amp: AmpProviderDescriptor.primaryLabel(snapshot: snapshot)
         case .alibabatokenplan: AlibabaTokenPlanProviderDescriptor.primaryLabel(window: snapshot.primary)

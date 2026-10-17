@@ -278,7 +278,11 @@ struct OverviewCompactAccountRow: View {
         }
     }
 
-    static func windowLabel(_ window: RateWindow, provider: UsageProvider?, infersPeriodFromReset: Bool = true) -> String {
+    static func windowLabel(
+        _ window: RateWindow,
+        provider: UsageProvider?,
+        infersPeriodFromReset: Bool = true) -> String
+    {
         guard let minutes = nativeMinutes(window, provider: provider, infersPeriodFromReset: infersPeriodFromReset)
         else { return "—" }
         if minutes >= 28 * 1440 { return "Mo" }
