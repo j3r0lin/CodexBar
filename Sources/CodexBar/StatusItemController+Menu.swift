@@ -489,11 +489,11 @@ extension StatusItemController {
                 indent: isGrouped ? 10 : 0,
                 namesProvider: !isGrouped,
                 provider: row.nativeProvider,
-                infersPeriodFromReset: !row.isMagpie,
                 block: block,
                 errorText: row.errorText,
                 showsErrorFlag: row.showsErrorFlag,
-                namedLines: namedLines)
+                namedLines: namedLines,
+                infersPeriodFromReset: !row.isMagpie)
             let item = self.makeMenuCardItem(
                 rowView,
                 id: identifier,
