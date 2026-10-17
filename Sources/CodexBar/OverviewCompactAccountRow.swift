@@ -88,6 +88,8 @@ struct OverviewCompactAccountRow: View {
     /// Magpie rows pass every window the gateway reported, each under its own label, instead of
     /// the short/long slots a native snapshot fills.
     var namedLines: [Line]?
+    /// Native rows let Grok infer a period from the reset time; magpie-sourced windows never do.
+    var infersPeriodFromReset = true
     var now = Date()
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
@@ -116,7 +118,13 @@ struct OverviewCompactAccountRow: View {
         if let namedLines { return namedLines }
         return [self.shortWindow, self.longWindow].compactMap { window in
             guard let window, let used = Self.used(window) else { return nil }
-            return Line(label: Self.windowLabel(window, provider: self.provider), used: used, resetsAt: window.resetsAt)
+            return Line(
+                label: Self.windowLabel(
+                    window,
+                    provider: self.provider,
+                    infersPeriodFromReset: self.infersPeriodFromReset),
+                used: used,
+                resetsAt: window.resetsAt)
         }
     }
 
@@ -231,10 +239,17 @@ struct OverviewCompactAccountRow: View {
         provider: UsageProvider? = nil) -> (short: RateWindow?, long: RateWindow?)
     {
         guard let snapshot else { return (nil, nil) }
+        let infersPeriod = !snapshot.isMagpieSourced
         let windows = [snapshot.primary, snapshot.secondary, snapshot.tertiary].compactMap(\.self)
-        var short = windows.first { (Self.nativeMinutes($0, provider: provider) ?? .max) <= 1440 }
-        var long = windows.first { (Self.nativeMinutes($0, provider: provider) ?? 0) > 1440 }
-        let unknown = windows.filter { Self.nativeMinutes($0, provider: provider) == nil }
+        var short = windows.first {
+            (Self.nativeMinutes($0, provider: provider, infersPeriodFromReset: infersPeriod) ?? .max) <= 1440
+        }
+        var long = windows.first {
+            (Self.nativeMinutes($0, provider: provider, infersPeriodFromReset: infersPeriod) ?? 0) > 1440
+        }
+        let unknown = windows.filter {
+            Self.nativeMinutes($0, provider: provider, infersPeriodFromReset: infersPeriod) == nil
+        }
         for window in unknown {
             if long == nil {
                 long = window
@@ -246,11 +261,16 @@ struct OverviewCompactAccountRow: View {
     }
 
     /// Grok's descriptor owns the fallback for its untyped credit pool; human-readable reset
-    /// descriptions never determine the quota period.
-    static func nativeMinutes(_ window: RateWindow, provider: UsageProvider?) -> Int? {
+    /// descriptions never determine the quota period. Magpie-sourced windows get no fallback:
+    /// their period comes from a known duration or a parseable window name only.
+    static func nativeMinutes(
+        _ window: RateWindow,
+        provider: UsageProvider?,
+        infersPeriodFromReset: Bool = true) -> Int?
+    {
         if let minutes = window.windowMinutes { return minutes }
         // Provider-specific by design: Grok owns the weekly fallback for its untyped credit pool.
-        guard provider == .grok else { return nil }
+        guard provider == .grok, infersPeriodFromReset else { return nil }
         switch GrokProviderDescriptor.displayLabel(window: window) {
         case "Weekly": return 10080
         case "Monthly": return 43200
@@ -258,8 +278,9 @@ struct OverviewCompactAccountRow: View {
         }
     }
 
-    static func windowLabel(_ window: RateWindow, provider: UsageProvider?) -> String {
-        guard let minutes = nativeMinutes(window, provider: provider) else { return "—" }
+    static func windowLabel(_ window: RateWindow, provider: UsageProvider?, infersPeriodFromReset: Bool = true) -> String {
+        guard let minutes = nativeMinutes(window, provider: provider, infersPeriodFromReset: infersPeriodFromReset)
+        else { return "—" }
         if minutes >= 28 * 1440 { return "Mo" }
         if minutes >= 1440 { return "\(minutes / 1440)d" }
         return "\(max(1, minutes / 60))h"

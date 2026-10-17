@@ -95,3 +95,12 @@ public enum MagpieUsageProjection {
             resetDescription: nil)
     }
 }
+
+extension UsageSnapshot {
+    /// True when this snapshot was projected from a magpie gateway row rather than read natively.
+    /// Source-dependent fallbacks (like Grok's reset-time period inference) must not apply to
+    /// magpie windows: their period comes from a known duration or a parseable name only.
+    public var isMagpieSourced: Bool {
+        self.identity?.loginMethod == MagpieAccountProjection.sourceLabel
+    }
+}

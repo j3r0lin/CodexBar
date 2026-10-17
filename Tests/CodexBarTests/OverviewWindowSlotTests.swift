@@ -121,7 +121,42 @@ struct OverviewWindowSlotTests {
             shortWindow: slots.short,
             longWindow: slots.long,
             width: 340,
-            provider: .grok)
+            provider: .grok,
+            infersPeriodFromReset: false)
+        #expect(row.lines.map(\.label) == ["—"])
+    }
+
+    @Test
+    func `a magpie sourced Grok window never infers a period from its reset time`() throws {
+        let accounts = MagpieAccountProjection.snapshots(from: [
+            MagpieQuotaRow(
+                provider: "grok-plugin",
+                email: "",
+                organization: "",
+                alias: nil,
+                isLast: false,
+                readAt: nil,
+                windows: [
+                    MagpieQuotaWindow(
+                        name: "Month",
+                        usedPercent: 40,
+                        resetsAt: Date().addingTimeInterval(5 * 86400)),
+                ],
+                error: nil),
+        ])
+        let account = try #require(accounts.first)
+        let snapshot = try #require(MagpieUsageProjection.usageSnapshot(for: account))
+        // A native Grok window with the same shape would title "Weekly" from the reset distance;
+        // the magpie-sourced one keeps its period unknown.
+        #expect(GrokProviderDescriptor.displayLabel(window: snapshot.primary) == "Weekly")
+        let slots = OverviewCompactAccountRow.slots(of: snapshot, provider: .grok)
+        let row = OverviewCompactAccountRow(
+            name: "Grok",
+            shortWindow: slots.short,
+            longWindow: slots.long,
+            width: 340,
+            provider: .grok,
+            infersPeriodFromReset: false)
         #expect(row.lines.map(\.label) == ["—"])
     }
 

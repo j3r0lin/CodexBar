@@ -724,7 +724,9 @@ struct MenuDescriptor {
                 sessionLabel: metadata.sessionLabel,
                 weeklyLabel: metadata.weeklyLabel)
         } else if provider == .grok {
-            GrokProviderDescriptor.displayLabel(window: snapshot.primary) ?? metadata.sessionLabel
+            GrokProviderDescriptor.displayLabel(
+                window: snapshot.primary,
+                infersPeriodFromReset: !snapshot.isMagpieSourced) ?? metadata.sessionLabel
         } else if provider == .doubao {
             DoubaoProviderDescriptor.primaryLabel(window: snapshot.primary) ?? metadata.sessionLabel
         } else if provider == .sub2api {
