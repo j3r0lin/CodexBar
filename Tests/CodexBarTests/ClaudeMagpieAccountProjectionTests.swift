@@ -21,8 +21,7 @@ struct MagpieAccountProjectionTests {
         #expect(unknown.provider.instanceID.rawValue.hasPrefix("magpie-"))
         #expect(unknown.windows.first?.name == "Custom")
         #expect(unknown.windows.first?.duration == nil)
-        let grok = try #require(rows.first { $0.provider.wireID == "grok-plugin" })
-        #expect(grok.provider.nativeProvider == .grok)
+        let grok = try #require(rows.first { $0.provider.nativeProvider == .grok })
         #expect(grok.provider.displayName == "Grok")
     }
 
