@@ -205,7 +205,7 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
     /// not create image from window". A process may always read its own windows.
     private static func capture(window: NSWindow?, name: String, into directory: URL) {
         guard let window else {
-            Self.recordDiagnostic("capture \(name): no window", into: directory)
+            recordDiagnostic("capture \(name): no window", into: directory)
             return
         }
         let url = directory.appendingPathComponent("\(name).png")
