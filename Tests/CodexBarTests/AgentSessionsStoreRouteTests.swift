@@ -34,8 +34,8 @@ struct AgentSessionsStoreRouteTests {
         let store = AgentSessionsStore(settings: settings, localScanner: scanner)
         store.excludedProviders = { excluded }
         store.start()
-        for _ in 0..<2000 where store.schedulerState.hasLocalImmediateTask || store.lastUpdatedAt == nil {
-            await Task.yield()
+        for _ in 0..<500 where store.schedulerState.hasLocalImmediateTask || store.lastUpdatedAt == nil {
+            try? await Task.sleep(for: .milliseconds(10))
         }
         return store
     }
