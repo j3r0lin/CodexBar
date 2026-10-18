@@ -1,7 +1,7 @@
-import CodexBarCore
 import Foundation
 import Testing
 @testable import CodexBar
+@testable import CodexBarCore
 
 private actor RequestedProcessIDs {
     private(set) var pids: Set<Int32> = []
