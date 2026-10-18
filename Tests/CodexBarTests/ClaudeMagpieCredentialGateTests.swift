@@ -225,6 +225,32 @@ struct CLIMagpieTests {
         #expect(output.payload.first?.error?.message == "token expired")
     }
 
+    @Test(arguments: ["codex", "claude"])
+    func `serve cost leaves magpie owned and claude family providers out`(provider: String) async throws {
+        let source = CLIMagpieSource(transport: ClaudeMagpieFixture.transport(data: Data("""
+        {"data":[{"provider":"codex","windows":[{"name":"5 hours","used":1}]},
+          {"provider":"claude","windows":[{"name":"5 hours","used":1}]}]}
+        """.utf8)))
+        let context = ServeCostContext(
+            period: .rolling(days: 30),
+            now: Date(),
+            calendar: Calendar(identifier: .gregorian),
+            config: CodexBarConfig(
+                providers: [ProviderConfig(id: UsageProvider.codex.instanceID),
+                            ProviderConfig(id: UsageProvider.claude.instanceID)],
+                magpie: MagpieSourceConfig(enabled: true)),
+            collection: ServeCostCollectionContext(
+                configFingerprint: "magpie-serve-cost",
+                providerTimeout: nil,
+                requestDeadline: nil,
+                now: { ContinuousClock().now },
+                providerOperations: CLIServeOperationCoordinator()))
+        let response = await CodexBarCLI.serveCost(provider: provider, context: context, magpieSource: source)
+        #expect(response.status == .ok)
+        let rows = try #require(JSONSerialization.jsonObject(with: response.body) as? [Any])
+        #expect(rows.isEmpty)
+    }
+
     private static func makeContext(
         providers: [UsageProvider],
         data: Data) throws -> TokenAccountCLIContext

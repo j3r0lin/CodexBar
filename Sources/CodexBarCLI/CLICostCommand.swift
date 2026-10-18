@@ -25,11 +25,11 @@ extension CodexBarCLI {
         await Self.runStandardCost(values, output: output)
     }
 
-    private static func nativeCostProviders(
+    static func nativeCostProviders(
         _ candidates: [UsageProvider],
-        config: CodexBarConfig) async -> [UsageProvider]
+        config: CodexBarConfig,
+        source: CLIMagpieSource = CLIMagpieSource()) async -> [UsageProvider]
     {
-        let source = CLIMagpieSource()
         var providers: [UsageProvider] = []
         for provider in candidates {
             let route = await source.route(for: provider, configuration: config.magpie)
