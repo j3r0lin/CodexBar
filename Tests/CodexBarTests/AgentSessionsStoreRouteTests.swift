@@ -12,13 +12,13 @@ private actor RequestedProcessIDs {
     }
 }
 
+private let sessionProcessOutput = """
+301 1 Mon Jul 6 09:03:00 2026 /usr/local/bin/claude -p hi
+302 1 Tue Jul 7 09:03:00 2026 /usr/local/bin/codex exec
+"""
+
 @MainActor
 struct AgentSessionsStoreRouteTests {
-    private static let processes = """
-    301 1 Mon Jul 6 09:03:00 2026 /usr/local/bin/claude -p hi
-    302 1 Tue Jul 7 09:03:00 2026 /usr/local/bin/codex exec
-    """
-
     private func scannedStore(
         excluded: Set<AgentSession.Provider>,
         requested: RequestedProcessIDs) async -> AgentSessionsStore
@@ -26,7 +26,7 @@ struct AgentSessionsStoreRouteTests {
         let settings = testSettingsStore(suiteName: "AgentSessionsStoreRouteTests-\(UUID().uuidString)")
         settings.agentSessionsEnabled = true
         let scanner = LocalAgentSessionScanner(
-            processOutputProvider: { _ in Self.processes },
+            processOutputProvider: { _ in sessionProcessOutput },
             cwdProvider: { pids, _ in
                 await requested.record(pids)
                 return Dictionary(uniqueKeysWithValues: pids.map { ($0, "/repo") })
