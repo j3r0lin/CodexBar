@@ -45,6 +45,46 @@ struct MagpieIsolationRegressionTests {
         return store
     }
 
+    @Test(arguments: ["grok", "grok-plugin"])
+    func `grok stays magpie owned under either wire id`(wireID: String) async {
+        let store = self.makeStore(enabled: true)
+        store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
+        {"data":[{"provider":"\(wireID)","user":"g@example.com","windows":[{"name":"7 days","used":1}]}]}
+        """.utf8))
+        store.reconcileMagpieSourceConfiguration()
+        await store.awaitMagpieRefresh()
+        #expect(!store.providerSourceRoute(for: .grok).isNative, "\(wireID)")
+        let grokCards = store.magpieOverviewSnapshots.filter { $0.provider.nativeProvider == .grok }
+        #expect(grokCards.count == 1, "\(wireID)")
+        #expect(grokCards.allSatisfy { $0.provider.displayName == "Grok" }, "\(wireID)")
+        let spy = MagpieRegressionIOSpy()
+        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
+            spy.record(kind)
+            throw CancellationError()
+        }
+        await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
+            await store.refreshProvider(.grok, allowDisabled: true)
+        }
+        for kind in NativeProviderIOTestBoundary.Kind.allCases {
+            #expect(spy.count(kind) == 0, "\(wireID) \(kind.rawValue)")
+        }
+        store.settings.magpieSourceEnabled = false
+        store.reconcileMagpieSourceConfiguration()
+        #expect(store.providerSourceRoute(for: .grok).isNative, "\(wireID)")
+    }
+
+    @Test(arguments: ["grok", "grok-plugin"])
+    func `a grok takeover persisted under either wire id keeps grok owned`(wireID: String) async {
+        let store = self.makeStore(enabled: true)
+        store.settings.magpieTakeoverWireIDs = [wireID]
+        // An unreachable gateway with a persisted takeover still owns Grok: no discovery result
+        // may return it to native reads.
+        store.magpieTransport = ClaudeMagpieFixture.transport(status: 503)
+        store.reconcileMagpieSourceConfiguration()
+        await store.awaitMagpieRefresh()
+        #expect(!store.providerSourceRoute(for: .grok).isNative, "\(wireID)")
+    }
+
     @Test
     func `codex account scoped refresh reads no codex files while magpie owns codex`() async {
         let store = self.makeStore(enabled: true)

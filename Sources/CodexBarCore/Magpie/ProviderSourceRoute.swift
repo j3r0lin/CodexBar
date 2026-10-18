@@ -17,9 +17,11 @@ public enum ProviderSourceRoute: Sendable, Equatable {
         ownedWireIDs: Set<String>,
         discoverySucceeded: Bool) -> ProviderSourceRoute
     {
-        guard enabled, let wireID = MagpieProviderMapping.wireID(for: provider) else { return .native }
-        if ownedWireIDs.contains(wireID) {
-            return .magpie(MagpieProviderMapping.reference(for: wireID))
+        guard enabled else { return .native }
+        let wireIDs = MagpieProviderMapping.wireIDs(for: provider)
+        guard !wireIDs.isEmpty else { return .native }
+        if let owned = wireIDs.first(where: { ownedWireIDs.contains($0) }) {
+            return .magpie(MagpieProviderMapping.reference(for: owned))
         }
         return discoverySucceeded ? .native : .waitingForMagpieDiscovery
     }

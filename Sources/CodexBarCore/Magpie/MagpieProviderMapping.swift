@@ -26,13 +26,23 @@ public enum MagpieProviderMapping {
     public static let nativeProviders: [String: UsageProvider] = [
         "claude": .claude,
         "codex": .codex,
+        // magpie renamed the Grok wire ID from "grok-plugin" to "grok"; both own the provider,
+        // so a takeover persisted under either spelling keeps Grok off local credentials.
+        "grok": .grok,
         "grok-plugin": .grok,
         "kimi-code": .kimi,
         "opencode-go": .opencodego,
     ]
 
+    /// Every wire ID that maps to the provider, sorted so the choice never depends on
+    /// Dictionary iteration order. A provider with more than one wire ID is owned when any
+    /// of them is in the takeover set.
+    public static func wireIDs(for provider: UsageProvider) -> [String] {
+        self.nativeProviders.filter { $0.value == provider }.map(\.key).sorted()
+    }
+
     public static func wireID(for provider: UsageProvider) -> String? {
-        self.nativeProviders.first(where: { $0.value == provider })?.key
+        self.wireIDs(for: provider).first
     }
 
     public static func reference(for wireID: String) -> MagpieProviderReference {

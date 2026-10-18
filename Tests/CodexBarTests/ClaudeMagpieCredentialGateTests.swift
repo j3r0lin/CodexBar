@@ -97,6 +97,25 @@ struct CLIMagpieTests {
         #expect(!route.isNative)
     }
 
+    @Test(arguments: ["grok", "grok-plugin"])
+    func `grok routes to magpie under either wire id`(wireID: String) async throws {
+        let source = CLIMagpieSource(
+            transport: ClaudeMagpieFixture.transport(data: Data("""
+            {"data":[{"provider":"\(wireID)","windows":[]}]}
+            """.utf8)))
+        let route = await source.route(for: .grok, configuration: MagpieSourceConfig(enabled: true))
+        #expect(!route.isNative, "\(wireID)")
+    }
+
+    @Test(arguments: ["grok", "grok-plugin"])
+    func `grok stays owned when persisted under either wire id`(wireID: String) async {
+        let source = CLIMagpieSource(
+            transport: ClaudeMagpieFixture.transport(data: Data(#"{"data":[]}"#.utf8)),
+            ownedWireIDs: [wireID])
+        let route = await source.route(for: .grok, configuration: MagpieSourceConfig(enabled: true))
+        #expect(!route.isNative, "\(wireID)")
+    }
+
     @Test
     func `legacy enabled migration writes only the unified config`() throws {
         let data = Data(

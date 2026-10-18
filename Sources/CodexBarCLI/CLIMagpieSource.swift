@@ -82,14 +82,18 @@ extension CodexBarCLI {
         tokenContext: TokenAccountCLIContext,
         command: UsageCommandContext) async -> UsageCommandOutput?
     {
-        guard tokenContext.config.magpie?.enabled == true,
-              let wireID = MagpieProviderMapping.wireID(for: provider)
-        else { return nil }
+        guard tokenContext.config.magpie?.enabled == true else { return nil }
+        let wireIDs = MagpieProviderMapping.wireIDs(for: provider)
+        guard !wireIDs.isEmpty else { return nil }
         var output = UsageCommandOutput()
         do {
             let rows = try await tokenContext.magpieSource.rows(quotasURL: tokenContext.config.magpie?.quotasURL)
-            let previouslyOwned = await tokenContext.magpieSource.owns(wireID)
-            guard rows.contains(where: { $0.provider == wireID }) || previouslyOwned else { return nil }
+            var previouslyOwned = false
+            for wireID in wireIDs where await tokenContext.magpieSource.owns(wireID) {
+                previouslyOwned = true
+                break
+            }
+            guard rows.contains(where: { wireIDs.contains($0.provider) }) || previouslyOwned else { return nil }
             let accounts = MagpieUsageProjection.providerAccountSnapshots(
                 for: provider, in: MagpieAccountProjection.snapshots(from: rows))
             for account in accounts {
