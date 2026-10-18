@@ -64,7 +64,9 @@ extension CodexBarCLI {
     struct MagpieUpstreamError: LocalizedError {
         let message: String
 
-        var errorDescription: String? { self.message }
+        var errorDescription: String? {
+            self.message
+        }
     }
 
     static func fetchRoutedProviderUsage(

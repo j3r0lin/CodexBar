@@ -238,8 +238,10 @@ struct CLIMagpieTests {
             now: Date(),
             calendar: Calendar(identifier: .gregorian),
             config: CodexBarConfig(
-                providers: [ProviderConfig(id: UsageProvider.codex.instanceID),
-                            ProviderConfig(id: UsageProvider.claude.instanceID)],
+                providers: [
+                    ProviderConfig(id: UsageProvider.codex.instanceID),
+                    ProviderConfig(id: UsageProvider.claude.instanceID),
+                ],
                 magpie: MagpieSourceConfig(enabled: true)),
             collection: ServeCostCollectionContext(
                 configFingerprint: "magpie-serve-cost",
