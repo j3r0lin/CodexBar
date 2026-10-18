@@ -71,7 +71,7 @@ struct OverviewUsageRow {
     let model: UsageMenuCardView.Model?
     /// Native rows only, set by `filtered(to:)`: the window slots that survive the active
     /// Overview filter, replacing the slots the row view would otherwise derive from `snapshot`.
-    var slotOverride: (short: RateWindow?, long: RateWindow?)? = nil
+    var slotOverride: (short: RateWindow?, long: RateWindow?)?
     /// Replaces the usage lines when set; used for native overview errors and for magpie rows
     /// whose account has no windows to show.
     let errorText: String?

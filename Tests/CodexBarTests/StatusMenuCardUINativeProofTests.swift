@@ -267,11 +267,17 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
         fixture.store.magpieAccountSnapshots = [
             account("claude:claude", "claude", 1, windows: [
                 MagpieQuotaWindow(name: "5 hours", usedPercent: 22, resetsAt: now.addingTimeInterval(138 * 60)),
-                MagpieQuotaWindow(name: "7 days", usedPercent: 10, resetsAt: now.addingTimeInterval(6 * 86400 + 4 * 3600)),
+                MagpieQuotaWindow(
+                    name: "7 days",
+                    usedPercent: 10,
+                    resetsAt: now.addingTimeInterval(6 * 86400 + 4 * 3600)),
             ]),
             account("claude:claude-1", "claude-1", 2, windows: [
                 MagpieQuotaWindow(name: "5 hours", usedPercent: 12, resetsAt: now.addingTimeInterval(188 * 60)),
-                MagpieQuotaWindow(name: "7 days", usedPercent: 22, resetsAt: now.addingTimeInterval(5 * 86400 + 21 * 3600)),
+                MagpieQuotaWindow(
+                    name: "7 days",
+                    usedPercent: 22,
+                    resetsAt: now.addingTimeInterval(5 * 86400 + 21 * 3600)),
             ]),
             account("claude:claude-2", "claude-2", 3, windows: [
                 MagpieQuotaWindow(name: "5 hours", usedPercent: 0, resetsAt: nil),

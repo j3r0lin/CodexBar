@@ -53,7 +53,7 @@ struct OverviewCardHeaderView: View {
             Group {
                 if self.isRefreshing {
                     ProgressView()
-                    .controlSize(.small)
+                        .controlSize(.small)
                 } else {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 13, weight: .medium))

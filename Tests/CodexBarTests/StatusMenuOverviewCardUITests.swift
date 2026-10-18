@@ -155,7 +155,7 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `a collapsed provider group keeps only its header and the state persists`() throws {
+    func `a collapsed provider group keeps only its header and the state persists`() {
         self.disableMenuCardsForTesting()
         let (settings, store) = self.makeOverviewFixture()
         enableTestProviders([.claude, .codex], settings: settings)
