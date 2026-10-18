@@ -528,7 +528,7 @@ extension StatusItemController {
                 errorText: row.errorText,
                 showsErrorFlag: row.showsErrorFlag,
                 namedLines: namedLines,
-                showsDetailChevron: !isGrouped && submenu != nil,
+                showsDetailChevron: !isGrouped,
                 infersPeriodFromReset: !row.isMagpie)
             let item = self.makeMenuCardItem(
                 rowView,
