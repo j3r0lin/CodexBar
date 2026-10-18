@@ -88,6 +88,7 @@ struct OverviewUsageRow {
     /// Applies the Overview window filter: keeps only the windows the filter admits and returns nil
     /// when nothing matches, so the caller drops the row. Error-only rows carry no window and are
     /// hidden by either filter. Under `.now` the row is returned unchanged.
+    @MainActor
     func filtered(to filter: OverviewWindowFilter) -> OverviewUsageRow? {
         guard filter != .now else { return self }
         var copy = self
@@ -100,13 +101,17 @@ struct OverviewUsageRow {
         guard self.errorText == nil else { return nil }
         let slots = OverviewCompactAccountRow.slots(of: self.snapshot, provider: self.nativeProvider)
         let infersPeriod = !self.isMagpie
-        let short = slots.short.filter {
+        let short = slots.short.flatMap { window in
             filter.includes(OverviewCompactAccountRow.windowKind(
-                of: $0, provider: self.nativeProvider, infersPeriodFromReset: infersPeriod))
+                of: window, provider: self.nativeProvider, infersPeriodFromReset: infersPeriod))
+                ? window
+                : nil
         }
-        let long = slots.long.filter {
+        let long = slots.long.flatMap { window in
             filter.includes(OverviewCompactAccountRow.windowKind(
-                of: $0, provider: self.nativeProvider, infersPeriodFromReset: infersPeriod))
+                of: window, provider: self.nativeProvider, infersPeriodFromReset: infersPeriod))
+                ? window
+                : nil
         }
         guard short != nil || long != nil else { return nil }
         copy.slotOverride = (short: short, long: long)

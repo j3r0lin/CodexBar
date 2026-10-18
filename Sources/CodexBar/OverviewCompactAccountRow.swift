@@ -56,13 +56,13 @@ struct OverviewCardPieceBorder: Shape {
             path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
             path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + r))
             path.addArc(
-                tangent1To: CGPoint(x: rect.minX, y: rect.minY),
-                tangent2To: CGPoint(x: rect.minX + r, y: rect.minY),
+                tangent1End: CGPoint(x: rect.minX, y: rect.minY),
+                tangent2End: CGPoint(x: rect.minX + r, y: rect.minY),
                 radius: r)
             path.addLine(to: CGPoint(x: rect.maxX - r, y: rect.minY))
             path.addArc(
-                tangent1To: CGPoint(x: rect.maxX, y: rect.minY),
-                tangent2To: CGPoint(x: rect.maxX, y: rect.minY + r),
+                tangent1End: CGPoint(x: rect.maxX, y: rect.minY),
+                tangent2End: CGPoint(x: rect.maxX, y: rect.minY + r),
                 radius: r)
             path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
         case .middle:
@@ -74,13 +74,13 @@ struct OverviewCardPieceBorder: Shape {
             path.move(to: CGPoint(x: rect.minX, y: rect.minY))
             path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY - r))
             path.addArc(
-                tangent1To: CGPoint(x: rect.minX, y: rect.maxY),
-                tangent2To: CGPoint(x: rect.minX + r, y: rect.maxY),
+                tangent1End: CGPoint(x: rect.minX, y: rect.maxY),
+                tangent2End: CGPoint(x: rect.minX + r, y: rect.maxY),
                 radius: r)
             path.addLine(to: CGPoint(x: rect.maxX - r, y: rect.maxY))
             path.addArc(
-                tangent1To: CGPoint(x: rect.maxX, y: rect.maxY),
-                tangent2To: CGPoint(x: rect.maxX, y: rect.maxY - r),
+                tangent1End: CGPoint(x: rect.maxX, y: rect.maxY),
+                tangent2End: CGPoint(x: rect.maxX, y: rect.maxY - r),
                 radius: r)
             path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
         }
