@@ -48,6 +48,14 @@ Incomplete proxy records with an explicit null `stop_reason`, positive input, ze
 Usage source picker:
 - Preferences → Providers → Claude → Usage source (Auto/OAuth/Web/CLI).
 
+When an account-widget identity check or successful web enrichment returns an OAuth profile, its same-token email is
+retained for display even if the profile lacks the organization needed to verify widget ownership. A failed
+optional profile check leaves successful usage available. Ordinary OAuth refreshes also start one background
+profile lookup per credential, bounded to two seconds, without waiting for it to publish quota usage. The first
+refresh may omit the email while that request is in flight; later refreshes reuse its result, including a failed
+lookup, until the token changes or CodexBar restarts. This process-local display cache cannot establish widget
+ownership. Organization UUIDs are ownership evidence, not organization display names.
+
 Admin API key setup:
 - Preferences → Providers → Claude → Admin API key, stored in `~/.codexbar/config.json`.
 - CLI/env: `printf '%s' "$ANTHROPIC_ADMIN_KEY" | codexbar config set-api-key --provider claude --stdin`.
