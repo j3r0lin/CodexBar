@@ -389,10 +389,10 @@ extension UsageStore {
         } else {
             self.clearMagpieAccountState()
             self.settings.magpieTakeoverWireIDs = []
-            for provider in ProviderSourceRoute.switchOnNativeForbidden {
-                if self.errors[provider.instanceID] == Self.magpieSuspendedMessage(for: provider) {
-                    self.errors.removeValue(forKey: provider.instanceID)
-                }
+            for provider in ProviderSourceRoute.switchOnNativeForbidden
+                where self.errors[provider.instanceID] == Self.magpieSuspendedMessage(for: provider)
+            {
+                self.errors.removeValue(forKey: provider.instanceID)
             }
             guard previous?.enabled == true else { return }
             for provider in gatedProviders where self.isEnabled(provider) {

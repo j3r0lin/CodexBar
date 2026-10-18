@@ -14,9 +14,9 @@ public enum ProviderSourceRoute: Sendable, Equatable {
     case magpieSuspended
     case native
 
-    /// Providers that must never read local credentials, Keychain, OAuth, or browser cookies while
-    /// the magpie switch is on — the whole Claude family, whether or not magpie carries them.
-    /// User-facing messages follow the same rule.
+    // Providers that must never read local credentials, Keychain, OAuth, or browser cookies while
+    // the magpie switch is on — the whole Claude family, whether or not magpie carries them.
+    // User-facing messages follow the same rule.
     // Provider-specific by design: the standing Claude-family rule names exactly these providers.
     public static let switchOnNativeForbidden: Set<UsageProvider> = [.claude, .claudeplatform]
 
