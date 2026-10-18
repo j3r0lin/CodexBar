@@ -291,12 +291,12 @@ public struct LocalAgentSessionScanner: Sendable {
             latestRolloutActivityAt: includeRolloutActivity ? candidates.first?.modifiedAt : nil)
     }
 
-    // Provider-specific by design: excluding Codex also drops its rollout files and app-server probing.
+    /// Provider-specific by design: excluding Codex also drops its rollout files and app-server probing.
     private static func excludesCodexSessions(_ excluded: Set<AgentSession.Provider>) -> Bool {
         excluded.contains(.codex)
     }
 
-    // Provider-specific by design: Pi-family sessions come from their own session roots, not a process transcript.
+    /// Provider-specific by design: Pi-family sessions come from their own session roots, not a process transcript.
     private static func excludesPiFamilySessions(_ excluded: Set<AgentSession.Provider>) -> Bool {
         excluded.contains(.pi)
     }
