@@ -406,6 +406,60 @@ extension StatusMenuTests {
     }
 
     @Test
+    func `a grok card on the non-canonical wire id keeps its provider slot`() {
+        self.disableMenuCardsForTesting()
+        let settings = self.makeSettings()
+        settings.statusChecksEnabled = false
+        settings.refreshFrequency = .manual
+        settings.mergeIcons = true
+        settings.mergedMenuLastSelectedWasOverview = true
+        enableTestProviders([.grok, .opencodego], settings: settings)
+        let fetcher = UsageFetcher(environment: [:])
+        let store = UsageStore(
+            fetcher: fetcher,
+            browserDetection: BrowserDetection(cacheTTL: 0),
+            settings: settings,
+            startupBehavior: .testing,
+            environmentBase: [:])
+        store.magpieTransport = { _ in throw CancellationError() }
+        settings.magpieSourceEnabled = true
+        // Hand-built rows bypass the projection's canonicalization: this account still carries
+        // the non-canonical "grok-plugin" reference, so only the Overview's own wire-ID set can
+        // keep it in Grok's slot.
+        func account(
+            _ wireID: String,
+            _ opaque: String,
+            _ windows: [MagpieQuotaWindow]) -> MagpieAccountSnapshot
+        {
+            MagpieAccountSnapshot(
+                id: ProviderAccountIdentity(source: "magpie", opaqueID: opaque),
+                provider: MagpieProviderMapping.reference(for: wireID),
+                displayLabel: wireID,
+                accountEmail: nil,
+                ordinal: 1,
+                windows: windows,
+                readAt: nil,
+                isActive: true,
+                error: nil)
+        }
+        store.magpieAccountSnapshots = [
+            account("grok-plugin", "g1", [MagpieQuotaWindow(name: "7 days", usedPercent: 42, resetsAt: nil)]),
+            account("opencode-go", "o1", [MagpieQuotaWindow(name: "5 hours", usedPercent: 12, resetsAt: nil)]),
+        ]
+        settings.magpieTakeoverWireIDs = ["grok", "opencode-go"]
+        let controller = StatusItemController(
+            store: store,
+            settings: settings,
+            account: fetcher.loadAccountInfo(),
+            updater: DisabledUpdaterController(),
+            preferencesSelection: PreferencesSelection(),
+            statusBar: self.makeStatusBarForTesting())
+        defer { controller.releaseStatusItemsForTesting() }
+        let rows = controller.overviewUsageRows(visibleProviders: [.grok, .opencodego])
+        #expect(rows.map(\.providerName) == ["Grok", "OpenCode Go"])
+    }
+
+    @Test
     func `overview detail submenu ends with the provider's own actions`() throws {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()

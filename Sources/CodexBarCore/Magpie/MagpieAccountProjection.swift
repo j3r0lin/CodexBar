@@ -100,11 +100,14 @@ public enum MagpieAccountProjection {
         for wireID in wireOrder {
             let reference = MagpieProviderMapping.reference(for: wireID)
             guard let native = reference.nativeProvider else {
-                groupOrder.append(wireID)
-                groups[wireID] = (reference, rowsByWire[wireID] ?? [])
+                // Prefixed keys: an unknown wire ID that spells a mapped provider's raw value
+                // ("kimi" vs kimi-code's .kimi) must never collide with the native group.
+                let key = "wire:\(wireID)"
+                groupOrder.append(key)
+                groups[key] = (reference, rowsByWire[wireID] ?? [])
                 continue
             }
-            let key = native.rawValue
+            let key = "native:\(native.rawValue)"
             if var group = groups[key] {
                 group.rows.append(contentsOf: rowsByWire[wireID] ?? [])
                 groups[key] = group
@@ -120,8 +123,14 @@ public enum MagpieAccountProjection {
             guard let group = groups[key] else { return [] }
             // The same account under two wire IDs of one provider keeps the canonical row.
             let canonical = group.reference.wireID
-            let ordered = group.rows.sorted {
-                ($0.provider == canonical) && ($1.provider != canonical)
+            let canonicalRows = group.rows.filter { $0.provider == canonical }
+            var ordered = canonicalRows
+            // One provider-level (user-less) row per provider: a second spelling's anonymous
+            // row would otherwise turn both into ambiguous-identity error cards.
+            let canonicalHasAnonymous = canonicalRows.contains { $0.email.isEmpty }
+            for row in group.rows where row.provider != canonical {
+                if row.email.isEmpty, canonicalHasAnonymous { continue }
+                ordered.append(row)
             }
             return self.snapshots(for: group.reference, rows: ordered)
         }

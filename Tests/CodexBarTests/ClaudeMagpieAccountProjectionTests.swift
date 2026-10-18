@@ -42,6 +42,32 @@ struct MagpieAccountProjectionTests {
         #expect(original.allSatisfy { !$0.id.opaqueID.contains("@") })
     }
 
+    @Test(arguments: [true, false])
+    func `an unknown wire id spelling a mapped provider name keeps both cards`(kimiFirst: Bool) throws {
+        let kimi = #"{"provider":"kimi","user":"u@example.com","windows":[{"name":"Burst","used":9}]}"#
+        let kimiCode = #"{"provider":"kimi-code","user":"k@example.com","windows":[{"name":"5 hours","used":4}]}"#
+        let rows = try self.project(kimiFirst
+            ? "{\"data\":[\(kimi),\(kimiCode)]}"
+            : "{\"data\":[\(kimiCode),\(kimi)]}")
+        #expect(rows.filter { $0.provider.nativeProvider == .kimi }.count == 1)
+        let unknown = rows.filter { $0.provider.nativeProvider == nil }
+        #expect(unknown.count == 1)
+        #expect(unknown.first?.provider.wireID == "kimi")
+        #expect(unknown.first?.windows.first?.name == "Burst")
+    }
+
+    @Test
+    func `both grok wire ids without user fields merge into one normal card`() throws {
+        let rows = try self.project("""
+        {"data":[{"provider":"grok-plugin","windows":[{"name":"7 days","used":1}]},
+          {"provider":"grok","windows":[{"name":"7 days","used":2}]}]}
+        """)
+        let grok = rows.filter { $0.provider.nativeProvider == .grok }
+        #expect(grok.count == 1)
+        #expect(grok.first?.error == nil)
+        #expect(grok.first?.windows.map(\.usedPercent) == [2])
+    }
+
     @Test(arguments: ["kimi-code", "opencode-go"])
     func `a sole anonymous provider has stable normal quota identity`(wireID: String) throws {
         let json = "{\"data\":[{\"provider\":\"\(wireID)\",\"windows\":[{\"name\":\"7 days\",\"used\":8}]}]}"
