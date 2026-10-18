@@ -30,6 +30,8 @@ public enum MagpieProviderMapping {
         // so a takeover persisted under either spelling keeps Grok off local credentials.
         "grok": .grok,
         "grok-plugin": .grok,
+        // magpie renamed the Kimi wire ID from "kimi-code" to "kimi", same handling as Grok.
+        "kimi": .kimi,
         "kimi-code": .kimi,
         "opencode-go": .opencodego,
     ]

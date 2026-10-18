@@ -101,7 +101,7 @@ public enum MagpieAccountProjection {
             let reference = MagpieProviderMapping.reference(for: wireID)
             guard let native = reference.nativeProvider else {
                 // Prefixed keys: an unknown wire ID that spells a mapped provider's raw value
-                // ("kimi" vs kimi-code's .kimi) must never collide with the native group.
+                // ("opencodego" vs opencode-go's .opencodego) must never collide with the native group.
                 let key = "wire:\(wireID)"
                 groupOrder.append(key)
                 groups[key] = (reference, rowsByWire[wireID] ?? [])
