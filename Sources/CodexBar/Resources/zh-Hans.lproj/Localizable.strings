@@ -2610,3 +2610,12 @@
 "account_detail_usage_title" = "%@ 用量";
 "account_detail_used" = "已用 %@";
 "account_detail_history" = "历史";
+
+/* Overview card UI */
+"%lld providers" = "%lld 个提供商";
+"Auto-refresh on" = "自动刷新已开启";
+"Auto-refresh off" = "自动刷新已关闭";
+"Last sync: %@" = "上次同步：%@";
+"No matching windows" = "没有匹配的窗口";
+"Now" = "现在";
+"resets in %@" = "%@ 后重置";

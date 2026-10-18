@@ -12,12 +12,15 @@ struct OverviewUsageRow {
         let title: String
         let used: Double
         let resetsAt: Date?
+        /// The filter bucket this window belongs to; the label stays display-only.
+        let kind: OverviewWindowFilter.WindowKind
 
         init(window: MagpieQuotaWindow) {
             self.label = Self.label(for: window)
             self.title = Self.title(for: window)
             self.used = min(100, max(0, window.usedPercent))
             self.resetsAt = window.resetsAt
+            self.kind = Self.kind(for: window)
         }
 
         /// Slots and labels follow the window's semantics, never its reset-description text:
@@ -40,6 +43,14 @@ struct OverviewUsageRow {
             case .scopedWeekly, .other: window.name
             }
         }
+
+        private static func kind(for window: MagpieQuotaWindow) -> OverviewWindowFilter.WindowKind {
+            switch window.semantics {
+            case .session: .session
+            case .weekly, .scopedWeekly: .weekly
+            case .monthly, .other: .other
+            }
+        }
     }
 
     /// Grouping key: the provider's raw value for native rows, the wire ID for magpie rows.
@@ -53,11 +64,14 @@ struct OverviewUsageRow {
     /// Privacy-aware account label, shown on grouped rows and in the detail header.
     let accountName: String?
     /// Every window the gateway reported for this account; non-nil marks a magpie row.
-    let namedWindows: [NamedWindow]?
+    var namedWindows: [NamedWindow]?
     /// Native rows only: the snapshot behind the window slots and the detail card.
     let snapshot: UsageSnapshot?
     /// Native rows only: the card model behind the hover chart and provider actions.
     let model: UsageMenuCardView.Model?
+    /// Native rows only, set by `filtered(to:)`: the window slots that survive the active
+    /// Overview filter, replacing the slots the row view would otherwise derive from `snapshot`.
+    var slotOverride: (short: RateWindow?, long: RateWindow?)? = nil
     /// Replaces the usage lines when set; used for native overview errors and for magpie rows
     /// whose account has no windows to show.
     let errorText: String?
@@ -69,6 +83,34 @@ struct OverviewUsageRow {
 
     var isMagpie: Bool {
         self.namedWindows != nil
+    }
+
+    /// Applies the Overview window filter: keeps only the windows the filter admits and returns nil
+    /// when nothing matches, so the caller drops the row. Error-only rows carry no window and are
+    /// hidden by either filter. Under `.now` the row is returned unchanged.
+    func filtered(to filter: OverviewWindowFilter) -> OverviewUsageRow? {
+        guard filter != .now else { return self }
+        var copy = self
+        if let windows = self.namedWindows {
+            let kept = windows.filter { filter.includes($0.kind) }
+            guard !kept.isEmpty else { return nil }
+            copy.namedWindows = kept
+            return copy
+        }
+        guard self.errorText == nil else { return nil }
+        let slots = OverviewCompactAccountRow.slots(of: self.snapshot, provider: self.nativeProvider)
+        let infersPeriod = !self.isMagpie
+        let short = slots.short.filter {
+            filter.includes(OverviewCompactAccountRow.windowKind(
+                of: $0, provider: self.nativeProvider, infersPeriodFromReset: infersPeriod))
+        }
+        let long = slots.long.filter {
+            filter.includes(OverviewCompactAccountRow.windowKind(
+                of: $0, provider: self.nativeProvider, infersPeriodFromReset: infersPeriod))
+        }
+        guard short != nil || long != nil else { return nil }
+        copy.slotOverride = (short: short, long: long)
+        return copy
     }
 
     static func native(

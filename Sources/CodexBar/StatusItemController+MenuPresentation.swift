@@ -279,8 +279,8 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
         guard let block else {
             return bounds.insetBy(dx: self.selectionHorizontalInset, dy: self.selectionVerticalInset)
         }
-        // The bottom margin below a provider block stays outside the highlight.
-        let height = bounds.height - (block.roundsBottom ? 6 : 0)
+        // The gap below a provider card stays outside the highlight.
+        let height = bounds.height - (block.roundsBottom ? OverviewCompactAccountRow.blockGap : 0)
         return NSRect(
             x: OverviewCompactAccountRow.blockInset,
             y: bounds.height - height,
@@ -503,7 +503,7 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
         guard let layer = self.selectionView?.layer else { return }
         if let block = self.rowPayload.selectionBlock {
             layer.maskedCorners = Self.selectionMaskCorners(for: block)
-            layer.cornerRadius = block == .middle ? 0 : 8
+            layer.cornerRadius = block == .middle ? 0 : 10
         } else {
             layer.maskedCorners = [
                 .layerMinXMinYCorner, .layerMaxXMinYCorner,

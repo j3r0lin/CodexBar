@@ -70,11 +70,17 @@ extension StatusItemController {
             context: menuContext,
             switcherSelection: context.switcherSelection,
             captureMenu: captureMenu)
+        let overviewChrome = context.switcherSelection == .overview
         self.addActionableSections(
             context.descriptor.sections,
             to: target,
             width: context.menuWidth,
             provider: context.currentProvider,
-            captureMenu: captureMenu)
+            captureMenu: captureMenu,
+            footerBarActions: overviewChrome ? [.about, .quit] : nil)
+        self.appendOverviewFooterStatusIfNeeded(
+            to: target,
+            switcherSelection: overviewChrome ? .overview : nil,
+            width: context.menuWidth)
     }
 }

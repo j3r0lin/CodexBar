@@ -19,9 +19,9 @@ struct OverviewCompactAccountRowTests {
     }
 
     @Test
-    func `a reset time is written without separators`() {
-        #expect(self.countdown(minutes: 140) == "2h20m")
-        #expect(self.countdown(minutes: 9900) == "6d21h")
+    func `a reset time is written with a space between its units`() {
+        #expect(self.countdown(minutes: 140) == "2h 20m")
+        #expect(self.countdown(minutes: 9900) == "6d 21h")
         #expect(self.countdown(minutes: 18) == "18m")
         #expect(self.countdown(minutes: 52) == "52m")
     }

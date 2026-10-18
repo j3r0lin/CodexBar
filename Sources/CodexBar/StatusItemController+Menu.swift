@@ -11,6 +11,9 @@ extension StatusItemController {
     /// that row except the two bars takes 304pt of it, so a narrower menu leaves the bars too short to
     /// read the fill.
     static let menuCardBaseWidth: CGFloat = 340
+    /// The Overview card layout reserves a fixed "resets in 5d 21h" column; below this width the
+    /// usage bars collapse under it.
+    static let overviewMenuMinimumWidth: CGFloat = 400
     static let overviewRowIdentifierPrefix = "overviewRow-"
     static let overviewGroupHeadingIdentifierPrefix = "overviewHeading-"
     static let menuFooterBarItemID = "menuFooterBar"
@@ -255,10 +258,13 @@ extension StatusItemController {
         let descriptor = self.makeMenuDescriptor(
             provider: selectedProvider,
             includeContextualActions: !isOverviewSelected)
-        let menuWidth = self.menuCardWidth(
+        let measuredMenuWidth = self.menuCardWidth(
             for: enabledProviders,
             selectedProvider: selectedProvider,
             descriptor: descriptor)
+        let menuWidth = isOverviewSelected
+            ? max(measuredMenuWidth, Self.overviewMenuMinimumWidth)
+            : measuredMenuWidth
 
         let canUpdateInPlace = isOverviewSelected &&
             self.settings.usageBarsShowUsed == self.lastSwitcherUsageBarsShowUsed &&
@@ -339,8 +345,17 @@ extension StatusItemController {
                 to: menu,
                 context: menuContext,
                 switcherSelection: contentSelection)
+            let overviewChrome = contentSelection == .overview
             self.addActionableSections(
-                context.descriptor.sections, to: menu, width: context.menuWidth, provider: context.currentProvider)
+                context.descriptor.sections,
+                to: menu,
+                width: context.menuWidth,
+                provider: context.currentProvider,
+                footerBarActions: overviewChrome ? [.about, .quit] : nil)
+            self.appendOverviewFooterStatusIfNeeded(
+                to: menu,
+                switcherSelection: overviewChrome ? .overview : nil,
+                width: context.menuWidth)
         }
     }
 
@@ -406,6 +421,9 @@ extension StatusItemController {
     {
         let providerScopes = self.overviewProviderScopes(enabledProviders: enabledProviders)
         let rows = self.overviewUsageRows(visibleProviders: providerScopes.visible)
+
+        self.addOverviewHeader(to: menu, width: menuWidth)
+        self.addOverviewFilterBar(to: menu, rows: rows, width: menuWidth, captureMenu: captureMenu)
         guard !rows.isEmpty else { return false }
 
         let t0 = CACurrentMediaTime()
@@ -446,15 +464,17 @@ extension StatusItemController {
             menu.addItem(.separator())
         }
 
-        // A provider with several accounts gets one grey caption; a lone account is its own row.
+        // A provider with several accounts gets a collapsible group header; a lone account is its own card.
+        let collapsedGroups = self.settings.overviewCollapsedProviderGroups
         let accountCounts = Dictionary(rows.map { ($0.groupKey, 1) }, uniquingKeysWith: +)
         for (index, row) in rows.enumerated() {
             let isGrouped = (accountCounts[row.groupKey] ?? 1) > 1
             let startsProvider = index == 0 || rows[index - 1].groupKey != row.groupKey
             let endsProvider = index == rows.count - 1 || rows[index + 1].groupKey != row.groupKey
+            let groupCollapsed = isGrouped && collapsedGroups.contains(row.groupKey)
             let identifier = "\(Self.overviewRowIdentifierPrefix)\(row.groupKey)"
                 + (row.accountID.map { "#\($0.opaqueID)" } ?? "")
-            // Each provider is one tinted block; a grouped provider's heading opens its block.
+            // Each provider is one bordered card; a grouped provider's header opens its card.
             let block: OverviewBlockPosition = switch (isGrouped || !startsProvider, endsProvider) {
             case (false, true): .single
             case (false, false): .top
@@ -462,34 +482,49 @@ extension StatusItemController {
             case (true, false): .middle
             }
             if isGrouped, startsProvider {
+                let groupKey = row.groupKey
+                let icon = self.overviewProviderIcon(for: row)
                 let heading = self.makeMenuCardItem(
-                    OverviewAccountGroupHeading(
-                        title: "\(row.providerName) · " + L("%lld accounts", accountCounts[row.groupKey] ?? 0),
+                    OverviewProviderGroupHeader(
+                        title: "\(row.providerName) · " + L("%lld accounts", accountCounts[groupKey] ?? 0),
+                        windowHint: self.overviewWindowHint(for: rows, groupKey: groupKey),
+                        icon: icon.image,
+                        iconIsTemplate: icon.isTemplate,
+                        collapsed: groupCollapsed,
                         width: menuWidth),
-                    id: "\(Self.overviewGroupHeadingIdentifierPrefix)\(row.groupKey)",
+                    id: "\(Self.overviewGroupHeadingIdentifierPrefix)\(groupKey)",
                     width: menuWidth,
                     heightCacheScope: "overviewAccountGroupHeading",
-                    heightCacheFingerprint: "heading",
-                    tightVerticalFit: true)
-                heading.isEnabled = false
+                    heightCacheFingerprint: groupCollapsed ? "heading-collapsed" : "heading",
+                    usesGPUSelection: true,
+                    tightVerticalFit: true,
+                    selectionBlock: groupCollapsed ? .single : .top,
+                    onClick: { [weak self, weak captureMenu] in
+                        self?.toggleOverviewGroupCollapsed(groupKey, menu: captureMenu)
+                    })
                 menu.addItem(heading)
             }
+            // A collapsed group is just its header.
+            if groupCollapsed { continue }
             let submenu = self.makeOverviewDetailSubmenu(row: row, width: menuWidth)
             let namedLines = row.namedWindows?.map {
                 OverviewCompactAccountRow.Line(label: $0.label, used: $0.used, resetsAt: $0.resetsAt)
             }
-            let slots = namedLines == nil
+            let slots = row.slotOverride ?? (namedLines == nil
                 ? OverviewCompactAccountRow.slots(of: row.snapshot, provider: row.nativeProvider)
-                : (short: nil, long: nil)
+                : (short: nil, long: nil))
+            let icon = self.overviewProviderIcon(for: row)
             let rowView = OverviewCompactAccountRow(
                 name: isGrouped ? row.accountName ?? row.providerName : row.providerName,
                 shortWindow: slots.short,
                 longWindow: slots.long,
                 width: menuWidth,
-                indent: isGrouped ? 10 : 0,
                 namesProvider: !isGrouped,
                 provider: row.nativeProvider,
+                icon: isGrouped ? nil : icon.image,
+                iconIsTemplate: icon.isTemplate,
                 block: block,
+                showsAccountDivider: isGrouped && !startsProvider,
                 errorText: row.errorText,
                 showsErrorFlag: row.showsErrorFlag,
                 namedLines: namedLines,
@@ -501,13 +536,143 @@ extension StatusItemController {
                 heightCacheScope: "overviewCompactRow",
                 heightCacheFingerprint: "compact-\(block)-\(max(1, rowView.lines.count))-\(row.errorText ?? "")",
                 submenu: submenu,
-                showsSubmenuIndicator: false,
+                showsSubmenuIndicator: !isGrouped,
+                submenuIndicatorAlignment: .trailing,
                 usesGPUSelection: true,
                 tightVerticalFit: true,
                 selectionBlock: isGrouped && startsProvider ? .top : block)
             menu.addItem(item)
         }
         return true
+    }
+
+    /// The card header: app icon, title, last-update subtitle, and the refresh/settings buttons.
+    private func addOverviewHeader(to menu: NSMenu, width: CGFloat) {
+        let updatedText = self.overviewLastSyncDate().map { L("Updated %@", $0.relativeDescription()) }
+            ?? L("No usage fetched yet")
+        menu.addItem(self.makeMenuCardItem(
+            OverviewCardHeaderView(
+                title: "CodexBar",
+                updatedText: updatedText,
+                width: width),
+            id: "overviewHeader",
+            width: width,
+            heightCacheScope: "overviewHeader",
+            heightCacheFingerprint: "header",
+            containsInteractiveControls: true))
+    }
+
+    /// The "N providers" line with the Now / 5h / 7d filter. The choice persists and rebuilds the menu.
+    private func addOverviewFilterBar(
+        to menu: NSMenu,
+        rows: [OverviewUsageRow],
+        width: CGFloat,
+        captureMenu: NSMenu?)
+    {
+        let selection = self.settings.overviewWindowFilter
+        menu.addItem(self.makeMenuCardItem(
+            OverviewWindowFilterBarView(
+                providerCount: Set(rows.map(\.groupKey)).count,
+                selection: selection,
+                onSelect: { [weak self, weak captureMenu] filter in
+                    guard let self else { return }
+                    self.advanceMenuInteraction(for: captureMenu)
+                    self.settings.overviewWindowFilter = filter
+                    self.invalidateMenus(refreshOpenMenus: true)
+                },
+                width: width),
+            id: "overviewFilterBar",
+            width: width,
+            heightCacheScope: "overviewFilterBar",
+            heightCacheFingerprint: "filter-\(selection.rawValue)",
+            containsInteractiveControls: true))
+    }
+
+    /// The distinct window labels a provider group holds, in row order ("5h / 7d").
+    private func overviewWindowHint(for rows: [OverviewUsageRow], groupKey: String) -> String {
+        var labels: [String] = []
+        for row in rows where row.groupKey == groupKey {
+            if let windows = row.namedWindows {
+                for window in windows where !labels.contains(window.label) {
+                    labels.append(window.label)
+                }
+            } else {
+                let slots = row.slotOverride
+                    ?? OverviewCompactAccountRow.slots(of: row.snapshot, provider: row.nativeProvider)
+                for window in [slots.short, slots.long].compactMap(\.self) {
+                    let label = OverviewCompactAccountRow.windowLabel(
+                        window,
+                        provider: row.nativeProvider,
+                        infersPeriodFromReset: !row.isMagpie)
+                    if !labels.contains(label) { labels.append(label) }
+                }
+            }
+        }
+        return labels.joined(separator: " / ")
+    }
+
+    /// The brand icon for a row's provider, coloured when a curated asset exists; a nil image makes
+    /// the row draw the generic cube for providers the app has never heard of.
+    private func overviewProviderIcon(for row: OverviewUsageRow) -> (image: NSImage?, isTemplate: Bool) {
+        guard let provider = row.nativeProvider,
+              let image = ProviderBrandIcon.image(for: provider, style: .brand)
+        else { return (nil, true) }
+        return (image, image.isTemplate)
+    }
+
+    private func toggleOverviewGroupCollapsed(_ groupKey: String, menu: NSMenu?) {
+        self.advanceMenuInteraction(for: menu)
+        var collapsed = self.settings.overviewCollapsedProviderGroups
+        if collapsed.contains(groupKey) {
+            collapsed.remove(groupKey)
+        } else {
+            collapsed.insert(groupKey)
+        }
+        self.settings.overviewCollapsedProviderGroups = collapsed
+        self.invalidateMenus(refreshOpenMenus: true)
+    }
+
+    /// The green-dot status line at the bottom of the Overview menu.
+    func appendOverviewFooterStatusIfNeeded(
+        to menu: NSMenu,
+        switcherSelection: ProviderSwitcherSelection?,
+        width: CGFloat)
+    {
+        guard switcherSelection == .overview else { return }
+        let autoRefresh = self.settings.refreshFrequency != .manual
+        let lastSyncText = L(
+            "Last sync: %@",
+            self.overviewLastSyncDate().map { Self.overviewFooterTimeFormatter.string(from: $0) } ?? "—")
+        menu.addItem(self.makeMenuCardItem(
+            OverviewFooterStatusView(
+                autoRefreshOn: autoRefresh,
+                lastSyncText: lastSyncText,
+                width: width),
+            id: "overviewFooterStatus",
+            width: width,
+            heightCacheScope: "overviewFooterStatus",
+            heightCacheFingerprint: "footer-\(autoRefresh)"))
+    }
+
+    private static let overviewFooterTimeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        return formatter
+    }()
+
+    /// The freshest reading behind the Overview: native snapshot updates and magpie reads.
+    private func overviewLastSyncDate() -> Date? {
+        var dates = self.store.magpieOverviewSnapshots.compactMap(\.readAt)
+        if let magpieRefresh = self.store.magpieLastRefreshAt {
+            dates.append(magpieRefresh)
+        }
+        for provider in self.store.enabledFirstPartyProvidersForDisplay() {
+            if let updated = self.store.snapshot(for: provider.instanceID)?.updatedAt {
+                dates.append(updated)
+            }
+        }
+        return dates.max()
     }
 
     /// Native rows for every visible provider still natively owned, plus one row per magpie
@@ -536,7 +701,8 @@ extension StatusItemController {
         for account in magpieAccounts where !coveredWireIDs.contains(account.provider.wireID) {
             rows.append(self.magpieOverviewRow(for: account, hidePersonalInfo: hidePersonalInfo))
         }
-        return rows
+        let filter = self.settings.overviewWindowFilter
+        return rows.compactMap { $0.filtered(to: filter) }
     }
 
     private func magpieOverviewRow(
@@ -574,7 +740,11 @@ extension StatusItemController {
     }
 
     private func addOverviewEmptyState(to menu: NSMenu) {
-        let item = NSMenuItem(title: L("No providers enabled"), action: nil, keyEquivalent: "")
+        let filtered = self.settings.overviewWindowFilter != .now
+        let item = NSMenuItem(
+            title: filtered ? L("No matching windows") : L("No providers enabled"),
+            action: nil,
+            keyEquivalent: "")
         item.isEnabled = false
         item.representedObject = "overviewEmptyState"
         menu.addItem(item)
@@ -747,7 +917,8 @@ extension StatusItemController {
         to menu: NSMenu,
         width: CGFloat,
         provider: UsageProvider?,
-        captureMenu: NSMenu? = nil)
+        captureMenu: NSMenu? = nil,
+        footerBarActions: [MenuDescriptor.MenuAction]? = nil)
     {
         let actionableSections = sections.filter { section in section.entries.contains(where: \ .isActionable) }
         for (index, section) in actionableSections.enumerated() {
@@ -847,7 +1018,12 @@ extension StatusItemController {
                     menu.addItem(.separator())
                 }
             }
-            self.appendMenuFooterBarIfNeeded(section: section, to: menu, width: width, captureMenu: captureMenu)
+            self.appendMenuFooterBarIfNeeded(
+                section: section,
+                to: menu,
+                width: width,
+                captureMenu: captureMenu,
+                includedActions: footerBarActions)
             if index < actionableSections.count - 1 {
                 menu.addItem(.separator())
             }

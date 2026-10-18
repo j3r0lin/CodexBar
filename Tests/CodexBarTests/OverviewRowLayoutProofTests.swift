@@ -9,7 +9,7 @@ import Testing
 @MainActor
 struct OverviewRowLayoutProofTests {
     /// The width the app draws an Overview row at.
-    private static let width = StatusItemController.menuCardBaseWidth
+    private static let width = StatusItemController.overviewMenuMinimumWidth
     private static let now = Date(timeIntervalSince1970: 1_800_000_000)
 
     @Test
@@ -77,30 +77,36 @@ struct OverviewRowLayoutProofTests {
                 name: "Codex",
                 short: self.window(96, minutes: 2 * 60 + 20),
                 long: self.window(15, minutes: 6 * 1440 + 21 * 60),
-                indent: 0)
-            self.separator()
-            OverviewAccountGroupHeading(title: "Claude · 3 accounts", width: Self.width)
+                namesProvider: true)
+            OverviewProviderGroupHeader(
+                title: "Claude · 3 accounts",
+                windowHint: "5h / 7d",
+                icon: nil,
+                iconIsTemplate: true,
+                collapsed: false,
+                width: Self.width)
             self.row(
                 name: "a",
                 short: self.window(46, minutes: 18),
                 long: self.window(95, minutes: 9 * 60 + 58),
-                indent: 10)
+                block: .middle)
             self.row(
                 name: "b",
                 short: self.window(0, minutes: nil),
                 long: self.window(84, minutes: 1440 + 9 * 60),
-                indent: 10)
+                block: .middle,
+                divider: true)
             self.row(
                 name: "c",
                 short: self.window(0, minutes: nil),
                 long: self.window(100, minutes: 2 * 60 + 58),
-                indent: 10)
-            self.separator()
+                block: .bottom,
+                divider: true)
             self.row(
                 name: "Kimi Code",
                 short: self.window(8, minutes: 4 * 1440 + 2 * 60),
                 long: self.window(10, minutes: 52),
-                indent: 0)
+                namesProvider: true)
             self.row(
                 name: "Grok",
                 short: RateWindow(
@@ -110,35 +116,29 @@ struct OverviewRowLayoutProofTests {
                     resetDescription: nil,
                     isSyntheticPlaceholder: true),
                 long: self.window(90, minutes: 4 * 1440 + 20 * 60),
-                indent: 0)
+                namesProvider: true)
         }
         .frame(width: self.width)
         .background(Color(nsColor: self.menuBackground))
         .environment(\.colorScheme, .dark)
     }
 
-    /// The app's separators come from AppKit. This copies the geometry measured off the running menu:
-    /// a 1pt line, 6pt in from the leading edge, with 6pt of air above and below.
-    private static func separator() -> some View {
-        Rectangle()
-            .fill(Color.white.opacity(0.1))
-            .frame(height: 1)
-            .padding(.leading, 6)
-            .padding(.vertical, 6)
-    }
-
     private static func row(
         name: String,
         short: RateWindow?,
         long: RateWindow?,
-        indent: CGFloat) -> some View
+        block: OverviewBlockPosition = .single,
+        namesProvider: Bool = false,
+        divider: Bool = false) -> some View
     {
         OverviewCompactAccountRow(
             name: name,
             shortWindow: short,
             longWindow: long,
             width: self.width,
-            indent: indent,
+            namesProvider: namesProvider,
+            block: block,
+            showsAccountDivider: divider,
             now: self.now)
     }
 

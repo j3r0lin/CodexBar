@@ -24,14 +24,20 @@ extension StatusItemController {
     /// The four trailing meta actions collapse into one icon bar after the section's other entries.
     /// Their keyboard shortcuts stay with `StatusItemMenu.performKeyEquivalent`: a hidden item's
     /// keyEquivalent does not fire while a menu is tracking, even with `allowsKeyEquivalentWhenHidden`.
+    /// `includedActions` narrows which of them get a button — the Overview header owns refresh and
+    /// settings, so its footer bar only carries About and Quit.
     func appendMenuFooterBarIfNeeded(
         section: MenuDescriptor.Section,
         to menu: NSMenu,
         width: CGFloat,
-        captureMenu: NSMenu?)
+        captureMenu: NSMenu?,
+        includedActions: [MenuDescriptor.MenuAction]? = nil)
     {
+        let included = includedActions ?? Self.menuFooterActions
         let actions = section.entries.compactMap { entry -> MenuDescriptor.MenuAction? in
-            guard case let .action(_, action) = entry, Self.menuFooterActions.contains(action) else { return nil }
+            guard case let .action(_, action) = entry,
+                  Self.menuFooterActions.contains(action),
+                  included.contains(action) else { return nil }
             return action
         }
         guard !actions.isEmpty else { return }

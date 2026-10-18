@@ -866,6 +866,20 @@ extension SettingsStore {
         set { self.setDefault(\.mergedOverviewLayoutRaw, newValue.rawValue, key: "mergedOverviewLayout") }
     }
 
+    var overviewWindowFilter: OverviewWindowFilter {
+        get { OverviewWindowFilter(rawValue: self.defaultsState.overviewWindowFilterRaw) ?? .now }
+        set { self.setDefault(\.overviewWindowFilterRaw, newValue.rawValue, key: "overviewWindowFilter") }
+    }
+
+    /// Group keys (provider raw values or magpie wire IDs) whose account list is collapsed in the Overview.
+    var overviewCollapsedProviderGroups: Set<String> {
+        get { Set(self.defaultsState.overviewCollapsedProviderGroupsRaw) }
+        set {
+            self.setDefault(
+                \.overviewCollapsedProviderGroupsRaw, newValue.sorted(), key: "overviewCollapsedProviderGroups")
+        }
+    }
+
     var mergeIconsStacked: Bool {
         get { self.defaultsState.mergeIconsStacked }
         set { self.setDefault(\.mergeIconsStacked, newValue, key: "mergeIconsStacked") }

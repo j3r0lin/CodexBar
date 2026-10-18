@@ -3,7 +3,7 @@ import CodexBarCore
 import SwiftUI
 
 /// Overview colours: one accent for normal readings, orange from 70% and red from 90%, for both the bar
-/// and its number. Provider and group names use the accent too.
+/// and its number. A 0% reading stays neutral white so an unused window reads as empty, not healthy.
 enum OverviewPalette {
     static let accent = Color(red: 0x4F / 255, green: 0xD1 / 255, blue: 0xE8 / 255)
     static let warning = Color(red: 1, green: 0xB3 / 255, blue: 0x40 / 255)
@@ -11,6 +11,8 @@ enum OverviewPalette {
     static let caption = Color.white.opacity(0.60)
     /// Reset countdowns read one step brighter than the window labels.
     static let reset = Color.white.opacity(0.60)
+    /// Names and idle readings.
+    static let neutral = Color.white.opacity(0.55)
 
     static func color(usedPercent used: Double) -> Color {
         if used >= 90 { return self.critical }
@@ -19,8 +21,8 @@ enum OverviewPalette {
     }
 }
 
-/// Where a menu item sits in its provider's block: every block is one tinted rounded panel, drawn piecewise
-/// by the items it spans because each item is its own view.
+/// Where a menu item sits in its provider's card: every card is one bordered rounded panel, drawn
+/// piecewise by the items it spans because each item is its own view.
 enum OverviewBlockPosition {
     case single
     case top
@@ -36,27 +38,79 @@ enum OverviewBlockPosition {
     }
 }
 
+/// The outline of one item's slice of its provider card: the top piece draws the top edge and both
+/// sides, a middle piece draws only the sides, the bottom piece closes the card. Tangent arcs keep
+/// the corner direction unambiguous.
+struct OverviewCardPieceBorder: Shape {
+    let position: OverviewBlockPosition
+    var radius: CGFloat = 10
+
+    func path(in rect: CGRect) -> Path {
+        let rect = rect.insetBy(dx: 0.5, dy: 0.5)
+        let r = self.radius
+        var path = Path()
+        switch self.position {
+        case .single:
+            path.addRoundedRect(in: rect, cornerSize: CGSize(width: r, height: r))
+        case .top:
+            path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + r))
+            path.addArc(
+                tangent1To: CGPoint(x: rect.minX, y: rect.minY),
+                tangent2To: CGPoint(x: rect.minX + r, y: rect.minY),
+                radius: r)
+            path.addLine(to: CGPoint(x: rect.maxX - r, y: rect.minY))
+            path.addArc(
+                tangent1To: CGPoint(x: rect.maxX, y: rect.minY),
+                tangent2To: CGPoint(x: rect.maxX, y: rect.minY + r),
+                radius: r)
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        case .middle:
+            path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+            path.move(to: CGPoint(x: rect.maxX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        case .bottom:
+            path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY - r))
+            path.addArc(
+                tangent1To: CGPoint(x: rect.minX, y: rect.maxY),
+                tangent2To: CGPoint(x: rect.minX + r, y: rect.maxY),
+                radius: r)
+            path.addLine(to: CGPoint(x: rect.maxX - r, y: rect.maxY))
+            path.addArc(
+                tangent1To: CGPoint(x: rect.maxX, y: rect.maxY),
+                tangent2To: CGPoint(x: rect.maxX, y: rect.maxY - r),
+                radius: r)
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        }
+        return path
+    }
+}
+
 extension View {
-    /// Draws this item's part of its provider block. The block's own padding lives inside the
-    /// background so consecutive items paint one continuous panel; a 6pt transparent gap below
-    /// the last item keeps blocks apart without separator lines.
+    /// Draws this item's part of its provider card. The card's own padding lives inside the
+    /// background so consecutive items paint one continuous panel; a transparent gap below the
+    /// last item keeps cards apart without separator lines.
     func overviewBlock(_ position: OverviewBlockPosition) -> some View {
-        let radius: CGFloat = 8
+        let radius: CGFloat = 10
         return self
-            .padding(.top, position.roundsTop ? 6 : 0)
-            .padding(.bottom, position.roundsBottom ? 4 : 0)
+            .padding(.top, position.roundsTop ? 8 : 0)
+            .padding(.bottom, position.roundsBottom ? 6 : 0)
             .background(
                 UnevenRoundedRectangle(
                     topLeadingRadius: position.roundsTop ? radius : 0,
                     bottomLeadingRadius: position.roundsBottom ? radius : 0,
                     bottomTrailingRadius: position.roundsBottom ? radius : 0,
                     topTrailingRadius: position.roundsTop ? radius : 0)
-                    .fill(Color.white.opacity(0.07)))
+                    .fill(Color.white.opacity(0.06)))
+            .background(OverviewCardPieceBorder(position: position, radius: radius)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1))
             .padding(.horizontal, OverviewCompactAccountRow.blockInset)
-            .padding(.bottom, position.roundsBottom ? 6 : 0)
+            .padding(.bottom, position.roundsBottom ? OverviewCompactAccountRow.blockGap : 0)
     }
 
-    /// Accent-coloured, upper-case, slightly tracked label used for provider and group names.
+    /// Accent-coloured, upper-case, slightly tracked label used in the detail card's titles.
     func overviewSectionTitleStyle() -> some View {
         self
             .font(.system(size: 11, weight: .semibold))
@@ -66,20 +120,47 @@ extension View {
     }
 }
 
-/// One Overview row per account: a line per window the provider reported, short window first, each with
-/// its window label, a bar across the free width, the percentage and the reset time. The name sits on the
-/// first line only.
+/// A provider's brand mark on a card: the coloured brand asset when one exists, the monochrome
+/// template otherwise, and a generic cube for providers the app has never heard of.
+struct OverviewProviderIcon: View {
+    let image: NSImage?
+    let isTemplate: Bool
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(nsImage: image)
+                    .resizable()
+                    .renderingMode(self.isTemplate ? .template : .original)
+                    .aspectRatio(contentMode: .fit)
+            } else {
+                Image(systemName: "cube")
+                    .resizable()
+                    .renderingMode(.template)
+                    .aspectRatio(contentMode: .fit)
+            }
+        }
+        .foregroundStyle(Color.white.opacity(0.9))
+        .frame(width: 18, height: 18)
+    }
+}
+
+/// One Overview row per account: the account or provider name on the left, then one line per window
+/// the provider reported, short window first, each with its window label, the percentage, a bar
+/// across the free width and the reset countdown.
 struct OverviewCompactAccountRow: View {
     let name: String
     let shortWindow: RateWindow?
     let longWindow: RateWindow?
     let width: CGFloat
-    /// Account rows under a provider heading sit further right than a lone provider row.
-    var indent: CGFloat = 0
-    /// A lone provider row names its provider in the section-title style; an account row names its account.
+    /// A lone provider row carries the provider's icon; an account row under a group header does not.
     var namesProvider = false
     var provider: UsageProvider?
+    var icon: NSImage?
+    var iconIsTemplate = true
     var block: OverviewBlockPosition = .single
+    /// A hairline above the row separates it from the previous account inside the same card.
+    var showsAccountDivider = false
     /// A provider that only has an error shows it in place of its usage.
     var errorText: String?
     /// The account keeps its readings alongside an error (last-known retention, unstable
@@ -99,16 +180,20 @@ struct OverviewCompactAccountRow: View {
         let resetsAt: Date?
     }
 
-    /// Every line puts the same element in the same column, so each part is sized here and the bar takes
-    /// whatever the line has left.
-    static let blockInset: CGFloat = 2
-    static let horizontalPadding: CGFloat = 8
-    /// Fits "OPENCODE GO" in the section-title style.
-    static let nameColumn: CGFloat = 104
-    static let labelWidth: CGFloat = 28
+    /// Every line puts the same element in the same column, so each part is sized here and the bar
+    /// takes whatever the line has left.
+    static let blockInset: CGFloat = 8
+    /// The transparent gap between two cards.
+    static let blockGap: CGFloat = 10
+    static let horizontalPadding: CGFloat = 12
+    /// Icon plus a provider name; account names under a group header get a narrower column.
+    static let providerNameColumn: CGFloat = 116
+    static let accountNameColumn: CGFloat = 92
+    static let labelWidth: CGFloat = 26
     /// Fits "100%" at 13pt semibold with monospaced digits.
     static let percentWidth: CGFloat = 38
-    static let resetWidth: CGFloat = 40
+    /// Fits "resets in 5d 21h" at 10pt with monospaced digits.
+    static let resetWidth: CGFloat = 100
     /// Every window line keeps this height so lines pitch evenly within and across accounts.
     static let lineHeight: CGFloat = 22
 
@@ -128,21 +213,20 @@ struct OverviewCompactAccountRow: View {
         }
     }
 
-    /// All providers share one label column, including model-scoped windows.
-    var labelColumnWidth: CGFloat {
-        Self.labelWidth
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            let lines = self.lines
+            if self.showsAccountDivider {
+                Rectangle()
+                    .fill(Color.white.opacity(0.08))
+                    .frame(height: 1)
+                    .padding(.vertical, 3)
+            }
             if let errorText {
                 self.errorLines(errorText)
-            } else if lines.isEmpty {
-                self.line(named: true) { Spacer(minLength: 0) }
             } else {
-                ForEach(lines.indices, id: \.self) { index in
-                    self.line(named: index == 0) { self.reading(lines[index]) }
+                HStack(alignment: .center, spacing: 8) {
+                    self.nameColumn
+                    self.windowLines
                 }
             }
         }
@@ -151,52 +235,67 @@ struct OverviewCompactAccountRow: View {
         .frame(width: self.width, alignment: .leading)
     }
 
+    private var nameColumn: some View {
+        HStack(spacing: 8) {
+            if self.namesProvider {
+                OverviewProviderIcon(image: self.icon, isTemplate: self.iconIsTemplate)
+            }
+            Text(self.name)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(self.nameColor)
+                .lineLimit(1)
+                .truncationMode(.middle)
+        }
+        .frame(
+            width: (self.namesProvider ? Self.providerNameColumn : Self.accountNameColumn) - 8,
+            alignment: .leading)
+    }
+
+    private var nameColor: Color {
+        if self.showsErrorFlag { return OverviewPalette.warning }
+        return self.namesProvider ? .white : Color.white.opacity(0.85)
+    }
+
+    @ViewBuilder
+    private var windowLines: some View {
+        let lines = self.lines
+        if lines.isEmpty {
+            self.windowLine { Spacer(minLength: 0) }
+        } else {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(lines.indices, id: \.self) { index in
+                    self.windowLine { self.reading(lines[index]) }
+                }
+            }
+        }
+    }
+
     /// An error-only provider names itself in full on the first line and wraps the message below it,
     /// so neither the name nor the message is truncated into the narrow name column.
     private func errorLines(_ errorText: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(self.name)
-                .overviewSectionTitleStyle()
-                .lineLimit(1)
-            Text(errorText)
-                .font(.system(size: 10))
-                .foregroundStyle(MenuHighlightStyle.error(self.isHighlighted))
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
+        HStack(alignment: .top, spacing: 8) {
+            if self.namesProvider {
+                OverviewProviderIcon(image: self.icon, isTemplate: self.iconIsTemplate)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(self.name)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(self.nameColor)
+                    .lineLimit(1)
+                Text(errorText)
+                    .font(.system(size: 10))
+                    .foregroundStyle(MenuHighlightStyle.error(self.isHighlighted))
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .padding(.vertical, 4)
     }
 
-    private func line(named: Bool, @ViewBuilder content: () -> some View) -> some View {
-        HStack(spacing: 8) {
-            Group {
-                if named {
-                    self.nameLabel
-                } else {
-                    Color.clear
-                }
-            }
-            .lineLimit(1)
-            .truncationMode(.middle)
-            .frame(width: Self.nameColumn - self.indent, alignment: .leading)
-            .padding(.leading, self.indent)
-            content()
-        }
-        .frame(height: Self.lineHeight)
-    }
-
-    @ViewBuilder
-    private var nameLabel: some View {
-        if self.namesProvider {
-            Text(self.name)
-                .overviewSectionTitleStyle()
-                .foregroundStyle(self.showsErrorFlag ? OverviewPalette.warning : OverviewPalette.accent)
-        } else {
-            Text(self.name)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(self.showsErrorFlag ? OverviewPalette.warning : Color.white)
-        }
+    private func windowLine(@ViewBuilder content: () -> some View) -> some View {
+        content()
+            .frame(height: Self.lineHeight)
     }
 
     private func reading(_ line: Line) -> some View {
@@ -206,15 +305,15 @@ struct OverviewCompactAccountRow: View {
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(OverviewPalette.caption)
                 .lineLimit(1)
-                .frame(width: self.labelColumnWidth, alignment: .leading)
-            UsageBar(used: line.used, color: color, trackColor: Self.trackColor, height: 6)
+                .frame(width: Self.labelWidth, alignment: .leading)
             Text("\(Int(line.used.rounded()))%")
                 .font(.system(size: 13, weight: .semibold).monospacedDigit())
-                .foregroundStyle(color)
+                .foregroundStyle(line.used > 0 ? color : OverviewPalette.neutral)
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
                 .frame(width: Self.percentWidth, alignment: .trailing)
-            Text(line.resetsAt.map { Self.countdown(to: $0, now: self.now) } ?? "")
+            UsageBar(used: line.used, color: color, trackColor: Self.trackColor, height: 6)
+            Text(line.resetsAt.map { L("resets in %@", Self.countdown(to: $0, now: self.now)) } ?? "—")
                 .font(.system(size: 10).monospacedDigit())
                 .foregroundStyle(OverviewPalette.reset)
                 .lineLimit(1)
@@ -260,6 +359,21 @@ struct OverviewCompactAccountRow: View {
         return (short, long)
     }
 
+    /// The filter bucket of a native window by its duration: a day or less is a session window,
+    /// under a month is weekly, and anything longer or untyped is neither.
+    static func windowKind(
+        of window: RateWindow,
+        provider: UsageProvider?,
+        infersPeriodFromReset: Bool = true) -> OverviewWindowFilter.WindowKind
+    {
+        guard let minutes = nativeMinutes(
+            window, provider: provider, infersPeriodFromReset: infersPeriodFromReset)
+        else { return .other }
+        if minutes <= 1440 { return .session }
+        if minutes < 28 * 1440 { return .weekly }
+        return .other
+    }
+
     /// Grok's descriptor owns the fallback for its untyped credit pool; human-readable reset
     /// descriptions never determine the quota period. Magpie-sourced windows get no fallback:
     /// their period comes from a known duration or a parseable window name only.
@@ -299,28 +413,45 @@ struct OverviewCompactAccountRow: View {
     static func countdown(to date: Date, now: Date) -> String {
         let minutes = max(0, Int(date.timeIntervalSince(now) / 60))
         let days = minutes / 1440, hours = (minutes % 1440) / 60, mins = minutes % 60
-        if days > 0 { return "\(days)d\(hours)h" }
-        if hours > 0 { return "\(hours)h\(mins)m" }
+        if days > 0 { return "\(days)d \(hours)h" }
+        if hours > 0 { return "\(hours)h \(mins)m" }
         return "\(mins)m"
     }
 }
 
-/// Title at the top of a provider's block when it has several accounts. It is not a row: no usage,
-/// no highlight, no action.
-struct OverviewAccountGroupHeading: View {
+/// Header of a multi-account provider card: brand icon, the "Provider · N accounts" title, the
+/// window kinds the group holds, and the chevron that collapses the account list. Tapping the row
+/// toggles the collapse; the row view itself stays passive.
+struct OverviewProviderGroupHeader: View {
     let title: String
+    let windowHint: String
+    let icon: NSImage?
+    let iconIsTemplate: Bool
+    let collapsed: Bool
     let width: CGFloat
 
     var body: some View {
-        Text(self.title)
-            .overviewSectionTitleStyle()
-            .lineLimit(1)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(height: 16)
-            .padding(.horizontal, OverviewCompactAccountRow.horizontalPadding)
-            .padding(.bottom, 2)
-            .overviewBlock(.top)
-            .frame(width: self.width, alignment: .leading)
+        HStack(spacing: 8) {
+            OverviewProviderIcon(image: self.icon, isTemplate: self.iconIsTemplate)
+            Text(self.title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            if !self.windowHint.isEmpty {
+                Text(self.windowHint)
+                    .font(.system(size: 10))
+                    .foregroundStyle(OverviewPalette.caption)
+                    .lineLimit(1)
+            }
+            Image(systemName: self.collapsed ? "chevron.right" : "chevron.down")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(OverviewPalette.caption)
+        }
+        .padding(.horizontal, OverviewCompactAccountRow.horizontalPadding)
+        .padding(.vertical, 5)
+        .overviewBlock(self.collapsed ? .single : .top)
+        .frame(width: self.width, alignment: .leading)
     }
 }
 

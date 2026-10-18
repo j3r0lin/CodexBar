@@ -20,26 +20,25 @@ struct OverviewRowRenderTests {
                 resetsAt: now.addingTimeInterval(resetMinutes * 60),
                 resetDescription: nil)
         }
-        let width: CGFloat = 340
+        let width: CGFloat = 400
         struct Account {
             let name: String
             let session: RateWindow
             let weekly: RateWindow
         }
         let accounts = [
-            Account(name: "claude-1", session: window(300, 46, 18), weekly: window(10080, 95, 598)),
-            Account(name: "claude", session: window(300, 0, 70), weekly: window(10080, 84, 2340)),
-            Account(name: "claude-2", session: window(300, 2, 70), weekly: window(10080, 100, 178)),
+            Account(name: "claude", session: window(300, 46, 138), weekly: window(10080, 10, 8912)),
+            Account(name: "claude-1", session: window(300, 12, 188), weekly: window(10080, 22, 7418)),
+            Account(name: "claude-2", session: window(300, 0, 70), weekly: window(10080, 98, 248)),
         ]
         let view = VStack(alignment: .leading, spacing: 0) {
-            OverviewCompactAccountRow(
-                name: "Codex",
-                shortWindow: window(300, 96, 140),
-                longWindow: window(10080, 15, 9900),
-                width: width,
-                namesProvider: true,
-                now: now)
-            OverviewAccountGroupHeading(title: "Claude · 3 accounts", width: width)
+            OverviewProviderGroupHeader(
+                title: "Claude · 3 accounts",
+                windowHint: "5h / 7d",
+                icon: nil,
+                iconIsTemplate: true,
+                collapsed: false,
+                width: width)
             ForEach(accounts.indices, id: \.self) { index in
                 let account = accounts[index]
                 OverviewCompactAccountRow(
@@ -47,10 +46,17 @@ struct OverviewRowRenderTests {
                     shortWindow: account.session,
                     longWindow: account.weekly,
                     width: width,
-                    indent: 10,
                     block: index == accounts.count - 1 ? .bottom : .middle,
+                    showsAccountDivider: index > 0,
                     now: now)
             }
+            OverviewCompactAccountRow(
+                name: "Codex",
+                shortWindow: window(300, 96, 140),
+                longWindow: window(10080, 15, 9900),
+                width: width,
+                namesProvider: true,
+                now: now)
             OverviewCompactAccountRow(
                 name: "Kimi Code",
                 shortWindow: window(300, 8, 5880),
