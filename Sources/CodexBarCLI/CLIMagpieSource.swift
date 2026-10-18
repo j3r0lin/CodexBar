@@ -50,6 +50,16 @@ actor CLIMagpieSource {
 }
 
 extension CodexBarCLI {
+    /// A Claude-family provider suspended by the magpie switch answers with this instead of
+    /// falling through to native reads.
+    struct MagpieSuspendedProviderError: LocalizedError {
+        let provider: UsageProvider
+
+        var errorDescription: String? {
+            ProviderSourceRoute.suspendedMessage(for: self.provider)
+        }
+    }
+
     static func fetchRoutedProviderUsage(
         provider: UsageProvider,
         tokenContext: TokenAccountCLIContext,
@@ -84,7 +94,10 @@ extension CodexBarCLI {
     {
         guard tokenContext.config.magpie?.enabled == true else { return nil }
         let wireIDs = MagpieProviderMapping.wireIDs(for: provider)
-        guard !wireIDs.isEmpty else { return nil }
+        // Claude-family providers never fall through to native reads while the switch is on,
+        // even without a wire ID or any magpie rows (`--provider all` expands to them too).
+        let switchSuspended = ProviderSourceRoute.switchOnNativeForbidden.contains(provider)
+        guard !wireIDs.isEmpty || switchSuspended else { return nil }
         var output = UsageCommandOutput()
         do {
             let rows = try await tokenContext.magpieSource.rows(quotasURL: tokenContext.config.magpie?.quotasURL)
@@ -93,11 +106,14 @@ extension CodexBarCLI {
                 previouslyOwned = true
                 break
             }
-            guard rows.contains(where: { wireIDs.contains($0.provider) }) || previouslyOwned else { return nil }
+            guard rows.contains(where: { wireIDs.contains($0.provider) }) || previouslyOwned || switchSuspended
+            else { return nil }
             let accounts = MagpieUsageProjection.providerAccountSnapshots(
                 for: provider, in: MagpieAccountProjection.snapshots(from: rows))
+            var emitted = false
             for account in accounts {
                 guard let usage = account.snapshot else { continue }
+                emitted = true
                 if command.format == .json {
                     output.payload.append(ProviderPayload(
                         provider: provider,
@@ -134,6 +150,16 @@ extension CodexBarCLI {
                             resetStyle: command.resetStyle,
                             weeklyWorkDays: command.weeklyWorkDays)))
                 }
+            }
+            if !emitted, switchSuspended {
+                // A suspended provider still answers, with its suspended state, so the caller
+                // never continues into a native credential, cookie, or Keychain read.
+                let error = MagpieSuspendedProviderError(provider: provider)
+                output.exitCode = .failure
+                output.payload.append(Self.makeProviderErrorPayload(
+                    provider: provider, account: nil, source: "magpie", status: status, error: error))
+                output.cardFailures.append(CLICardFailure(
+                    provider: provider, accountLabel: nil, message: error.localizedDescription))
             }
         } catch {
             output.exitCode = .failure

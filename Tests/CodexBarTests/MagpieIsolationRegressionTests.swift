@@ -348,6 +348,75 @@ struct MagpieIsolationRegressionTests {
         let total = NativeProviderIOTestBoundary.Kind.allCases.reduce(0) { $0 + spy.count($1) }
         #expect(total > 0)
     }
+
+    @Test
+    func `claude platform refresh does no native IO while the switch is on`() async {
+        let store = self.makeStore(enabled: true)
+        store.settings.setProviderEnabled(
+            provider: .claudeplatform, metadata: store.metadata(for: .claudeplatform), enabled: true)
+        store.reconcileMagpieSourceConfiguration()
+        await store.awaitMagpieRefresh()
+        #expect(store.providerSourceRoute(for: .claudeplatform) == .magpieSuspended)
+        let spy = MagpieRegressionIOSpy()
+        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
+            spy.record(kind)
+            throw CancellationError()
+        }
+        await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
+            await store.refreshProvider(.claudeplatform, allowDisabled: true)
+        }
+        for kind in NativeProviderIOTestBoundary.Kind.allCases {
+            #expect(spy.count(kind) == 0, "\(kind.rawValue)")
+        }
+        #expect(
+            store.errors[UsageProvider.claudeplatform.instanceID]
+                == ProviderSourceRoute.suspendedMessage(for: .claudeplatform))
+    }
+
+    @Test
+    func `claude with empty discovery and no takeover performs no native IO`() async {
+        let store = self.makeStore(enabled: true)
+        store.settings.setProviderEnabled(
+            provider: .claude, metadata: store.metadata(for: .claude), enabled: true)
+        // A successful discovery without a Claude row and without a takeover entry must not
+        // restore native reads for Claude.
+        store.magpieTransport = ClaudeMagpieFixture.transport(data: Data(#"{"data":[]}"#.utf8))
+        store.reconcileMagpieSourceConfiguration()
+        await store.awaitMagpieRefresh()
+        #expect(store.providerSourceRoute(for: .claude) == .magpieSuspended)
+        let spy = MagpieRegressionIOSpy()
+        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
+            spy.record(kind)
+            throw CancellationError()
+        }
+        await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
+            await store.refreshProvider(.claude, allowDisabled: true)
+            _ = await store.debugLog(for: .claude)
+            await store.refreshTokenUsage(.claude, force: true)
+        }
+        for kind in NativeProviderIOTestBoundary.Kind.allCases {
+            #expect(spy.count(kind) == 0, "\(kind.rawValue)")
+        }
+        #expect(
+            store.errors[UsageProvider.claude.instanceID]
+                == ProviderSourceRoute.suspendedMessage(for: .claude))
+    }
+
+    @Test
+    func `turning the switch off restores native routing for the claude family`() async {
+        let store = self.makeStore(enabled: true)
+        store.settings.setProviderEnabled(
+            provider: .claudeplatform, metadata: store.metadata(for: .claudeplatform), enabled: true)
+        store.reconcileMagpieSourceConfiguration()
+        await store.awaitMagpieRefresh()
+        #expect(!store.providerSourceRoute(for: .claude).isNative)
+        #expect(!store.providerSourceRoute(for: .claudeplatform).isNative)
+        store.settings.magpieSourceEnabled = false
+        store.reconcileMagpieSourceConfiguration()
+        #expect(store.providerSourceRoute(for: .claude).isNative)
+        #expect(store.providerSourceRoute(for: .claudeplatform).isNative)
+        #expect(store.errors[UsageProvider.claudeplatform.instanceID] == nil)
+    }
 }
 
 private final class MagpieRegressionIOSpy: @unchecked Sendable {

@@ -90,22 +90,122 @@ struct CLIMagpieTests {
 
     @Test
     func `parallel CLI collection keeps magpie ownership and does no native IO`() async throws {
-        let context = try TokenAccountCLIContext(
+        let context = try Self.makeContext(
+            providers: [.claude, .codex],
+            data: Data("""
+            {"data":[{"provider":"claude","windows":[{"name":"5 hours","used":1}]},
+              {"provider":"codex","windows":[{"name":"5 hours","used":1}]}]}
+            """.utf8))
+        let command = Self.makeCommand()
+        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
+            Issue.record("Native IO crossed the magpie route: \(kind.rawValue)")
+            throw CancellationError()
+        }
+        let output = await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
+            await CodexBarCLI.collectUsageOutputs(providers: [.claude, .codex]) { provider in
+                await CodexBarCLI.fetchUsageOutputs(
+                    provider: provider, status: nil, tokenContext: context, command: command)
+            }
+        }
+        #expect(output.exitCode == .success)
+        #expect(output.payload.map(\.provider) == ["claude", "codex"])
+        #expect(output.payload.allSatisfy { $0.source == "magpie" })
+        #expect(output.payload.allSatisfy { $0.usage != nil })
+    }
+
+    @Test
+    func `parallel CLI collection suspends claude platform without native IO`() async throws {
+        let context = try Self.makeContext(
+            providers: [.claudeplatform],
+            data: Data(#"{"data":[{"provider":"claude","windows":[{"name":"5 hours","used":1}]}]}"#.utf8))
+        let command = Self.makeCommand()
+        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
+            Issue.record("Native IO crossed the magpie route: \(kind.rawValue)")
+            throw CancellationError()
+        }
+        let output = await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
+            await CodexBarCLI.collectUsageOutputs(providers: [.claudeplatform]) { provider in
+                await CodexBarCLI.fetchUsageOutputs(
+                    provider: provider, status: nil, tokenContext: context, command: command)
+            }
+        }
+        #expect(output.exitCode == .failure)
+        #expect(output.payload.count == 1)
+        #expect(output.payload.first?.source == "magpie")
+        #expect(
+            output.payload.first?.error?.message
+                == ProviderSourceRoute.suspendedMessage(for: .claudeplatform))
+    }
+
+    @Test
+    func `provider all expansion keeps the claude family off native reads`() async throws {
+        let expansion = ProviderSelection.all.asList
+        #expect(expansion.contains(.claude))
+        #expect(expansion.contains(.claudeplatform))
+        let family = expansion.filter { ProviderSourceRoute.switchOnNativeForbidden.contains($0) }
+        #expect(Set(family) == [.claude, .claudeplatform])
+        // Claude rows exist but Claude Platform has none: one owned provider, one suspended.
+        let context = try Self.makeContext(
+            providers: family,
+            data: Data(#"{"data":[{"provider":"claude","windows":[{"name":"5 hours","used":1}]}]}"#.utf8))
+        let command = Self.makeCommand()
+        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
+            Issue.record("Native IO crossed the magpie route: \(kind.rawValue)")
+            throw CancellationError()
+        }
+        let output = await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
+            await CodexBarCLI.collectUsageOutputs(providers: family) { provider in
+                await CodexBarCLI.fetchUsageOutputs(
+                    provider: provider, status: nil, tokenContext: context, command: command)
+            }
+        }
+        #expect(output.payload.map(\.provider) == family.map(\.rawValue))
+        #expect(output.payload.allSatisfy { $0.source == "magpie" })
+        #expect(output.payload.first { $0.provider == "claude" }?.usage != nil)
+        #expect(
+            output.payload.first { $0.provider == "claudeplatform" }?.error?.message
+                == ProviderSourceRoute.suspendedMessage(for: .claudeplatform))
+    }
+
+    @Test
+    func `CLI keeps claude off native reads when magpie returns no claude rows`() async throws {
+        let context = try Self.makeContext(
+            providers: [.claude],
+            data: Data(#"{"data":[]}"#.utf8))
+        let command = Self.makeCommand()
+        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
+            Issue.record("Native IO crossed the magpie route: \(kind.rawValue)")
+            throw CancellationError()
+        }
+        let output = await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
+            await CodexBarCLI.fetchUsageOutputs(
+                provider: .claude, status: nil, tokenContext: context, command: command)
+        }
+        #expect(output.exitCode == .failure)
+        #expect(output.payload.count == 1)
+        #expect(output.payload.first?.source == "magpie")
+        #expect(
+            output.payload.first?.error?.message
+                == ProviderSourceRoute.suspendedMessage(for: .claude))
+    }
+
+    private static func makeContext(
+        providers: [UsageProvider],
+        data: Data) throws -> TokenAccountCLIContext
+    {
+        try TokenAccountCLIContext(
             selection: TokenAccountCLISelection(label: nil, index: nil, allAccounts: true),
             config: CodexBarConfig(
-                providers: [
-                    ProviderConfig(id: UsageProvider.claude.instanceID),
-                    ProviderConfig(id: UsageProvider.codex.instanceID),
-                ],
+                providers: providers.map { ProviderConfig(id: $0.instanceID) },
                 magpie: MagpieSourceConfig(enabled: true)),
             verbose: false,
             baseEnvironment: [:],
-            magpieSource: CLIMagpieSource(transport: ClaudeMagpieFixture.transport(data: Data("""
-            {"data":[{"provider":"claude","windows":[{"name":"5 hours","used":1}]},
-              {"provider":"codex","windows":[{"name":"5 hours","used":1}]}]}
-            """.utf8))))
+            magpieSource: CLIMagpieSource(transport: ClaudeMagpieFixture.transport(data: data)))
+    }
+
+    private static func makeCommand() -> UsageCommandContext {
         let browserDetection = BrowserDetection(cacheTTL: 0)
-        let command = UsageCommandContext(
+        return UsageCommandContext(
             format: .json,
             includeCredits: false,
             sourceModeOverride: nil,
@@ -122,20 +222,6 @@ struct CLIMagpieTests {
             fetcher: UsageFetcher(),
             claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
             browserDetection: browserDetection)
-        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
-            Issue.record("Native IO crossed the magpie route: \(kind.rawValue)")
-            throw CancellationError()
-        }
-        let output = await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
-            await CodexBarCLI.collectUsageOutputs(providers: [.claude, .codex]) { provider in
-                await CodexBarCLI.fetchUsageOutputs(
-                    provider: provider, status: nil, tokenContext: context, command: command)
-            }
-        }
-        #expect(output.exitCode == .success)
-        #expect(output.payload.map(\.provider) == ["claude", "codex"])
-        #expect(output.payload.allSatisfy { $0.source == "magpie" })
-        #expect(output.payload.allSatisfy { $0.usage != nil })
     }
 
     @Test

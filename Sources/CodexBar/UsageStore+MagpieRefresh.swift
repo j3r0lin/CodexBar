@@ -114,6 +114,8 @@ extension UsageStore {
             return nil
         case let .magpie(owned):
             reference = owned
+        case .magpieSuspended:
+            return self.magpieSuspendedNote(for: provider)
         case .waitingForMagpieDiscovery:
             reference = MagpieProviderMapping.reference(
                 for: MagpieProviderMapping.wireID(for: provider) ?? provider.rawValue)
@@ -124,6 +126,7 @@ extension UsageStore {
         let state = switch route {
         case .native: "native"
         case .magpie: "owned by magpie"
+        case .magpieSuspended: "suspended while the magpie source is on"
         case .waitingForMagpieDiscovery: "waiting for first magpie discovery"
         }
         return [
@@ -293,6 +296,24 @@ extension UsageStore {
         }
     }
 
+    /// User-facing message for a Claude-family provider the switch suspends without magpie data.
+    static func magpieSuspendedMessage(for provider: UsageProvider) -> String {
+        ProviderSourceRoute.suspendedMessage(for: provider)
+    }
+
+    private func magpieSuspendedNote(for provider: UsageProvider) -> String {
+        let url = self.settings.magpieQuotasURL.isEmpty
+            ? MagpieQuotasReader.defaultQuotasURL
+            : self.settings.magpieQuotasURL
+        return [
+            Self.magpieSuspendedMessage(for: provider)
+                + " Local credential and process reads are skipped.",
+            "magpie URL: \(url)",
+            "Route: suspended while the magpie source is on",
+            "Last magpie error: \(self.magpieLastError ?? "none")",
+        ].joined(separator: "\n")
+    }
+
     /// Publishes the active magpie account's usage as each managed native provider's ambient
     /// snapshot, so the menu bar icon, widgets, and detail cards keep working without any
     /// credential-derived fetch. Disabled providers keep their rows only in the Overview list.
@@ -315,6 +336,16 @@ extension UsageStore {
                 } else if let accountError = active?.error {
                     self.errors[provider.instanceID] = accountError
                 }
+            }
+        }
+        // Claude-family providers the switch suspends without any magpie data never fall back to
+        // native reads: keep any last-known snapshot, otherwise show the suspended state.
+        for provider in ProviderSourceRoute.switchOnNativeForbidden {
+            guard self.isEnabled(provider),
+                  self.providerSourceRoute(for: provider) == .magpieSuspended
+            else { continue }
+            if self.snapshots[provider.instanceID] == nil {
+                self.errors[provider.instanceID] = Self.magpieSuspendedMessage(for: provider)
             }
         }
     }
@@ -344,10 +375,13 @@ extension UsageStore {
         self.lastMagpieSourceConfiguration = configuration
         // A provider with two wire IDs (Grok) appears once; the Set keeps its clears single.
         let mappedProviders = Set(MagpieProviderMapping.nativeProviders.values)
+        // The Claude family is switch-suspended even without a magpie wire ID, so it gets the
+        // same cleanup and refresh treatment as mapped providers.
+        let gatedProviders = mappedProviders.union(ProviderSourceRoute.switchOnNativeForbidden)
 
         if configuration.enabled {
             self.clearMagpieAccountState()
-            for provider in mappedProviders {
+            for provider in gatedProviders {
                 self.invalidateProviderRefreshRequests(provider)
                 self.clearCredentialDerivedStateForMagpie(provider)
             }
@@ -355,8 +389,13 @@ extension UsageStore {
         } else {
             self.clearMagpieAccountState()
             self.settings.magpieTakeoverWireIDs = []
+            for provider in ProviderSourceRoute.switchOnNativeForbidden {
+                if self.errors[provider.instanceID] == Self.magpieSuspendedMessage(for: provider) {
+                    self.errors.removeValue(forKey: provider.instanceID)
+                }
+            }
             guard previous?.enabled == true else { return }
-            for provider in mappedProviders where self.isEnabled(provider) {
+            for provider in gatedProviders where self.isEnabled(provider) {
                 Task { await self.refreshProvider(provider) }
             }
         }

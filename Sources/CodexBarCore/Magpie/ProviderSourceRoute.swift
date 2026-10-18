@@ -9,7 +9,23 @@ import Foundation
 public enum ProviderSourceRoute: Sendable, Equatable {
     case waitingForMagpieDiscovery
     case magpie(MagpieProviderReference)
+    /// The provider has no magpie rows and no takeover entry, but the standing Claude-family rule
+    /// forbids native reads while the switch is on, so it stays unfetched instead of going native.
+    case magpieSuspended
     case native
+
+    /// Providers that must never read local credentials, Keychain, OAuth, or browser cookies while
+    /// the magpie switch is on — the whole Claude family, whether or not magpie carries them.
+    public static let switchOnNativeForbidden: Set<UsageProvider> = [.claude, .claudeplatform]
+
+    /// User-facing message for a suspended provider. Claude Platform has no magpie wire ID at all,
+    /// so it gets a plain unavailable state; Claude reports the missing rows like any owned
+    /// provider without data.
+    public static func suspendedMessage(for provider: UsageProvider) -> String {
+        provider == .claudeplatform
+            ? "Unavailable while the magpie source is on."
+            : "magpie returned no Claude usage rows; native reads stay suspended."
+    }
 
     public static func resolve(
         provider: UsageProvider,
@@ -19,10 +35,13 @@ public enum ProviderSourceRoute: Sendable, Equatable {
     {
         guard enabled else { return .native }
         let wireIDs = MagpieProviderMapping.wireIDs(for: provider)
-        guard !wireIDs.isEmpty else { return .native }
         if let owned = wireIDs.first(where: { ownedWireIDs.contains($0) }) {
             return .magpie(MagpieProviderMapping.reference(for: owned))
         }
+        if self.switchOnNativeForbidden.contains(provider) {
+            return discoverySucceeded ? .magpieSuspended : .waitingForMagpieDiscovery
+        }
+        guard !wireIDs.isEmpty else { return .native }
         return discoverySucceeded ? .native : .waitingForMagpieDiscovery
     }
 
