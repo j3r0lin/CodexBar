@@ -88,7 +88,7 @@ struct AdaptiveRefreshPerformanceTests {
         let spy = AdaptiveLocalScanSpy()
         let store = AgentSessionsStore(
             settings: settings,
-            localScan: { includeFileOnlySessions, _ in
+            localScan: { includeFileOnlySessions, _, _ in
                 await .init(sessions: spy.scan(includeFileOnlySessions: includeFileOnlySessions))
             })
         store.start()

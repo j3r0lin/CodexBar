@@ -367,6 +367,7 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
         self.settings = settings
         self.cloudSyncState = cloudSyncState
         self.agentSessions = agentSessions ?? AgentSessionsStore(settings: settings)
+        self.agentSessions.excludedProviders = { [weak store] in store?.sessionProvidersExcludedByRoute ?? [] }
         self.account = account
         self.updater = updater
         self.preferencesSelection = preferencesSelection

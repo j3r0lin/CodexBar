@@ -59,6 +59,13 @@ extension UsageStore {
             discoverySucceeded: self.magpieDiscoveryCompleted && self.magpieLastRefreshAt != nil)
     }
 
+    /// Agent-session providers whose local scan the current source routes forbid.
+    var sessionProvidersExcludedByRoute: Set<AgentSession.Provider> {
+        Set(AgentSession.Provider.allCases.filter { provider in
+            UsageProvider(rawValue: provider.rawValue).map { !self.providerSourceRoute(for: $0).isNative } ?? false
+        })
+    }
+
     /// OpenAI dashboard, reset credits and weekly history belong to native Codex only.
     var canReadNativeCodexSource: Bool {
         // Provider-specific by design: these Codex-only entry points share the same source route.

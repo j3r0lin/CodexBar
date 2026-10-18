@@ -35,7 +35,9 @@ typealias AgentSessionRemoteRefreshGate = AgentSessionRefreshGate
 @Observable
 final class AgentSessionsStore {
     typealias LocalScan = @Sendable (
-        _ includeFileOnlySessions: Bool, _ includeRolloutActivity: Bool) async -> LocalAgentSessionScanner.ScanResult
+        _ includeFileOnlySessions: Bool,
+        _ includeRolloutActivity: Bool,
+        _ excludedProviders: Set<AgentSession.Provider>) async -> LocalAgentSessionScanner.ScanResult
     typealias RemoteHostDiscovery = @Sendable () async -> [String]
     typealias RemoteFetch = @Sendable (_ hosts: [String]) async -> [RemoteSessionHostResult]
     typealias PeriodicSleep = @Sendable (_ duration: Duration) async throws -> Void
@@ -65,6 +67,9 @@ final class AgentSessionsStore {
     @ObservationIgnored private var localRefreshGate = AgentSessionRefreshGate()
     @ObservationIgnored private var remoteRefreshGate = AgentSessionRemoteRefreshGate()
     @ObservationIgnored var onUpdate: (@MainActor () -> Void)?
+    /// Providers whose local sessions must not be scanned right now (magpie-owned, or suspended by
+    /// the Claude-family rule). Evaluated at the start of every local scan.
+    @ObservationIgnored var excludedProviders: @MainActor () -> Set<AgentSession.Provider> = { [] }
 
     private(set) var isStarted = false
     private(set) var localSessions: [AgentSession] = []
@@ -79,10 +84,11 @@ final class AgentSessionsStore {
     {
         self.init(
             settings: settings,
-            localScan: { includeFileOnlySessions, includeRolloutActivity in
+            localScan: { includeFileOnlySessions, includeRolloutActivity, excludedProviders in
                 await localScanner.scanWithActivity(
                     includeFileOnlySessions: includeFileOnlySessions,
-                    includeRolloutActivity: includeRolloutActivity)
+                    includeRolloutActivity: includeRolloutActivity,
+                    excludedProviders: excludedProviders)
             },
             remoteFetcher: remoteFetcher)
     }
@@ -348,12 +354,13 @@ final class AgentSessionsStore {
         let includeFileOnlySessions = self.settings.agentSessionsEnabled
         let includeRolloutActivity = self.settings.adaptiveActivityScanningEnabled && activityScanAllowed
         let localScan = self.localScan
+        let excludedProviders = self.excludedProviders()
         self.localImmediateTask = Task { [weak self] in
             guard !Task.isCancelled else {
                 self?.completeLocalRefresh(generation: generation, result: nil, wasCancelled: true)
                 return
             }
-            let result = await localScan(includeFileOnlySessions, includeRolloutActivity)
+            let result = await localScan(includeFileOnlySessions, includeRolloutActivity, excludedProviders)
             self?.completeLocalRefresh(
                 generation: generation,
                 result: result,

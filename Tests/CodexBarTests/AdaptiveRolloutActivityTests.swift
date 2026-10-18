@@ -217,7 +217,7 @@ struct AdaptiveRolloutActivityTests {
         settings.stayAwakeEnabled = true
         let store = AgentSessionsStore(
             settings: settings,
-            localScan: { includeSessions, includeActivity in
+            localScan: { includeSessions, includeActivity, _ in
                 #expect(!includeSessions)
                 return .init(latestRolloutActivityAt: includeActivity ? Self.now : nil)
             },
@@ -261,7 +261,7 @@ struct AdaptiveRolloutActivityTests {
         let expectedActivity = !lowPowerModeEnabled && thermalState != .serious && thermalState != .critical
         let store = AgentSessionsStore(
             settings: settings,
-            localScan: { includeSessions, includeActivity in
+            localScan: { includeSessions, includeActivity, _ in
                 calls.increment()
                 #expect(!includeSessions)
                 #expect(includeActivity == expectedActivity)

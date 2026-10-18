@@ -405,6 +405,21 @@ struct MagpieIsolationRegressionTests {
     }
 
     @Test
+    func `agent session scans exclude providers the source routes forbid`() async {
+        let store = self.makeStore(enabled: true)
+        store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
+        {"data":[{"provider":"codex","windows":[{"name":"5 hours","used":1}]}]}
+        """.utf8))
+        store.reconcileMagpieSourceConfiguration()
+        await store.awaitMagpieRefresh()
+        // Codex is owned by a row; Claude is suspended by the family rule; Pi stays native.
+        #expect(store.sessionProvidersExcludedByRoute == [.codex, .claude])
+        store.settings.magpieSourceEnabled = false
+        store.reconcileMagpieSourceConfiguration()
+        #expect(store.sessionProvidersExcludedByRoute.isEmpty)
+    }
+
+    @Test
     func `turning the switch off restores native routing for the claude family`() async {
         let store = self.makeStore(enabled: true)
         store.settings.setProviderEnabled(
