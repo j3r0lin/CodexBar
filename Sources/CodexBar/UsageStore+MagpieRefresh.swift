@@ -230,9 +230,9 @@ extension UsageStore {
             let incoming = MagpieAccountProjection.snapshots(from: rows)
             var snapshots = incoming
             var retainedProviders: [String] = []
-            // Retention groups by native provider: fresh rows under any wire ID of a provider
-            // retire the retained rows of every wire ID of that provider, so a wire-ID rename
-            // never leaves a stale last-known card behind. Unknown providers group by wire ID.
+            /// Retention groups by native provider: fresh rows under any wire ID of a provider
+            /// retire the retained rows of every wire ID of that provider, so a wire-ID rename
+            /// never leaves a stale last-known card behind. Unknown providers group by wire ID.
             func retentionKey(of account: MagpieAccountSnapshot) -> String {
                 account.provider.nativeProvider.map { "native:\($0.rawValue)" }
                     ?? "wire:\(account.provider.wireID)"
