@@ -196,6 +196,7 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
         guard self.detailTicks >= 4 else { return }
         let window = detail.items.compactMap { $0.view?.window }.first
         Self.capture(window: window, name: "cardui-detail", into: directory)
+        self.detailMenu = nil
         detail.cancelTracking()
     }
 
@@ -261,6 +262,17 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
                 resetsAt: resetMinutes.map { now.addingTimeInterval($0 * 60) },
                 resetDescription: nil)
         }
+        // A transport that never completes keeps the synthetic snapshots in place.
+        fixture.store.magpieTransport = { _ in
+            try await Task.sleep(for: .seconds(3600))
+            throw CancellationError()
+        }
+        fixture.settings.magpieSourceEnabled = true
+        fixture.settings.magpieTakeoverWireIDs = ["claude", "opencode-go"]
+        // Reconcile before seeding: the first reconcile on menu open would otherwise see the
+        // switch flip and wipe the snapshots we are about to plant. It also strips native
+        // snapshots from every mapped provider, so the native seeds come after it.
+        fixture.store.reconcileMagpieSourceConfiguration()
         fixture.store._setSnapshotForTesting(
             UsageSnapshot(
                 primary: window(300, 10, 236),
@@ -279,17 +291,6 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
                 secondary: window(10080, 50, 2 * 1440 + 21 * 60),
                 updatedAt: now),
             provider: .kimi)
-
-        // A transport that never completes keeps the synthetic snapshots in place.
-        fixture.store.magpieTransport = { _ in
-            try await Task.sleep(for: .seconds(3600))
-            throw CancellationError()
-        }
-        fixture.settings.magpieSourceEnabled = true
-        fixture.settings.magpieTakeoverWireIDs = ["claude", "opencode-go"]
-        // Reconcile before seeding: the first reconcile on menu open would otherwise see the
-        // switch flip and wipe the snapshots we are about to plant.
-        fixture.store.reconcileMagpieSourceConfiguration()
         func account(
             _ opaque: String,
             _ label: String,
