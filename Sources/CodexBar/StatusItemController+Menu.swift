@@ -528,6 +528,7 @@ extension StatusItemController {
                 errorText: row.errorText,
                 showsErrorFlag: row.showsErrorFlag,
                 namedLines: namedLines,
+                showsDetailChevron: !isGrouped && submenu != nil,
                 infersPeriodFromReset: !row.isMagpie)
             let item = self.makeMenuCardItem(
                 rowView,
@@ -536,8 +537,7 @@ extension StatusItemController {
                 heightCacheScope: "overviewCompactRow",
                 heightCacheFingerprint: "compact-\(block)-\(max(1, rowView.lines.count))-\(row.errorText ?? "")",
                 submenu: submenu,
-                showsSubmenuIndicator: !isGrouped,
-                submenuIndicatorAlignment: .trailing,
+                showsSubmenuIndicator: false,
                 usesGPUSelection: true,
                 tightVerticalFit: true,
                 selectionBlock: isGrouped && startsProvider ? .top : block)

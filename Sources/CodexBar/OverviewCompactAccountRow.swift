@@ -169,6 +169,9 @@ struct OverviewCompactAccountRow: View {
     /// Magpie rows pass every window the gateway reported, each under its own label, instead of
     /// the short/long slots a native snapshot fills.
     var namedLines: [Line]?
+    /// Lone provider cards draw their own detail chevron so it centres on the card instead of
+    /// the menu item's frame (the shared payload indicator sits on the item, gap included).
+    var showsDetailChevron = false
     /// Native rows let Grok infer a period from the reset time; magpie-sourced windows never do.
     var infersPeriodFromReset = true
     var now = Date()
@@ -227,6 +230,9 @@ struct OverviewCompactAccountRow: View {
                 HStack(alignment: .center, spacing: 8) {
                     self.nameColumn
                     self.windowLines
+                    if self.showsDetailChevron {
+                        self.detailChevron
+                    }
                 }
             }
         }
@@ -272,9 +278,9 @@ struct OverviewCompactAccountRow: View {
 
     /// An error-only provider names itself in full on the first line and wraps the message below it,
     /// so neither the name nor the message is truncated into the narrow name column. The name stays
-    /// white: the red message carries the error on its own.
+    /// white: the red message carries the error on its own. Icon and chevron centre on the card.
     private func errorLines(_ errorText: String) -> some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .center, spacing: 8) {
             if self.namesProvider {
                 OverviewProviderIcon(image: self.icon, isTemplate: self.iconIsTemplate)
             }
@@ -290,8 +296,19 @@ struct OverviewCompactAccountRow: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+            if self.showsDetailChevron {
+                self.detailChevron
+            }
         }
         .padding(.vertical, 4)
+    }
+
+    /// The trailing "›" of a lone provider card, matching the payload indicator's style.
+    private var detailChevron: some View {
+        Image(systemName: "chevron.forward")
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
+            .padding(.trailing, 2)
     }
 
     private func windowLine(@ViewBuilder content: () -> some View) -> some View {

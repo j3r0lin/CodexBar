@@ -12,18 +12,30 @@ struct OverviewCardHeaderView: View {
     @Environment(\.providerCardAction) private var cardAction
     @Environment(\.menuCardRefreshMonitor) private var refreshMonitor
 
+    /// The bundle's own icon once the app is packaged; nil under a test runner (no bundle icon).
+    private static var appIcon: NSImage? {
+        guard !SettingsStore.isRunningTests else { return nil }
+        return NSApplication.shared.applicationIconImage ?? NSImage(named: NSImage.applicationIconName)
+    }
+
     private var isRefreshing: Bool {
         self.refreshMonitor?.isManualRefreshInFlight ?? false
     }
 
     var body: some View {
         HStack(spacing: 10) {
-            if let icon = NSImage(named: NSImage.applicationIconName) {
+            if let icon = Self.appIcon {
                 Image(nsImage: icon)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 32, height: 32)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            } else {
+                // Test hosts have no app bundle to pull the icon from; show a neutral stand-in.
+                Image(systemName: "gauge.with.needle")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(.white)
+                    .frame(width: 32, height: 32)
             }
             VStack(alignment: .leading, spacing: 1) {
                 Text(self.title)
