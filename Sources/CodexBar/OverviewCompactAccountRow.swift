@@ -271,7 +271,8 @@ struct OverviewCompactAccountRow: View {
     }
 
     /// An error-only provider names itself in full on the first line and wraps the message below it,
-    /// so neither the name nor the message is truncated into the narrow name column.
+    /// so neither the name nor the message is truncated into the narrow name column. The name stays
+    /// white: the red message carries the error on its own.
     private func errorLines(_ errorText: String) -> some View {
         HStack(alignment: .top, spacing: 8) {
             if self.namesProvider {
@@ -280,7 +281,7 @@ struct OverviewCompactAccountRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(self.name)
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(self.nameColor)
+                    .foregroundStyle(.white)
                     .lineLimit(1)
                 Text(errorText)
                     .font(.system(size: 10))
