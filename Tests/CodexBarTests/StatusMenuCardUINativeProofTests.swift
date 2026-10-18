@@ -99,47 +99,13 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
         host.makeKeyAndOrderFront(nil)
 
         // Common-mode timer: it keeps firing while the menu tracks in event-tracking mode.
-        let timer = Timer(timeInterval: 0.25, repeats: true) { [self] _ in
-            MainActor.assumeIsolated {
-                guard let menu = self.proofMenu,
-                      let controller = self.proofController,
-                      let fixture = self.proofFixture,
-                      let directory = self.proofDirectory
-                else { return }
-                let menuWindow = menu.items.compactMap { $0.view?.window }.first
-                switch self.phase {
-                case .settleNow:
-                    guard menuWindow != nil else { return }
-                    self.settleTicks += 1
-                    if self.settleTicks >= 4 { self.phase = .captureNow }
-                case .captureNow:
-                    Self.capture(window: menuWindow, name: "cardui-now", into: directory)
-                    fixture.settings.overviewWindowFilter = .sevenDays
-                    controller.invalidateMenus(refreshOpenMenus: true)
-                    self.settleTicks = 0
-                    self.phase = .settle7d
-                case .settle7d:
-                    self.settleTicks += 1
-                    if self.settleTicks >= 4 { self.phase = .capture7d }
-                case .capture7d:
-                    Self.capture(window: menuWindow, name: "cardui-7d", into: directory)
-                    fixture.settings.overviewWindowFilter = .now
-                    fixture.settings.overviewCollapsedProviderGroups = ["claude"]
-                    controller.invalidateMenus(refreshOpenMenus: true)
-                    self.settleTicks = 0
-                    self.phase = .settleCollapsed
-                case .settleCollapsed:
-                    self.settleTicks += 1
-                    if self.settleTicks >= 4 { self.phase = .captureCollapsed }
-                case .captureCollapsed:
-                    Self.capture(window: menuWindow, name: "cardui-collapsed", into: directory)
-                    self.phase = .closing
-                    menu.cancelTracking()
-                case .closing:
-                    break
-                }
-            }
-        }
+        // Target/selector form: a Timer block is @Sendable and may not capture the test state.
+        let timer = Timer(
+            timeInterval: 0.25,
+            target: self,
+            selector: #selector(self.tickOverviewCapture),
+            userInfo: nil,
+            repeats: true)
         RunLoop.main.add(timer, forMode: .common)
         defer { timer.invalidate() }
 
@@ -152,16 +118,12 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
         })
         let detail = try XCTUnwrap(row.submenu)
         self.detailMenu = detail
-        let detailTimer = Timer(timeInterval: 0.25, repeats: true) { [self] _ in
-            MainActor.assumeIsolated {
-                guard let detail = self.detailMenu, let directory = self.proofDirectory else { return }
-                self.detailTicks += 1
-                guard self.detailTicks >= 4 else { return }
-                let window = detail.items.compactMap { $0.view?.window }.first
-                Self.capture(window: window, name: "cardui-detail", into: directory)
-                detail.cancelTracking()
-            }
-        }
+        let detailTimer = Timer(
+            timeInterval: 0.25,
+            target: self,
+            selector: #selector(self.tickDetailCapture),
+            userInfo: nil,
+            repeats: true)
         RunLoop.main.add(detailTimer, forMode: .common)
         defer { detailTimer.invalidate() }
         detail.popUp(positioning: nil, at: NSPoint(x: 120, y: 120), in: host.contentView)
@@ -170,6 +132,57 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
             let png = directory.appendingPathComponent("\(name).png")
             XCTAssertTrue(FileManager.default.fileExists(atPath: png.path), "missing \(name).png")
         }
+    }
+
+    /// One step of the capture state machine: settle, capture the Now filter, switch to 7d,
+    /// capture, collapse the Claude group, capture, close.
+    @objc private func tickOverviewCapture() {
+        guard let menu = self.proofMenu,
+              let controller = self.proofController,
+              let fixture = self.proofFixture,
+              let directory = self.proofDirectory
+        else { return }
+        let menuWindow = menu.items.compactMap { $0.view?.window }.first
+        switch self.phase {
+        case .settleNow:
+            guard menuWindow != nil else { return }
+            self.settleTicks += 1
+            if self.settleTicks >= 4 { self.phase = .captureNow }
+        case .captureNow:
+            Self.capture(window: menuWindow, name: "cardui-now", into: directory)
+            fixture.settings.overviewWindowFilter = .sevenDays
+            controller.invalidateMenus(refreshOpenMenus: true)
+            self.settleTicks = 0
+            self.phase = .settle7d
+        case .settle7d:
+            self.settleTicks += 1
+            if self.settleTicks >= 4 { self.phase = .capture7d }
+        case .capture7d:
+            Self.capture(window: menuWindow, name: "cardui-7d", into: directory)
+            fixture.settings.overviewWindowFilter = .now
+            fixture.settings.overviewCollapsedProviderGroups = ["claude"]
+            controller.invalidateMenus(refreshOpenMenus: true)
+            self.settleTicks = 0
+            self.phase = .settleCollapsed
+        case .settleCollapsed:
+            self.settleTicks += 1
+            if self.settleTicks >= 4 { self.phase = .captureCollapsed }
+        case .captureCollapsed:
+            Self.capture(window: menuWindow, name: "cardui-collapsed", into: directory)
+            self.phase = .closing
+            menu.cancelTracking()
+        case .closing:
+            break
+        }
+    }
+
+    @objc private func tickDetailCapture() {
+        guard let detail = self.detailMenu, let directory = self.proofDirectory else { return }
+        self.detailTicks += 1
+        guard self.detailTicks >= 4 else { return }
+        let window = detail.items.compactMap { $0.view?.window }.first
+        Self.capture(window: window, name: "cardui-detail", into: directory)
+        detail.cancelTracking()
     }
 
     private static func capture(window: NSWindow?, name: String, into directory: URL) {
