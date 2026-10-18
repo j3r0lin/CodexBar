@@ -85,7 +85,9 @@ public enum MagpieAccountProjection {
 
     /// Projects all rows into account snapshots, preserving every provider magpie returns,
     /// including unknown ones. Rows are grouped by provider; within a provider the active row
-    /// comes first, matching the source's own order otherwise.
+    /// comes first, matching the source's own order otherwise. Wire IDs that name the same
+    /// native provider merge into one group — one card per account and a single active row —
+    /// while unknown providers stay keyed by their own wire ID.
     public static func snapshots(from rows: [MagpieQuotaRow]) -> [MagpieAccountSnapshot] {
         var wireOrder: [String] = []
         var rowsByWire: [String: [MagpieQuotaRow]] = [:]
@@ -93,10 +95,35 @@ public enum MagpieAccountProjection {
             if rowsByWire[row.provider] == nil { wireOrder.append(row.provider) }
             rowsByWire[row.provider, default: []].append(row)
         }
-        return wireOrder.flatMap { wireID in
-            self.snapshots(
-                for: MagpieProviderMapping.reference(for: wireID),
-                rows: rowsByWire[wireID] ?? [])
+        var groupOrder: [String] = []
+        var groups: [String: (reference: MagpieProviderReference, rows: [MagpieQuotaRow])] = [:]
+        for wireID in wireOrder {
+            let reference = MagpieProviderMapping.reference(for: wireID)
+            guard let native = reference.nativeProvider else {
+                groupOrder.append(wireID)
+                groups[wireID] = (reference, rowsByWire[wireID] ?? [])
+                continue
+            }
+            let key = native.rawValue
+            if var group = groups[key] {
+                group.rows.append(contentsOf: rowsByWire[wireID] ?? [])
+                groups[key] = group
+            } else {
+                groupOrder.append(key)
+                // The group's identity follows the provider's deterministic first wire ID,
+                // never whichever spelling the response happened to carry.
+                let canonical = MagpieProviderMapping.wireID(for: native) ?? wireID
+                groups[key] = (MagpieProviderMapping.reference(for: canonical), rowsByWire[wireID] ?? [])
+            }
+        }
+        return groupOrder.flatMap { key -> [MagpieAccountSnapshot] in
+            guard let group = groups[key] else { return [] }
+            // The same account under two wire IDs of one provider keeps the canonical row.
+            let canonical = group.reference.wireID
+            let ordered = group.rows.sorted {
+                ($0.provider == canonical) && ($1.provider != canonical)
+            }
+            return self.snapshots(for: group.reference, rows: ordered)
         }
     }
 

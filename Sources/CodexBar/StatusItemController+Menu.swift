@@ -685,9 +685,13 @@ extension StatusItemController {
         let magpieAccounts = self.store.magpieOverviewSnapshots
         for provider in visibleProviders {
             if case let .magpie(reference) = self.store.providerSourceRoute(for: provider) {
-                coveredWireIDs.insert(reference.wireID)
+                // A provider owns its rows under every wire ID that maps to it, not only the one
+                // the route happened to resolve; unknown providers keep their single wire ID.
+                let wireIDs = reference.nativeProvider
+                    .map { Set(MagpieProviderMapping.wireIDs(for: $0)) } ?? [reference.wireID]
+                coveredWireIDs.formUnion(wireIDs)
                 rows += magpieAccounts
-                    .filter { $0.provider.wireID == reference.wireID }
+                    .filter { wireIDs.contains($0.provider.wireID) }
                     .map { self.magpieOverviewRow(for: $0, hidePersonalInfo: hidePersonalInfo) }
                 continue
             }

@@ -220,20 +220,30 @@ extension UsageStore {
             let incoming = MagpieAccountProjection.snapshots(from: rows)
             var snapshots = incoming
             var retainedProviders: [String] = []
-            for wireID in Set(self.magpieAccountSnapshots.map(\.provider.wireID)) {
+            // Retention groups by native provider: fresh rows under any wire ID of a provider
+            // retire the retained rows of every wire ID of that provider, so a wire-ID rename
+            // never leaves a stale last-known card behind. Unknown providers group by wire ID.
+            func retentionKey(of account: MagpieAccountSnapshot) -> String {
+                account.provider.nativeProvider.map { "native:\($0.rawValue)" }
+                    ?? "wire:\(account.provider.wireID)"
+            }
+            for key in Set(self.magpieAccountSnapshots.map(retentionKey)) {
                 let previous = self.magpieAccountSnapshots.filter {
-                    $0.provider.wireID == wireID && !$0.windows.isEmpty &&
+                    retentionKey(of: $0) == key && !$0.windows.isEmpty &&
                         $0.error != MagpieAccountProjection.unstableIdentityError
                 }
-                let current = incoming.filter { $0.provider.wireID == wireID }
+                let current = incoming.filter { retentionKey(of: $0) == key }
                 guard !previous.isEmpty else { continue }
                 if current.isEmpty {
-                    let message = "magpie returned no usable quota rows for \(wireID)."
+                    let label = previous.first.map {
+                        $0.provider.nativeProvider?.rawValue ?? $0.provider.wireID
+                    } ?? key
+                    let message = "magpie returned no usable quota rows for \(label)."
                     snapshots.append(contentsOf: previous.map { $0.retainedAsLastKnown(error: message) })
-                    retainedProviders.append(wireID)
+                    retainedProviders.append(label)
                 } else {
                     snapshots = snapshots.map { account in
-                        guard account.provider.wireID == wireID, account.windows.isEmpty,
+                        guard retentionKey(of: account) == key, account.windows.isEmpty,
                               let prior = previous.first(where: { $0.id == account.id })
                         else { return account }
                         return prior.retainedAsLastKnown(error: account.error)
@@ -332,7 +342,8 @@ extension UsageStore {
         }
         let previous = self.lastMagpieSourceConfiguration
         self.lastMagpieSourceConfiguration = configuration
-        let mappedProviders = MagpieProviderMapping.nativeProviders.values
+        // A provider with two wire IDs (Grok) appears once; the Set keeps its clears single.
+        let mappedProviders = Set(MagpieProviderMapping.nativeProviders.values)
 
         if configuration.enabled {
             self.clearMagpieAccountState()

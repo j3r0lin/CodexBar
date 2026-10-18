@@ -117,6 +117,42 @@ struct CLIMagpieTests {
     }
 
     @Test
+    func `both grok wire ids in one response produce one cli entry`() async throws {
+        let source = CLIMagpieSource(
+            transport: ClaudeMagpieFixture.transport(data: Data("""
+            {"data":[{"provider":"grok-plugin","user":"g@example.com","windows":[{"name":"7 days","used":1}]},
+              {"provider":"grok","user":"g@example.com","windows":[{"name":"7 days","used":2}]}]}
+            """.utf8)))
+        let context = try TokenAccountCLIContext(
+            selection: TokenAccountCLISelection(label: nil, index: nil, allAccounts: true),
+            config: CodexBarConfig(providers: [], magpie: MagpieSourceConfig(enabled: true)),
+            verbose: false,
+            baseEnvironment: [:],
+            magpieSource: source)
+        let browserDetection = BrowserDetection(cacheTTL: 0)
+        let command = UsageCommandContext(
+            format: .json,
+            includeCredits: false,
+            sourceModeOverride: nil,
+            antigravityPlanDebug: false,
+            augmentDebug: false,
+            webDebugDumpHTML: false,
+            webTimeout: 5,
+            verbose: false,
+            useColor: false,
+            resetStyle: .countdown,
+            weeklyWorkDays: nil,
+            jsonOnly: true,
+            includeAllCodexAccounts: false,
+            fetcher: UsageFetcher(),
+            claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
+            browserDetection: browserDetection)
+        let output = await CodexBarCLI.fetchMagpieUsageIfOwned(
+            provider: .grok, status: nil, tokenContext: context, command: command)
+        #expect(output?.payload.count == 1)
+    }
+
+    @Test
     func `legacy enabled migration writes only the unified config`() throws {
         let data = Data(
             #"{"version":1,"providers":[{"id":"claude","claudeMagpieEnabled":true,"claudeMagpieQuotasURL":"http://localhost:3425/v1/magpie/quotas"}]}"#

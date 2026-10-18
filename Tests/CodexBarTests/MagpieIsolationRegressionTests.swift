@@ -77,12 +77,46 @@ struct MagpieIsolationRegressionTests {
     func `a grok takeover persisted under either wire id keeps grok owned`(wireID: String) async {
         let store = self.makeStore(enabled: true)
         store.settings.magpieTakeoverWireIDs = [wireID]
-        // An unreachable gateway with a persisted takeover still owns Grok: no discovery result
-        // may return it to native reads.
-        store.magpieTransport = ClaudeMagpieFixture.transport(status: 503)
+        // Discovery succeeds but returns no Grok row, so the persisted takeover set alone
+        // decides between .magpie and .native.
+        store.magpieTransport = ClaudeMagpieFixture.transport(data: Data(#"{"data":[]}"#.utf8))
         store.reconcileMagpieSourceConfiguration()
         await store.awaitMagpieRefresh()
         #expect(!store.providerSourceRoute(for: .grok).isNative, "\(wireID)")
+    }
+
+    @Test
+    func `a grok wire id rename retires the stale card instead of keeping it as last known`() async {
+        let store = self.makeStore(enabled: true)
+        store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
+        {"data":[{"provider":"grok-plugin","user":"g@example.com","windows":[{"name":"7 days","used":1}]}]}
+        """.utf8))
+        store.reconcileMagpieSourceConfiguration()
+        await store.awaitMagpieRefresh()
+        store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
+        {"data":[{"provider":"grok","user":"g@example.com","windows":[{"name":"7 days","used":2}]}]}
+        """.utf8))
+        await store.refreshMagpieAccounts()
+        let grokCards = store.magpieOverviewSnapshots.filter { $0.provider.nativeProvider == .grok }
+        #expect(grokCards.count == 1)
+        #expect(grokCards.allSatisfy { $0.error == nil && !$0.usesLastKnownUsage })
+        #expect(store.magpieLastError == nil)
+    }
+
+    @Test
+    func `both grok wire ids in one response merge into one card`() async {
+        let store = self.makeStore(enabled: true)
+        store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
+        {"data":[{"provider":"grok-plugin","user":"g@example.com","windows":[{"name":"7 days","used":1}]},
+          {"provider":"grok","user":"g@example.com","windows":[{"name":"7 days","used":2}]}]}
+        """.utf8))
+        store.reconcileMagpieSourceConfiguration()
+        await store.awaitMagpieRefresh()
+        let grokCards = store.magpieOverviewSnapshots.filter { $0.provider.nativeProvider == .grok }
+        #expect(grokCards.count == 1)
+        #expect(grokCards.filter(\.isActive).count == 1)
+        // The deterministic first wire ID ("grok") wins when both spell the same account.
+        #expect(grokCards.first?.windows.map(\.usedPercent) == [2])
     }
 
     @Test
