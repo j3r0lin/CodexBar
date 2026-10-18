@@ -60,6 +60,13 @@ extension CodexBarCLI {
         }
     }
 
+    /// An error magpie reported for an account row, shown as-is.
+    struct MagpieUpstreamError: LocalizedError {
+        let message: String
+
+        var errorDescription: String? { self.message }
+    }
+
     static func fetchRoutedProviderUsage(
         provider: UsageProvider,
         tokenContext: TokenAccountCLIContext,
@@ -152,14 +159,30 @@ extension CodexBarCLI {
                 }
             }
             if !emitted, switchSuspended {
-                // A suspended provider still answers, with its suspended state, so the caller
-                // never continues into a native credential, cookie, or Keychain read.
-                let error = MagpieSuspendedProviderError(provider: provider)
-                output.exitCode = .failure
-                output.payload.append(Self.makeProviderErrorPayload(
-                    provider: provider, account: nil, source: "magpie", status: status, error: error))
-                output.cardFailures.append(CLICardFailure(
-                    provider: provider, accountLabel: nil, message: error.localizedDescription))
+                if rows.contains(where: { wireIDs.contains($0.provider) }) {
+                    // Rows with empty windows are an empty result; only an upstream error is
+                    // reported, matching the app. Nothing here may touch native reads.
+                    for account in accounts {
+                        guard let message = account.error else { continue }
+                        let error = MagpieUpstreamError(message: message)
+                        output.exitCode = .failure
+                        output.payload.append(Self.makeProviderErrorPayload(
+                            provider: provider, account: account.displayLabel, source: "magpie",
+                            status: status, error: error))
+                        output.cardFailures.append(CLICardFailure(
+                            provider: provider, accountLabel: account.displayLabel,
+                            message: message))
+                    }
+                } else {
+                    // No rows at all: the suspended state answers, so the caller never continues
+                    // into a native credential, cookie, or Keychain read.
+                    let error = MagpieSuspendedProviderError(provider: provider)
+                    output.exitCode = .failure
+                    output.payload.append(Self.makeProviderErrorPayload(
+                        provider: provider, account: nil, source: "magpie", status: status, error: error))
+                    output.cardFailures.append(CLICardFailure(
+                        provider: provider, accountLabel: nil, message: error.localizedDescription))
+                }
             }
         } catch {
             output.exitCode = .failure

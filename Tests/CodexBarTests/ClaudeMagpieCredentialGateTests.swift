@@ -189,6 +189,42 @@ struct CLIMagpieTests {
                 == ProviderSourceRoute.suspendedMessage(for: .claude))
     }
 
+    @Test
+    func `CLI reports claude rows without windows as an empty result`() async throws {
+        let context = try Self.makeContext(
+            providers: [.claude],
+            data: Data(#"{"data":[{"provider":"claude","user":"a@example.com","windows":[]}]}"#.utf8))
+        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
+            Issue.record("Native IO crossed the magpie route: \(kind.rawValue)")
+            throw CancellationError()
+        }
+        let output = await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
+            await CodexBarCLI.fetchUsageOutputs(
+                provider: .claude, status: nil, tokenContext: context, command: Self.makeCommand())
+        }
+        #expect(output.exitCode == .success)
+        #expect(output.payload.isEmpty)
+    }
+
+    @Test
+    func `CLI shows the upstream error of claude rows without usage`() async throws {
+        let context = try Self.makeContext(
+            providers: [.claude],
+            data: Data(#"{"data":[{"provider":"claude","user":"a@example.com","windows":[],"error":"token expired"}]}"#.utf8))
+        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
+            Issue.record("Native IO crossed the magpie route: \(kind.rawValue)")
+            throw CancellationError()
+        }
+        let output = await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
+            await CodexBarCLI.fetchUsageOutputs(
+                provider: .claude, status: nil, tokenContext: context, command: Self.makeCommand())
+        }
+        #expect(output.exitCode == .failure)
+        #expect(output.payload.count == 1)
+        #expect(output.payload.first?.source == "magpie")
+        #expect(output.payload.first?.error?.message == "token expired")
+    }
+
     private static func makeContext(
         providers: [UsageProvider],
         data: Data) throws -> TokenAccountCLIContext
