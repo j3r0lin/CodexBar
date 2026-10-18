@@ -255,6 +255,16 @@ struct CLIMagpieTests {
         #expect(rows.isEmpty)
     }
 
+    @Test
+    func `serve cost cache cannot carry rows across the magpie switch`() throws {
+        // Serve reloads the config per request and keys cached cost rows by this token, so rows
+        // cached while the switch was off are unreachable once it is on.
+        let off = CodexBarConfig(providers: [ProviderConfig(id: UsageProvider.claude.instanceID)])
+        var on = off
+        on.magpie = MagpieSourceConfig(enabled: true)
+        #expect(try CodexBarCLI.serveConfigCacheToken(for: off) != CodexBarCLI.serveConfigCacheToken(for: on))
+    }
+
     private static func makeContext(
         providers: [UsageProvider],
         data: Data) throws -> TokenAccountCLIContext
