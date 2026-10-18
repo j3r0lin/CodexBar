@@ -57,6 +57,7 @@ struct CodexBarConfigMigrator {
             userDefaults.bool(forKey: Self.legacyClaudeCookieDeferredKey)
         if claudeCookiePending || (!migrationCompleted && !switchOn) {
             self.migrateCookieProviders(
+                // Provider-specific by design: the retired Claude cookie item is read only while the switch is off.
                 [(.claude, "claude-cookie", stores.claudeCookieStore.loadCookieHeader)],
                 config: &config,
                 state: &state,

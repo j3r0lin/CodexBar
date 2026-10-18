@@ -216,7 +216,7 @@ public struct LocalAgentSessionScanner: Sendable {
                 AgentPSOutputParser.provider(for: $0).map { !excludedProviders.contains($0) } ?? true
             })
             .prefix(max(0, self.config.maxProcessCount)))
-        let codexExcluded = excludedProviders.contains(.codex)
+        let codexExcluded = Self.excludesCodexSessions(excludedProviders)
         let homeDirectory = URL(fileURLWithPath: environment["HOME"] ?? NSHomeDirectory(), isDirectory: true)
         let readRolloutMetadata = includeFileOnlySessions || !includeRolloutActivity
         let trustedCodexAppServerPresent = readRolloutMetadata && !codexExcluded &&
@@ -245,7 +245,7 @@ public struct LocalAgentSessionScanner: Sendable {
             startedAt: self.directoryScanStartedAt(),
             didVisitEntry: self.didVisitDirectoryEntry)
         var piFamilyDirectoryBudget = directoryBudget
-        let piFamilySessions = excludedProviders.contains(.pi) ? [] : PiFamilySessionScanner.scan(
+        let piFamilySessions = Self.excludesPiFamilySessions(excludedProviders) ? [] : PiFamilySessionScanner.scan(
             input: PiFamilySessionScanner.ScanInput(
                 processes: processes,
                 cwdByPID: cwdByPID,
@@ -289,6 +289,16 @@ public struct LocalAgentSessionScanner: Sendable {
         return ScanResult(
             sessions: sessions,
             latestRolloutActivityAt: includeRolloutActivity ? candidates.first?.modifiedAt : nil)
+    }
+
+    // Provider-specific by design: excluding Codex also drops its rollout files and app-server probing.
+    private static func excludesCodexSessions(_ excluded: Set<AgentSession.Provider>) -> Bool {
+        excluded.contains(.codex)
+    }
+
+    // Provider-specific by design: Pi-family sessions come from their own session roots, not a process transcript.
+    private static func excludesPiFamilySessions(_ excluded: Set<AgentSession.Provider>) -> Bool {
+        excluded.contains(.pi)
     }
 
     /// Returns the project directories of live Pi processes so historical cost scans can resolve
