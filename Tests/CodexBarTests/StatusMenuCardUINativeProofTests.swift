@@ -115,6 +115,16 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
             "popUp returned: phase=\(self.phase) ticks=\(self.settleTicks) "
                 + "items=\(menu.items.count) views=\(menu.items.count { $0.view != nil })",
             into: directory)
+        let ids = menu.items.compactMap { $0.representedObject as? String }
+        Self.recordDiagnostic("ids=\(ids.joined(separator: ","))", into: directory)
+        Self.recordDiagnostic(
+            "magpieAccounts=\(fixture.store.magpieAccountSnapshots.count) "
+                + "overview=\(fixture.store.magpieOverviewSnapshots.count)",
+            into: directory)
+        let rowsNow = controller.overviewUsageRows(visibleProviders: [.claude, .codex, .grok, .kimi])
+        Self.recordDiagnostic(
+            "rows=\(rowsNow.map { $0.groupKey + ($0.accountID.map { "#" + $0.opaqueID } ?? "") })",
+            into: directory)
 
         // Detail submenu: captured in its own tracking session, again from a common-mode timer.
         let row = try XCTUnwrap(menu.items.first {
@@ -189,29 +199,31 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
         detail.cancelTracking()
     }
 
+    /// Captures the menu window in-process: `screencapture -l` runs as a separate process and the
+    /// window belongs to the test runner, so without a Screen Recording grant it fails with "could
+    /// not create image from window". A process may always read its own windows.
     private static func capture(window: NSWindow?, name: String, into directory: URL) {
         guard let window else {
             Self.recordDiagnostic("capture \(name): no window", into: directory)
             return
         }
-        let stderr = Pipe()
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = [
-            "-x", "-o", "-l", String(window.windowNumber),
-            directory.appendingPathComponent("\(name).png").path,
-        ]
-        process.standardError = stderr
-        do {
-            try process.run()
-            process.waitUntilExit()
-            if process.terminationStatus != 0 {
-                let message = String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-                Self.recordDiagnostic(
-                    "capture \(name): status \(process.terminationStatus): \(message)", into: directory)
+        let url = directory.appendingPathComponent("\(name).png")
+        if let image = CGWindowListCreateImage(
+            .null,
+            .optionIncludingWindow,
+            CGWindowID(window.windowNumber),
+            [.boundsIgnoreFraming, .bestResolution]),
+            let bitmap = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:])
+        {
+            do {
+                try bitmap.write(to: url)
+                Self.recordDiagnostic("capture \(name): cgwindowlist ok", into: directory)
+                return
+            } catch {
+                Self.recordDiagnostic("capture \(name): write failed: \(error)", into: directory)
             }
-        } catch {
-            Self.recordDiagnostic("capture \(name): \(error)", into: directory)
+        } else {
+            Self.recordDiagnostic("capture \(name): CGWindowListCreateImage returned nil", into: directory)
         }
     }
 
