@@ -277,6 +277,83 @@ struct CodexBarConfigMigratorTests {
         #expect(defaults.bool(forKey: Self.legacyMigrationCompletedKey))
     }
 
+    @Test
+    func `claude cookie migration waits for the magpie switch to turn off`() throws {
+        let suite = "CodexBarConfigMigratorTests-claude-deferred-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        var config = CodexBarConfig.makeDefault()
+        config.magpie = MagpieSourceConfig(enabled: true)
+        try configStore.save(config)
+        let secrets = CountingLegacySecretStore(token: "legacy-token")
+        let claude = CountingLegacySecretStore(token: "claude-cookie=1")
+        let stores = Self.legacyStores(
+            secrets: secrets,
+            accountStore: CountingTokenAccountStore(),
+            claudeCookieStore: claude)
+
+        let withSwitch = Self.migrate(configStore: configStore, defaults: defaults, stores: stores)
+
+        // The rest of the migration runs; the Claude Keychain item is neither read nor cleared.
+        #expect(withSwitch.providerConfig(for: .zai)?.apiKey == "legacy-token")
+        #expect(secrets.clearAttempts > 0)
+        #expect(claude.loadCount == 0)
+        #expect(claude.clearAttempts == 0)
+        #expect(try claude.loadCookieHeader() == "claude-cookie=1")
+        #expect(withSwitch.providerConfig(for: .claude)?.cookieHeader == nil)
+
+        config = try #require(try configStore.load())
+        config.magpie = MagpieSourceConfig(enabled: false)
+        try configStore.save(config)
+        let afterOff = Self.migrate(configStore: configStore, defaults: defaults, stores: stores)
+
+        #expect(afterOff.providerConfig(for: .claude)?.cookieHeader == "claude-cookie=1")
+        #expect(try configStore.load()?.providerConfig(for: .claude)?.cookieHeader == "claude-cookie=1")
+        #expect(try claude.loadCookieHeader() == nil)
+
+        let loadsAfterImport = claude.loadCount
+        let rerun = Self.migrate(configStore: configStore, defaults: defaults, stores: stores)
+        #expect(claude.loadCount == loadsAfterImport)
+        #expect(rerun.providerConfig(for: .claude)?.cookieHeader == "claude-cookie=1")
+    }
+
+    @Test
+    func `interrupted claude cookie import resumes to the same end state`() throws {
+        let suite = "CodexBarConfigMigratorTests-claude-resume-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        var config = CodexBarConfig.makeDefault()
+        config.magpie = MagpieSourceConfig(enabled: true)
+        try configStore.save(config)
+        let claude = CountingLegacySecretStore(token: "claude-cookie=1")
+        let stores = Self.legacyStores(
+            secrets: CountingLegacySecretStore(),
+            accountStore: CountingTokenAccountStore(),
+            claudeCookieStore: claude)
+        _ = Self.migrate(configStore: configStore, defaults: defaults, stores: stores)
+        config = try #require(try configStore.load())
+        config.magpie = MagpieSourceConfig(enabled: false)
+        try configStore.save(config)
+
+        // Interrupted after the config save: the Keychain item could not be cleared.
+        claude.throwOnStore = true
+        _ = Self.migrate(configStore: configStore, defaults: defaults, stores: stores)
+        #expect(try configStore.load()?.providerConfig(for: .claude)?.cookieHeader == "claude-cookie=1")
+        #expect(try claude.loadCookieHeader() == "claude-cookie=1")
+
+        claude.throwOnStore = false
+        let resumed = Self.migrate(configStore: configStore, defaults: defaults, stores: stores)
+        #expect(resumed.providerConfig(for: .claude)?.cookieHeader == "claude-cookie=1")
+        #expect(try claude.loadCookieHeader() == nil)
+        let loads = claude.loadCount
+        _ = Self.migrate(configStore: configStore, defaults: defaults, stores: stores)
+        #expect(claude.loadCount == loads)
+    }
+
     private static func migrate(
         configStore: CodexBarConfigStore,
         defaults: UserDefaults,
@@ -292,13 +369,14 @@ struct CodexBarConfigMigratorTests {
     private static func legacyStores(
         secrets: CountingLegacySecretStore,
         accountStore: CountingTokenAccountStore,
-        syntheticTokenStore: CountingLegacySecretStore? = nil) -> CodexBarConfigMigrator.LegacyStores
+        syntheticTokenStore: CountingLegacySecretStore? = nil,
+        claudeCookieStore: CountingLegacySecretStore? = nil) -> CodexBarConfigMigrator.LegacyStores
     {
         CodexBarConfigMigrator.LegacyStores(
             zaiTokenStore: secrets,
             syntheticTokenStore: syntheticTokenStore ?? secrets,
             codexCookieStore: secrets,
-            claudeCookieStore: secrets,
+            claudeCookieStore: claudeCookieStore ?? secrets,
             cursorCookieStore: secrets,
             opencodeCookieStore: secrets,
             factoryCookieStore: secrets,

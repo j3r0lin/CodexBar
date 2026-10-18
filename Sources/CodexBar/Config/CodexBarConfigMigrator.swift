@@ -20,6 +20,10 @@ struct CodexBarConfigMigrator {
     }
 
     private static let legacyMigrationCompletedKey = "codexbar.legacySecretsMigrationCompleted"
+    /// Set when the one-shot migration completed while the magpie switch kept the Claude cookie
+    /// Keychain item unread. The first launch with the switch off imports and clears it, then
+    /// removes this key.
+    private static let legacyClaudeCookieDeferredKey = "codexbar.legacyClaudeCookieMigrationDeferred"
 
     private struct MigrationState {
         var didUpdate = false
@@ -47,6 +51,17 @@ struct CodexBarConfigMigrator {
         self.preserveClaudeResetCreditVisibility(userDefaults: userDefaults, config: &config, state: &state)
 
         let migrationCompleted = userDefaults.bool(forKey: Self.legacyMigrationCompletedKey)
+        // While the switch is on, no Claude credential or Keychain item is read or cleared.
+        let switchOn = config.magpie?.enabled == true
+        let claudeCookiePending = migrationCompleted && !switchOn &&
+            userDefaults.bool(forKey: Self.legacyClaudeCookieDeferredKey)
+        if claudeCookiePending {
+            self.migrateCookieProviders(
+                [(.claude, "claude-cookie", stores.claudeCookieStore.loadCookieHeader)],
+                config: &config,
+                state: &state,
+                log: log)
+        }
         if !migrationCompleted {
             // Run once: migrate Keychain/file secrets then clear them. Using a completion flag rather
             // than `existing == nil` ensures a crash between config-save and clearLegacyStores can
@@ -57,6 +72,7 @@ struct CodexBarConfigMigrator {
             self.migrateLegacySecrets(
                 userDefaults: userDefaults,
                 stores: stores,
+                includeClaudeCookie: !switchOn,
                 config: &config,
                 state: &state,
                 log: log)
@@ -90,13 +106,26 @@ struct CodexBarConfigMigrator {
             return config.normalized()
         }
 
-        if state.sawLegacySecrets || state.sawLegacyAccounts {
-            let cleared = self.clearLegacyStores(stores: stores, sawAccounts: state.sawLegacyAccounts, log: log)
-            if cleared {
-                userDefaults.set(true, forKey: Self.legacyMigrationCompletedKey)
+        // The deferred key goes in before the completion key, so an interruption between them
+        // reruns the whole migration instead of losing the pending Claude cookie.
+        let markCompleted = {
+            if switchOn, !migrationCompleted {
+                userDefaults.set(true, forKey: Self.legacyClaudeCookieDeferredKey)
             }
-        } else if !migrationCompleted {
             userDefaults.set(true, forKey: Self.legacyMigrationCompletedKey)
+            if !switchOn {
+                userDefaults.removeObject(forKey: Self.legacyClaudeCookieDeferredKey)
+            }
+        }
+        if state.sawLegacySecrets || state.sawLegacyAccounts {
+            let cleared = self.clearLegacyStores(
+                stores: stores,
+                sawAccounts: state.sawLegacyAccounts,
+                includeClaudeCookie: !switchOn,
+                log: log)
+            if cleared { markCompleted() }
+        } else if !migrationCompleted || claudeCookiePending {
+            markCompleted()
         }
 
         return config.normalized()
@@ -158,6 +187,7 @@ struct CodexBarConfigMigrator {
     private static func migrateLegacySecrets(
         userDefaults: UserDefaults,
         stores: LegacyStores,
+        includeClaudeCookie: Bool,
         config: inout CodexBarConfig,
         state: inout MigrationState,
         log: CodexBarLogger)
@@ -173,15 +203,16 @@ struct CodexBarConfigMigrator {
             state: &state,
             log: log)
 
+        let claudeCookie: [(UsageProvider, String, () throws -> String?)] = includeClaudeCookie
+            ? [(.claude, "claude-cookie", stores.claudeCookieStore.loadCookieHeader)] : []
         self.migrateCookieProviders(
             [
                 (.codex, "codex-cookie", stores.codexCookieStore.loadCookieHeader),
-                (.claude, "claude-cookie", stores.claudeCookieStore.loadCookieHeader),
                 (.cursor, "cursor-cookie", stores.cursorCookieStore.loadCookieHeader),
                 (.factory, "factory-cookie", stores.factoryCookieStore.loadCookieHeader),
                 (.augment, "augment-cookie", stores.augmentCookieStore.loadCookieHeader),
                 (.amp, "amp-cookie", stores.ampCookieStore.loadCookieHeader),
-            ],
+            ] + claudeCookie,
             config: &config,
             state: &state,
             log: log)
@@ -471,6 +502,7 @@ struct CodexBarConfigMigrator {
     private static func clearLegacyStores(
         stores: LegacyStores,
         sawAccounts: Bool,
+        includeClaudeCookie: Bool,
         log: CodexBarLogger) -> Bool
     {
         var success = true
@@ -481,7 +513,9 @@ struct CodexBarConfigMigrator {
             try stores.minimaxAPITokenStore.storeToken(nil)
             try stores.kimiTokenStore.storeToken(nil)
             try stores.codexCookieStore.storeCookieHeader(nil)
-            try stores.claudeCookieStore.storeCookieHeader(nil)
+            if includeClaudeCookie {
+                try stores.claudeCookieStore.storeCookieHeader(nil)
+            }
             try stores.cursorCookieStore.storeCookieHeader(nil)
             try stores.opencodeCookieStore.storeCookieHeader(nil)
             try stores.factoryCookieStore.storeCookieHeader(nil)

@@ -365,6 +365,8 @@ struct MagpieIsolationRegressionTests {
         await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
             await store.refreshProvider(.claudeplatform, allowDisabled: true)
         }
+        // The spy cannot see plugin cookie reads (they run in Task.detached, ProviderPluginRuntime.swift:1007),
+        // so the route and error assertions below are what catch a regression there.
         for kind in NativeProviderIOTestBoundary.Kind.allCases {
             #expect(spy.count(kind) == 0, "\(kind.rawValue)")
         }
