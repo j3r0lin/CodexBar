@@ -2620,3 +2620,12 @@
 "account_detail_usage_title" = "Ús de %@";
 "account_detail_used" = "%@ utilitzat";
 "account_detail_history" = "Historial";
+
+/* Overview card UI */
+"%lld providers" = "%lld proveïdors";
+"Auto-refresh on" = "Actualització automàtica activada";
+"Auto-refresh off" = "Actualització automàtica desactivada";
+"Last sync: %@" = "Darrera sincronització: %@";
+"No matching windows" = "No hi ha finestres coincidents";
+"Now" = "Ara";
+"resets in %@" = "es reinicia en %@";

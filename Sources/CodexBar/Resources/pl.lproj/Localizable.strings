@@ -2621,3 +2621,12 @@
 "account_detail_usage_title" = "Użycie %@";
 "account_detail_used" = "Wykorzystano %@";
 "account_detail_history" = "Historia";
+
+/* Overview card UI */
+"%lld providers" = "Dostawcy: %lld";
+"Auto-refresh on" = "Automatyczne odświeżanie włączone";
+"Auto-refresh off" = "Automatyczne odświeżanie wyłączone";
+"Last sync: %@" = "Ostatnia synchronizacja: %@";
+"No matching windows" = "Brak pasujących okien";
+"Now" = "Teraz";
+"resets in %@" = "resetuje się za %@";

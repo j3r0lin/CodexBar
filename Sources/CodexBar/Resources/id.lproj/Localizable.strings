@@ -2619,3 +2619,12 @@
 "account_detail_usage_title" = "Penggunaan %@";
 "account_detail_used" = "%@ terpakai";
 "account_detail_history" = "Riwayat";
+
+/* Overview card UI */
+"%lld providers" = "%lld penyedia";
+"Auto-refresh on" = "Segarkan otomatis aktif";
+"Auto-refresh off" = "Segarkan otomatis nonaktif";
+"Last sync: %@" = "Sinkronisasi terakhir: %@";
+"No matching windows" = "Tidak ada jendela yang cocok";
+"Now" = "Sekarang";
+"resets in %@" = "diatur ulang dalam %@";

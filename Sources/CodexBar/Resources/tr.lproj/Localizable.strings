@@ -2621,3 +2621,12 @@
 "account_detail_usage_title" = "%@ kullanımı";
 "account_detail_used" = "%@ kullanıldı";
 "account_detail_history" = "Geçmiş";
+
+/* Overview card UI */
+"%lld providers" = "%lld sağlayıcı";
+"Auto-refresh on" = "Otomatik yenileme açık";
+"Auto-refresh off" = "Otomatik yenileme kapalı";
+"Last sync: %@" = "Son eşitleme: %@";
+"No matching windows" = "Eşleşen pencere yok";
+"Now" = "Şimdi";
+"resets in %@" = "%@ içinde sıfırlanır";

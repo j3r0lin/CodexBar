@@ -2622,3 +2622,12 @@
 "account_detail_usage_title" = "Utilizzo di %@";
 "account_detail_used" = "%@ usato";
 "account_detail_history" = "Cronologia";
+
+/* Overview card UI */
+"%lld providers" = "%lld provider";
+"Auto-refresh on" = "Aggiornamento automatico attivo";
+"Auto-refresh off" = "Aggiornamento automatico disattivato";
+"Last sync: %@" = "Ultima sincronizzazione: %@";
+"No matching windows" = "Nessuna finestra corrispondente";
+"Now" = "Ora";
+"resets in %@" = "si reimposta tra %@";

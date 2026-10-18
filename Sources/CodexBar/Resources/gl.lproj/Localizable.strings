@@ -2617,3 +2617,12 @@
 "account_detail_usage_title" = "Uso de %@";
 "account_detail_used" = "%@ usado";
 "account_detail_history" = "Historial";
+
+/* Overview card UI */
+"%lld providers" = "%lld provedores";
+"Auto-refresh on" = "Actualización automática activada";
+"Auto-refresh off" = "Actualización automática desactivada";
+"Last sync: %@" = "Última sincronización: %@";
+"No matching windows" = "Non hai xanelas coincidentes";
+"Now" = "Agora";
+"resets in %@" = "reiníciase en %@";
