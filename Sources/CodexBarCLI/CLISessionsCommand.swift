@@ -3,8 +3,29 @@ import Commander
 import Foundation
 
 extension CodexBarCLI {
+    /// Scans local sessions of the providers read natively. Providers magpie owns (and the Claude
+    /// family while the switch is on) are excluded from the scan itself and reported on stderr.
+    static func scanNativeSessions(
+        config: CodexBarConfig,
+        scanner: LocalAgentSessionScanner = LocalAgentSessionScanner(),
+        source: CLIMagpieSource = CLIMagpieSource()) async -> [AgentSession]
+    {
+        var excluded = Set<AgentSession.Provider>()
+        for provider in AgentSession.Provider.allCases {
+            guard let usageProvider = UsageProvider(rawValue: provider.rawValue) else { continue }
+            let route = await source.route(for: usageProvider, configuration: config.magpie)
+            if !route.isNative { excluded.insert(provider) }
+        }
+        if !excluded.isEmpty {
+            let names = excluded.map(\.rawValue).sorted().joined(separator: ", ")
+            Self.writeStderr("Skipping sessions for providers owned by magpie: \(names)\n")
+        }
+        return await scanner.scan(excludedProviders: excluded)
+    }
+
     static func runSessions(_ values: ParsedValues) async {
-        let sessions = await LocalAgentSessionScanner().scan()
+        let config = Self.loadConfig(output: CLIOutputPreferences.from(values: values))
+        let sessions = await Self.scanNativeSessions(config: config)
         if let jsonVersion = Self.sessionsJSONProtocolVersion(from: values) {
             Self.printJSON(
                 Self.sessionsForJSON(sessions, includePiFamily: jsonVersion == 2),
@@ -35,7 +56,8 @@ extension CodexBarCLI {
             writeStderr("Missing session id.\n")
             platformExit(1)
         }
-        let sessions = await LocalAgentSessionScanner().scan()
+        let config = Self.loadConfig(output: CLIOutputPreferences.from(values: values))
+        let sessions = await Self.scanNativeSessions(config: config)
         guard let session = sessions.first(where: { $0.id == sessionID }) else {
             Self.writeStderr("Unknown session: \(sessionID)\n")
             Self.platformExit(1)

@@ -189,13 +189,15 @@ public struct LocalAgentSessionScanner: Sendable {
     public func scan(
         now: Date = Date(),
         environment: [String: String] = ProcessInfo.processInfo.environment,
-        includeFileOnlySessions: Bool = true) async -> [AgentSession]
+        includeFileOnlySessions: Bool = true,
+        excludedProviders: Set<AgentSession.Provider> = []) async -> [AgentSession]
     {
         await self.scanWithActivity(
             now: now,
             environment: environment,
             includeFileOnlySessions: includeFileOnlySessions,
-            includeRolloutActivity: false).sessions
+            includeRolloutActivity: false,
+            excludedProviders: excludedProviders).sessions
     }
 
     /// Activity is a timestamp projection, never a file-only session or an identity assertion.
@@ -204,23 +206,29 @@ public struct LocalAgentSessionScanner: Sendable {
         now: Date = Date(),
         environment: [String: String] = ProcessInfo.processInfo.environment,
         includeFileOnlySessions: Bool,
-        includeRolloutActivity: Bool) async -> ScanResult
+        includeRolloutActivity: Bool,
+        excludedProviders: Set<AgentSession.Provider> = []) async -> ScanResult
     {
         let allProcesses = await self.processRecords(environment: environment)
+        // An excluded provider's processes, transcripts and rollouts are never visited.
         let processes = Array(AgentSessionCorrelation.newestProcessesFirst(
-            AgentPSOutputParser.agentProcesses(from: allProcesses))
+            AgentPSOutputParser.agentProcesses(from: allProcesses).filter {
+                AgentPSOutputParser.provider(for: $0).map { !excludedProviders.contains($0) } ?? true
+            })
             .prefix(max(0, self.config.maxProcessCount)))
+        let codexExcluded = excludedProviders.contains(.codex)
         let homeDirectory = URL(fileURLWithPath: environment["HOME"] ?? NSHomeDirectory(), isDirectory: true)
         let readRolloutMetadata = includeFileOnlySessions || !includeRolloutActivity
-        let trustedCodexAppServerPresent = readRolloutMetadata && AgentPSOutputParser.hasTrustedChatGPTCodexAppServer(
-            in: allProcesses, validator: self.appServerTrustValidator)
+        let trustedCodexAppServerPresent = readRolloutMetadata && !codexExcluded &&
+            AgentPSOutputParser.hasTrustedChatGPTCodexAppServer(
+                in: allProcesses, validator: self.appServerTrustValidator)
         guard Self.shouldScanSessionMetadata(
             hasAgentProcesses: !processes.isEmpty,
             includeFileOnlySessions: includeFileOnlySessions,
             hasTrustedCodexAppServer: trustedCodexAppServerPresent) || includeRolloutActivity
         else { return ScanResult() }
-        let codexAppServerPresent = AgentPSOutputParser.hasCodexAppServer(in: allProcesses) ||
-            trustedCodexAppServerPresent
+        let codexAppServerPresent = !codexExcluded &&
+            (AgentPSOutputParser.hasCodexAppServer(in: allProcesses) || trustedCodexAppServerPresent)
         let cwdByPID = await self.cwdByPID(processes.map(\.pid), environment: environment)
         let codexCWDs = processes.filter { AgentPSOutputParser.provider(for: $0) == .codex }
             .compactMap { cwdByPID[$0.pid] }
@@ -237,7 +245,7 @@ public struct LocalAgentSessionScanner: Sendable {
             startedAt: self.directoryScanStartedAt(),
             didVisitEntry: self.didVisitDirectoryEntry)
         var piFamilyDirectoryBudget = directoryBudget
-        let piFamilySessions = PiFamilySessionScanner.scan(
+        let piFamilySessions = excludedProviders.contains(.pi) ? [] : PiFamilySessionScanner.scan(
             input: PiFamilySessionScanner.ScanInput(
                 processes: processes,
                 cwdByPID: cwdByPID,
@@ -246,8 +254,10 @@ public struct LocalAgentSessionScanner: Sendable {
                 host: host,
                 config: self.config),
             directoryBudget: &piFamilyDirectoryBudget)
-        let includeUnmatchedCodexRollouts = includeFileOnlySessions || trustedCodexAppServerPresent
-        let enrichRollouts = readRolloutMetadata && (includeUnmatchedCodexRollouts || !codexCWDs.isEmpty)
+        let includeUnmatchedCodexRollouts = !codexExcluded &&
+            (includeFileOnlySessions || trustedCodexAppServerPresent)
+        let enrichRollouts = !codexExcluded && readRolloutMetadata &&
+            (includeUnmatchedCodexRollouts || !codexCWDs.isEmpty)
         var candidates = enrichRollouts ? self.codexRolloutCandidates(
             now: now, codexHomeDirectory: codexHomeDirectory, directoryBudget: &directoryBudget) : []
         let rollouts = enrichRollouts ? self.codexRollouts(
@@ -271,7 +281,7 @@ public struct LocalAgentSessionScanner: Sendable {
                 threadMetadata: threadMetadata,
                 piFamilySessions: piFamilySessions),
             directoryBudget: &directoryBudget)
-        if includeRolloutActivity, !enrichRollouts {
+        if includeRolloutActivity, !enrichRollouts, !codexExcluded {
             // Preserve the shared budget for process-backed Claude activity before the new file-only signal.
             candidates = self.codexRolloutCandidates(
                 now: now, codexHomeDirectory: codexHomeDirectory, directoryBudget: &directoryBudget)
