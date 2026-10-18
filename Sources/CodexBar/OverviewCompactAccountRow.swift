@@ -190,9 +190,11 @@ struct OverviewCompactAccountRow: View {
     static let blockGap: CGFloat = 10
     static let horizontalPadding: CGFloat = 12
     /// Icon plus a provider name; account names under a group header get a narrower column.
-    static let providerNameColumn: CGFloat = 116
+    /// Sized so "OpenCode Go" (88pt at 13pt semibold) fits beside the 18pt icon.
+    static let providerNameColumn: CGFloat = 124
     static let accountNameColumn: CGFloat = 92
-    static let labelWidth: CGFloat = 26
+    /// Fits the scoped-weekly model labels ("Fable" is 27pt at 10pt medium) alongside "5h"/"7d"/"Mo".
+    static let labelWidth: CGFloat = 32
     /// Fits "100%" at 13pt semibold with monospaced digits.
     static let percentWidth: CGFloat = 38
     /// Fits "resets in 5d 21h" at 10pt with monospaced digits.
