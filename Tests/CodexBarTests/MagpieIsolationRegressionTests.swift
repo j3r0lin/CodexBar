@@ -73,6 +73,44 @@ struct MagpieIsolationRegressionTests {
         #expect(store.providerSourceRoute(for: .grok).isNative, "\(wireID)")
     }
 
+    @Test(arguments: ["kimi", "kimi-code"])
+    func `kimi stays magpie owned under either wire id`(wireID: String) async {
+        let store = self.makeStore(enabled: true)
+        store.magpieTransport = ClaudeMagpieFixture.transport(data: Data("""
+        {"data":[{"provider":"\(wireID)","user":"k@example.com","windows":[{"name":"5 hours","used":1}]}]}
+        """.utf8))
+        store.reconcileMagpieSourceConfiguration()
+        await store.awaitMagpieRefresh()
+        #expect(!store.providerSourceRoute(for: .kimi).isNative, "\(wireID)")
+        let kimiCards = store.magpieOverviewSnapshots.filter { $0.provider.nativeProvider == .kimi }
+        #expect(kimiCards.count == 1, "\(wireID)")
+        #expect(kimiCards.allSatisfy { $0.provider.displayName == "Kimi Code" }, "\(wireID)")
+        let spy = MagpieRegressionIOSpy()
+        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
+            spy.record(kind)
+            throw CancellationError()
+        }
+        await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
+            await store.refreshProvider(.kimi, allowDisabled: true)
+        }
+        for kind in NativeProviderIOTestBoundary.Kind.allCases {
+            #expect(spy.count(kind) == 0, "\(wireID) \(kind.rawValue)")
+        }
+        store.settings.magpieSourceEnabled = false
+        store.reconcileMagpieSourceConfiguration()
+        #expect(store.providerSourceRoute(for: .kimi).isNative, "\(wireID)")
+    }
+
+    @Test(arguments: ["kimi", "kimi-code"])
+    func `a kimi takeover persisted under either wire id keeps kimi owned`(wireID: String) async {
+        let store = self.makeStore(enabled: true)
+        store.settings.magpieTakeoverWireIDs = [wireID]
+        store.magpieTransport = ClaudeMagpieFixture.transport(data: Data(#"{"data":[]}"#.utf8))
+        store.reconcileMagpieSourceConfiguration()
+        await store.awaitMagpieRefresh()
+        #expect(!store.providerSourceRoute(for: .kimi).isNative, "\(wireID)")
+    }
+
     @Test(arguments: ["grok", "grok-plugin"])
     func `a grok takeover persisted under either wire id keeps grok owned`(wireID: String) async {
         let store = self.makeStore(enabled: true)

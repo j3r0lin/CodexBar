@@ -319,6 +319,18 @@ struct CLIMagpieTests {
         #expect(!route.isNative, "\(wireID)")
     }
 
+    @Test(arguments: ["kimi", "kimi-code"])
+    func `kimi routes to magpie under either wire id`(wireID: String) async {
+        let source = CLIMagpieSource(
+            transport: ClaudeMagpieFixture.transport(data: Data("""
+            {"data":[{"provider":"\(wireID)","windows":[]}]}
+            """.utf8)))
+        let route = await source.route(for: .kimi, configuration: MagpieSourceConfig(enabled: true))
+        #expect(!route.isNative, "\(wireID)")
+        let off = await source.route(for: .kimi, configuration: MagpieSourceConfig(enabled: false))
+        #expect(off.isNative, "\(wireID)")
+    }
+
     @Test(arguments: ["grok", "grok-plugin"])
     func `grok stays owned when persisted under either wire id`(wireID: String) async {
         let source = CLIMagpieSource(

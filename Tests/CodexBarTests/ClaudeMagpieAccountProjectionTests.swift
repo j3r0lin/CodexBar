@@ -43,16 +43,16 @@ struct MagpieAccountProjectionTests {
     }
 
     @Test(arguments: [true, false])
-    func `an unknown wire id spelling a mapped provider name keeps both cards`(kimiFirst: Bool) throws {
-        let kimi = #"{"provider":"kimi","user":"u@example.com","windows":[{"name":"Burst","used":9}]}"#
-        let kimiCode = #"{"provider":"kimi-code","user":"k@example.com","windows":[{"name":"5 hours","used":4}]}"#
-        let rows = try self.project(kimiFirst
-            ? "{\"data\":[\(kimi),\(kimiCode)]}"
-            : "{\"data\":[\(kimiCode),\(kimi)]}")
-        #expect(rows.filter { $0.provider.nativeProvider == .kimi }.count == 1)
+    func `an unknown wire id spelling a mapped provider name keeps both cards`(unknownFirst: Bool) throws {
+        let unknownRow = #"{"provider":"opencodego","user":"u@example.com","windows":[{"name":"Burst","used":9}]}"#
+        let mappedRow = #"{"provider":"opencode-go","user":"k@example.com","windows":[{"name":"5 hours","used":4}]}"#
+        let rows = try self.project(unknownFirst
+            ? "{\"data\":[\(unknownRow),\(mappedRow)]}"
+            : "{\"data\":[\(mappedRow),\(unknownRow)]}")
+        #expect(rows.filter { $0.provider.nativeProvider == .opencodego }.count == 1)
         let unknown = rows.filter { $0.provider.nativeProvider == nil }
         #expect(unknown.count == 1)
-        #expect(unknown.first?.provider.wireID == "kimi")
+        #expect(unknown.first?.provider.wireID == "opencodego")
         #expect(unknown.first?.windows.first?.name == "Burst")
     }
 
