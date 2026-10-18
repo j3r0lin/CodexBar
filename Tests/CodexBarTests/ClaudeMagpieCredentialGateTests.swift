@@ -98,7 +98,7 @@ struct CLIMagpieTests {
     }
 
     @Test(arguments: ["grok", "grok-plugin"])
-    func `grok routes to magpie under either wire id`(wireID: String) async throws {
+    func `grok routes to magpie under either wire id`(wireID: String) async {
         let source = CLIMagpieSource(
             transport: ClaudeMagpieFixture.transport(data: Data("""
             {"data":[{"provider":"\(wireID)","windows":[]}]}
