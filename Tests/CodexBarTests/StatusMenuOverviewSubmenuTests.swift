@@ -352,7 +352,7 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `a grok card keeps its provider slot when the takeover and the response use different wire ids`() throws {
+    func `a grok card keeps its provider slot when the takeover and the response use different wire ids`() {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
