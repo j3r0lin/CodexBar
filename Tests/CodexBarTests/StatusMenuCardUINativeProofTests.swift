@@ -111,6 +111,10 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
 
         // Blocking: returns once the state machine cancels tracking after the third capture.
         menu.popUp(positioning: nil, at: NSPoint(x: 20, y: 120), in: host.contentView)
+        Self.recordDiagnostic(
+            "popUp returned: phase=\(self.phase) ticks=\(self.settleTicks) "
+                + "items=\(menu.items.count) views=\(menu.items.count { $0.view != nil })",
+            into: directory)
 
         // Detail submenu: captured in its own tracking session, again from a common-mode timer.
         let row = try XCTUnwrap(menu.items.first {
@@ -186,15 +190,41 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
     }
 
     private static func capture(window: NSWindow?, name: String, into directory: URL) {
-        guard let window else { return }
+        guard let window else {
+            Self.recordDiagnostic("capture \(name): no window", into: directory)
+            return
+        }
+        let stderr = Pipe()
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
         process.arguments = [
             "-x", "-o", "-l", String(window.windowNumber),
             directory.appendingPathComponent("\(name).png").path,
         ]
-        try? process.run()
-        process.waitUntilExit()
+        process.standardError = stderr
+        do {
+            try process.run()
+            process.waitUntilExit()
+            if process.terminationStatus != 0 {
+                let message = String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+                Self.recordDiagnostic(
+                    "capture \(name): status \(process.terminationStatus): \(message)", into: directory)
+            }
+        } catch {
+            Self.recordDiagnostic("capture \(name): \(error)", into: directory)
+        }
+    }
+
+    private static func recordDiagnostic(_ line: String, into directory: URL) {
+        let file = directory.appendingPathComponent("diagnostics.txt")
+        let data = (line + "\n").data(using: .utf8) ?? Data()
+        if let handle = try? FileHandle(forWritingTo: file) {
+            handle.seekToEndOfFile()
+            handle.write(data)
+            try? handle.close()
+        } else {
+            try? data.write(to: file)
+        }
     }
 
     /// Synthetic mirror of the reference mockup: three magpie Claude accounts, native Codex, Grok
