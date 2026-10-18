@@ -287,6 +287,9 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
         }
         fixture.settings.magpieSourceEnabled = true
         fixture.settings.magpieTakeoverWireIDs = ["claude", "opencode-go"]
+        // Reconcile before seeding: the first reconcile on menu open would otherwise see the
+        // switch flip and wipe the snapshots we are about to plant.
+        fixture.store.reconcileMagpieSourceConfiguration()
         func account(
             _ opaque: String,
             _ label: String,
