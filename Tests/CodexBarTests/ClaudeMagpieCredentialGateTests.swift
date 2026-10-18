@@ -210,7 +210,9 @@ struct CLIMagpieTests {
     func `CLI shows the upstream error of claude rows without usage`() async throws {
         let context = try Self.makeContext(
             providers: [.claude],
-            data: Data(#"{"data":[{"provider":"claude","user":"a@example.com","windows":[],"error":"token expired"}]}"#.utf8))
+            data: Data("""
+            {"data":[{"provider":"claude","user":"a@example.com","windows":[],"error":"token expired"}]}
+            """.utf8))
         let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
             Issue.record("Native IO crossed the magpie route: \(kind.rawValue)")
             throw CancellationError()

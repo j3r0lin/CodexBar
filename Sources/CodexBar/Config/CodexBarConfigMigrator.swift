@@ -55,7 +55,7 @@ struct CodexBarConfigMigrator {
         let switchOn = config.magpie?.enabled == true
         let claudeCookiePending = migrationCompleted && !switchOn &&
             userDefaults.bool(forKey: Self.legacyClaudeCookieDeferredKey)
-        if claudeCookiePending {
+        if claudeCookiePending || (!migrationCompleted && !switchOn) {
             self.migrateCookieProviders(
                 [(.claude, "claude-cookie", stores.claudeCookieStore.loadCookieHeader)],
                 config: &config,
@@ -72,7 +72,6 @@ struct CodexBarConfigMigrator {
             self.migrateLegacySecrets(
                 userDefaults: userDefaults,
                 stores: stores,
-                includeClaudeCookie: !switchOn,
                 config: &config,
                 state: &state,
                 log: log)
@@ -187,7 +186,6 @@ struct CodexBarConfigMigrator {
     private static func migrateLegacySecrets(
         userDefaults: UserDefaults,
         stores: LegacyStores,
-        includeClaudeCookie: Bool,
         config: inout CodexBarConfig,
         state: inout MigrationState,
         log: CodexBarLogger)
@@ -203,8 +201,6 @@ struct CodexBarConfigMigrator {
             state: &state,
             log: log)
 
-        let claudeCookie: [(UsageProvider, String, () throws -> String?)] = includeClaudeCookie
-            ? [(.claude, "claude-cookie", stores.claudeCookieStore.loadCookieHeader)] : []
         self.migrateCookieProviders(
             [
                 (.codex, "codex-cookie", stores.codexCookieStore.loadCookieHeader),
@@ -212,7 +208,7 @@ struct CodexBarConfigMigrator {
                 (.factory, "factory-cookie", stores.factoryCookieStore.loadCookieHeader),
                 (.augment, "augment-cookie", stores.augmentCookieStore.loadCookieHeader),
                 (.amp, "amp-cookie", stores.ampCookieStore.loadCookieHeader),
-            ] + claudeCookie,
+            ],
             config: &config,
             state: &state,
             log: log)

@@ -167,10 +167,14 @@ extension CodexBarCLI {
                         let error = MagpieUpstreamError(message: message)
                         output.exitCode = .failure
                         output.payload.append(Self.makeProviderErrorPayload(
-                            provider: provider, account: account.displayLabel, source: "magpie",
-                            status: status, error: error))
+                            provider: provider,
+                            account: account.displayLabel,
+                            source: "magpie",
+                            status: status,
+                            error: error))
                         output.cardFailures.append(CLICardFailure(
-                            provider: provider, accountLabel: account.displayLabel,
+                            provider: provider,
+                            accountLabel: account.displayLabel,
                             message: message))
                     }
                 } else {
