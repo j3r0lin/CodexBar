@@ -89,6 +89,56 @@ struct CLIMagpieTests {
     }
 
     @Test
+    func `parallel CLI collection keeps magpie ownership and does no native IO`() async throws {
+        let context = try TokenAccountCLIContext(
+            selection: TokenAccountCLISelection(label: nil, index: nil, allAccounts: true),
+            config: CodexBarConfig(
+                providers: [
+                    ProviderConfig(id: UsageProvider.claude.instanceID),
+                    ProviderConfig(id: UsageProvider.codex.instanceID),
+                ],
+                magpie: MagpieSourceConfig(enabled: true)),
+            verbose: false,
+            baseEnvironment: [:],
+            magpieSource: CLIMagpieSource(transport: ClaudeMagpieFixture.transport(data: Data("""
+            {"data":[{"provider":"claude","windows":[{"name":"5 hours","used":1}]},
+              {"provider":"codex","windows":[{"name":"5 hours","used":1}]}]}
+            """.utf8))))
+        let browserDetection = BrowserDetection(cacheTTL: 0)
+        let command = UsageCommandContext(
+            format: .json,
+            includeCredits: false,
+            sourceModeOverride: nil,
+            antigravityPlanDebug: false,
+            augmentDebug: false,
+            webDebugDumpHTML: false,
+            webTimeout: 5,
+            verbose: false,
+            useColor: false,
+            resetStyle: .countdown,
+            weeklyWorkDays: nil,
+            jsonOnly: true,
+            includeAllCodexAccounts: false,
+            fetcher: UsageFetcher(),
+            claudeFetcher: ClaudeUsageFetcher(browserDetection: browserDetection),
+            browserDetection: browserDetection)
+        let intercept: @Sendable (NativeProviderIOTestBoundary.Kind) throws -> Void = { kind in
+            Issue.record("Native IO crossed the magpie route: \(kind.rawValue)")
+            throw CancellationError()
+        }
+        let output = await NativeProviderIOTestBoundary.$intercept.withValue(intercept) {
+            await CodexBarCLI.collectUsageOutputs(providers: [.claude, .codex]) { provider in
+                await CodexBarCLI.fetchUsageOutputs(
+                    provider: provider, status: nil, tokenContext: context, command: command)
+            }
+        }
+        #expect(output.exitCode == .success)
+        #expect(output.payload.map(\.provider) == ["claude", "codex"])
+        #expect(output.payload.allSatisfy { $0.source == "magpie" })
+        #expect(output.payload.allSatisfy { $0.usage != nil })
+    }
+
+    @Test
     func `CLI keeps persisted ownership when provider disappears`() async {
         let source = CLIMagpieSource(
             transport: ClaudeMagpieFixture.transport(data: Data(#"{"data":[]}"#.utf8)),
