@@ -132,12 +132,12 @@ struct OverviewProviderIcon: View {
                 Image(nsImage: image)
                     .resizable()
                     .renderingMode(self.isTemplate ? .template : .original)
-                    .aspectRatio(contentMode: .fit)
+                    .scaledToFit()
             } else {
                 Image(systemName: "cube")
                     .resizable()
                     .renderingMode(.template)
-                    .aspectRatio(contentMode: .fit)
+                    .scaledToFit()
             }
         }
         .foregroundStyle(Color.white.opacity(0.9))

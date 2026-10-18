@@ -21,7 +21,7 @@ struct OverviewCardHeaderView: View {
             if let icon = NSImage(named: NSImage.applicationIconName) {
                 Image(nsImage: icon)
                     .resizable()
-                    .aspectRatio(contentMode: .fit)
+                    .scaledToFit()
                     .frame(width: 32, height: 32)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
