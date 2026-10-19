@@ -1,0 +1,97 @@
+import AppKit
+
+private enum MenuFooterBarRegistry {
+    /// Footer bars are weakly tracked so a refresh started while the menu is open can spin their icon.
+    nonisolated(unsafe) static let bars =
+        NSMapTable<StatusItemController, NSHashTable<MenuFooterBarView>>.weakToStrongObjects()
+}
+
+extension StatusItemController {
+    var menuFooterBars: NSHashTable<MenuFooterBarView> {
+        if let existing = MenuFooterBarRegistry.bars.object(forKey: self) {
+            return existing
+        }
+        let created = NSHashTable<MenuFooterBarView>.weakObjects()
+        MenuFooterBarRegistry.bars.setObject(created, forKey: self)
+        return created
+    }
+
+    static func isMenuFooterEntry(_ entry: MenuDescriptor.Entry) -> Bool {
+        guard case let .action(_, action) = entry else { return false }
+        return Self.menuFooterActions.contains(action)
+    }
+
+    /// The four trailing meta actions collapse into one icon bar after the section's other entries.
+    /// Their keyboard shortcuts stay with `StatusItemMenu.performKeyEquivalent`: a hidden item's
+    /// keyEquivalent does not fire while a menu is tracking, even with `allowsKeyEquivalentWhenHidden`.
+    /// `includedActions` narrows which of them get a button — the Overview header owns refresh and
+    /// settings, so its footer bar only carries About and Quit.
+    func appendMenuFooterBarIfNeeded(
+        section: MenuDescriptor.Section,
+        to menu: NSMenu,
+        width: CGFloat,
+        captureMenu: NSMenu?,
+        includedActions: [MenuDescriptor.MenuAction]? = nil)
+    {
+        let included = includedActions ?? Self.menuFooterActions
+        let actions = section.entries.compactMap { entry -> MenuDescriptor.MenuAction? in
+            guard case let .action(_, action) = entry,
+                  Self.menuFooterActions.contains(action),
+                  included.contains(action) else { return nil }
+            return action
+        }
+        guard !actions.isEmpty else { return }
+        let buttons = actions.map { action in
+            self.menuFooterButton(for: action, menu: captureMenu ?? menu)
+        }
+        let bar = MenuFooterBarView(width: width, buttons: buttons)
+        let item = NSMenuItem()
+        item.view = bar
+        item.representedObject = Self.menuFooterBarItemID
+        menu.addItem(item)
+        self.menuFooterBars.add(bar)
+        self.updateMenuFooterBars()
+    }
+
+    private func menuFooterButton(for action: MenuDescriptor.MenuAction, menu: NSMenu?) -> MenuFooterButton {
+        MenuFooterButton(
+            systemImageName: action.systemImageName ?? "",
+            label: self.menuFooterLabel(for: action))
+        { [weak self, weak menu] in
+            guard let self else { return }
+            self.performMenuFooterAction(action, menu: menu)
+        }
+    }
+
+    private func menuFooterLabel(for action: MenuDescriptor.MenuAction) -> String {
+        switch action {
+        case .refresh: L("Refresh")
+        case .settings: L("Settings...")
+        case .about: L("About CodexBar") + (AppVersion.shortVersion.isEmpty ? "" : " (v\(AppVersion.shortVersion))")
+        case .quit: L("Quit")
+        default: ""
+        }
+    }
+
+    private func performMenuFooterAction(_ action: MenuDescriptor.MenuAction, menu: NSMenu?) {
+        switch action {
+        case .refresh:
+            if let menu = menu as? StatusItemMenu {
+                menu.requestPersistentRefreshAction()
+            } else if let menu {
+                self.performPersistentRefreshAction(in: ObjectIdentifier(menu))
+            }
+        case .settings:
+            menu?.cancelTracking()
+            self.showSettingsGeneral()
+        case .about:
+            menu?.cancelTracking()
+            self.showSettingsAbout()
+        case .quit:
+            menu?.cancelTracking()
+            self.quit()
+        default:
+            break
+        }
+    }
+}

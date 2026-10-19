@@ -57,5 +57,65 @@
       <string>Тижневий ліміт може вичерпатися на ≈%d вікон раніше</string>
     </dict>
   </dict>
+  <key>account_detail_window_days</key>
+  <dict>
+    <key>NSStringLocalizedFormatKey</key>
+    <string>%#@n@</string>
+    <key>n</key>
+    <dict>
+      <key>NSStringFormatSpecTypeKey</key>
+      <string>NSStringPluralRuleType</string>
+      <key>NSStringFormatValueTypeKey</key>
+      <string>d</string>
+      <key>one</key>
+      <string>%d день</string>
+      <key>few</key>
+      <string>%d дні</string>
+      <key>many</key>
+      <string>%d днів</string>
+      <key>other</key>
+      <string>%d дня</string>
+    </dict>
+  </dict>
+  <key>account_detail_window_hours</key>
+  <dict>
+    <key>NSStringLocalizedFormatKey</key>
+    <string>%#@n@</string>
+    <key>n</key>
+    <dict>
+      <key>NSStringFormatSpecTypeKey</key>
+      <string>NSStringPluralRuleType</string>
+      <key>NSStringFormatValueTypeKey</key>
+      <string>d</string>
+      <key>one</key>
+      <string>%d година</string>
+      <key>few</key>
+      <string>%d години</string>
+      <key>many</key>
+      <string>%d годин</string>
+      <key>other</key>
+      <string>%d години</string>
+    </dict>
+  </dict>
+  <key>account_detail_window_minutes</key>
+  <dict>
+    <key>NSStringLocalizedFormatKey</key>
+    <string>%#@n@</string>
+    <key>n</key>
+    <dict>
+      <key>NSStringFormatSpecTypeKey</key>
+      <string>NSStringPluralRuleType</string>
+      <key>NSStringFormatValueTypeKey</key>
+      <string>d</string>
+      <key>one</key>
+      <string>%d хвилина</string>
+      <key>few</key>
+      <string>%d хвилини</string>
+      <key>many</key>
+      <string>%d хвилин</string>
+      <key>other</key>
+      <string>%d хвилини</string>
+    </dict>
+  </dict>
 </dict>
 </plist>

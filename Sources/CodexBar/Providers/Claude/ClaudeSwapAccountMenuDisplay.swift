@@ -39,11 +39,14 @@ struct ClaudeSwapAccountMenuDisplay {
     }
 
     static func privacyOrdinal(for account: ProviderAccountUsageSnapshot) -> PersonalInfoRedactor.AccountOrdinal? {
-        guard account.provider == .claude,
-              ClaudeSwapAccountSource(identitySource: account.id.source) != nil,
-              let number = Int(account.id.opaqueID)
-        else { return nil }
-        return PersonalInfoRedactor.AccountOrdinal(number)
+        guard account.provider == .claude else { return nil }
+        if ClaudeSwapAccountSource(identitySource: account.id.source) != nil {
+            guard let number = Int(account.id.opaqueID) else { return nil }
+            return PersonalInfoRedactor.AccountOrdinal(number)
+        }
+        // Sources without numeric slots (magpie) use their own listing order.
+        guard let ordinal = account.sourceOrdinal else { return nil }
+        return PersonalInfoRedactor.AccountOrdinal(ordinal)
     }
 
     static func cardContext(
@@ -65,7 +68,8 @@ struct ClaudeSwapAccountMenuDisplay {
             plan: .label(planLabel),
             planEmphasis: account.isActive ? .active : .none,
             lastKnownUsageCapturedAt: account.usesLastKnownUsage ? account.snapshot?.updatedAt : nil,
-            sourceLabel: ClaudeSwapAccountSource(identitySource: account.id.source)?.label
+            sourceLabel: account.sourceLabel
+                ?? ClaudeSwapAccountSource(identitySource: account.id.source)?.label
                 ?? ClaudeSwapAccountProjection.sourceLabel))
     }
 

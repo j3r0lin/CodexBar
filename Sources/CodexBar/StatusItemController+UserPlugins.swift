@@ -10,10 +10,6 @@ extension StatusItemController {
                 !self.topLevelUserProviderPlugins().isEmpty)
     }
 
-    static func isUserPluginSelection(_ selection: ProviderSwitcherSelection?) -> Bool {
-        selection?.instanceID.map { UserProviderPluginRegistry.plugin(for: $0) != nil } == true
-    }
-
     func topLevelUserProviderPlugins() -> [UserProviderPlugin] {
         UserProviderPluginRegistry.all.filter {
             $0.manifest.topLevel && self.settings.isPluginEnabled($0.manifest.id)
@@ -24,17 +20,6 @@ extension StatusItemController {
         enabledFirstPartyProviders.map(\.instanceID) + self.topLevelUserProviderPlugins().map(\.manifest.id)
     }
 
-    static func resolvedSwitcherProviderID(
-        providerIDs: [ProviderInstanceID],
-        selectedProviderID: ProviderInstanceID?,
-        fallbackProviderID: ProviderInstanceID) -> ProviderInstanceID
-    {
-        if let selectedProviderID, providerIDs.contains(selectedProviderID) {
-            return selectedProviderID
-        }
-        return providerIDs.contains(fallbackProviderID) ? fallbackProviderID : providerIDs.first ?? fallbackProviderID
-    }
-
     func overviewProviderIDs(enabledProviders: [UsageProvider]) -> [ProviderInstanceID] {
         let enabled = Set(enabledProviders)
         return self.store.enabledProvidersForDisplay().filter {
@@ -42,35 +27,9 @@ extension StatusItemController {
         }
     }
 
-    func includesOverviewTab(enabledProviders: [UsageProvider]) -> Bool {
-        self.switcherProviderIDs(enabledFirstPartyProviders: enabledProviders).count > 1 &&
-            !self.settings.resolvedMergedOverviewProviders(
-                activeProviders: self.overviewProviderIDs(enabledProviders: enabledProviders),
-                maxVisibleProviders: SettingsStore.mergedOverviewProviderLimit).isEmpty
-    }
-
-    func resolvedSwitcherSelection(
-        enabledProviders: [UsageProvider],
-        includesOverview: Bool) -> ProviderSwitcherSelection
-    {
-        if includesOverview, self.settings.mergedMenuLastSelectedWasOverview {
-            return .overview
-        }
-        let providerIDs = self.switcherProviderIDs(enabledFirstPartyProviders: enabledProviders)
-        let fallbackProviderID = (self.resolvedMenuProvider(enabledProviders: enabledProviders) ?? .codex).instanceID
-        return .provider(Self.resolvedSwitcherProviderID(
-            providerIDs: providerIDs,
-            selectedProviderID: self.selectedMenuProvider,
-            fallbackProviderID: fallbackProviderID))
-    }
-
-    func resolvedMergedMenuSelection(enabledProviders: [UsageProvider]) -> ProviderSwitcherSelection? {
-        guard self.shouldMergeIcons,
-              !self.switcherProviderIDs(enabledFirstPartyProviders: enabledProviders).isEmpty
-        else { return nil }
-        return self.resolvedSwitcherSelection(
-            enabledProviders: enabledProviders,
-            includesOverview: self.includesOverviewTab(enabledProviders: enabledProviders))
+    /// The merged menu always shows Overview; provider details open as submenus off its rows.
+    var mergedMenuSelection: ProviderSwitcherSelection? {
+        self.shouldMergeIcons ? .overview : nil
     }
 
     func addUserPluginMenuCards(
@@ -78,13 +37,9 @@ extension StatusItemController {
         width: CGFloat,
         selectedPluginID: ProviderInstanceID? = nil)
     {
-        let hasTopLevelSwitcher = self.shouldMergeIcons &&
-            self.switcherProviderIDs(
-                enabledFirstPartyProviders: self.store.enabledFirstPartyProvidersForDisplay()).count > 1
         let plugins = Self.userPluginsForMenu(
             UserProviderPluginRegistry.all,
             isEnabled: self.settings.isPluginEnabled,
-            topLevelSwitcherVisible: hasTopLevelSwitcher,
             selectedPluginID: selectedPluginID)
         guard !plugins.isEmpty else { return }
         if !menu.items.isEmpty, menu.items.last?.isSeparatorItem != true {
@@ -134,22 +89,16 @@ extension StatusItemController {
         guard self.isMenuRefreshEnabled else { return }
         let cardID = "pluginCard:\(instanceID.rawValue)"
         // Plugin cards capture snapshots, so their visible payload needs the guarded rebuild path.
-        let overviewID = "\(Self.overviewRowIdentifierPrefix)\(instanceID.rawValue)"
-        for menu in self.openMenus.values {
-            (menu.items.first?.view as? ProviderSwitcherView)?.updateQuotaIndicators()
-            if menu.items.contains(where: {
-                let id = $0.representedObject as? String
-                return id == cardID || id == overviewID
-            }) {
-                self.scheduleOpenMenuRebuildIfStillVisible(menu, provider: self.menuProvider(for: menu))
-            }
+        for menu in self.openMenus.values
+            where menu.items.contains(where: { $0.representedObject as? String == cardID })
+        {
+            self.scheduleOpenMenuRebuildIfStillVisible(menu, provider: self.menuProvider(for: menu))
         }
     }
 
     static func userPluginsForMenu(
         _ plugins: [UserProviderPlugin],
         isEnabled: (ProviderInstanceID) -> Bool,
-        topLevelSwitcherVisible: Bool,
         selectedPluginID: ProviderInstanceID?) -> [UserProviderPlugin]
     {
         let enabledPlugins = plugins.filter { isEnabled($0.manifest.id) }
@@ -160,7 +109,8 @@ extension StatusItemController {
             }
             return selected + legacy
         }
-        return enabledPlugins.filter { !topLevelSwitcherVisible || !$0.manifest.topLevel }
+        // No provider tabs exist anymore, so top-level plugins list their cards with the rest.
+        return enabledPlugins
     }
 
     func userPluginSwitcherIcon(for plugin: UserProviderPlugin) -> NSImage {
@@ -244,17 +194,6 @@ struct UserPluginQuotaPresentation: Equatable {
         return Self(
             percent: showUsed ? used : remaining,
             text: UsageFormatter.usageLine(remaining: remaining, used: used, showUsed: showUsed))
-    }
-}
-
-extension ProviderSwitcherView {
-    static func pluginSwitcherImage(
-        _ plugin: UserProviderPlugin,
-        iconProvider: (UserProviderPlugin) -> NSImage) -> NSImage
-    {
-        let image = iconProvider(plugin)
-        image.size = NSSize(width: 16, height: 16)
-        return image
     }
 }
 

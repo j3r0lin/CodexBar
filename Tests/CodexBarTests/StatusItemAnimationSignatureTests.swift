@@ -426,7 +426,7 @@ struct StatusItemAnimationSignatureTests {
     }
 
     @Test
-    func `merged icon render defers while merged menu is tracking`() async throws {
+    func `merged icon render defers while merged menu is tracking`() throws {
         let suite = "StatusItemAnimationSignatureTests-merged-icon-defers-during-tracking"
         let settings = testSettingsStore(suiteName: suite)
         settings.statusChecksEnabled = false
@@ -503,23 +503,6 @@ struct StatusItemAnimationSignatureTests {
 
         #expect(!controller.deferredMergedIconRenderAfterTracking)
         #expect(controller.lastAppliedMergedIconRenderSignature?.contains("warningFlash=0") == true)
-
-        controller.menuWillOpen(menu)
-        settings.selectedMenuProvider = .synthetic
-        #expect(controller.primaryProviderForUnifiedIcon() == .synthetic)
-        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=codex") == true)
-
-        controller.startQuotaWarningFlash(provider: .codex)
-        let switchedProviderWarningTask = controller.quotaWarningFlashTasks[.codex]
-        #expect(controller.lastAppliedMergedIconRenderSignature?.contains("provider=synthetic") == true)
-        controller.clearExpiredQuotaWarningFlash(provider: .codex, now: .distantFuture)
-        switchedProviderWarningTask?.cancel()
-        controller.menuDidClose(menu)
-
-        settings.selectedMenuProvider = .codex
-        for _ in 0..<10 where controller.primaryProviderForUnifiedIcon() != .codex {
-            await Task.yield()
-        }
 
         controller.menuWillOpen(menu)
         store._setSnapshotForTesting(nil, provider: .codex)

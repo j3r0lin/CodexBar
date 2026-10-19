@@ -168,7 +168,7 @@ struct UsageMenuCardView: View {
         }
 
         let provider: UsageProvider
-        let providerName: String
+        var providerName: String
         var email: String
         var accountIdentityFingerprint: String?
         let subtitleText: String
@@ -198,6 +198,8 @@ struct UsageMenuCardView: View {
         let tokenUsage: TokenUsageSection?
         let placeholder: String?
         let progressColor: Color
+        /// Colors each usage bar by how much is used instead of the provider accent.
+        var usageColoredProgress = false
     }
 
     let model: Model
@@ -645,7 +647,10 @@ private struct UsageMenuCardUsageContentView: View {
                 metric: metric,
                 layoutMetric: self.layoutModel.metrics.first { $0.id == metric.id } ?? metric,
                 title: UsageMenuCardView.popupMetricTitle(provider: self.model.provider, metric: metric),
-                progressColor: self.model.progressColor,
+                progressColor: self.model.usageColoredProgress
+                    ? Color(nsColor: UsageSeverityPalette.color(
+                        usedPercent: metric.percentStyle == .used ? metric.percent : 100 - metric.percent))
+                    : self.model.progressColor,
                 compact: self.compactMetrics)
         }
     }

@@ -206,7 +206,7 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
                 if tracksFirstPartyCards {
                     self.menuCardRefreshMonitor.endManualRefresh(for: firstPartyProvider)
                 }
-                self.updatePersistentRefreshItemsEnabled()
+                self.updateMenuFooterBars()
                 if completed {
                     self.scheduleCompletedManualRefreshViewportRestore(viewportRestoreRequests)
                 } else {
@@ -248,19 +248,13 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
         if tracksFirstPartyCards {
             self.menuCardRefreshMonitor.beginManualRefresh(frozenModels: frozenModels, provider: firstPartyProvider)
         }
-        self.updatePersistentRefreshItemsEnabled()
+        self.updateMenuFooterBars()
     }
 
     func manualRefreshProvider(for menu: NSMenu?) -> ProviderInstanceID? {
         guard let menu else { return nil }
-        if self.shouldMergeIcons {
-            guard self.mergedMenu == nil || menu === self.mergedMenu else { return nil }
-            let enabledProviders = self.store.enabledFirstPartyProvidersForDisplay()
-            if let selection = self.resolvedMergedMenuSelection(enabledProviders: enabledProviders) {
-                return selection.instanceID
-            }
-            return self.resolvedMenuProvider(enabledProviders: enabledProviders)?.instanceID
-        }
+        // Overview spans every provider, so a refresh from the merged menu is global.
+        guard !self.shouldMergeIcons else { return nil }
         return self.menuProviders[ObjectIdentifier(menu)]
     }
 
@@ -320,12 +314,6 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
         }
     }
 
-    nonisolated func performProviderNavigation(_ direction: StatusItemMenuProviderNavigationDirection) {
-        Task { @MainActor [weak self] in
-            self?.navigateProviderSwitcher(direction)
-        }
-    }
-
     @objc func refreshAugmentSession() {
         Task {
             await self.store.forceRefreshAugmentSession()
@@ -343,6 +331,24 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
 
     @objc func checkForUpdates() {
         self.updater.checkForUpdates(nil)
+    }
+
+    /// The provider a link action was built for. Nil for items made before actions carried one.
+    func actionProvider(for sender: NSMenuItem) -> UsageProvider? {
+        (sender.representedObject as? String).flatMap(UsageProvider.init(rawValue:))
+    }
+
+    @objc func openDashboardFromMenuItem(_ sender: NSMenuItem) {
+        guard let provider = self.actionProvider(for: sender) else { return self.openDashboard() }
+        guard let url = self.dashboardURL(for: provider) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    @objc func openChangelogFromMenuItem(_ sender: NSMenuItem) {
+        guard let provider = self.actionProvider(for: sender) else { return self.openChangelog() }
+        let metadata = self.store.metadata(for: provider)
+        guard let value = metadata.changelogURL, let url = URL(string: value) else { return }
+        NSWorkspace.shared.open(url)
     }
 
     @objc func openDashboard() {
@@ -473,10 +479,19 @@ extension StatusItemController: StatusItemMenuPersistentActionDelegate {
     }
 
     @objc func openStatusPageFromMenuItem(_ sender: NSMenuItem) {
-        let provider = (sender.identifier?.rawValue).flatMap(UsageProvider.init(rawValue:))
+        let provider = self.statusPageProvider(for: sender)
             ?? self.lastMenuProvider?.firstPartyProvider
             ?? .codex
         self.openStatusPage(for: provider)
+    }
+
+    /// The status-components link keeps its provider in the identifier and a chart tag in the represented
+    /// object; Overview detail items carry it as the represented object only.
+    func statusPageProvider(for sender: NSMenuItem) -> UsageProvider? {
+        [sender.identifier?.rawValue, sender.representedObject as? String]
+            .lazy
+            .compactMap { $0.flatMap(UsageProvider.init(rawValue:)) }
+            .first
     }
 
     private func openStatusPage(for provider: UsageProvider) {

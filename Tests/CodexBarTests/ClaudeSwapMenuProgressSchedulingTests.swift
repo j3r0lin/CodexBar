@@ -56,8 +56,6 @@ struct ClaudeSwapMenuProgressSchedulingTests {
             switch invalidation {
             case .configuration:
                 fixture.store.clearClaudeSwapAccountState()
-            case .provider:
-                fixture.controller.selectedMenuProvider = .codex
             case .interaction:
                 fixture.controller.advanceMenuInteraction(for: fixture.menu)
             case .inspection:
@@ -84,7 +82,6 @@ struct ClaudeSwapMenuProgressSchedulingTests {
 
     enum Invalidation: CaseIterable, Equatable, Sendable {
         case configuration
-        case provider
         case interaction
         case inspection
     }

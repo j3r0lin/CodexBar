@@ -24,7 +24,7 @@ extension UsageStore {
     /// ambient Claude refresh. Listing is read-only; explicit account activation
     /// stays external-process-owned and never exposes credentials to CodexBar.
     func shouldFetchClaudeSwapAccounts() -> Bool {
-        self.isEnabled(.claude) && self.settings.claudeSwapEnabled &&
+        self.providerSourceRoute(for: .claude).isNative && self.isEnabled(.claude) && self.settings.claudeSwapEnabled &&
             !self.settings.claudeSwapExecutablePath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
@@ -40,12 +40,9 @@ extension UsageStore {
     /// last-known numbers on the bar would present them as current.
     func claudeSwapMenuBarSnapshotOverride(for instanceID: ProviderInstanceID) -> UsageSnapshot? {
         guard instanceID == UsageProvider.claude.instanceID else { return nil }
-        guard ClaudeSwapMenuPrecedence.prefersClaudeSwap(
-            provider: .claude,
-            accountCount: self.claudeSwapAccountSnapshots.count,
-            showSingleAccount: self.settings.claudeSwapShowSingleAccount)
-        else { return nil }
-        guard let active = self.claudeSwapAccountSnapshots.first(where: \.isActive),
+        let source = self.claudeAccountSource
+        guard source.ownsPresentation else { return nil }
+        guard let active = source.activeAccount,
               !active.usesLastKnownUsage
         else { return nil }
         return active.snapshot
@@ -294,7 +291,7 @@ extension UsageStore {
         source: ClaudeSwapAccountSource,
         configurationGeneration: UInt64? = nil) -> Bool
     {
-        self.isEnabled(.claude) && self.settings.claudeSwapEnabled &&
+        self.providerSourceRoute(for: .claude).isNative && self.isEnabled(.claude) && self.settings.claudeSwapEnabled &&
             self.settings.claudeSwapExecutablePath == executablePath &&
             self.settings.claudeSwapSource == source &&
             (configurationGeneration == nil ||

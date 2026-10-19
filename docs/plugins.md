@@ -485,6 +485,9 @@ built-in provider.
 
 ## Provider switcher tabs
 
+> The merged menu no longer has a provider switcher; it opens on the Overview list with details in hover submenus.
+> Top-level plugin tabs described below have no entry point there until plugins get Overview rows.
+
 Enabled user plugins get their own tab by default when **Merge Icons** is enabled; the manifest can omit `topLevel`.
 The tab uses the manifest name and icon. Selecting it shows that plugin’s usage followed by any enabled plugins with
 explicit `topLevel: false`, which keeps the appended-card placement under provider tabs and Overview. With Merge Icons

@@ -111,6 +111,20 @@ extension CodexBarCLI {
         browserDetection: BrowserDetection,
         verbose: Bool) async -> ProviderDiagnosticExport
     {
+        let route = await tokenContext.magpieSource.route(for: provider, configuration: tokenContext.config.magpie)
+        if !route.isNative {
+            let outcome = await Self.fetchRoutedProviderUsage(provider: provider, tokenContext: tokenContext) {
+                ProviderFetchOutcome(result: .failure(UsageError.noRateLimitsFound), attempts: [])
+            }
+            return ProviderDiagnosticExportBuilder.build(.init(
+                provider: provider,
+                descriptor: ProviderDescriptorRegistry.descriptor(for: provider),
+                outcome: outcome,
+                sourceMode: .auto,
+                settings: ProviderSettingsSnapshot(),
+                auth: ProviderDiagnosticAuthSummary(configured: false, modes: []),
+                appVersion: Self.currentVersion()))
+        }
         let account = ((try? tokenContext.resolvedAccounts(for: provider)) ?? []).first
         let env = tokenContext.environment(
             base: ProcessInfo.processInfo.environment,

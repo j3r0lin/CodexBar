@@ -116,15 +116,6 @@ struct MenuBarPane: View {
                         automaticProvider: pair.bottom)
                 }
 
-                SettingsMenuPicker(
-                    selection: self.$settings.switcherRowsOption,
-                    options: MenuBarSettingsMenuOptions.switcherRows,
-                    label: { SettingsRowLabel(L("switcher_rows_title")) },
-                    optionLabel: { option in
-                        Text(option.label)
-                    })
-                    .disabled(!self.settings.mergeIcons)
-
                 UnifiedIconSourcePicker(selection: self.$settings.unifiedIconSource)
                     .disabled(!self.settings.mergeIcons || self.mergedIconPresentation.effectiveStyle == .stacked)
 

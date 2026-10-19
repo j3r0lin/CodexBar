@@ -7,32 +7,24 @@ extension StatusItemController {
         captureMenu: NSMenu,
         context: MenuCardContext)
     {
-        let accounts = self.store.claudeSwapAccountSnapshots
-        let display = ClaudeSwapAccountMenuDisplay(
-            accounts: accounts,
-            layout: self.settings.multiAccountMenuLayout,
-            switchingAccountID: self.store.claudeSwapTransientState.switchingAccountID,
-            errorAccountID: self.store.claudeSwapTransientState.lastErrorAccountID,
-            inspectedAccountID: self.claudeSwapInspectedAccountID)
+        let accounts = self.store.claudeAccountSource.accounts
+        if self.claudeAccountTabsEnabled {
+            // Each account has its own Overview row; the Claude detail card shows only the selected account.
+            if let account = self.selectedClaudeTabAccount {
+                self.addStackedClaudeSwapMenuCards(
+                    accounts: [account],
+                    to: menu,
+                    captureMenu: captureMenu,
+                    context: context)
+            }
+            return
+        }
+        let display = self.claudeSwapAccountMenuDisplay()
         // tcr picks the account for each request, so it never switches and never reports an active account.
         // Keyed on the rows being drawn, not the setting, so a list read before a source change keeps its wording.
         let readsFromTcr = accounts.contains { ClaudeSwapAccountSource(identitySource: $0.id.source) == .tcr }
         if display.showsSwitcher {
-            let headingTitle = readsFromTcr ? L("Claude accounts in tcr") : L("Switch Claude Code account")
-            let switcherHeading = NSMenuItem(title: headingTitle, action: nil, keyEquivalent: "")
-            switcherHeading.isEnabled = false
-            menu.addItem(switcherHeading)
-            let item = NSMenuItem()
-            item.view = ClaudeSwapAccountSwitcherView(
-                display: display,
-                hidePersonalInfo: self.settings.hidePersonalInfo,
-                width: context.menuWidth,
-                onSelect: { [weak self, weak captureMenu] id in
-                    self?.handleClaudeSwapAccountSelection(id, menu: captureMenu)
-                })
-            item.isEnabled = false
-            menu.addItem(item)
-            menu.addItem(.separator())
+            self.addClaudeSwapAccountSwitcher(display, to: menu, captureMenu: captureMenu, width: context.menuWidth)
             if !readsFromTcr, !accounts.contains(where: \.isActive) {
                 let notice = NSMenuItem(title: L("No active account"), action: nil, keyEquivalent: "")
                 notice.isEnabled = false
@@ -81,6 +73,48 @@ extension StatusItemController {
             context: context)
     }
 
+    func claudeSwapAccountMenuDisplay() -> ClaudeSwapAccountMenuDisplay {
+        ClaudeSwapAccountMenuDisplay(
+            accounts: self.store.claudeAccountSource.accounts,
+            layout: self.settings.multiAccountMenuLayout,
+            switchingAccountID: self.store.claudeSwapTransientState.switchingAccountID,
+            errorAccountID: self.store.claudeSwapTransientState.lastErrorAccountID,
+            inspectedAccountID: self.claudeSwapInspectedAccountID)
+    }
+
+    /// The heading and segmented account switcher, followed by a separator.
+    func addClaudeSwapAccountSwitcher(
+        _ display: ClaudeSwapAccountMenuDisplay,
+        to menu: NSMenu,
+        captureMenu: NSMenu,
+        width: CGFloat)
+    {
+        let accounts = self.store.claudeAccountSource.accounts
+        // Read-only sources (magpie, tcr) only inspect accounts, so do not promise a switch.
+        let readsFromTcr = accounts.contains { ClaudeSwapAccountSource(identitySource: $0.id.source) == .tcr }
+        let headingTitle = if readsFromTcr {
+            L("Claude accounts in tcr")
+        } else if accounts.contains(where: \.canActivate) || self.store.shouldFetchClaudeSwapAccounts() {
+            L("Switch Claude Code account")
+        } else {
+            L("Accounts")
+        }
+        let switcherHeading = NSMenuItem(title: headingTitle, action: nil, keyEquivalent: "")
+        switcherHeading.isEnabled = false
+        menu.addItem(switcherHeading)
+        let item = NSMenuItem()
+        item.view = ClaudeSwapAccountSwitcherView(
+            display: display,
+            hidePersonalInfo: self.settings.hidePersonalInfo,
+            width: width,
+            onSelect: { [weak self, weak captureMenu] id in
+                self?.handleClaudeSwapAccountSelection(id, menu: captureMenu)
+            })
+        item.isEnabled = false
+        menu.addItem(item)
+        menu.addItem(.separator())
+    }
+
     func resetClaudeSwapAccountInspection() {
         guard self.claudeSwapInspectedAccountID != nil else { return }
         self.claudeSwapInspectedAccountID = nil
@@ -89,7 +123,7 @@ extension StatusItemController {
 
     func handleClaudeSwapAccountSelection(_ id: ProviderAccountIdentity, menu: NSMenu?) {
         guard self.store.claudeSwapTransientState.task == nil,
-              let account = self.store.claudeSwapAccountSnapshots.first(where: { $0.id == id })
+              let account = self.store.claudeAccountSource.accounts.first(where: { $0.id == id })
         else { return }
         if !ClaudeSwapAccountMenuDisplay.activatesAccount(account) {
             // Inspect sentinel diagnostics without asking the adapter to activate that slot.
@@ -153,17 +187,21 @@ extension StatusItemController {
             })
     }
 
-    private func claudeSwapCardModel(for account: ProviderAccountUsageSnapshot) -> UsageMenuCardView.Model? {
-        self.menuCardModel(
+    func claudeSwapCardModel(for account: ProviderAccountUsageSnapshot) -> UsageMenuCardView.Model? {
+        var model = self.menuCardModel(
             for: .claude,
             context: ClaudeSwapAccountMenuDisplay.cardContext(
                 for: account,
                 planLabel: self.claudeSwapAccountActionLabel(account),
-                adapterError: self.store.claudeSwapLastError,
+                adapterError: self.store.claudeAccountSource.lastError,
                 switchError: self.store.claudeSwapTransientState.lastErrorAccountID == account.id
                     ? self.store.claudeSwapTransientState.lastError
                     : nil,
                 historySelection: self.store.claudeSwapPlanUtilizationHistorySelection(for: account)))
+        if self.claudeAccountTabsEnabled {
+            model?.usageColoredProgress = true
+        }
+        return model
     }
 
     private func claudeSwapAccountActionLabel(_ account: ProviderAccountUsageSnapshot) -> String? {
@@ -184,6 +222,41 @@ extension StatusItemController {
         return { [weak self, weak menu] in
             guard let self else { return }
             self.startClaudeSwapAccountSwitch(accountID, menu: menu)
+        }
+    }
+
+    // MARK: - Per-account Overview rows (magpie only)
+
+    /// While magpie owns Claude, each magpie account gets its own Overview row.
+    var claudeAccountTabsEnabled: Bool {
+        self.settings.magpieSourceEnabled && !self.store.claudeAccountSource.accounts.isEmpty
+    }
+
+    var selectedClaudeTabAccount: ProviderAccountUsageSnapshot? {
+        let accounts = self.store.claudeAccountSource.accounts
+        if let id = self.claudeSwapInspectedAccountID, let account = accounts.first(where: { $0.id == id }) {
+            return account
+        }
+        return accounts.first(where: \.isActive) ?? accounts.first
+    }
+
+    /// magpie serves every account from one quotas call, so the item refreshes all Claude accounts.
+    func makeRefreshClaudeAccountItem(_ id: ProviderAccountIdentity) -> NSMenuItem {
+        let item = NSMenuItem(
+            title: L("Refresh Claude usage"),
+            action: #selector(self.refreshClaudeAccount(_:)),
+            keyEquivalent: "")
+        item.target = self
+        item.representedObject = id.opaqueID
+        return item
+    }
+
+    @objc func refreshClaudeAccount(_ sender: NSMenuItem) {
+        guard let opaqueID = sender.representedObject as? String,
+              self.store.claudeAccountSource.accounts.contains(where: { $0.id.opaqueID == opaqueID })
+        else { return }
+        Task { @MainActor [weak self] in
+            await self?.store.refreshMagpieAccounts()
         }
     }
 }

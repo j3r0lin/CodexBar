@@ -460,7 +460,7 @@
 "metric_tertiary" = "3차 (%@)";
 "multiple_workspaces_found" = "CodexBar가 %@에 대한 여러 작업 공간을 찾았습니다. 추가할 작업 공간을 선택하세요.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "최대 %@개의 공급자 선택";
+"overview_choose_providers" = "통합 아이콘에 사용할 제공자를 최대 %@개 선택";
 "remove_account_message" = "CodexBar에서 %@을(를) 제거하시겠습니까? 관리형 Codex 홈이 삭제됩니다.";
 "version_format" = "버전 %@";
 "vertex_ai_login_instructions" = "Vertex AI 사용량을 추적하려면 Google Cloud로 인증하세요.\n\n1. 터미널 열기\n2. 실행: gcloud auth application-default login\n3. 브라우저 안내에 따라 로그인\n4. 프로젝트 설정: gcloud config set project PROJECT_ID\n\n지금 터미널을 여시겠습니까?";
@@ -617,9 +617,6 @@
 "menu_bar_style_critters" = "크리터";
 "menu_bar_style_bars" = "미터 막대";
 "menu_bar_style_icon_percent" = "아이콘 및 백분율";
-"switcher_rows_title" = "전환기 행";
-"switcher_rows_icons" = "공급자 아이콘";
-"switcher_rows_progress" = "주간 진행률";
 "usage_bars_fill_title" = "사용량 막대 채우기";
 "usage_bars_fill_remaining" = "남은 양 기준";
 "usage_bars_fill_used" = "사용량 기준";
@@ -658,11 +655,11 @@
 "multi_account_layout_subtitle" = "분할된 계정 전환 또는 쌓인 계정 카드를 선택하세요.";
 "multi_account_layout_segmented" = "분할";
 "multi_account_layout_stacked" = "쌓기";
-"overview_tab_providers_title" = "개요 탭 공급자";
+"overview_tab_providers_title" = "통합 아이콘 제공자";
 "configure" = "구성…";
-"overview_enable_merge_icons_hint" = "개요 탭 공급자를 구성하려면 아이콘 병합을 사용하세요.";
+"overview_enable_merge_icons_hint" = "통합 아이콘의 제공자를 선택하려면 아이콘 합치기를 켜세요.";
 "overview_no_providers_hint" = "개요에 사용할 수 있는 활성화된 공급자가 없습니다.";
-"overview_rows_follow_order" = "개요 행은 항상 공급자 순서를 따릅니다.";
+"overview_rows_follow_order" = "통합 아이콘은 이 제공자 중 하나를 표시합니다. 개요 메뉴에는 활성화된 모든 제공자가 표시됩니다.";
 "overview_no_providers_selected" = "선택된 공급자 없음";
 "agent_sessions_title" = "에이전트 세션";
 "agent_sessions_subtitle" = "메뉴에 로컬 및 SSH로 검색된 Codex 및 Claude Code 세션을 표시합니다.";
@@ -1768,7 +1765,6 @@
 "Enable Antigravity provider" = "Antigravity 공급자 활성화";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "CodexBar → 설정 → 메뉴 → 위젯에서 계정 위젯을 활성화하세요. 그런 다음 이 위젯을 편집하여 계정을 선택하세요.";
 "Error: %@" = "오류: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "예: alt+cmd+2, shift+right. 새로 고침(cmd+r), 설정(cmd+,) 및 종료(cmd+q)는 예약되어 있습니다.";
 "Export Preferences…" = "내보내기 기본 설정…";
 "External Codex OAuth sources" = "외부 Codex OAuth 소스";
 "Extra usage balance" = "추가 사용량 잔액";
@@ -1820,7 +1816,6 @@
 "My AI subscriptions · last %d days" = "내 AI 구독 · 지난 %d 일";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "~/.aws/config의 이름이 AWS 프로필입니다. AWS_PROFILE로도 설정할 수 있습니다.";
-"Next provider" = "다음 공급자";
 "No active account" = "활성 계정 없음";
 "No cookie header pasted." = "붙여넣은 cookie 헤더가 없습니다.";
 "No matching OpenAI web session found for %@." = "%@와 일치하는 OpenAI 웹 세션을 찾을 수 없습니다.";
@@ -1896,14 +1891,11 @@
 "Preferences could not be transferred" = "환경설정을 이전할 수 없습니다.";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Go 사용 제한에 선호됩니다. OPENCODE_API_KEY도 읽습니다.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "유휴 상태라도 로컬 에이전트 프로세스가 실행되는 동안 유휴 시스템 절전을 방지합니다. 배터리 전원을 사용합니다. 뚜껑이 닫히거나 수면을 표시하는 것을 방지하지 않습니다.";
-"Previous provider" = "이전 공급자";
 "Primary quota" = "기본 할당량";
 "Prioritize exhausted quotas" = "지친 할당량 우선순위 지정";
 "Profile name" = "구성 프로필 이름";
 "Provider %@" = "공급자 %@";
 "Provider + Metric" = "공급자 + 지표";
-"Provider Switcher Shortcuts" = "공급자 전환기 바로 가기";
-"Provider Switcher Shortcuts…" = "공급자 전환기 바로 가기…";
 "Provider service status: %@" = "공급자 서비스 상태: %@";
 "Quota estimated from local usage history" = "로컬 사용 기록으로 추정되는 할당량";
 "Quota from the selected dev.meta.ai browser team" = "선택된 dev.meta.ai 브라우저 팀의 할당량";
@@ -1932,7 +1924,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "CodexBar의 로컬 구성 파일에 저장됩니다. 또는 GITKRAKEN_API_TOKEN를 설정하십시오.";
 "Scoped weekly" = "선택한 범위에 대한 주간 할당량";
 "Secondary quota" = "보조 할당량";
-"Select position %@" = "위치 %@ 선택";
 "Select the provider and account to display in the widget." = "위젯에 표시할 공급자와 계정을 선택하세요.";
 "Select the provider and metric to display." = "표시할 공급자와 지표를 선택합니다.";
 "Select the provider and usage window to display." = "표시할 공급자 및 사용 창을 선택합니다.";
@@ -1970,7 +1961,6 @@
 "The pasted header is sent only to this tenant." = "붙여넣은 헤더는 이 테넌트에게만 전송됩니다.";
 "The selected Codex profile has no verified account email." = "선택한 Codex 프로필에는 확인된 계정 이메일이 없습니다.";
 "The selected managed Codex account is unavailable." = "선택한 관리형 Codex 계정을 사용할 수 없습니다.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "이 단축키는 공급자 전환 메뉴가 열려 있을 때 작동합니다. `ctrl`, `alt`, `shift`, `cmd`를 문자, 숫자, `left` 또는 `right`와 함께 입력하세요. 동작을 비활성화하려면 `none`을 사용하세요.";
 "Third quota" = "세 번째 할당량";
 "Today cost" = "오늘의 비용";
 "Token Refreshed" = "토큰 새로 고침";
@@ -2618,6 +2608,12 @@
 "Daily spend · %@" = "일일 지출 · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "선택한 토큰 계정 “%@”에 적용됩니다. 각 계정은 자체 한도를 유지합니다.";
 "Applies to the OpenAI API key, not to token accounts." = "토큰 계정이 아닌 OpenAI API 키에 적용됩니다.";
+"No providers enabled" = "활성화된 제공자가 없습니다";
+"5-hour limit" = "5시간 한도";
+"Weekly limit" = "주간 한도";
+"account_detail_usage_title" = "%@ 사용량";
+"account_detail_used" = "%@ 사용됨";
+"account_detail_history" = "기록";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar가 Muse Code 구독 사용량을 가져올 수 있도록 macOS 키체인에 Muse Code 로그인 토큰을 요청합니다. 계속하려면 확인을 클릭하세요.";
 /* Claude Platform provider */
 "API credit" = "API 크레딧";

@@ -95,15 +95,6 @@ final class TahoeBatchNativeProofTests: XCTestCase {
                     fixture.settings.menuBarIconStyle = style
                     controller.updateIcons()
                 }
-                let command = (try? String(
-                    contentsOf: output.appendingPathComponent("selection"),
-                    encoding: .utf8)) ?? ""
-                if command != menuState.previousCommand,
-                   let index = Int(command.trimmingCharacters(in: .whitespacesAndNewlines))
-                {
-                    _ = (menu.items.first?.view as? ProviderSwitcherView)?.handleKeyboardSelection(at: index)
-                    menuState.previousCommand = command
-                }
                 let menuWindow = menu.items.compactMap { $0.view?.window }.first
                 let itemButton = controller.statusItem.button
                 let servers = MenuBarStatusItemWindowProbe.snapshots(matching: [controller.statusItem.autosaveName])
@@ -180,8 +171,8 @@ final class TahoeBatchNativeProofTests: XCTestCase {
             to: output.appendingPathComponent("phase-\(state.phase).json"), options: .atomic)
         state.phase += 1
         switch state.phase {
-        case 1: _ = (state.menu.items.first?.view as? ProviderSwitcherView)?.handleKeyboardSelection(at: 1)
-        case 2: _ = (state.menu.items.first?.view as? ProviderSwitcherView)?.handleKeyboardSelection(at: 2)
+        case 1, 2:
+            break
         case 3:
             state.menu.cancelTracking()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { button.performClick(nil) }
@@ -263,7 +254,6 @@ private final class TahoeBatchMenuButton: NSButton {
 @MainActor
 private final class TahoeBatchMenuState {
     let menu: NSMenu
-    var previousCommand = ""
     var phase = 0
     var ticks = 0
     init(menu: NSMenu) {

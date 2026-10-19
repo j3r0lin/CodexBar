@@ -86,6 +86,13 @@ public enum KimiSettingsReader {
         region: KimiRegion,
         environment: [String: String]) -> KimiCodeOAuthCredential?
     {
+        #if DEBUG
+        do {
+            try NativeProviderIOTestBoundary.intercept?(.file)
+        } catch {
+            return nil
+        }
+        #endif
         // The CLI file has no issuing-host metadata; keep its historical China-only scope.
         guard region == .china, !self.hasCodeEndpointOverride(environment: environment) else { return nil }
         let url = self.kimiCodeHomeURL(environment: environment)

@@ -540,6 +540,46 @@ The accepted multi-account design in
 - Multiple claude-swap accounts—and a single account when explicitly enabled—take precedence over Claude
   token-account presentation (stacked cards and the segmented switcher).
 
+## magpie accounts (opt-in)
+
+- Setup: Preferences → Providers → Claude → "Read accounts from magpie". The URL field beneath it defaults to the
+  local gateway, `http://127.0.0.1:3425/v1/magpie/quotas`; any other http(s) URL serving the same shape works. Both
+  settings are machine-local and are not part of cloud settings sync.
+- Exclusive ownership: while on, magpie is Claude's only usage source. The Claude fetch pipeline resolves a single
+  magpie strategy ahead of selected token accounts and `--source` overrides, so no app or CLI path (`usage`, `cards`
+  including `--account`/`--source`, `dashboard`, `serve`, `guard`, `hooks watch`, `diagnose`, `cookie refresh`) reads
+  Claude Code's credentials file, the Keychain, OAuth, the Claude CLI, or browser cookies. Those commands report the
+  active magpie account's usage, or a magpie error. In the app, turning magpie on clears all credential-derived Claude
+  state (including preserved widget usage), claude-swap stops and its toggle is disabled with a note, and the
+  "Sign in with Claude Code" / Keychain-consent menu actions are hidden. Turning magpie off restores the previous
+  behavior and triggers a normal Claude refresh.
+- Limits: an ambient fetch already in flight when magpie is switched on may finish one credential read; its result
+  is discarded. The Claude debug log reports magpie ownership, URL and last error instead of probing credentials,
+  the Keychain, browser cookies or the Claude CLI. Claude token accounts are not resolved in the CLI, so `usage`,
+  `serve` and `dashboard` show one Claude row; `cookie refresh` skips Claude. Turning magpie on keeps the local-log
+  token cost.
+- Behavior: on each Claude refresh CodexBar sends one unauthenticated `GET` to the URL (10 s timeout, 1 MiB cap) and
+  keeps only rows with `provider == "claude"`. Window names map as `5 hours` → session, `7 days` → weekly, and
+  `7 days · <Model>` → that model's scoped weekly lane; other names are dropped. `used` is the used percentage,
+  `resetsAt` is optional, and `readAt` is the measurement time. Windows with negative `used` are dropped; values above
+  100 are shown as reported. A malformed row, or a row without an email, is skipped without discarding the rest.
+- Accounts: every Claude row is a card, even when only one exists. The row marked `last: true` is active (it drives the
+  menu-bar icon and widgets); without one, the first row is active. Labels use `alias`, otherwise the email from
+  `user` (`<email> · <organization>`), with the organization appended when two rows share an email. Hide Personal Info
+  replaces the whole label with `Account N`, numbered in the gateway's own order. Widgets and the menu-bar icon never
+  show last-known usage as current. magpie cards cannot be switched from
+  CodexBar.
+- Identity is `magpie` / `claude:<lowercased email>` (plus ` · <organization>` for shared emails). This intentionally
+  departs from the "never derive identity from email" rule used for claude-swap: magpie exposes no slot or other stable
+  row ID. Rows are deduplicated first: the same email and organization (case-insensitive) keep only the first row,
+  while different organizations under one email stay separate accounts labeled with their organization. Widgets persist only a SHA-256 of that identity
+  and an `Account N` label in gateway order.
+- Failures keep the last successful accounts as last-known usage with their age and the error on each card and in
+  provider settings; the menu-bar icon stops showing them until the next successful read. `codexbar cards` lists every
+  magpie account when magpie is enabled in the config file and reports a `Claude (magpie)` failure instead of falling
+  back to the ambient account. `codexbar dashboard` shows the active magpie account in the Claude row but does not
+  nest per-account entries.
+
 Packaged synthetic proof (fake `cswap` executable, no real accounts or credentials):
 
 ![Stacked claude-swap account cards](screenshots/claude-swap-accounts-synthetic-proof.png)

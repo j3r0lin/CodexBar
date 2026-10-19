@@ -54,6 +54,7 @@ extension UsageStore {
     }
 
     func scheduleCreditsRefreshIfNeeded(minimumSnapshotUpdatedAt: Date? = nil) {
+        guard self.providerSourceRoute(for: .codex).isNative else { return }
         let refreshKey = self.codexCreditsRefreshKey(
             expectedGuard: self.freshCodexAccountScopedRefreshGuard())
         if let existing = self.creditsRefreshTask,
@@ -90,6 +91,7 @@ extension UsageStore {
     }
 
     func refreshCreditsNow(minimumSnapshotUpdatedAt: Date? = nil) async {
+        guard self.providerSourceRoute(for: .codex).isNative else { return }
         self.cancelScheduledCreditsRefresh()
         await self.refreshCreditsIfNeeded(minimumSnapshotUpdatedAt: minimumSnapshotUpdatedAt)
     }
@@ -122,6 +124,8 @@ extension UsageStore {
     }
 
     func refreshCreditsIfNeeded(minimumSnapshotUpdatedAt: Date? = nil) async {
+        guard self.canReadNativeCodexSource else { return }
+        let publicationRevision = self.providerPublicationRevision(for: .codex)
         guard self.isEnabled(.codex) else { return }
         var expectedGuard = self.freshCodexAccountScopedRefreshGuard()
         if expectedGuard.identity == .unresolved,
@@ -129,6 +133,9 @@ extension UsageStore {
            case .liveSystem = expectedGuard.source
         {
             _ = await self.waitForCodexSnapshotOrRefreshCompletion(minimumUpdatedAt: minimumSnapshotUpdatedAt)
+            guard self.canReadNativeCodexSource,
+                  self.providerPublicationRevisionIsCurrent(publicationRevision, for: .codex)
+            else { return }
             expectedGuard = self.freshCodexAccountScopedRefreshGuard()
         }
         guard expectedGuard.identity != .unresolved,
@@ -138,7 +145,9 @@ extension UsageStore {
         }
         do {
             let credits = try await self.loadLatestCodexCredits(expectedGuard: expectedGuard)
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, self.canReadNativeCodexSource,
+                  self.providerPublicationRevisionIsCurrent(publicationRevision, for: .codex)
+            else { return }
             guard let applyGuard = self.codexScopedNonUsageSuccessApplyGuard(
                 expectedGuard: expectedGuard) else { return }
             self.reconcileCodexPublishedUsageOwner(with: applyGuard)
@@ -171,7 +180,9 @@ extension UsageStore {
                 snapshot: codexSnapshot,
                 now: codexSnapshot.updatedAt)
         } catch {
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, self.canReadNativeCodexSource,
+                  self.providerPublicationRevisionIsCurrent(publicationRevision, for: .codex)
+            else { return }
             let message = error.localizedDescription
             if message.localizedCaseInsensitiveContains("data not available yet") {
                 guard self.shouldApplyCodexScopedNonUsageFailure(expectedGuard: expectedGuard) else { return }
@@ -313,6 +324,7 @@ extension UsageStore {
         minimumSnapshotUpdatedAt: Date)
     {
         self.cancelCodexPlanHistoryBackfill()
+        let publicationRevision = self.providerPublicationRevision(for: .codex)
         let token = UUID()
         self.codexPlanHistoryBackfillTaskToken = token
         self.codexPlanHistoryBackfillTask = Task { @MainActor [weak self] in
@@ -326,7 +338,9 @@ extension UsageStore {
             guard let snapshot = await self.waitForCodexSnapshot(minimumUpdatedAt: minimumSnapshotUpdatedAt) else {
                 return
             }
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, self.canReadNativeCodexSource,
+                  self.providerPublicationRevisionIsCurrent(publicationRevision, for: .codex)
+            else { return }
             #if DEBUG
             self._test_codexPlanHistoryBackfillWillRecord?()
             #endif

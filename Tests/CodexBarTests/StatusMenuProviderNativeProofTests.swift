@@ -250,8 +250,6 @@ final class StatusMenuProviderNativeProofTests: XCTestCase {
             })),
             "statusProvider": submenu?.items.first?.toolTip
                 ?? submenu?.items.last?.identifier?.rawValue ?? "website-only",
-            "cachedSelections": String(controller.mergedSwitcherContentCaches[ObjectIdentifier(menu)]?
-                .count ?? 0),
         ]
     }
 

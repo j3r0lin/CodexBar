@@ -5,6 +5,7 @@ extension UsageStore {
     func codexAccountUsageOverview(
         onRefresh: @escaping (Set<String>) -> Void) -> ProviderAccountUsageOverview?
     {
+        guard self.providerSourceRoute(for: .codex).isNative else { return nil }
         // PAT has one ambient owner and cannot be attributed to the visible OAuth accounts.
         guard !self.shouldUseAmbientCodexPATForUsage() else { return nil }
         // Refresh failures belong to the current auth file, which can outlive its saved metadata fingerprint.
@@ -65,6 +66,7 @@ extension UsageStore {
     }
 
     func refreshCodexAccountsForSettings(_ accountIDs: Set<String>, allowDisabled: Bool = false) async {
+        guard self.providerSourceRoute(for: .codex).isNative else { return }
         guard !accountIDs.isEmpty, !self.shouldUseAmbientCodexPATForUsage(),
               self.codexSettingsRefreshingAccountIDs.isEmpty,
               allowDisabled || self.isEnabled(.codex)

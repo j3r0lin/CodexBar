@@ -89,7 +89,8 @@ struct SettingsDefaultsState {
     var mergeIcons: Bool
     var mergedOverviewLayoutRaw: String
     var mergedOverviewAllAccounts: Bool
-    var switcherShowsIcons: Bool
+    var overviewWindowFilterRaw: String
+    var overviewCollapsedProviderGroupsRaw: [String]
     var mergeIconsStacked: Bool
     var mergeIconStackedTopProviderRaw: String?
     var mergeIconStackedBottomProviderRaw: String?

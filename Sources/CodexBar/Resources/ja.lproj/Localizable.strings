@@ -459,7 +459,7 @@
 "metric_tertiary" = "第3（%@）";
 "multiple_workspaces_found" = "CodexBar は %@ の複数のワークスペースを見つけました。追加するワークスペースを選択してください。";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "最大 %@ 個のプロバイダを選択";
+"overview_choose_providers" = "統合アイコンに使うプロバイダを最大 %@ 件選択";
 "remove_account_message" = "%@ を CodexBar から削除しますか？マネージド Codex ホームも削除されます。";
 "version_format" = "バージョン %@";
 "vertex_ai_login_instructions" = "Vertex AI の使用状況を追跡するには、Google Cloud で認証してください。\n\n1. ターミナルを開く\n2. 実行: gcloud auth application-default login\n3. ブラウザの指示に従ってサインイン\n4. プロジェクトを設定: gcloud config set project PROJECT_ID\n\n今すぐターミナルを開きますか？";
@@ -624,9 +624,6 @@
 "menu_bar_style_critters" = "クリッター";
 "menu_bar_style_bars" = "メーターバー";
 "menu_bar_style_icon_percent" = "アイコンとパーセント";
-"switcher_rows_title" = "切替バーの表示";
-"switcher_rows_icons" = "プロバイダアイコン";
-"switcher_rows_progress" = "週間進捗";
 "usage_bars_fill_title" = "使用量バーの表示";
 "usage_bars_fill_remaining" = "残量として";
 "usage_bars_fill_used" = "消費量として";
@@ -665,11 +662,11 @@
 "multi_account_layout_subtitle" = "セグメント式のアカウント切替か、積み重ね式のアカウントカードを選択します。";
 "multi_account_layout_segmented" = "セグメント";
 "multi_account_layout_stacked" = "スタック";
-"overview_tab_providers_title" = "概要タブのプロバイダ";
+"overview_tab_providers_title" = "統合アイコンのプロバイダ";
 "configure" = "設定…";
-"overview_enable_merge_icons_hint" = "概要タブのプロバイダを設定するには「アイコンを統合」を有効にしてください。";
+"overview_enable_merge_icons_hint" = "統合アイコンのプロバイダを選ぶには「アイコンを統合」をオンにしてください。";
 "overview_no_providers_hint" = "概要に使用できる有効なプロバイダがありません。";
-"overview_rows_follow_order" = "概要の行は常にプロバイダの並び順に従います。";
+"overview_rows_follow_order" = "統合アイコンはこれらのプロバイダのいずれかを表示します。概要メニューには有効なすべてのプロバイダが表示されます。";
 "overview_no_providers_selected" = "プロバイダが選択されていません";
 "agent_sessions_title" = "エージェントセッション";
 "agent_sessions_subtitle" = "ローカルおよび SSH で検出された Codex と Claude Code のセッションをメニューに表示します。";
@@ -1799,7 +1796,6 @@
 "Enable Antigravity provider" = "Antigravityプロバイダーを有効にする";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "CodexBar → 設定 → メニュー → ウィジェットでアカウント ウィジェットを有効にします。次に、このウィジェットを編集してアカウントを選択します。";
 "Error: %@" = "エラー: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "例: alt+cmd+2、shift+right。更新 (cmd+r)、設定 (cmd+,)、および終了 (cmd+q) は予約されています。";
 "Export Preferences…" = "エクスポート設定…";
 "External Codex OAuth sources" = "外部 Codex OAuth ソース";
 "Extra usage balance" = "追加使用残高";
@@ -1852,7 +1848,6 @@
 "My AI subscriptions · last %d days" = "私の AI サブスクリプション · 過去 %d 日間";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "~/.aws/config から AWS プロファイルという名前を付けました。 AWS_PROFILEでも設定可能です。";
-"Next provider" = "次のプロバイダー";
 "No active account" = "アクティブなアカウントがありません";
 "No cookie header pasted." = "cookie ヘッダーは貼り付けられていません。";
 "No matching OpenAI web session found for %@." = "%@ に一致する OpenAI Web セッションが見つかりません。";
@@ -1928,14 +1923,11 @@
 "Preferences could not be transferred" = "設定を転送できませんでした";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Go の使用制限に推奨されます。 OPENCODE_API_KEY とも読みます。";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "アイドル状態であっても、ローカル エージェント プロセスの実行中にアイドル状態のシステム スリープを防止します。バッテリー電源を使用します。蓋を閉めたり、ディスプレイのスリープを妨げたりすることはありません。";
-"Previous provider" = "以前のプロバイダー";
 "Primary quota" = "プライマリ クォータ";
 "Prioritize exhausted quotas" = "消耗したクォータを優先します";
 "Profile name" = "構成プロファイル名";
 "Provider %@" = "プロバイダー %@";
 "Provider + Metric" = "プロバイダー + 指標";
-"Provider Switcher Shortcuts" = "プロバイダー切り替えのショートカット";
-"Provider Switcher Shortcuts…" = "プロバイダー切り替えのショートカット…";
 "Provider service status: %@" = "プロバイダーのサービスステータス: %@";
 "Quota estimated from local usage history" = "クォータ ローカルの使用履歴から推定";
 "Quota from the selected dev.meta.ai browser team" = "選択された dev.meta.ai ブラウザー チームの クォータ";
@@ -1964,7 +1956,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "CodexBar のローカル設定ファイルに保存されます。または、GITKRAKEN_API_TOKEN を設定します。";
 "Scoped weekly" = "選択したスコープの週次 クォータ";
 "Secondary quota" = "セカンダリ クォータ";
-"Select position %@" = "位置を選択 %@";
 "Select the provider and account to display in the widget." = "ウィジェットに表示するプロバイダーとアカウントを選択します。";
 "Select the provider and metric to display." = "プロバイダーと表示する 指標 を選択します。";
 "Select the provider and usage window to display." = "表示するプロバイダーと使用状況ウィンドウを選択します。";
@@ -2002,7 +1993,6 @@
 "The pasted header is sent only to this tenant." = "貼り付けられたヘッダーは、このテナントにのみ送信されます。";
 "The selected Codex profile has no verified account email." = "選択した Codex プロファイルには検証済みのアカウント電子メールがありません。";
 "The selected managed Codex account is unavailable." = "選択した管理対象 Codex アカウントは使用できません。";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "これらのショートカットは、プロバイダー切り替えメニューが開いている間に使えます。`ctrl`、`alt`、`shift`、`cmd` を文字、数字、`left` または `right` と組み合わせて入力します。操作を無効にするには `none` を使います。";
 "Third quota" = "3 番目の クォータ";
 "Today cost" = "今日の費用";
 "Token Refreshed" = "トークン 更新されました";
@@ -2650,6 +2640,12 @@
 "Daily spend · %@" = "日別の支出 · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "選択中のトークンアカウント「%@」に適用されます。各アカウントは独自の上限を保持します。";
 "Applies to the OpenAI API key, not to token accounts." = "OpenAI APIキーに適用されます。トークンアカウントには適用されません。";
+"No providers enabled" = "有効なプロバイダがありません";
+"5-hour limit" = "5時間の上限";
+"Weekly limit" = "週間の上限";
+"account_detail_usage_title" = "%@ の使用状況";
+"account_detail_used" = "%@ 使用済み";
+"account_detail_history" = "履歴";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar は Muse Code のサブスクリプション使用量を取得するために、macOS キーチェーンに Muse Code のログイン トークンへのアクセスを求めます。続けるには OK をクリックしてください。";
 /* Claude Platform provider */
 "API credit" = "API クレジット";

@@ -459,7 +459,7 @@
 "metric_tertiary" = "Вищий (%@)";
 "multiple_workspaces_found" = "CodexBar знайшов кілька робочих областей для %@. Виберіть робочу область для додавання.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "Виберіть до %@ постачальників";
+"overview_choose_providers" = "Виберіть до %@ провайдерів для об’єднаного значка";
 "remove_account_message" = "Видалити %@ з CodexBar? Його керовану домашню сторінку Codex буде видалено.";
 "version_format" = "Версія %@";
 "vertex_ai_login_instructions" = "Щоб відстежувати використання Vertex AI, пройдіть автентифікацію в Google Cloud.\n\n1. Відкрийте термінал\n2. Запустіть: gcloud auth application-default login\n3. Дотримуйтесь підказок браузера, щоб увійти\n4. Налаштуйте свій проект: gcloud config set project PROJECT_ID\n\nВідкрити термінал зараз?";
@@ -627,9 +627,6 @@
 "menu_bar_style_critters" = "Тварини";
 "menu_bar_style_bars" = "Смуги-індикатори";
 "menu_bar_style_icon_percent" = "Значок і відсоток";
-"switcher_rows_title" = "Рядки перемикача";
-"switcher_rows_icons" = "Значки провайдерів";
-"switcher_rows_progress" = "Тижневий прогрес";
 "usage_bars_fill_title" = "Заповнення смуг використання";
 "usage_bars_fill_remaining" = "За залишком";
 "usage_bars_fill_used" = "За використанням";
@@ -668,11 +665,11 @@
 "multi_account_layout_subtitle" = "Виберіть сегментоване перемикання облікових записів або складені картки облікових записів.";
 "multi_account_layout_segmented" = "Сегментований";
 "multi_account_layout_stacked" = "складені";
-"overview_tab_providers_title" = "Постачальники вкладок огляду";
+"overview_tab_providers_title" = "Провайдери об’єднаного значка";
 "configure" = "Налаштувати…";
-"overview_enable_merge_icons_hint" = "Увімкніть Merge Icons, щоб налаштувати постачальників вкладок «Огляд».";
+"overview_enable_merge_icons_hint" = "Увімкніть «Об’єднати значки», щоб вибрати провайдерів об’єднаного значка.";
 "overview_no_providers_hint" = "Немає активованих постачальників, доступних для огляду.";
-"overview_rows_follow_order" = "Оглядові рядки завжди відповідають порядку постачальника.";
+"overview_rows_follow_order" = "Об’єднаний значок показує одного з цих провайдерів. Меню «Огляд» показує всіх увімкнених провайдерів.";
 "overview_no_providers_selected" = "Не вибрано жодного постачальника";
 "agent_sessions_title" = "Сеанси агентів";
 "agent_sessions_subtitle" = "Показувати в меню локальні й виявлені через SSH сеанси Codex і Claude Code.";
@@ -1799,7 +1796,6 @@
 "Enable Antigravity provider" = "Увімкнути постачальника Antigravity";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "Увімкніть віджети облікового запису в CodexBar → Налаштування → Меню → Віджети. Потім відредагуйте цей віджет, щоб вибрати обліковий запис.";
 "Error: %@" = "Помилка: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "Приклади: alt+cmd+2, shift+right. Оновлення (cmd+r), налаштування (cmd+,) і вихід (cmd+q) зарезервовані.";
 "Export Preferences…" = "Параметри експорту…";
 "External Codex OAuth sources" = "Зовнішні джерела Codex OAuth";
 "Extra usage balance" = "Залишок додаткового використання";
@@ -1852,7 +1848,6 @@
 "My AI subscriptions · last %d days" = "Мої підписки на AI · останні дні %d";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "Названий профіль AWS із ~/.aws/config. Також можна встановити за допомогою AWS_PROFILE.";
-"Next provider" = "Наступний провайдер";
 "No active account" = "Немає активного облікового запису";
 "No cookie header pasted." = "Заголовок cookie не вставлено.";
 "No matching OpenAI web session found for %@." = "Для %@ не знайдено відповідної веб-сесії OpenAI.";
@@ -1928,14 +1923,11 @@
 "Preferences could not be transferred" = "Не вдалося передати налаштування";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Бажано для обмежень використання Go. Також читається OPENCODE_API_KEY.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "Запобігання простою системи в режимі сну, коли працює процес локального агента, навіть коли він неактивний. Використовує заряд акумулятора; не перешкоджає закриттю кришки або сплячому режиму дисплея.";
-"Previous provider" = "Попередній постачальник";
 "Primary quota" = "Первинний Квота";
 "Prioritize exhausted quotas" = "Пріоритет вичерпаного Квота";
 "Profile name" = "Назва профілю конфігурації";
 "Provider %@" = "Постачальник %@";
 "Provider + Metric" = "Провайдер + Показник";
-"Provider Switcher Shortcuts" = "Ярлики перемикача постачальників";
-"Provider Switcher Shortcuts…" = "Ярлики перемикача постачальників…";
 "Provider service status: %@" = "Статус служби постачальника: %@";
 "Quota estimated from local usage history" = "Квота оцінено на основі локальної історії використання";
 "Quota from the selected dev.meta.ai browser team" = "Квота від обраної команди браузера dev.meta.ai";
@@ -1964,7 +1956,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "Збережено в локальному конфігураційному файлі CodexBar. Або встановити GITKRAKEN_API_TOKEN.";
 "Scoped weekly" = "Щотижня Квота для вибраного обсягу";
 "Secondary quota" = "Вторинний Квота";
-"Select position %@" = "Виберіть позицію %@";
 "Select the provider and account to display in the widget." = "Виберіть постачальника та обліковий запис для відображення у віджеті.";
 "Select the provider and metric to display." = "Виберіть постачальника та Показник для відображення.";
 "Select the provider and usage window to display." = "Виберіть постачальника та вікно використання для відображення.";
@@ -2002,7 +1993,6 @@
 "The pasted header is sent only to this tenant." = "Вставлений заголовок надсилається лише цьому орендарю.";
 "The selected Codex profile has no verified account email." = "Вибраний профіль Codex не має підтвердженої електронної адреси облікового запису.";
 "The selected managed Codex account is unavailable." = "Вибраний керований обліковий запис Codex недоступний.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "Ці сполучення клавіш працюють, коли відкрито меню перемикання постачальника. Використовуйте `ctrl`, `alt`, `shift` і `cmd` з літерою, цифрою, `left` або `right`; використовуйте `none`, щоб вимкнути дію.";
 "Third quota" = "Третій Квота";
 "Today cost" = "Сьогодні вартість";
 "Token Refreshed" = "жетони Оновлено";
@@ -2650,6 +2640,12 @@
 "Daily spend · %@" = "Щоденні витрати · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Застосовується до вибраного облікового запису токена «%@». Кожен обліковий запис зберігає власні ліміти.";
 "Applies to the OpenAI API key, not to token accounts." = "Застосовується до ключа API OpenAI, а не до облікових записів токенів.";
+"No providers enabled" = "Немає увімкнених провайдерів";
+"5-hour limit" = "Ліміт на 5 годин";
+"Weekly limit" = "Тижневий ліміт";
+"account_detail_usage_title" = "Використання %@";
+"account_detail_used" = "Використано %@";
+"account_detail_history" = "Історія";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar запитає у macOS Keychain маркер входу Muse Code, щоб отримати дані про використання вашої підписки Muse Code. Натисніть OK, щоб продовжити.";
 /* Claude Platform provider */
 "API credit" = "Кредит API";

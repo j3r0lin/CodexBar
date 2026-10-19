@@ -73,15 +73,14 @@ struct UserProviderPluginTests {
         #expect(controller.shouldMergeIcons)
         #expect(controller.statusItem.isVisible)
         #expect(menu === controller.mergedMenu)
-        #expect(!(menu.items.first?.view is ProviderSwitcherView))
         #expect(Self.pluginCardIDs(in: menu) == ["pluginCard:solo-meter"])
-        #expect(settings.selectedMenuProvider == plugin.manifest.id)
-        #expect(controller.manualRefreshProvider(for: menu) == plugin.manifest.id)
+        // The merged menu has no plugin page, so its refresh covers every provider.
+        #expect(controller.manualRefreshProvider(for: menu) == nil)
     }
 
     @MainActor
     @Test
-    func `top level plugin tabs retain legacy plugin cards without built in providers`() throws {
+    func `merged menu lists every enabled plugin card without built in providers`() throws {
         let fixture = try Fixture()
         defer { fixture.remove() }
         _ = try fixture.write(
@@ -107,8 +106,8 @@ struct UserProviderPluginTests {
         let menu = controller.makeMenu()
         controller.populateMenu(menu, provider: nil)
         #expect(store.enabledFirstPartyProvidersForDisplay().isEmpty)
-        #expect(menu.items.first?.view is ProviderSwitcherView)
-        #expect(Self.pluginCardIDs(in: menu) == ["pluginCard:first-meter", "pluginCard:legacy-meter"])
+        let expectedCards: Set = ["pluginCard:first-meter", "pluginCard:second-meter", "pluginCard:legacy-meter"]
+        #expect(Set(Self.pluginCardIDs(in: menu)) == expectedCards)
 
         let wideDescriptor = MenuDescriptor(sections: [
             MenuDescriptor.Section(entries: [
@@ -124,17 +123,10 @@ struct UserProviderPluginTests {
             selectedProvider: nil,
             descriptor: wideDescriptor) == measuredWidth)
 
+        // The stored selection no longer narrows the list.
         settings.selectedMenuProvider = secondID
         controller.populateMenu(menu, provider: nil)
-        #expect(Self.pluginCardIDs(in: menu) == ["pluginCard:second-meter", "pluginCard:legacy-meter"])
-
-        settings.mergedMenuLastSelectedWasOverview = true
-        controller.populateMenu(menu, provider: nil)
-        #expect(controller.includesOverviewTab(enabledProviders: []))
-        let overviewIDs = menu.items.compactMap { $0.representedObject as? String }
-            .filter { $0.hasPrefix("overviewRow-") }
-        #expect(Set(overviewIDs) == Set(plugins.map { "overviewRow-\($0.manifest.id.rawValue)" }))
-        #expect(Self.pluginCardIDs(in: menu).isEmpty)
+        #expect(Set(Self.pluginCardIDs(in: menu)) == expectedCards)
     }
 
     @MainActor
@@ -170,117 +162,6 @@ struct UserProviderPluginTests {
             loader: fixture.loader(transport: RecordingTransport(responseJSON: "{}")))
 
         #expect(controller.menuLocalizationSignature() != firstSignature)
-    }
-
-    @MainActor
-    @Test
-    func `opening a selected top level plugin does not schedule Codex dashboard refresh`() throws {
-        let fixture = try Fixture()
-        defer { fixture.remove() }
-        _ = try fixture.write(
-            name: "selected.js",
-            source: Self.menuPlugin(id: "selected-meter", name: "Selected Meter"))
-        let plugin = try #require(UserProviderPluginRegistry.refresh(
-            loader: fixture.loader(transport: RecordingTransport(responseJSON: "{}"))).first?.plugin)
-        let (controller, _, settings) = Self.makePluginMenuController(
-            suiteName: "UserProviderPluginTests.menuOpenOwnership",
-            selectedPluginID: plugin.manifest.id,
-            enabledPluginIDs: [plugin.manifest.id],
-            approvalStore: fixture.approvals)
-        defer { controller.releaseStatusItemsForTesting() }
-        try settings.setProviderEnabled(
-            provider: .codex,
-            metadata: #require(ProviderRegistry.shared.metadata[.codex]),
-            enabled: true)
-        controller.menuRefreshEnabledOverrideForTesting = true
-
-        let menu = controller.makeMenu()
-        controller.menuWillOpen(menu)
-
-        #expect(controller.lastMenuProvider == plugin.manifest.id)
-        #expect(controller.deferredOpenAIDashboardRefreshReason == nil)
-    }
-
-    @MainActor
-    @Test(arguments: [false, true])
-    func `persistent refresh targets the selected user plugin`(keyboard: Bool) async throws {
-        let fixture = try Fixture()
-        defer { fixture.remove() }
-        _ = try fixture.write(
-            name: "first.js",
-            source: Self.menuPlugin(id: "first-meter", name: "First Meter"))
-        _ = try fixture.write(
-            name: "second.js",
-            source: Self.menuPlugin(id: "second-meter", name: "Second Meter"))
-        let plugins = UserProviderPluginRegistry.refresh(
-            loader: fixture.loader(transport: RecordingTransport(responseJSON: "{}"))).compactMap(\.plugin)
-        let selectedID = try #require(ProviderInstanceID(rawValue: "second-meter"))
-        let selectedPlugin = try #require(plugins.first { $0.manifest.id == selectedID })
-        try fixture.approvals.record(selectedPlugin.approvalBinding(settings: [:]))
-        let (controller, store, settings) = Self.makePluginMenuController(
-            suiteName: "UserProviderPluginTests.selectedRefresh",
-            selectedPluginID: selectedID,
-            enabledPluginIDs: plugins.map(\.manifest.id),
-            approvalStore: fixture.approvals)
-        defer {
-            controller.manualRefreshTasks.values.forEach { $0.cancel() }
-            controller.releaseStatusItemsForTesting()
-        }
-
-        controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = try #require(controller.statusItem.menu as? StatusItemMenu)
-        controller.menuWillOpen(menu)
-        #expect(controller.manualRefreshProvider(for: menu) == selectedID)
-        try settings.setProviderEnabled(
-            provider: .codex,
-            metadata: #require(ProviderRegistry.shared.metadata[.codex]),
-            enabled: true)
-        settings.mergedMenuLastSelectedWasOverview = true
-        #expect(controller.isMergedOverviewSelected(in: menu))
-        settings.mergedMenuLastSelectedWasOverview = false
-        #expect(!controller.isMergedOverviewSelected(in: menu))
-        store.refreshingProviders.insert(plugins[0].manifest.id)
-        #expect(!controller.isRefreshActionInFlight(for: menu))
-        store.refreshingProviders.remove(plugins[0].manifest.id)
-        if keyboard {
-            let event = try #require(NSEvent.keyEvent(
-                with: .keyDown,
-                location: .zero,
-                modifierFlags: [.command],
-                timestamp: 0,
-                windowNumber: 0,
-                context: nil,
-                characters: "r",
-                charactersIgnoringModifiers: "r",
-                isARepeat: false,
-                keyCode: 15))
-            #expect(menu.performKeyEquivalent(with: event))
-            for _ in 0..<20 where controller.manualRefreshTasks[.provider(selectedID)] == nil {
-                await Task.yield()
-            }
-        } else {
-            controller.refreshMenuProviderNow(in: menu)
-        }
-
-        #expect(controller.manualRefreshTasks[.provider(selectedID)] != nil)
-        #expect(controller.manualRefreshTasks[.global] == nil)
-        #expect(controller.manualRefreshTasks[.provider(.codex)] == nil)
-        #expect(controller.isRefreshActionInFlight(for: menu))
-
-        await controller.manualRefreshTasks[.provider(selectedID)]?.value
-        #expect(store.snapshots[selectedID]?.primary?.usedPercent == 12)
-        let menuID = ObjectIdentifier(menu)
-        for _ in 0..<20 where controller.menuNeedsRefresh(menu) {
-            if let rebuild = controller.openMenuRebuildTasks[menuID] {
-                await rebuild.value
-            } else {
-                await Task.yield()
-            }
-        }
-        #expect(!controller.menuSession.isParentRebuildDeferred(menuID))
-        let menuIsFresh = !controller.menuNeedsRefresh(menu)
-        #expect(menuIsFresh)
-        #expect(controller.manualRefreshProvider(for: menu) == selectedID)
     }
 
     @Test
@@ -819,28 +700,19 @@ extension UserProviderPluginTests {
                 metadata: #require(ProviderRegistry.shared.metadata[provider]),
                 enabled: true)
         }
-        let expectedCards = topLevel == false ? ["pluginCard:placement-meter"] : []
+        // The merged menu has no plugin tabs, so it lists the card whatever the placement.
+        let expectedCards = ["pluginCard:placement-meter"]
         for overview in [false, true] {
             settings.mergedMenuLastSelectedWasOverview = overview
             let menu = controller.makeMenu()
             controller.populateMenu(menu, provider: nil)
-            #expect(Self.pluginCardIDs(in: menu) == (overview ? [] : expectedCards))
-            if overview {
-                #expect(menu.items.contains { ($0.representedObject as? String) == "overviewRow-placement-meter" })
-            }
-            let switcher = try #require(menu.items.first?.view as? ProviderSwitcherView)
-            #expect(switcher._test_segmentTitles().contains("Placement Meter") == (topLevel != false))
-            controller.warmMergedSwitcherSiblingContent(in: menu)
-            let caches = controller.mergedSwitcherContentCaches[ObjectIdentifier(menu)] ?? [:]
-            let cachedPlugin = caches[.provider(plugin.manifest.id)]
-            #expect((cachedPlugin != nil) == (topLevel != false))
+            #expect(Self.pluginCardIDs(in: menu) == expectedCards)
         }
         settings.mergeIcons = false
         settings.mergedMenuLastSelectedWasOverview = false
         let unmerged = controller.makeMenu()
         controller.populateMenu(unmerged, provider: .codex)
         #expect(!controller.shouldMergeIcons)
-        #expect(!(unmerged.items.first?.view is ProviderSwitcherView))
         #expect(Self.pluginCardIDs(in: unmerged) == ["pluginCard:placement-meter"])
         settings.setPluginEnabled(plugin.manifest.id, enabled: false)
         controller.populateMenu(unmerged, provider: .codex)
@@ -896,8 +768,6 @@ extension UserProviderPluginTests {
             let menu = controller.makeMenu()
             controller.populateMenu(menu, provider: nil)
             receipt[selection + "Cards"] = Self.pluginCardIDs(in: menu)
-            receipt[selection + "Tabs"] = (menu.items.first?.view as? ProviderSwitcherView)?
-                ._test_segmentTitles() ?? []
             // Use the actual menu's production views; no desktop capture or real provider data.
             let rows = menu.items.compactMap(\.view)
             let canvas = PluginMenuProofCanvas(frame: NSRect(
@@ -1242,7 +1112,7 @@ private struct Fixture {
 extension UserProviderPluginTests {
     @MainActor
     @Test
-    func `top level plugin becomes a stable provider switcher segment`() throws {
+    func `top level plugin cards and Overview selection accept plugin IDs`() throws {
         let fixture = try Fixture()
         defer { fixture.remove() }
         let source = """
@@ -1258,43 +1128,7 @@ extension UserProviderPluginTests {
         _ = try fixture.write(name: "proxy.js", source: source)
         let plugin = try #require(UserProviderPluginRegistry.refresh(
             loader: fixture.loader(transport: RecordingTransport(responseJSON: "{}"))).first?.plugin)
-        var selected: ProviderSwitcherSelection?
-        let view = ProviderSwitcherView(
-            providers: [.codex],
-            pluginProviders: [plugin],
-            selected: .provider(.codex),
-            includesOverview: false,
-            width: 240,
-            showsIcons: true,
-            iconProvider: { _ in NSImage(size: NSSize(width: 16, height: 16)) },
-            pluginIconProvider: { _ in NSImage(size: NSSize(width: 16, height: 16)) },
-            weeklyRemainingProvider: { _ in 75 },
-            onSelect: { selected = $0 })
-
         #expect(plugin.manifest.topLevel)
-        #expect(view._test_quotaIndicatorFillRatios() == [0.75, 0.75])
-        #expect(view._test_segmentTitles() == ["Codex", "Proxy Meter"])
-        #expect(view._test_simulateRuntimeClick(buttonTag: 1))
-        #expect(selected == .provider(plugin.manifest.id))
-
-        #expect(StatusItemController.userPluginsForMenu(
-            [plugin],
-            isEnabled: { _ in true },
-            topLevelSwitcherVisible: true,
-            selectedPluginID: nil).isEmpty)
-        #expect(StatusItemController.userPluginsForMenu(
-            [plugin],
-            isEnabled: { _ in true },
-            topLevelSwitcherVisible: true,
-            selectedPluginID: plugin.manifest.id).map(\.manifest.id) == [plugin.manifest.id])
-        #expect(StatusItemController.isUserPluginSelection(.provider(plugin.manifest.id)))
-        #expect(!StatusItemController.isUserPluginSelection(.provider(.codex)))
-        #expect(ProviderSwitcherSelection.provider(plugin.manifest.id).provider == nil)
-        #expect(ProviderSwitcherSelection.provider(.codex).provider == .codex)
-        #expect(StatusItemController.resolvedSwitcherProviderID(
-            providerIDs: [plugin.manifest.id],
-            selectedProviderID: nil,
-            fallbackProviderID: .codex) == plugin.manifest.id)
 
         let previousMenuCardRendering = StatusItemController.menuCardRenderingEnabled
         let previousMenuRefresh = StatusItemController.menuRefreshEnabled
@@ -1304,7 +1138,7 @@ extension UserProviderPluginTests {
             StatusItemController.menuCardRenderingEnabled = previousMenuCardRendering
             StatusItemController.setMenuRefreshEnabledForTesting(previousMenuRefresh)
         }
-        let (controller, store, settings) = Self.makePluginMenuController(
+        let (controller, _, settings) = Self.makePluginMenuController(
             suiteName: "UserProviderPluginTests.topLevelMenuCards",
             selectedPluginID: plugin.manifest.id,
             enabledPluginIDs: [plugin.manifest.id],
@@ -1335,24 +1169,6 @@ extension UserProviderPluginTests {
         let exported = try settings.exportPreferences()
         #expect(try exported
             .value("mergedOverviewSelectedProviders", as: [String].self) == [plugin.manifest.id.rawValue])
-        settings.mergedMenuLastSelectedWasOverview = true
-        settings.usageBarsShowUsed = false
-        store.snapshots[plugin.manifest.id] = UsageSnapshot(
-            primary: RateWindow(usedPercent: 20, windowMinutes: nil, resetsAt: nil, resetDescription: nil),
-            secondary: RateWindow(usedPercent: 75, windowMinutes: 10080, resetsAt: nil, resetDescription: nil),
-            updatedAt: .distantPast)
-        let overview = controller.makeMenu()
-        controller.populateMenu(overview, provider: nil)
-        #expect(controller.includesOverviewTab(enabledProviders: [.codex]))
-        let overviewRow = try #require(overview.items.first {
-            ($0.representedObject as? String) == "overviewRow-proxy-meter"
-        })
-        #expect(overviewRow.action == #selector(StatusItemController.selectOverviewProvider(_:)))
-        #expect(Self.pluginCardIDs(in: overview).isEmpty)
-        #expect(controller.switcherWeeklyRemaining(for: plugin.manifest.id) == 25)
-        controller.selectOverviewProvider(plugin.manifest.id, menu: overview)
-        #expect(settings.selectedMenuProvider == plugin.manifest.id)
-        #expect(!settings.mergedMenuLastSelectedWasOverview)
     }
 }
 

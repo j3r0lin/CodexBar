@@ -64,13 +64,9 @@ extension StatusItemController {
         #if DEBUG
         guard !self.isReleasedForTesting else { return }
         #endif
-        let preservesMergedSwitcherContentCaches = self.preservesMergedSwitcherContentCachesDuringInvalidation
         self.menuSession.invalidate(
             allowsStaleContent: allowStaleContentDuringDataRefresh,
-            requiresRebuild: !preservesMergedSwitcherContentCaches)
-        if !preservesMergedSwitcherContentCaches {
-            self.clearMergedSwitcherContentCaches()
-        }
+            requiresRebuild: true)
         self.pruneVersionScopedMenuCardHeightCache()
         guard self.isMenuRefreshEnabled else { return }
         if !self.openMenus.isEmpty {
@@ -437,7 +433,8 @@ extension StatusItemController {
 
             if target == .claude {
                 parts.append(Self.menuIdentityField(self.store.claudeSwapLastError ?? ""))
-                for accountSnapshot in self.store.claudeSwapAccountSnapshots {
+                parts.append(Self.menuIdentityField(self.store.magpieLastError ?? ""))
+                for accountSnapshot in self.store.claudeAccountSource.accounts {
                     parts.append(Self.menuIdentityField(accountSnapshot.id.opaqueID))
                     parts.append(accountSnapshot.isActive ? "active" : "inactive")
                     parts.append(self.providerIdentitySignature(
@@ -462,8 +459,9 @@ extension StatusItemController {
         return "\(value.utf8.count):\(value)"
     }
 
+    /// Open submenus that a parent rebuild would close: hosted charts and Overview detail submenus.
     func hasOpenHostedSubviewMenu() -> Bool {
-        self.openMenus.values.contains { self.isHostedSubviewMenu($0) }
+        self.openMenus.values.contains { self.isHostedSubviewMenu($0) || $0 is OverviewDetailMenu }
     }
 
     func hasOpenNonHostedChildMenu() -> Bool {
@@ -499,14 +497,13 @@ extension StatusItemController {
         let stillSelected: @MainActor () -> Bool = { [weak self, weak menu] in
             guard let self, let menu else { return false }
             guard isCurrent?() ?? true else { return false }
-            if let selection = self.resolvedMergedMenuSelection(
-                enabledProviders: self.store.enabledFirstPartyProvidersForDisplay())
-            {
-                return selection == .provider(provider.instanceID)
+            if self.mergedMenuSelection != nil {
+                // Overview has a row for every enabled provider.
+                return self.store.enabledFirstPartyProvidersForDisplay().contains(provider)
             }
             return self.menuProvider(for: menu) == provider
         }
-        // Late account data must not replace a newer provider/Overview selection request.
+        // Late account data must not rebuild a menu that no longer shows this provider.
         guard stillSelected() else { return }
         self.invalidateMenus(refreshOpenMenus: false, allowStaleContentDuringDataRefresh: true)
         self.scheduleTrackingMenuRebuildIfStillVisible(menu, provider: provider, beforeRebuild: stillSelected)
@@ -650,6 +647,8 @@ extension StatusItemController {
         deferParentRebuildDuringTracking: Bool,
         hasOpenHostedSubviewMenu: Bool)
     {
+        // A detail submenu is rebuilt with its parent, never on its own.
+        guard !(menu is OverviewDetailMenu) else { return }
         if self.isHostedSubviewMenu(menu) {
             self.scheduleOpenMenuRebuildIfStillVisible(menu, provider: self.menuProvider(for: menu))
             return

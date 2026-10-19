@@ -149,6 +149,7 @@ extension UsageStore {
     }
 
     func recordCodexHistoricalSampleIfNeeded(snapshot: UsageSnapshot) {
+        guard self.canReadNativeCodexSource else { return }
         guard self.settings.historicalTrackingEnabled else { return }
         let projection = self.codexConsumerProjection(
             surface: .liveCard,
@@ -159,6 +160,8 @@ extension UsageStore {
         let sampledAt = snapshot.updatedAt
         let ownership = self.codexOwnershipContext(preferredEmail: snapshot.accountEmail(for: .codex))
         let historyStore = self.historicalUsageHistoryStore
+        // Provider-specific by design: Codex weekly history publishes only for the captured account revision.
+        let publicationRevision = self.providerPublicationRevision(for: .codex)
         Task.detached(priority: .utility) { [weak self] in
             _ = await historyStore.recordCodexWeekly(
                 window: weekly,
@@ -166,18 +169,30 @@ extension UsageStore {
                 accountKey: ownership.canonicalKey)
             let dataset = await Self.loadHistoricalDataset(from: historyStore, ownership: ownership)
             await MainActor.run { [weak self] in
-                self?.setCodexHistoricalDataset(dataset, accountKey: ownership.canonicalKey)
+                guard let self, self.canReadNativeCodexSource,
+                      self.providerPublicationRevisionIsCurrent(publicationRevision, for: .codex)
+                else { return }
+                self.setCodexHistoricalDataset(dataset, accountKey: ownership.canonicalKey)
             }
         }
     }
 
     func refreshHistoricalDatasetIfNeeded() async {
+        guard self.canReadNativeCodexSource else {
+            self.setCodexHistoricalDataset(nil, accountKey: nil)
+            return
+        }
         if !self.settings.historicalTrackingEnabled {
             self.setCodexHistoricalDataset(nil, accountKey: nil)
             return
         }
         let ownership = self.codexOwnershipContext()
+        // Provider-specific by design: Codex weekly history publishes only for the captured account revision.
+        let publicationRevision = self.providerPublicationRevision(for: .codex)
         let dataset = await Self.loadHistoricalDataset(from: self.historicalUsageHistoryStore, ownership: ownership)
+        guard self.canReadNativeCodexSource,
+              self.providerPublicationRevisionIsCurrent(publicationRevision, for: .codex)
+        else { return }
         self.setCodexHistoricalDataset(dataset, accountKey: ownership.canonicalKey)
         if let dashboard = self.openAIDashboard {
             let authority = self.evaluateCodexDashboardAuthority(
@@ -196,6 +211,7 @@ extension UsageStore {
         authorityDecision: CodexDashboardAuthorityDecision,
         attachedAccountEmail: String?)
     {
+        guard self.canReadNativeCodexSource else { return }
         guard self.settings.historicalTrackingEnabled else { return }
         guard authorityDecision.allowedEffects.contains(.historicalBackfill) else { return }
         let usageBreakdown = OpenAIDashboardDailyBreakdown.removingSkillUsageServices(
@@ -230,6 +246,8 @@ extension UsageStore {
         }
 
         let historyStore = self.historicalUsageHistoryStore
+        // Provider-specific by design: Codex weekly history publishes only for the captured account revision.
+        let publicationRevision = self.providerPublicationRevision(for: .codex)
         Task.detached(priority: .utility) { [weak self] in
             _ = await historyStore.backfillCodexWeeklyFromUsageBreakdown(
                 usageBreakdown,
@@ -238,7 +256,10 @@ extension UsageStore {
                 accountKey: ownership.canonicalKey)
             let dataset = await Self.loadHistoricalDataset(from: historyStore, ownership: ownership)
             await MainActor.run { [weak self] in
-                self?.setCodexHistoricalDataset(dataset, accountKey: ownership.canonicalKey)
+                guard let self, self.canReadNativeCodexSource,
+                      self.providerPublicationRevisionIsCurrent(publicationRevision, for: .codex)
+                else { return }
+                self.setCodexHistoricalDataset(dataset, accountKey: ownership.canonicalKey)
             }
         }
     }

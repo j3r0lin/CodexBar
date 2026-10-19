@@ -54,6 +54,7 @@ enum TokenAccountCLIError: LocalizedError {
 struct TokenAccountCLIContext {
     let selection: TokenAccountCLISelection
     let config: CodexBarConfig
+    let magpieSource: CLIMagpieSource
     let accountsByProvider: [UsageProvider: ProviderTokenAccountData]
     @ProcessEnvironment private(set) var baseEnvironment: [String: String]
     private let managedCodexAccountStoreURL: URL?
@@ -66,9 +67,11 @@ struct TokenAccountCLIContext {
         resolutionScope: TokenAccountCLIResolutionScope = .configuredAccounts,
         baseEnvironment: [String: String] = ProcessInfo.processInfo.environment,
         managedCodexAccountStoreURL: URL? = nil,
-        configStore: CodexBarConfigStore = CodexBarConfigStore()) throws
+        configStore: CodexBarConfigStore = CodexBarConfigStore(),
+        magpieSource: CLIMagpieSource = CLIMagpieSource()) throws
     {
         self.selection = selection
+        self.magpieSource = magpieSource
         self.config = config
         self.baseEnvironment = baseEnvironment
         self.managedCodexAccountStoreURL = managedCodexAccountStoreURL

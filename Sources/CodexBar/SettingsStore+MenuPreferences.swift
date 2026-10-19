@@ -15,18 +15,6 @@ enum MenuBarIconStyle: String, CaseIterable {
     }
 }
 
-enum SwitcherRowsOption: String, CaseIterable {
-    case icons
-    case progress
-
-    var label: String {
-        switch self {
-        case .icons: L("switcher_rows_icons")
-        case .progress: L("switcher_rows_progress")
-        }
-    }
-}
-
 enum MergedIconDisplayStyle: String, CaseIterable {
     case switcher
     case stacked
@@ -59,6 +47,37 @@ enum MergedOverviewLayout: String, CaseIterable {
         switch self {
         case .detailed: L("overview_layout_detailed")
         case .compact: L("overview_layout_compact")
+        }
+    }
+}
+
+/// Overview window filter: the full list, only session (5h) windows, or only weekly (7d) windows.
+/// Monthly, model-unscoped and untyped windows belong to neither filtered view, so both hide them.
+enum OverviewWindowFilter: String, CaseIterable {
+    case now
+    case fiveHours = "5h"
+    case sevenDays = "7d"
+
+    /// The coarse bucket a quota window falls into for filtering.
+    enum WindowKind {
+        case session
+        case weekly
+        case other
+    }
+
+    func includes(_ kind: WindowKind) -> Bool {
+        switch self {
+        case .now: true
+        case .fiveHours: kind == .session
+        case .sevenDays: kind == .weekly
+        }
+    }
+
+    var segmentTitle: String {
+        switch self {
+        case .now: L("Now")
+        case .fiveHours: "5h"
+        case .sevenDays: "7d"
         }
     }
 }
@@ -166,11 +185,6 @@ extension SettingsStore {
                 self.menuBarShowsBrandIconWithPercent = true
             }
         }
-    }
-
-    var switcherRowsOption: SwitcherRowsOption {
-        get { self.switcherShowsIcons ? .icons : .progress }
-        set { self.switcherShowsIcons = newValue == .icons }
     }
 
     var mergedIconDisplayStyle: MergedIconDisplayStyle {

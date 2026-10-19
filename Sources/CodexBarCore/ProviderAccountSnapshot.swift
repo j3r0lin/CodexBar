@@ -41,6 +41,9 @@ public struct ProviderAccountUsageSnapshot: Identifiable, Sendable {
     public let snapshot: UsageSnapshot?
     public let error: String?
     public let sourceLabel: String?
+    /// 1-based position in the source's own listing, for sources without numeric slots. Privacy-safe
+    /// `Account N` labels use it; it is never identity.
+    public let sourceOrdinal: Int?
 
     public init(
         id: ProviderAccountIdentity,
@@ -53,8 +56,10 @@ public struct ProviderAccountUsageSnapshot: Identifiable, Sendable {
         usesLastKnownUsage: Bool = false,
         snapshot: UsageSnapshot?,
         error: String?,
-        sourceLabel: String?)
+        sourceLabel: String?,
+        sourceOrdinal: Int? = nil)
     {
+        self.sourceOrdinal = sourceOrdinal
         self.id = id
         self.provider = provider
         self.displayLabel = displayLabel
@@ -66,5 +71,22 @@ public struct ProviderAccountUsageSnapshot: Identifiable, Sendable {
         self.snapshot = snapshot
         self.error = error
         self.sourceLabel = sourceLabel
+    }
+
+    /// The same account, with its usage marked as a last-known measurement and an explanatory error.
+    public func retainedAsLastKnown(error: String) -> ProviderAccountUsageSnapshot {
+        ProviderAccountUsageSnapshot(
+            id: self.id,
+            provider: self.provider,
+            displayLabel: self.displayLabel,
+            accountEmail: self.accountEmail,
+            historyAccountKey: self.historyAccountKey,
+            isActive: self.isActive,
+            canActivate: self.canActivate,
+            usesLastKnownUsage: self.snapshot != nil,
+            snapshot: self.snapshot,
+            error: error,
+            sourceLabel: self.sourceLabel,
+            sourceOrdinal: self.sourceOrdinal)
     }
 }

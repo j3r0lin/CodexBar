@@ -259,6 +259,7 @@ struct CodexProviderImplementation: ProviderImplementation {
 
     @MainActor
     func appendActionMenuEntries(context: ProviderMenuActionContext, entries: inout [ProviderMenuEntry]) {
+        guard context.store.canReadNativeCodexSource else { return }
         if context.codexWorkspacesMenuEnabled {
             entries.append(.action(L("Workspaces"), .openCodexWorkspaces))
         }

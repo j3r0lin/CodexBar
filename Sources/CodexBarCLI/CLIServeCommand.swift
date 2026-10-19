@@ -228,7 +228,7 @@ struct DashboardSnapshotContext: Sendable {
     let codexBarVersion: String?
 }
 
-private struct ServeCostContext: Sendable {
+struct ServeCostContext: Sendable {
     let period: CostReportingPeriod
     let now: Date
     let calendar: Calendar
@@ -1445,9 +1445,10 @@ extension CodexBarCLI {
         return output
     }
 
-    private static func serveCost(
+    static func serveCost(
         provider rawProvider: String?,
-        context: ServeCostContext) async -> CLILocalHTTPResponse
+        context: ServeCostContext,
+        magpieSource: CLIMagpieSource = CLIMagpieSource()) async -> CLILocalHTTPResponse
     {
         let selection: ProviderSelection
         do {
@@ -1456,12 +1457,16 @@ extension CodexBarCLI {
             return Self.serveError(status: .badRequest, message: error.localizedDescription)
         }
 
-        let providers = Self.costProviders(from: selection)
-        guard !providers.isEmpty else {
+        let requested = Self.costProviders(from: selection)
+        guard !requested.isEmpty else {
             return Self.serveError(
                 status: .badRequest,
                 message: "cost is only supported for \(Self.costSupportedProviderNames())")
         }
+        // Same filter as `codexbar cost`: magpie-owned and Claude-family providers are absent and
+        // their local token logs are never read while the switch is on.
+        let providers = await Self.nativeCostProviders(requested, config: context.config, source: magpieSource)
+        guard !providers.isEmpty else { return Self.serveJSON([CostPayload]()) }
 
         let fetcher = CostUsageFetcher(calendar: context.calendar)
         let piSessionProcessContexts = await Self.piSessionProcessContextsForCost(

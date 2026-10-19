@@ -212,12 +212,19 @@ extension CodexBarCLI {
         "If Keychain access was declined, CodexBar keeps the six-hour denial cooldown; " +
         "use --allow-keychain-prompt only for an explicit interactive retry."
 
-    private static func refreshCookie(
+    static func refreshCookie(
         descriptor: ProviderDescriptor,
         tokenContext: TokenAccountCLIContext,
         browserDetection: BrowserDetection) async -> CookieRefreshResult
     {
         let provider = descriptor.id
+        let route = await tokenContext.magpieSource.route(for: provider, configuration: tokenContext.config.magpie)
+        if !route.isNative {
+            return CookieRefreshResult(
+                provider: descriptor.cli.name,
+                status: .skipped,
+                message: "magpie supplies usage or discovery is pending; browser cookies are not used.")
+        }
         return await Self.withCookieRefreshCacheSuppressed(provider: provider, providerName: descriptor.cli.name) {
             let environment = tokenContext.environment(
                 base: ProcessInfo.processInfo.environment,

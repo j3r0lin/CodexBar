@@ -175,7 +175,10 @@ extension CodexBarCLI {
         var command = command
         // Provider-specific by design: one-shot Claude Auto usage follows the adapter's active slot.
         let config = tokenContext.config.providerConfig(for: .claude)
-        if !appAutoVerifier, CLIClaudeSwapCards.isEligible(
+        // While the magpie switch is on, Claude reads only through magpie in fetchUsageOutputs.
+        let magpieOwnsProvider = tokenContext.config.magpie?.enabled == true &&
+            ProviderSourceRoute.switchOnNativeForbidden.contains(provider)
+        if !appAutoVerifier, !magpieOwnsProvider, CLIClaudeSwapCards.isEligible(
             provider: provider,
             integrationEnabled: config?.claudeSwapEnabled == true,
             hasExplicitAccountSelection: tokenContext.selection.usesOverride,
@@ -277,6 +280,11 @@ extension CodexBarCLI {
         publishPartial: CLIServeOperationCoordinator<UsageCommandOutput>
             .PublishPartial? = nil) async -> UsageCommandOutput
     {
+        if let output = await fetchMagpieUsageIfOwned(
+            provider: provider, status: status, tokenContext: tokenContext, command: command)
+        {
+            return output
+        }
         // Provider-specific by design: Codex can enumerate reconciled live, managed, and profile-home accounts.
         if provider == .codex, command.includeAllCodexAccounts {
             let projection = tokenContext.visibleCodexAccounts()

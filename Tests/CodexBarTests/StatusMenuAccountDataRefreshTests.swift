@@ -85,29 +85,6 @@ struct StatusMenuAccountDataRefreshTests {
     }
 
     @Test
-    func `late account data cannot replace a newer provider selection request`() throws {
-        try self.withMenu { fixture, controller, menu in
-            fixture.settings.setProviderEnabled(
-                provider: .claude,
-                metadata: ProviderDescriptorRegistry.descriptor(for: .claude).metadata,
-                enabled: true)
-            controller.selectedMenuProvider = .claude
-            fixture.settings.mergedMenuLastSelectedWasOverview = false
-            var selectionRequestRan = false
-            controller.scheduleTrackingMenuRebuildIfStillVisible(menu, provider: .claude) {
-                selectionRequestRan = true
-                return true
-            }
-            let version = controller.menuContentVersion
-            controller.scheduleOpenRootMenuDataRebuildIfStillVisible(menu, provider: .codex)
-            #expect(controller.menuContentVersion == version)
-            Self.drainTracking()
-            #expect(selectionRequestRan)
-            #expect(controller.selectedMenuProvider == .claude)
-        }
-    }
-
-    @Test
     func `queued account data is discarded when account ownership changes before execution`() throws {
         try self.withMenu { _, controller, menu in
             let selection = AccountSelection()
@@ -156,6 +133,8 @@ struct StatusMenuAccountDataRefreshTests {
         }
         let fixture = try CodexAccountMenuPhaseFixture()
         defer { fixture.cleanup() }
+        // The merged menu always opens on Overview; the standalone Codex menu keeps a provider page open.
+        fixture.settings.mergeIcons = false
         let controller = fixture.makeController()
         defer { controller.releaseStatusItemsForTesting() }
         let menu = controller.makeMenu()

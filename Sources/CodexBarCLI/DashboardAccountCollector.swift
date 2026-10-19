@@ -5,18 +5,21 @@ extension CodexBarCLI {
     static func serveUsageOutput(
         selection: ProviderSelection,
         context: ServeUsageContext,
+        magpieSource: CLIMagpieSource = CLIMagpieSource(),
         fetchUsage: @escaping ServeUsageFetcher = CodexBarCLI
             .fetchServeProviderUsage) async throws -> UsageCommandOutput
     {
         let tokenContext = try TokenAccountCLIContext(
             selection: TokenAccountCLISelection(label: nil, index: nil, allAccounts: false),
             config: context.config,
-            verbose: false)
+            verbose: false,
+            magpieSource: magpieSource)
 
         let allTokenContext = try TokenAccountCLIContext(
             selection: TokenAccountCLISelection(label: nil, index: nil, allAccounts: true),
             config: context.config,
-            verbose: false)
+            verbose: false,
+            magpieSource: magpieSource)
         let browserDetection = BrowserDetection()
         let command = UsageCommandContext(
             format: .json,
@@ -87,7 +90,12 @@ extension CodexBarCLI {
     {
         guard allAccounts else { return false }
         // Provider-specific by design: Claude-swap supplies account rows; keep normal provider-level usage only.
-        if provider == .claude, dashboardClaudeSwapIsEligible(config: config) { return false }
+        if provider == .claude,
+           dashboardClaudeSwapIsEligible(config: config)
+           || config.magpie?.enabled == true
+        {
+            return false
+        }
         return TokenAccountSupportCatalog.support(for: provider) != nil
             && config.providerConfig(for: provider.instanceID)?.tokenAccounts?.accounts.isEmpty == false
     }

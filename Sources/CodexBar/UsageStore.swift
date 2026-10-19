@@ -20,6 +20,7 @@ extension UsageStore {
         _ = self.claudeSwapAccountSnapshots
         _ = self.claudeSwapLastError
         _ = self.claudeSwapRevision
+        _ = (self.magpieAccountSnapshots, self.magpieLastError, self.magpieRevision)
         _ = self.tokenSnapshotPublications
         _ = self.tokenErrors
         _ = self.tokenRefreshInFlight
@@ -47,6 +48,7 @@ extension UsageStore {
         _ = self.snapshots
         _ = self.claudeSwapAccountSnapshots
         _ = self.claudeSwapRevision
+        _ = (self.magpieAccountSnapshots, self.magpieRevision)
         _ = self.errors
         _ = self.diagnostics
         _ = self.knownLimitsAvailabilityByProvider
@@ -171,6 +173,20 @@ final class UsageStore {
     var claudeSwapRevision: UInt64 = 0
     @ObservationIgnored var claudeSwapRefreshTask: Task<Void, Never>?
     @ObservationIgnored var claudeSwapTransientState = ClaudeSwapTransientState()
+    var magpieAccountSnapshots: [MagpieAccountSnapshot] = []
+    var magpieLastRefreshAt: Date?
+    var magpieLastError: String?
+    var magpieRevision: UInt64 = 0
+    /// False until the first magpie discovery attempt finishes; known-mapped providers pause native
+    /// reads while false so enabling the switch never races a credential read.
+    var magpieDiscoveryCompleted = false
+    /// Bumped on every state clear so a late fetch from a previous configuration cannot publish.
+    @ObservationIgnored var magpieRefreshEpoch: UInt64 = 0
+    @ObservationIgnored var magpieRefreshTask: Task<Void, Never>?
+    @ObservationIgnored var magpieRefreshInFlight = false
+    @ObservationIgnored var magpieTransport: MagpieQuotasReader.Transport =
+        MagpieQuotasReader.urlSessionTransport
+    @ObservationIgnored var lastMagpieSourceConfiguration: (enabled: Bool, quotasURL: String)?
     var tokenSnapshotPublications: [ProviderInstanceID: TokenSnapshotPublication] = [:]
     var tokenSnapshotPublicationRevisions: [ProviderInstanceID: UInt64] = [:]
     var spendDashboardTokenPublications: [ProviderInstanceID: TokenSnapshotPublication] = [:]
@@ -579,7 +595,9 @@ final class UsageStore {
             defaultsKey: Self.sessionLimitResetDetectorDefaultsKey,
             logName: "session")
         self.weeklyLimitResetDetectorStates = Self.loadWeeklyLimitResetDetectorStates(from: settings.userDefaults)
-        if let codexAccountUsageSnapshotStore = self.codexAccountUsageSnapshotStore {
+        if self.canReadNativeCodexSource,
+           let codexAccountUsageSnapshotStore = self.codexAccountUsageSnapshotStore
+        {
             self.codexAccountSnapshots = codexAccountUsageSnapshotStore.load(
                 for: self.freshCodexVisibleAccountsForSnapshotHydration())
         }
@@ -723,6 +741,7 @@ final class UsageStore {
     }
 
     func isProviderAvailable(_ provider: UsageProvider, now: Date = Date()) -> Bool {
+        guard self.providerSourceRoute(for: provider).isNative else { return true }
         guard provider != .codex else { return true }
 
         let configRevision = self.settings.configRevision
@@ -779,6 +798,11 @@ final class UsageStore {
             forcedBackgroundGeneration = self.forcedRefreshEnrichmentGeneration
         } else {
             forcedBackgroundGeneration = nil
+        }
+        self.reconcileMagpieSourceConfiguration()
+        if self.settings.magpieSourceEnabled {
+            self.scheduleMagpieAccountRefresh()
+            await self.awaitMagpieRefresh()
         }
         self.prepareRefreshState()
         let refreshPhase = Self.refreshPhase(hasCompletedInitialRefresh: self.hasCompletedInitialRefresh)
@@ -998,7 +1022,9 @@ final class UsageStore {
         case antigravityQuotaSummary
         case antigravityLegacy
     }
+}
 
+extension UsageStore {
     func postQuotaWarning(_ event: QuotaWarningEvent, provider: UsageProvider) {
         self.sessionQuotaNotifier.postQuotaWarning(
             event: event,
@@ -1036,6 +1062,7 @@ extension UsageStore {
     }
 
     func debugLog(for provider: UsageProvider) async -> String {
+        if let note = self.magpieDebugNote(for: provider) { return note }
         if let cached = self.probeLogs[provider.instanceID], !cached.isEmpty {
             return cached
         }
@@ -1044,12 +1071,15 @@ extension UsageStore {
         let claudeUsageDataSource = self.settings.claudeUsageDataSource
         let claudeCookieSource = self.settings.claudeCookieSource
         let claudeCookieHeader = self.settings.claudeCookieHeader
+        let claudeMagpieDebugNote = self.magpieDebugNote(for: provider)
         let claudeDebugConfiguration: ClaudeDebugLogConfiguration? = if provider == .claude {
-            await self.makeClaudeDebugConfiguration(
-                fallbackUsageDataSource: claudeUsageDataSource,
-                fallbackWebExtrasEnabled: claudeWebExtrasEnabled,
-                fallbackCookieSource: claudeCookieSource,
-                fallbackCookieHeader: claudeCookieHeader)
+            claudeMagpieDebugNote == nil
+                ? await self.makeClaudeDebugConfiguration(
+                    fallbackUsageDataSource: claudeUsageDataSource,
+                    fallbackWebExtrasEnabled: claudeWebExtrasEnabled,
+                    fallbackCookieSource: claudeCookieSource,
+                    fallbackCookieHeader: claudeCookieHeader)
+                : nil
         } else {
             nil
         }
@@ -1081,6 +1111,9 @@ extension UsageStore {
             let buildText = {
                 if let apiKeyDebugContext {
                     return Self.apiKeyDebugLine(apiKeyDebugContext)
+                }
+                if let claudeMagpieDebugNote {
+                    return claudeMagpieDebugNote
                 }
                 switch provider {
                 case .codex:
@@ -1375,7 +1408,9 @@ extension UsageStore {
         let enabled = Set(self.settings.enabledProvidersOrdered(metadataByProvider: self.providerMetadata))
         self.versionDetectionProviders = enabled
         let implementations = Self.versionDetectionImplementations(
-            enabled: Set(enabled.compactMap(\.firstPartyProvider)))
+            enabled: Set(enabled.compactMap(\.firstPartyProvider).filter {
+                self.providerSourceRoute(for: $0).isNative
+            }))
         // Provider-specific by design: only Claude's version probe is background-gated and needs recovery handling.
         let probesClaude = implementations.contains { $0.id == .claude }
         let browserDetection = self.browserDetection
@@ -1440,6 +1475,10 @@ extension UsageStore {
     }
 
     func refreshTokenUsage(_ provider: UsageProvider, force: Bool) async {
+        guard self.providerSourceRoute(for: provider).isNative else {
+            self.resetTokenUsageState(for: provider)
+            return
+        }
         guard ProviderDescriptorRegistry.descriptor(for: provider).tokenCost.supportsTokenCost else {
             self.resetTokenUsageState(for: provider)
             return

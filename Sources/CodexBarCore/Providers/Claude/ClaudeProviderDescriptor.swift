@@ -285,8 +285,8 @@ public enum ClaudeProviderDescriptor {
     }
 
     private static func resolveStrategies(context: ProviderFetchContext) async -> [any ProviderFetchStrategy] {
-        // An explicitly selected account is the credential authority for this fetch. The global
-        // source only controls ambient-account routing and must not redirect a selected account.
+        // magpie ownership is gated before strategy resolution (see ProviderSourceRoute), so every
+        // path below is native-only.
         if context.selectedTokenAccountID != nil {
             if ClaudeAdminAPIFetchStrategy.isSelectedAdminAPIAccount(context: context) {
                 return [ClaudeAdminAPIFetchStrategy()]

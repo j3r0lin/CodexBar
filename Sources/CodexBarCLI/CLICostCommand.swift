@@ -9,16 +9,39 @@ extension CodexBarCLI {
     static func runCost(_ values: ParsedValues) async {
         let output = CLIOutputPreferences.from(values: values)
         if values.flags.contains("identifiedOnly") || values.options["identifiedEnd"] != nil {
+            let config = Self.loadConfig(output: output)
+            // Provider-specific by design: identified-only usage reads native Codex session logs only.
+            let route = await CLIMagpieSource().route(for: .codex, configuration: config.magpie)
+            guard route.isNative else {
+                Self.exit(
+                    code: .failure,
+                    message: "Local cost is unavailable while magpie owns this provider.",
+                    output: output,
+                    kind: .runtime)
+            }
             await Self.runCodexIdentifiedUsage(values, output: output)
             return
         }
         await Self.runStandardCost(values, output: output)
     }
 
+    static func nativeCostProviders(
+        _ candidates: [UsageProvider],
+        config: CodexBarConfig,
+        source: CLIMagpieSource = CLIMagpieSource()) async -> [UsageProvider]
+    {
+        var providers: [UsageProvider] = []
+        for provider in candidates {
+            let route = await source.route(for: provider, configuration: config.magpie)
+            if route.isNative { providers.append(provider) }
+        }
+        return providers
+    }
+
     private static func runStandardCost(_ values: ParsedValues, output: CLIOutputPreferences) async {
         let config = CodexBarCLI.loadConfig(output: output)
         let selection = CodexBarCLI.decodeProvider(from: values, config: config)
-        let providers = Self.costProviders(from: selection)
+        let providers = await Self.nativeCostProviders(Self.costProviders(from: selection), config: config)
         let unsupported = selection.asList.filter { !Self.costSupportedProviders.contains($0) }
         if !unsupported.isEmpty {
             let names = unsupported

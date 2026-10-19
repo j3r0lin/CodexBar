@@ -138,6 +138,10 @@ last refresh, adapter errors, and a link to the upstream project; CodexBar shoul
 - Keep expired, missing, unknown, and Keychain-inaccessible credential slots non-actionable. Never auto-switch, launch
   sessions, add/import/export/purge accounts, or mutate credentials directly.
 
+A second, mutually exclusive source reads the local magpie gateway's quota endpoint over HTTP; see
+[claude.md](claude.md#magpie-accounts-opt-in). Its identity derives from the account email by necessity, which is the
+one documented exception to the slot-identity rule above.
+
 ## Provider-neutral account model
 
 Introduce one projection used by menus and status items rather than teaching status item code about Claude OAuth:

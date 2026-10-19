@@ -1,21 +1,24 @@
 import AppKit
 
 extension StatusItemController {
-    /// Updates persistent Refresh rows in place while their menus are tracking.
-    func updatePersistentRefreshItemsEnabled() {
-        for item in self.persistentRefreshItems.allObjects {
-            guard self.isPersistentRefreshItem(item) else {
-                self.persistentRefreshItems.remove(item)
-                continue
+    /// A highlighted footer would keep the viewport restore after a manual refresh from running,
+    /// so the footer drops its highlight while its refresh icon spins.
+    private func clearFooterHighlightWhileRefreshing(in menu: NSMenu) {
+        guard let highlighted = self.highlightedMenuItems[ObjectIdentifier(menu)],
+              highlighted.view is MenuFooterBarView
+        else { return }
+        self.highlightedMenuItems.removeValue(forKey: ObjectIdentifier(menu))
+    }
+
+    /// Spins the refresh icon in every footer bar whose menu currently has a refresh in flight.
+    func updateMenuFooterBars() {
+        for bar in self.menuFooterBars.allObjects {
+            guard let menu = bar.enclosingMenuItem?.menu else { continue }
+            let spinning = self.isRefreshActionInFlight(for: menu)
+            if spinning {
+                self.clearFooterHighlightWhileRefreshing(in: menu)
             }
-            guard let menu = item.menu else { continue }
-            let enabled = !self.isRefreshActionInFlight(for: menu)
-            if !enabled, self.highlightedMenuItems[ObjectIdentifier(menu)] === item {
-                (item.view as? MenuCardHighlighting)?.setHighlighted(false)
-                self.highlightedMenuItems.removeValue(forKey: ObjectIdentifier(menu))
-            }
-            item.isEnabled = enabled
-            (item.view as? PersistentRefreshMenuView)?.setEnabled(enabled)
+            bar.setSpinning(spinning, systemImageName: MenuDescriptor.MenuAction.refresh.systemImageName ?? "")
         }
     }
 
@@ -52,8 +55,6 @@ extension StatusItemController {
     func isMergedOverviewSelected(in menu: NSMenu) -> Bool {
         guard self.shouldMergeIcons else { return false }
         if let mergedMenu = self.mergedMenu, menu !== mergedMenu { return false }
-        let providers = self.store.enabledFirstPartyProvidersForDisplay()
-        return self.includesOverviewTab(enabledProviders: providers) &&
-            self.settings.mergedMenuLastSelectedWasOverview
+        return true
     }
 }

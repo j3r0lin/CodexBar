@@ -2,8 +2,11 @@ import AppKit
 
 @MainActor
 enum StatusMenuAppearance {
+    /// Menus and their submenus stay dark even when the system is light.
+    static let menuAppearance = NSAppearance(named: .darkAqua)
+
     static func pin(_ menu: NSMenu) {
-        self.pin(menu, to: NSApplication.shared.effectiveAppearance)
+        self.pin(menu, to: self.menuAppearance)
     }
 
     static func pin(_ menu: NSMenu, to appearance: NSAppearance?) {
@@ -25,8 +28,8 @@ final class StatusMenuAppearanceObserver {
     private var refreshScheduled = false
 
     convenience init(controller: StatusItemController) {
-        self.init(source: NSApplication.shared, appearance: \NSApplication.effectiveAppearance) { [weak controller] in
-            controller?.pinKnownMenus(to: $0)
+        self.init(source: NSApplication.shared, appearance: \NSApplication.effectiveAppearance) { [weak controller] _ in
+            controller?.pinKnownMenus(to: StatusMenuAppearance.menuAppearance)
             controller?.refreshStatusItemContentForColorMode()
         }
     }
@@ -69,7 +72,7 @@ final class StatusMenuAppearanceObserver {
 }
 
 extension StatusItemController {
-    fileprivate func pinKnownMenus(to appearance: NSAppearance) {
+    fileprivate func pinKnownMenus(to appearance: NSAppearance?) {
         let menus = [self.mergedMenu, self.fallbackMenu] + self.providerMenus.values.map(Optional.some)
         for menu in menus.compactMap(\.self) {
             StatusMenuAppearance.pin(menu, to: appearance)

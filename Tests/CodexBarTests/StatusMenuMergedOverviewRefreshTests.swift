@@ -30,11 +30,13 @@ struct StatusMenuMergedOverviewRefreshTests {
         #expect(!visibleProviders.contains(.opencode))
 
         controller.store.refreshingProviders.insert(.opencode)
-        controller.updatePersistentRefreshItemsEnabled()
+        controller.updateMenuFooterBars()
         #expect(controller.isRefreshActionInFlight(for: menu))
-        let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
-        #expect(controller.isPersistentRefreshItem(refreshItem))
-        #expect(!refreshItem.isEnabled)
+        // The Overview footer bar carries only About and Quit; refresh and Settings live in the header.
+        let footer = try #require(menu.items.compactMap { $0.view as? MenuFooterBarView }.first)
+        #expect(footer.button(labeled: L("Refresh")) == nil)
+        #expect(footer.button(labeled: L("Quit")) != nil)
+        #expect(menu.items.contains { $0.representedObject as? String == "overviewHeader" })
 
         var requestCount = 0
         controller._test_manualRefreshOperation = { requestCount += 1 }

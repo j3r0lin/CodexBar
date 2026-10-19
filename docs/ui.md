@@ -48,23 +48,28 @@ read_when:
 - Overview offers Share Usage Snapshot when its Usage & Spend summary has shareable data. The local preview uses the same spend sources, hidden-source choices, calendar, and currency as that summary; Copy Image exports PNG and TIFF without uploading anything.
 - Shared cards and copied statistics keep model families from providers with complete model history, even when another provider in the same currency has unpriced or incomplete history. A ranking that omits providers or model rows is labeled **PARTIAL** on the image and **Top models (partial)** in copied text; complete rankings retain **BY USAGE**. Selected-day model rows are omitted because the shared totals describe the full reporting window.
 - LSUIElement app: no Dock icon; status item uses custom NSImage.
-- Cached status menus and previously opened submenus follow macOS appearance changes before reopening, preserving the effective Light/Dark and accessibility appearance.
-- Merge Icons toggle combines providers into one status item with a switcher.
+- Status menus, their submenus and the account-ring hover card always draw in the dark appearance, also when macOS is in Light mode. The menu bar icons keep following the system.
+- Merge Icons toggle combines providers into one status item whose menu opens on the Overview list.
 - Menu Bar → Combined icon source offers Current selection (default), Highest usage, and Frontmost provider app. The last option follows enabled Codex, Claude, Cursor, and Antigravity desktop apps only while the merged icon is collapsed. Unknown or disabled apps fall back to the saved selection or Overview. Opening the menu preserves its provider, account, and Overview selection; focus never saves a new selection. Stacked and separate icons do not monitor focus. Monitoring uses macOS application notifications, without polling, permission prompts, or terminal-tab inspection. Existing highest-usage preferences are preserved, and the choice supports sync and portable preference transfer.
 - With separate icons, explicitly reordering providers in Settings reassigns CodexBar's saved menu bar slots in that order, from right to left. Recreated items retain their stable autosave and accessibility identities. Orders changed while icons are merged also update these saved slots before returning to separate icons. Ordinary refreshes and visibility recovery continue to preserve manual Command-drag placement.
-- With the automatic metric selected, switcher progress honors a provider's exhausted-quota selection before
-  showing normal weekly progress. OpenCode Go's automatic percentage and switcher use the least remaining
-  five-hour, weekly, or monthly allowance even before exhaustion. Explicit choices and separate provider pools
-  retain their existing selection rules.
+- OpenCode Go's automatic percentage uses the least remaining five-hour, weekly, or monthly allowance even before
+  exhaustion. Explicit choices and separate provider pools retain their existing selection rules.
 - Normal quit removes status items with their stable identities intact, preventing retained blank menu bar slots on macOS 26.6.2 while preserving saved placement.
 - Status items receive stable autosave names before normal sizing, including during visibility recovery. Saved
   positions beyond the widest attached display plus 512 points are cleared before creation. Visibility changes and
   removal validate positions before saving and after AppKit updates them: a missing or invalid result restores only
   a valid previous position. Valid new positions remain untouched; unrelated defaults are never repaired by this path.
-- When Overview has selected providers, the switcher includes an Overview tab that renders up to 6 provider rows.
-- Overview row order follows provider order; selecting a row jumps to that provider detail card.
+- The merged menu always opens on the Overview list, with one row per enabled provider. A provider that only has an
+  error shows the error text in its row. With no enabled provider the menu shows "No providers enabled".
+- The merged icon follows the first provider selected under "Merged icon providers" (or the highest-usage one among
+  them when Combined icon source is Highest usage). It no longer follows a provider page, since the menu has none.
+- Overview row order follows provider order. A provider with several accounts gets a grey "<provider> · N accounts"
+  caption with one indented row per account. Hovering a row opens a submenu with that account's five-hour and
+  weekly usage, reset times and data age, plus the provider's usage history chart when it has one, followed by the
+  provider's own actions: account switchers, Buy Credits, cost and credits submenus, dashboard and status links, and
+  login repair. A magpie Claude account row shows only that account's usage and its refresh item.
 - Overview uses native vertical scrolling when its menu exceeds the visible height. Fitted menus retain coarse-wheel provider highlighting; precise input and row submenus keep their native scrolling behavior. Scrolling after Command-R still prevents a pending refresh from resetting the viewport.
-- Menu → Overview layout offers Detailed (default) and Compact. Compact keeps provider/account headers and labeled quota bars, omits their reset/detail lines and supplemental sections, and retains detail-only providers. Select a provider for its full card. Visibility choices and the shared Usage & Spend summary continue to apply.
+- Menu → Overview layout offers Detailed (default) and Compact. Compact keeps provider/account headers and labeled quota bars, omits their reset/detail lines and supplemental sections, and retains detail-only providers. Visibility choices and the shared Usage & Spend summary continue to apply.
 - Menu-card wrappers use standard non-vibrant view behavior so white GPU-tinted Overview content remains visible on macOS 15. Overview selection stays outside the SwiftUI graph, with native submenu click and drag tracking retained.
 - The global open-menu keyboard shortcut toggles the currently tracked menu closed before opening a new one.
 - Display → Menu Bar → Layout provides presets plus a token editor. Tokens can be clicked to append, dragged from the
@@ -237,8 +242,8 @@ Runs out tokens remain hidden until 3% of their window has elapsed.
 - Advanced: “Disable Keychain access” turns off browser cookie import; paste Cookie headers manually in Providers.
 - Advanced: “Show provider storage usage” enables background scans of known provider-owned local paths; CodexBar only
   reports sizes and cleanup ideas, it does not delete files.
-- Display: “Overview tab providers” controls which providers appear in Merge Icons → Overview (up to 6).
-- If no providers are selected for Overview, the Overview tab is hidden.
+- Display: “Merged icon providers” picks up to 6 providers the merged icon draws from. It does not filter the
+  Overview list, which shows every enabled provider.
 - Providers → Claude: “Avoid Keychain prompts” selects the Security.framework reader's `Never prompt` policy.
 - The lower-level “Keychain prompt policy” picker remains visible as the source of truth for Claude OAuth prompts.
 

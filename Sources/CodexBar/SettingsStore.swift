@@ -280,7 +280,6 @@ final class SettingsStore {
     @ObservationIgnored var selectedMenuProviderRawStorage: String?
     @ObservationIgnored private nonisolated(unsafe) var lowPowerModeObserver: NSObjectProtocol?
     var defaultsState: SettingsDefaultsState
-    var providerSwitcherShortcuts = ProviderSwitcherShortcuts.defaults
     var configRevision: Int = 0
     var providerDetailSettingsRevision: Int = 0
     var backgroundWorkSettingsRevision: Int = 0
@@ -410,9 +409,6 @@ final class SettingsStore {
             userDefaults: userDefaults,
             hadPreviousInstallationState: hadPreviousInstallationState)
         self.defaultsState = defaultsState
-        self.providerSwitcherShortcuts = (try? ProviderSwitcherShortcuts.validated(
-            userDefaults.dictionary(forKey: "switcherShortcuts") as? [String: String] ?? [:]))
-            ?? ProviderSwitcherShortcuts.defaults
         self.mergedMenuLastSelectedWasOverviewStorage = defaultsState.mergedMenuLastSelectedWasOverview
         self.selectedMenuProviderRawStorage = defaultsState.selectedMenuProviderRaw
         self.updateProviderState(config: config)
@@ -689,7 +685,10 @@ extension SettingsStore {
             mergedOverviewLayoutRaw: userDefaults.string(forKey: "mergedOverviewLayout")
                 ?? MergedOverviewLayout.detailed.rawValue,
             mergedOverviewAllAccounts: userDefaults.bool(forKey: "mergedOverviewAllAccounts"),
-            switcherShowsIcons: userDefaults.object(forKey: "switcherShowsIcons") as? Bool ?? true,
+            overviewWindowFilterRaw: userDefaults.string(forKey: "overviewWindowFilter")
+                ?? OverviewWindowFilter.now.rawValue,
+            overviewCollapsedProviderGroupsRaw: userDefaults.array(
+                forKey: "overviewCollapsedProviderGroups") as? [String] ?? [],
             mergeIconsStacked: userDefaults.object(forKey: "mergeIconsStacked") as? Bool ?? false,
             mergeIconStackedTopProviderRaw: userDefaults.string(forKey: "mergeIconStackedTopProvider"),
             mergeIconStackedBottomProviderRaw: userDefaults.string(forKey: "mergeIconStackedBottomProvider"),

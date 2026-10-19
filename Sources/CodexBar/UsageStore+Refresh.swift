@@ -77,6 +77,7 @@ extension UsageStore {
     func prepareRefreshState(for provider: UsageProvider? = nil) {
         // Provider-specific by design: Codex active-source correction reconciles managed profile filesystem state.
         guard provider == nil || provider == .codex else { return }
+        guard self.providerSourceRoute(for: .codex).isNative else { return }
         _ = self.settings.persistResolvedCodexActiveSourceCorrectionIfNeeded()
     }
 
@@ -101,6 +102,11 @@ extension UsageStore {
     {
         // Codex source reconciliation can persist a settings correction. Perform it before
         // capturing the publication revision so the request cannot invalidate itself.
+        self.reconcileMagpieSourceConfiguration()
+        if !self.providerSourceRoute(for: provider).isNative {
+            await self.awaitMagpieRefresh()
+            guard self.providerSourceRoute(for: provider).isNative else { return }
+        }
         self.prepareRefreshState(for: provider)
         while coalesceIfRefreshing,
               let existingState = self.providerRefreshCoordinator.coalescingState(for: provider.instanceID)
@@ -172,6 +178,7 @@ extension UsageStore {
     }
 
     func isCurrentProviderRefreshGeneration(_ provider: UsageProvider, generation: UInt64?) -> Bool {
+        guard self.providerSourceRoute(for: provider).isNative else { return false }
         guard let generation else { return true }
         guard self.providerRefreshCoordinator.isCurrent(generation, for: provider.instanceID),
               let context = self.providerRefreshPublicationContexts[provider.instanceID],
@@ -297,6 +304,10 @@ extension UsageStore {
         retryMode: ProviderRefreshRetryMode?,
         codexAccountIDs: Set<String>?) async -> ProviderRefreshRetryMode?
     {
+        guard self.providerSourceRoute(for: provider).isNative else {
+            await self.awaitMagpieRefresh()
+            return nil
+        }
         guard let spec = await self.providerRefreshSpec(provider) else { return nil }
         guard self.isCurrentProviderRefreshGeneration(provider, generation: generation) else { return nil }
         let codexExplicitPAT = provider == .codex && self.settings.codexUsageDataSource == .pat
@@ -1277,7 +1288,8 @@ extension UsageStore {
         }
     }
 
-    private func clearClaudeCredentialDerivedStateForCredentialSwap() {
+    /// `keepsLocalTokenCost` keeps the cost snapshot scanned from local Claude logs, which no credential produced.
+    func clearClaudeCredentialDerivedStateForCredentialSwap(keepsLocalTokenCost: Bool = false) {
         // Provider-specific by design: retire Claude projections but preserve scoped warning episodes, including
         // unresolved accounts.
         self.widgetUsagePreservationBlockedProviders.insert(.claude)
@@ -1287,15 +1299,19 @@ extension UsageStore {
         self.knownLimitsAvailabilityByProvider.removeValue(forKey: .claude)
         self.lastSourceLabels.removeValue(forKey: .claude)
         self.claudeHistoryFallbackEligible = false
-        self.clearTokenSnapshot(for: .claude)
-        self.tokenErrors[.claude] = nil
+        if !keepsLocalTokenCost {
+            self.clearTokenSnapshot(for: .claude)
+            self.tokenErrors[.claude] = nil
+        }
         self.failureGates[.claude]?.reset()
         self.tokenFailureGates[.claude]?.reset()
         self.clearSessionQuotaTransitionState(provider: .claude)
         self.quotaWarningState = self.quotaWarningState.filter {
             $0.key.provider != .claude || $0.key.accountDiscriminator != nil
         }
-        self.lastTokenFetchAt.removeValue(forKey: .claude)
+        if !keepsLocalTokenCost {
+            self.lastTokenFetchAt.removeValue(forKey: .claude)
+        }
     }
 
     private func handleProviderFetchFailure(

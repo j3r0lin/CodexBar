@@ -10,7 +10,9 @@ extension UsageStore {
         historySelection: PlanUtilizationHistorySelection? = nil,
         usesLiveAccount: Bool = true) -> [CostUsageQuotaResetObservation]
     {
-        guard ProviderDescriptorRegistry.descriptor(for: provider).history.supportsPlanUtilization else { return [] }
+        guard ProviderDescriptorRegistry.descriptor(for: provider).history.supportsPlanUtilization,
+              self.providerSourceRoute(for: provider).isNative
+        else { return [] }
         if let historySelection {
             return Self.weeklyResetObservations(from: historySelection.histories)
         }

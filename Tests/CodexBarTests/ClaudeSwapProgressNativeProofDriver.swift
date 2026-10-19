@@ -252,7 +252,7 @@ final class ClaudeSwapProgressNativeProofDriver {
     }
 
     private func record(label: String, content: Content?, capture: Capture?) {
-        var receipt = MergedMenuScrollingSwapNativeProofTests.phaseReceipt(
+        var receipt = MergedMenuProofGeometry.phaseReceipt(
             menu: self.menu, label: label, settings: self.fixture.settings)
         receipt["trackingReturned"] = self.trackingReturned
         receipt["sameMenuObjectTracking"] = self.controller.openMenus[ObjectIdentifier(self.menu)] === self.menu
@@ -317,7 +317,7 @@ final class ClaudeSwapProgressNativeProofDriver {
     private func capture(label: String, content: Content) throws -> Capture {
         self.lastCaptureAt = Date()
         let url = self.configuration.output.appendingPathComponent("\(label)-menu-\(UUID().uuidString).png")
-        MergedMenuScrollingSwapNativeProofTests.capture(menu: self.menu, to: url)
+        MergedMenuProofGeometry.capture(menu: self.menu, to: url)
         let image = try XCTUnwrap(NSImage(contentsOf: url)?.cgImage(forProposedRect: nil, context: nil, hints: nil))
         try Data(contentsOf: url).write(
             to: self.configuration.output.appendingPathComponent("\(label)-menu.png"), options: .atomic)

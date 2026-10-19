@@ -577,7 +577,10 @@ extension UsageMenuCardView.Model {
         let primaryLabel = if input.provider == .cursor, snapshot.detailRow(label: "Request quota") != nil {
             "Requests"
         } else if input.provider == .grok {
-            GrokProviderDescriptor.displayLabel(window: snapshot.primary, now: input.now) ?? input.metadata.sessionLabel
+            GrokProviderDescriptor.displayLabel(
+                window: snapshot.primary,
+                now: input.now,
+                infersPeriodFromReset: !snapshot.isMagpieSourced) ?? input.metadata.sessionLabel
         } else if input.provider == .doubao {
             DoubaoProviderDescriptor.primaryLabel(window: snapshot.primary) ?? input.metadata.sessionLabel
         } else if input.provider == .sub2api {

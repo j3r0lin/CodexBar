@@ -1,4 +1,5 @@
 /* Chinese (Simplified) localization for CodexBar */
+"%lld accounts" = "%lld 个账号";
 
 /* iCloud Sync */
 "+ %d more" = "还有 %d 个";
@@ -334,6 +335,7 @@
 "Reads local usage logs. Shows today + last 30 days cost in the menu." = "读取本地用量日志。在菜单中显示今天及所选历史窗口的费用。";
 "When on, runs automatic provider, local usage, and storage refreshes no more often than every 30 minutes. Manual refresh remains available. Automatic follows the system Low Power Mode setting." = "开启后，自动供应商刷新、本地用量扫描和存储扫描最多每 30 分钟运行一次；仍可随时手动刷新。选择“自动”时将跟随系统的低电量模式设置。";
 "Refresh" = "刷新";
+"Refresh Claude usage" = "刷新 Claude 用量";
 "Refreshing" = "正在刷新";
 "Refresh cadence" = "刷新频率";
 "Remote" = "远程";
@@ -473,7 +475,7 @@
 "metric_tertiary" = "第三（%@）";
 "multiple_workspaces_found" = "CodexBar 发现 %@ 有多个工作区。请选择要添加的工作区。";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "最多选择 %@ 个提供商";
+"overview_choose_providers" = "为合并图标最多选择 %@ 个提供商";
 "remove_account_message" = "要从 CodexBar 中移除 %@ 吗？其托管的 Codex 主目录将被删除。";
 "version_format" = "版本 %@";
 "workspaceID is set but only opencode, opencodego, and deepgram support workspaceID." = "已设置 workspaceID，但只有 opencode、opencodego 和 deepgram 支持 workspaceID。";
@@ -604,9 +606,6 @@
 "menu_bar_style_critters" = "小动物";
 "menu_bar_style_bars" = "进度条";
 "menu_bar_style_icon_percent" = "图标和百分比";
-"switcher_rows_title" = "切换器行";
-"switcher_rows_icons" = "提供商图标";
-"switcher_rows_progress" = "每周进度";
 "usage_bars_fill_title" = "用量条填充方式";
 "usage_bars_fill_remaining" = "按剩余量";
 "usage_bars_fill_used" = "按已用量";
@@ -638,11 +637,11 @@
 "multi_account_layout_subtitle" = "选择分段账户切换或堆叠账户卡片。";
 "multi_account_layout_segmented" = "分段";
 "multi_account_layout_stacked" = "堆叠";
-"overview_tab_providers_title" = "概览标签提供商";
+"overview_tab_providers_title" = "合并图标的提供商";
 "configure" = "配置…";
-"overview_enable_merge_icons_hint" = "启用“合并图标”以配置“概览”标签中的提供商。";
+"overview_enable_merge_icons_hint" = "打开“合并图标”后才能选择合并图标的提供商。";
 "overview_no_providers_hint" = "“概览”中没有可用的已启用提供商。";
-"overview_rows_follow_order" = "概览行始终遵循提供商顺序。";
+"overview_rows_follow_order" = "合并图标显示其中一个提供商。概览菜单列出所有已启用的提供商。";
 "overview_no_providers_selected" = "未选择提供商";
 "agent_sessions_title" = "智能体会话";
 "agent_sessions_subtitle" = "在菜单中显示本地及通过 SSH 发现的 Codex 和 Claude Code 会话。";
@@ -1807,7 +1806,6 @@
 "Enable Antigravity provider" = "启用 Antigravity 提供程序";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "在 CodexBar → 设置 → 菜单 → 小部件中启用帐户小部件。然后编辑此小部件以选择一个帐户。";
 "Error: %@" = "错误：%@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "示例：alt+cmd+2、shift+right。刷新（cmd+r）、设置（cmd+,）和退出（cmd+q）被保留。";
 "Export Preferences…" = "导出首选项...";
 "External Codex OAuth sources" = "外部 Codex OAuth 源";
 "Extra usage balance" = "额外用量余额";
@@ -1859,7 +1857,6 @@
 "My AI subscriptions · last %d days" = "我的 AI 订阅 · 最近 %d 天";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "~/.aws/config 中的 AWS 配置档案名称，也可通过 AWS_PROFILE 设置。";
-"Next provider" = "下一个提供商";
 "No active account" = "没有正在使用的账户";
 "No cookie header pasted." = "尚未粘贴 Cookie 请求头。";
 "No matching OpenAI web session found for %@." = "找不到与 %@ 匹配的 OpenAI Web 会话。";
@@ -1934,14 +1931,11 @@
 "Preferences could not be transferred" = "无法迁移偏好设置";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Go 使用限制的首选。还读取 OPENCODE_API_KEY。";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "本地 agent 进程运行时，即使没有活动也保持系统唤醒。会消耗电量，不阻止合盖睡眠或显示器休眠。";
-"Previous provider" = "上一个提供商";
 "Primary quota" = "第一项配额";
 "Prioritize exhausted quotas" = "优先显示已耗尽的配额";
 "Profile name" = "配置档案名称";
 "Provider %@" = "提供商 %@";
 "Provider + Metric" = "提供商+指标";
-"Provider Switcher Shortcuts" = "提供商切换快捷键";
-"Provider Switcher Shortcuts…" = "提供商切换快捷键…";
 "Provider service status: %@" = "提供商服务状态：%@";
 "Quota estimated from local usage history" = "根据本地用量历史估算的配额";
 "Quota from the selected dev.meta.ai browser team" = "所选 dev.meta.ai 网页团队的配额";
@@ -1969,7 +1963,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "保存在CodexBar的本地配置文件中。或设置GITKRAKEN_API_TOKEN。";
 "Scoped weekly" = "所选范围的每周配额";
 "Secondary quota" = "第二项配额";
-"Select position %@" = "选择第 %@ 项";
 "Select the provider and account to display in the widget." = "选择要在小部件中显示的提供商和帐户。";
 "Select the provider and metric to display." = "选择要显示的提供商和 指标。";
 "Select the provider and usage window to display." = "选择要显示的提供商和使用窗口。";
@@ -2007,7 +2000,6 @@
 "The pasted header is sent only to this tenant." = "粘贴的标头仅发送给该租户。";
 "The selected Codex profile has no verified account email." = "所选的 Codex 配置文件没有经过验证的帐户电子邮件。";
 "The selected managed Codex account is unavailable." = "所选托管 Codex 帐户不可用。";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "这些快捷键在服务商切换菜单打开时可用。输入 `ctrl`、`alt`、`shift` 和 `cmd`，搭配字母、数字、`left` 或 `right`；输入 `none` 可禁用对应操作。";
 "Third quota" = "第三项配额";
 "Today cost" = "今日费用";
 "Token Refreshed" = "已刷新令牌";
@@ -2642,6 +2634,21 @@
 "Daily spend · %@" = "每日支出 · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "适用于所选令牌账户“%@”。每个账户保留各自的限制。";
 "Applies to the OpenAI API key, not to token accounts." = "适用于 OpenAI API 密钥，不适用于令牌账户。";
+"No providers enabled" = "未启用任何提供商";
+"5-hour limit" = "5 小时限额";
+"Weekly limit" = "每周限额";
+"account_detail_usage_title" = "%@ 用量";
+"account_detail_used" = "已用 %@";
+"account_detail_history" = "历史";
+
+/* Overview card UI */
+"%lld providers" = "%lld 个提供商";
+"Auto-refresh on" = "自动刷新已开启";
+"Auto-refresh off" = "自动刷新已关闭";
+"Last sync: %@" = "上次同步：%@";
+"No matching windows" = "没有匹配的窗口";
+"Now" = "现在";
+"resets in %@" = "%@ 后重置";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar 将向 macOS 钥匙串请求 Muse Code 登录 token，以获取你的 Muse Code 订阅用量。点击“确定”继续。";
 /* Claude Platform provider */
 "API credit" = "API 额度";

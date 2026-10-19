@@ -32,6 +32,14 @@ extension StatusItemController {
         return self.makeHostedSubviewPlaceholderMenu(chartID: Self.usageHistoryChartID, provider: provider)
     }
 
+    func usageHistoryHasPoints(for provider: UsageProvider) -> Bool {
+        PlanUtilizationHistoryChartMenuView(
+            provider: provider,
+            histories: self.store.planUtilizationHistory(for: provider),
+            snapshot: self.store.snapshot(for: provider.instanceID),
+            width: 0).hasPoints
+    }
+
     func appendUsageHistoryChartItem(
         to submenu: NSMenu,
         provider: UsageProvider,

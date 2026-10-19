@@ -422,6 +422,9 @@ public enum BrowserCookieAccessGate {
 extension BrowserCookieClient {
     /// Discover store metadata without reading credentials; record reads enforce the browser access gate.
     public func codexBarStores(for browser: Browser) throws -> [BrowserCookieStore] {
+        #if DEBUG
+        try NativeProviderIOTestBoundary.intercept?(.cookie)
+        #endif
         guard BrowserCookieAccessGate.cookieStoreAccessDecision(
             homeDirectories: self.configuration.homeDirectories) == .allowed
         else {
@@ -456,6 +459,9 @@ extension BrowserCookieClient {
         for browser: Browser,
         operation: () throws -> [Record]) throws -> [Record]
     {
+        #if DEBUG
+        try NativeProviderIOTestBoundary.intercept?(.cookie)
+        #endif
         guard BrowserCookieAccessGate.cookieStoreAccessDecision(
             homeDirectories: self.configuration.homeDirectories) == .allowed
         else {

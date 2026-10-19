@@ -68,6 +68,10 @@ extension UsageStore {
     }
 
     func refreshSpendDashboardTokenUsageNow(for provider: UsageProvider, force: Bool) async {
+        guard self.providerSourceRoute(for: provider).isNative else {
+            self.clearSpendDashboardTokenSnapshot(for: provider)
+            return
+        }
         guard Self.usesSpendDashboardIndependentTokenSnapshot(provider) else { return }
         guard self.settings.isCostUsageEffectivelyEnabled(for: provider) else {
             self.clearSpendDashboardTokenSnapshot(for: provider)

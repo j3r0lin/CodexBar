@@ -69,13 +69,6 @@ struct StatusMenuTests {
         return store
     }
 
-    private func switcherButtons(in menu: NSMenu) -> [NSButton] {
-        guard let switcherView = menu.items.first?.view as? ProviderSwitcherView else { return [] }
-        return switcherView.subviews
-            .compactMap { $0 as? NSButton }
-            .sorted { $0.tag < $1.tag }
-    }
-
     private func representedIDs(in menu: NSMenu) -> [String] {
         menu.items.compactMap { $0.representedObject as? String }
     }
@@ -566,185 +559,6 @@ struct StatusMenuTests {
     }
 
     @Test
-    func `open merged menu rebuilds switcher when usage bars mode changes`() async {
-        self.disableMenuCardsForTesting()
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        settings.usageBarsShowUsed = false
-
-        enableTestProviders([.codex, .claude], settings: settings)
-
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: self.makeStatusBarForTesting())
-
-        #expect(store.enabledProviders().count == 2)
-        #expect(controller.shouldMergeIcons == true)
-
-        let menu = controller.makeMenu()
-        controller.menuWillOpen(menu)
-        controller.openMenus[ObjectIdentifier(menu)] = menu
-        controller.menuRefreshEnabledOverrideForTesting = true
-
-        let initialSwitcher = menu.items.first?.view as? ProviderSwitcherView
-        #expect(initialSwitcher != nil)
-        let initialSwitcherID = initialSwitcher.map(ObjectIdentifier.init)
-
-        settings.usageBarsShowUsed = true
-        controller.handleProviderConfigChange(reason: "usageBarsShowUsed")
-        for _ in 0..<20 {
-            await Task.yield()
-        }
-
-        #expect(controller.parentMenuRebuildsDeferredDuringTracking.contains(ObjectIdentifier(menu)))
-        if let initialSwitcherID, let currentSwitcher = menu.items.first?.view as? ProviderSwitcherView {
-            #expect(initialSwitcherID == ObjectIdentifier(currentSwitcher))
-        }
-
-        controller.menuDidClose(menu)
-        controller.menuWillOpen(menu)
-        defer { controller.menuDidClose(menu) }
-
-        let updatedSwitcher = menu.items.first?.view as? ProviderSwitcherView
-        #expect(updatedSwitcher != nil)
-        if let initialSwitcherID, let updatedSwitcher {
-            #expect(initialSwitcherID != ObjectIdentifier(updatedSwitcher))
-        }
-    }
-
-    @Test
-    func `merged switcher includes overview tab when multiple providers enabled`() {
-        self.disableMenuCardsForTesting()
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .claude
-        settings.mergedMenuLastSelectedWasOverview = false
-
-        enableTestProviders([.codex, .claude], settings: settings)
-
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: self.makeStatusBarForTesting())
-
-        let menu = controller.makeMenu()
-        controller.menuWillOpen(menu)
-
-        let buttons = self.switcherButtons(in: menu)
-        #expect(buttons.count == store.enabledProvidersForDisplay().count + 1)
-        #expect(buttons.contains(where: { $0.tag == 0 }))
-        #expect(buttons.first(where: { $0.state == .on })?.tag == 2)
-    }
-
-    @Test
-    func `merged switcher overview selection persists without overwriting provider selection`() {
-        self.disableMenuCardsForTesting()
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .claude
-        settings.mergedMenuLastSelectedWasOverview = false
-
-        enableTestProviders([.codex, .claude], settings: settings)
-
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: self.makeStatusBarForTesting())
-
-        let menu = controller.makeMenu()
-        controller.menuWillOpen(menu)
-        let overviewButton = self.switcherButtons(in: menu).first(where: { $0.tag == 0 })
-        #expect(overviewButton != nil)
-        overviewButton?.performClick(nil)
-
-        #expect(settings.mergedMenuLastSelectedWasOverview == true)
-        #expect(settings.selectedMenuProvider == .claude)
-
-        controller.menuDidClose(menu)
-
-        let reopenedMenu = controller.makeMenu()
-        controller.menuWillOpen(reopenedMenu)
-        let reopenedSelectedTag = self.switcherButtons(in: reopenedMenu).first(where: { $0.state == .on })?.tag
-        #expect(reopenedSelectedTag == 0)
-        #expect(settings.selectedMenuProvider == .claude)
-    }
-
-    @Test
-    func `open menu rebuilds switcher when overview availability changes`() {
-        self.disableMenuCardsForTesting()
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        settings.mergedMenuLastSelectedWasOverview = false
-
-        enableTestProviders([.codex, .claude], settings: settings)
-
-        let activeProviders: [ProviderInstanceID] = [.codex, .claude]
-        _ = settings.setMergedOverviewProviderSelection(
-            provider: .codex,
-            isSelected: false,
-            activeProviders: activeProviders)
-        _ = settings.setMergedOverviewProviderSelection(
-            provider: .claude,
-            isSelected: false,
-            activeProviders: activeProviders)
-
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: self.makeStatusBarForTesting())
-
-        let menu = controller.makeMenu()
-        controller.menuWillOpen(menu)
-        controller.openMenus[ObjectIdentifier(menu)] = menu
-        controller.menuRefreshEnabledOverrideForTesting = true
-
-        let initialButtons = self.switcherButtons(in: menu)
-        #expect(initialButtons.count == activeProviders.count)
-
-        _ = settings.setMergedOverviewProviderSelection(
-            provider: .codex,
-            isSelected: true,
-            activeProviders: activeProviders)
-        controller.menuContentVersion &+= 1
-        controller.menuDidClose(menu)
-        controller.menuWillOpen(menu)
-
-        let updatedButtons = self.switcherButtons(in: menu)
-        #expect(updatedButtons.count == activeProviders.count + 1)
-    }
-
-    @Test
     func `overview tab omits contextual provider actions`() throws {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
@@ -774,31 +588,44 @@ struct StatusMenuTests {
         #expect(!titles.contains("Switch Account..."))
         #expect(!titles.contains("Usage Dashboard"))
         #expect(!titles.contains("Status Page"))
-        #expect(titles.contains("Refresh"))
-        #expect(titles.contains("Settings..."))
-        #expect(titles.contains("About CodexBar"))
-        #expect(titles.contains("Quit"))
+        // Refresh, Settings, About and Quit are one icon bar, not text rows.
+        for title in ["Refresh", "Settings...", "Quit"] {
+            #expect(!titles.contains(title))
+        }
+        #expect(!titles.contains { $0.hasPrefix("About CodexBar") })
 
-        let refreshItem = try #require(menu.items.first { $0.title == "Refresh" })
-        #expect(controller.isPersistentRefreshItem(refreshItem))
-        #expect(refreshItem.view is PersistentRefreshMenuView)
-        #expect(refreshItem.keyEquivalent.isEmpty)
-        #expect(refreshItem.keyEquivalentModifierMask.isEmpty)
+        // The Overview footer bar carries only About and Quit; refresh and Settings live in the header.
+        let footer = try #require(menu.items.compactMap { $0.view as? MenuFooterBarView }.first)
+        #expect(footer.button(labeled: "Refresh") == nil)
+        #expect(footer.button(labeled: "Settings...") == nil)
+        #expect(footer.button(labeled: "Quit") != nil)
 
-        let settingsItem = menu.items.first { $0.title == "Settings..." }
-        #expect(settingsItem != nil)
-        #expect(settingsItem?.keyEquivalent == ",")
-        #expect(settingsItem?.keyEquivalentModifierMask == [.command])
-
-        let quitItem = menu.items.first { $0.title == "Quit" }
-        #expect(quitItem != nil)
-        #expect(quitItem?.keyEquivalent == "q")
-        #expect(quitItem?.keyEquivalentModifierMask == [.command])
+        let statusMenu = try #require(menu as? StatusItemMenu)
+        let refreshKey = try self.footerKeyEvent("r")
+        let settingsKey = try self.footerKeyEvent(",")
+        let quitKey = try self.footerKeyEvent("q")
+        #expect(statusMenu.performKeyEquivalent(with: refreshKey))
+        #expect(statusMenu.performKeyEquivalent(with: settingsKey))
+        #expect(statusMenu.performKeyEquivalent(with: quitKey))
     }
 }
 
 @MainActor
 extension StatusMenuTests {
+    private func footerKeyEvent(_ characters: String) throws -> NSEvent {
+        try #require(NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: characters,
+            charactersIgnoringModifiers: characters,
+            isARepeat: false,
+            keyCode: 0))
+    }
+
     @Test
     func `status blurb uses wrapped view-backed menu item`() {
         self.disableMenuCardsForTesting()
@@ -832,7 +659,7 @@ extension StatusMenuTests {
         #expect(statusItem != nil)
         #expect(statusItem?.view != nil)
         #expect(statusItem?.title.isEmpty == true)
-        #expect(statusItem?.view?.frame.width == 310)
+        #expect(statusItem?.view?.frame.width == StatusItemController.menuCardBaseWidth)
     }
 
     @Test
@@ -1561,11 +1388,14 @@ extension StatusMenuTests {
         let ids = self.representedIDs(in: menu)
         let overviewRows = ids.filter { $0.hasPrefix("overviewRow-") }
         #expect(Set(overviewRows) == Set(enabledProviders.map { "overviewRow-\($0.rawValue)" }))
-        #expect(menu.items.count(where: \.isSeparatorItem) == overviewRows.count + 1)
+        // The card header opens the menu; providers sit in their own blocks, so the only separator is
+        // the one before the actions.
+        #expect(ids.first == "overviewHeader")
+        #expect(menu.items.count(where: \.isSeparatorItem) == 1)
     }
 
     @Test
-    func `overview tab honors stored subset when within the provider limit`() {
+    func `overview lists every enabled provider regardless of the stored overview subset`() {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
@@ -1595,15 +1425,12 @@ extension StatusMenuTests {
 
         let ids = self.representedIDs(in: menu)
         let overviewRows = ids.filter { $0.hasPrefix("overviewRow-") }
-        #expect(overviewRows.count == 2)
-        #expect(overviewRows.contains("overviewRow-codex"))
-        #expect(overviewRows.contains("overviewRow-cursor"))
-        #expect(overviewRows.contains("overviewRow-claude") == false)
+        #expect(Set(overviewRows) == ["overviewRow-codex", "overviewRow-claude", "overviewRow-cursor"])
         #expect(ids.contains("menuCard") == false)
     }
 
     @Test
-    func `overview tab with explicit empty selection is hidden and shows provider detail`() {
+    func `overview lists every enabled provider beyond six even with an empty stored selection`() {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
@@ -1629,18 +1456,14 @@ extension StatusMenuTests {
         controller.menuWillOpen(menu)
 
         let ids = self.representedIDs(in: menu)
-        let switcherButtons = self.switcherButtons(in: menu)
-        #expect(switcherButtons.count == store.enabledProvidersForDisplay().count)
-        #expect(switcherButtons.contains(where: { $0.title == "Overview" }) == false)
-        #expect(switcherButtons.contains(where: { $0.state == .on && $0.tag == 0 }))
-        #expect(ids.contains("menuCard"))
-        #expect(ids.contains(where: { $0.hasPrefix("overviewRow-") }) == false)
+        #expect(ids.contains("menuCard") == false)
+        #expect(Set(ids.filter { $0.hasPrefix("overviewRow-") })
+            == Set(enabledProviders.map { "overviewRow-\($0.rawValue)" }))
         #expect(ids.contains("overviewEmptyState") == false)
-        #expect(menu.items.contains(where: { $0.title == "No providers selected for Overview." }) == false)
     }
 
     @Test
-    func `overview rows keep menu item action in rendered mode`() throws {
+    func `overview rows open a detail submenu in rendered mode`() throws {
         StatusItemController.menuCardRenderingEnabled = true
         StatusItemController.setMenuRefreshEnabledForTesting(false)
         defer { self.disableMenuCardsForTesting() }
@@ -1670,7 +1493,7 @@ extension StatusMenuTests {
         let claudeRow = try #require(menu.items.first {
             ($0.representedObject as? String) == "overviewRow-claude"
         })
-        #expect(claudeRow.action != nil)
-        #expect(claudeRow.target is StatusItemController)
+        // Rendered rows open their detail as a hover submenu rather than acting on click.
+        #expect(claudeRow.submenu != nil)
     }
 }

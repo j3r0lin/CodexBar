@@ -328,7 +328,7 @@ struct AgentSessionsStoreSchedulerTests {
     {
         AgentSessionsStore(
             settings: settings,
-            localScan: { includeFileOnlySessions, includeRolloutActivity in
+            localScan: { includeFileOnlySessions, includeRolloutActivity, _ in
                 guard let scan else { return .init() }
                 return await .init(sessions: scan.scan(
                     includeFileOnlySessions: includeFileOnlySessions, includeRolloutActivity: includeRolloutActivity))
@@ -346,7 +346,7 @@ struct AgentSessionsStoreSchedulerTests {
     {
         AgentSessionsStore(
             settings: settings,
-            localScan: { includeFileOnlySessions, _ in
+            localScan: { includeFileOnlySessions, _, _ in
                 await .init(sessions: spy.scan(includeFileOnlySessions: includeFileOnlySessions))
             },
             remoteHostDiscovery: { [] },

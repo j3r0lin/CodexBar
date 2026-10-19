@@ -134,7 +134,7 @@ struct StayAwakeTests {
         let scan = DeferredScan()
         let store = AgentSessionsStore(
             settings: settings,
-            localScan: { _, _ in await .init(sessions: scan.scan()) },
+            localScan: { _, _, _ in await .init(sessions: scan.scan()) },
             remoteHostDiscovery: { [] },
             remoteFetch: { _ in [] },
             powerAssertion: assertions.api)
@@ -179,7 +179,7 @@ struct StayAwakeTests {
     private static func store(_ settings: SettingsStore, _ assertions: Assertions) -> AgentSessionsStore {
         AgentSessionsStore(
             settings: settings,
-            localScan: { _, _ in .init() },
+            localScan: { _, _, _ in .init() },
             remoteHostDiscovery: { [] },
             remoteFetch: { _ in [] },
             powerAssertion: assertions.api,

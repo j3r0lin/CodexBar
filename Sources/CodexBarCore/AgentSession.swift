@@ -1,7 +1,7 @@
 import Foundation
 
 public struct AgentSession: Codable, Equatable, Sendable, Identifiable {
-    public enum Provider: String, Codable, Sendable {
+    public enum Provider: String, Codable, Sendable, CaseIterable {
         case codex
         case claude
         case pi

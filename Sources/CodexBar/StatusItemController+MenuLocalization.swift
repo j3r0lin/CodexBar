@@ -20,23 +20,8 @@ extension StatusItemController {
         ].joined(separator: "|")
     }
 
-    func rememberMergedSwitcherState(_ providers: [UsageProvider], _ selection: ProviderSwitcherSelection?) {
-        self.rememberMergedSwitcherState(
-            providers,
-            selection,
-            self.includesOverviewTab(enabledProviders: providers))
-    }
-
-    func rememberMergedSwitcherState(
-        _ providers: [UsageProvider],
-        _ selection: ProviderSwitcherSelection?,
-        _ includesOverview: Bool)
-    {
-        self.lastSwitcherProviders = self.switcherProviderIDs(enabledFirstPartyProviders: providers)
+    func rememberMergedMenuState() {
         self.lastSwitcherUsageBarsShowUsed = self.settings.usageBarsShowUsed
-        self.lastMergedSwitcherSelection = selection
-        self.lastMergedMenuContentSelection = selection
-        self.lastSwitcherIncludesOverview = includesOverview
         self.lastMenuLocalizationSignature = self.menuLocalizationSignature()
     }
 }

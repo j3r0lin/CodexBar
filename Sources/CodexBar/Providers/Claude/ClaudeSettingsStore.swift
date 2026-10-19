@@ -97,6 +97,11 @@ extension SettingsStore {
             self.logProviderModeChange(provider: .claude, field: "claudeSwapSource", value: newValue.rawValue)
         }
     }
+
+    /// claude-swap only runs while magpie does not own Claude accounts.
+    var claudeSwapEffectivelyEnabled: Bool {
+        self.claudeSwapEnabled && !self.magpieSourceEnabled
+    }
 }
 
 extension SettingsStore {

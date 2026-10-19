@@ -1,15 +1,16 @@
 import AppKit
+import CodexBarCore
 
 extension StatusItemController {
-    func selector(for action: MenuDescriptor.MenuAction) -> (Selector, Any?) {
+    func selector(for action: MenuDescriptor.MenuAction, provider: UsageProvider? = nil) -> (Selector, Any?) {
         switch action {
         case .installUpdate: (#selector(self.installUpdate), nil)
         case .checkForUpdates: (#selector(self.checkForUpdates), nil)
         case .refresh: (#selector(self.refreshMenuItem(_:)), nil)
         case .refreshAugmentSession: (#selector(self.refreshAugmentSession), nil)
-        case .dashboard: (#selector(self.openDashboard), nil)
-        case .statusPage: (#selector(self.openStatusPage), nil)
-        case .changelog: (#selector(self.openChangelog), nil)
+        case .dashboard: (#selector(self.openDashboardFromMenuItem(_:)), provider?.rawValue)
+        case .statusPage: (#selector(self.openStatusPageFromMenuItem(_:)), provider?.rawValue)
+        case .changelog: (#selector(self.openChangelogFromMenuItem(_:)), provider?.rawValue)
         case .addCodexAccount: (#selector(self.addManagedCodexAccountFromMenu(_:)), nil)
         case let .addProviderAccount(provider): (#selector(self.runSwitchAccount(_:)), provider.rawValue)
         case let .requestCodexSystemPromotion(managedAccountID):

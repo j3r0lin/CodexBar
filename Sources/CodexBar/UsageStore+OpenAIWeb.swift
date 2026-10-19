@@ -107,6 +107,7 @@ extension UsageStore {
         refreshTaskToken: UUID? = nil,
         allowCodexUsageBackfill: Bool = true) async -> Bool
     {
+        guard self.canReadNativeCodexSource else { return false }
         guard self.shouldApplyOpenAIDashboardRefreshTask(token: refreshTaskToken) else { return false }
         self.settings.invalidateCodexAccountReconciliationSnapshotCache()
         let authority = self.evaluateCodexDashboardAuthority(
@@ -235,6 +236,7 @@ extension UsageStore {
         attachedAccountEmail: String?,
         allowCodexUsageBackfill: Bool) async
     {
+        guard self.canReadNativeCodexSource else { return }
         switch decision.disposition {
         case .attach:
             self.openAIDashboard = dashboard
@@ -421,6 +423,7 @@ extension UsageStore {
         bypassCoalescing: Bool = false,
         allowCodexUsageBackfill: Bool = true) async
     {
+        guard self.canReadNativeCodexSource else { return }
         self.syncOpenAIWebState()
         guard self.isEnabled(.codex),
               self.settings.openAIWebAccessEnabled,
@@ -499,6 +502,7 @@ extension UsageStore {
     }
 
     func scheduleOpenAIDashboardRefreshIfNeeded(expectedGuard: CodexAccountScopedRefreshGuard? = nil) {
+        guard self.canReadNativeCodexSource else { return }
         self.syncOpenAIWebState()
         let allowCurrentSnapshotFallback = expectedGuard?.source == .liveSystem && expectedGuard?
             .identity == .unresolved
@@ -884,6 +888,7 @@ extension UsageStore {
     }
 
     func importOpenAIDashboardBrowserCookiesNow() async {
+        guard self.canReadNativeCodexSource else { return }
         self.resetOpenAIWebDebugLog(context: "manual import")
         let targetEmail = self.currentCodexOpenAIWebTargetEmail(
             allowCurrentSnapshotFallback: true,
@@ -1011,6 +1016,7 @@ extension UsageStore {
     }
 
     private func shouldApplyOpenAIDashboardRefreshTask(token: UUID?) -> Bool {
+        guard self.canReadNativeCodexSource else { return false }
         guard let token else { return true }
         return self.openAIDashboardRefreshTaskToken == token
     }
@@ -1179,12 +1185,16 @@ extension UsageStore {
         }
     }
 
+    private var canReadNativeCodexCookies: Bool {
+        self.canReadNativeCodexSource && !Task.isCancelled
+    }
+
     func importOpenAIDashboardCookiesIfNeeded(
         targetEmail: String?,
         force: Bool,
         preferCachedCookieHeader: Bool? = nil) async -> String?
     {
-        guard !Task.isCancelled else { return nil }
+        guard self.canReadNativeCodexCookies else { return nil }
         if await self.openAIWebCookieImportShouldFailClosed() {
             return nil
         }
@@ -1519,6 +1529,7 @@ extension UsageStore {
     }
 
     func syncOpenAIWebState() {
+        guard self.canReadNativeCodexSource else { return }
         // Provider-specific by design: the OpenAI WKWebView lifecycle is enabled only for Codex consumer access.
         guard self.isEnabled(.codex),
               self.settings.openAIWebAccessEnabled,

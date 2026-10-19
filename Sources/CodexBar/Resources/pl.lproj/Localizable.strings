@@ -445,7 +445,7 @@
 "metric_tertiary" = "Trzeciorzędny (%@)";
 "multiple_workspaces_found" = "CodexBar znalazł wiele workspace dla %@. Wybierz workspace do dodania.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "Wybierz maksymalnie %@ dostawców";
+"overview_choose_providers" = "Wybierz maksymalnie %@ dostawców dla połączonej ikony";
 "remove_account_message" = "Usunąć %@ z CodexBar? Jego zarządzony katalog domowy Codex zostanie usunięty.";
 "version_format" = "Wersja %@";
 "vertex_ai_login_instructions" = "Aby śledzić użycie Vertex AI, uwierzytelnij się w Google Cloud.\n\n1. Otwórz Terminal\n2. Uruchom: gcloud auth application-default login\n3. Postępuj zgodnie z instrukcjami w przeglądarce, aby się zalogować\n4. Ustaw projekt: gcloud config set project PROJECT_ID\n\nOtworzyć teraz Terminal?";
@@ -635,9 +635,6 @@
 "menu_bar_style_critters" = "Stworki";
 "menu_bar_style_bars" = "Paski miernika";
 "menu_bar_style_icon_percent" = "Ikona i procent";
-"switcher_rows_title" = "Wiersze przełącznika";
-"switcher_rows_icons" = "Ikony dostawców";
-"switcher_rows_progress" = "Postęp tygodniowy";
 "usage_bars_fill_title" = "Wypełnienie pasków użycia";
 "usage_bars_fill_remaining" = "Pozostały limit";
 "usage_bars_fill_used" = "Wykorzystany limit";
@@ -676,11 +673,11 @@
 "multi_account_layout_subtitle" = "Wybierz przełączanie segmentowe kont lub ułożone karty kont.";
 "multi_account_layout_segmented" = "Segmentowy";
 "multi_account_layout_stacked" = "Ułożony";
-"overview_tab_providers_title" = "Dostawcy zakładki Przegląd";
+"overview_tab_providers_title" = "Dostawcy połączonej ikony";
 "configure" = "Skonfiguruj…";
-"overview_enable_merge_icons_hint" = "Włącz Scal ikony, aby skonfigurować dostawców zakładki Przegląd.";
+"overview_enable_merge_icons_hint" = "Włącz Połącz ikony, aby wybrać dostawców połączonej ikony.";
 "overview_no_providers_hint" = "Brak włączonych dostawców dla Przeglądu.";
-"overview_rows_follow_order" = "Wiersze Przeglądu zawsze podążają za kolejnością dostawców.";
+"overview_rows_follow_order" = "Połączona ikona pokazuje jednego z tych dostawców. Menu Przegląd pokazuje wszystkich włączonych dostawców.";
 "overview_no_providers_selected" = "Nie wybrano dostawców";
 "agent_sessions_title" = "Sesje agentów";
 "agent_sessions_subtitle" = "Pokazuj w menu lokalne oraz wykryte przez SSH sesje Codex i Claude Code.";
@@ -1802,7 +1799,6 @@
 "Enable Antigravity provider" = "Włącz dostawcę Antigravity";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "Włącz widżety konta w CodexBar → Ustawienia → Menu → Widżety. Następnie edytuj ten widget, aby wybrać konto.";
 "Error: %@" = "Błąd: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "Przykłady: alt+cmd+2, shift+right. Odśwież (cmd+r), Ustawienia (cmd+,) i Zakończ (cmd+q) są zarezerwowane.";
 "Export Preferences…" = "Preferencje eksportu…";
 "External Codex OAuth sources" = "Zewnętrzne źródła Codex OAuth";
 "Extra usage balance" = "Dodatkowe saldo użytkowania";
@@ -1855,7 +1851,6 @@
 "My AI subscriptions · last %d days" = "Moje subskrypcje AI · ostatnie dni %d";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "Nazwany profil AWS z ~/.aws/config. Można także ustawić za pomocą AWS_PROFILE.";
-"Next provider" = "Następny dostawca";
 "No active account" = "Brak aktywnego konta";
 "No cookie header pasted." = "Nie wklejono nagłówka cookie.";
 "No matching OpenAI web session found for %@." = "Nie znaleziono pasującej sesji internetowej OpenAI dla %@.";
@@ -1931,14 +1926,11 @@
 "Preferences could not be transferred" = "Nie można przenieść preferencji";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Preferowane w przypadku ograniczeń użytkowania Go. Przeczytaj także OPENCODE_API_KEY.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "Zapobiegaj uśpieniu bezczynnego systemu podczas działania procesu agenta lokalnego, nawet w stanie bezczynności. Wykorzystuje energię baterii; nie zapobiega zamykaniu pokrywy ani uśpieniu wyświetlacza.";
-"Previous provider" = "Poprzedni dostawca";
 "Primary quota" = "Podstawowy Limit";
 "Prioritize exhausted quotas" = "Priorytetowo traktuj wyczerpaną Limit";
 "Profile name" = "Nazwa profilu konfiguracyjnego";
 "Provider %@" = "Dostawca %@";
 "Provider + Metric" = "Dostawca + Wskaźnik";
-"Provider Switcher Shortcuts" = "Skróty do przełączania dostawców";
-"Provider Switcher Shortcuts…" = "Skróty zmiany dostawcy…";
 "Provider service status: %@" = "Status usługi dostawcy: %@";
 "Quota estimated from local usage history" = "Limit oszacowano na podstawie lokalnej historii użytkowania";
 "Quota from the selected dev.meta.ai browser team" = "Limit od wybranego zespołu przeglądarek dev.meta.ai";
@@ -1967,7 +1959,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "Zapisano w lokalnym pliku konfiguracyjnym CodexBar. Lub ustaw GITKRAKEN_API_TOKEN.";
 "Scoped weekly" = "Co tydzień Limit dla wybranego zakresu";
 "Secondary quota" = "Dodatkowy Limit";
-"Select position %@" = "Wybierz pozycję %@";
 "Select the provider and account to display in the widget." = "Wybierz dostawcę i konto, które chcesz wyświetlić w widżecie.";
 "Select the provider and metric to display." = "Wybierz dostawcę i Wskaźnik do wyświetlenia.";
 "Select the provider and usage window to display." = "Wybierz dostawcę i okno użytkowania do wyświetlenia.";
@@ -2005,7 +1996,6 @@
 "The pasted header is sent only to this tenant." = "Wklejony nagłówek jest wysyłany tylko do tego dzierżawcy.";
 "The selected Codex profile has no verified account email." = "Wybrany profil Codex nie ma zweryfikowanego adresu e-mail konta.";
 "The selected managed Codex account is unavailable." = "Wybrane zarządzane konto Codex jest niedostępne.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "Te skróty działają, gdy menu wyboru dostawcy jest otwarte. Użyj `ctrl`, `alt`, `shift` i `cmd` z literą, cyfrą, `left` lub `right`; użyj `none`, aby wyłączyć działanie.";
 "Third quota" = "Trzeci Limit";
 "Today cost" = "Dzisiaj koszt";
 "Token Refreshed" = "tokeny Odświeżony";
@@ -2653,6 +2643,23 @@
 "Daily spend · %@" = "Dzienne wydatki · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Dotyczy wybranego konta tokena „%@”. Każde konto zachowuje własne limity.";
 "Applies to the OpenAI API key, not to token accounts." = "Dotyczy klucza API OpenAI, a nie kont tokenów.";
+"%lld accounts" = "%lld kont";
+"Refresh Claude usage" = "Odśwież użycie Claude";
+"No providers enabled" = "Brak włączonych dostawców";
+"5-hour limit" = "Limit 5-godzinny";
+"Weekly limit" = "Limit tygodniowy";
+"account_detail_usage_title" = "Użycie %@";
+"account_detail_used" = "Wykorzystano %@";
+"account_detail_history" = "Historia";
+
+/* Overview card UI */
+"%lld providers" = "Dostawcy: %lld";
+"Auto-refresh on" = "Automatyczne odświeżanie włączone";
+"Auto-refresh off" = "Automatyczne odświeżanie wyłączone";
+"Last sync: %@" = "Ostatnia synchronizacja: %@";
+"No matching windows" = "Brak pasujących okien";
+"Now" = "Teraz";
+"resets in %@" = "resetuje się za %@";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar poprosi pęk kluczy macOS o token logowania Muse Code, aby pobrać użycie twojej subskrypcji Muse Code. Kliknij OK, aby kontynuować.";
 /* Claude Platform provider */
 "API credit" = "Kredyt API";

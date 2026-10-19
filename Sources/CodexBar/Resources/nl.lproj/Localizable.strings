@@ -459,7 +459,7 @@
 "metric_tertiary" = "Tertiair (%@)";
 "multiple_workspaces_found" = "CodexBar heeft meerdere werkruimten gevonden voor %@. Kies de werkruimte die u wilt toevoegen.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "Kies maximaal %@ providers";
+"overview_choose_providers" = "Kies maximaal %@ providers voor het samengevoegde pictogram";
 "remove_account_message" = "%@ verwijderen uit CodexBar? Het beheerde Codex-huis wordt verwijderd.";
 "version_format" = "Versie %@";
 "vertex_ai_login_instructions" = "Om het gebruik van Vertex AI bij te houden, authenticeert u zich met Google Cloud.\n\n1. Open Terminal\n2. Uitvoeren: gcloud auth application-default login\n3. Volg de browserprompts om in te loggen\n4. Stel uw project in: gcloud config set project PROJECT_ID\n\nTerminal nu openen?";
@@ -627,9 +627,6 @@
 "menu_bar_style_critters" = "Beestjes";
 "menu_bar_style_bars" = "Meterbalken";
 "menu_bar_style_icon_percent" = "Pictogram en percentage";
-"switcher_rows_title" = "Switcher-rijen";
-"switcher_rows_icons" = "Providerpictogrammen";
-"switcher_rows_progress" = "Wekelijkse voortgang";
 "usage_bars_fill_title" = "Vulling gebruiksbalken";
 "usage_bars_fill_remaining" = "Als resterend";
 "usage_bars_fill_used" = "Als gebruikt";
@@ -668,11 +665,11 @@
 "multi_account_layout_subtitle" = "Kies voor gesegmenteerd wisselen tussen accounts of gestapelde accountkaarten.";
 "multi_account_layout_segmented" = "Gesegmenteerd";
 "multi_account_layout_stacked" = "Gestapeld";
-"overview_tab_providers_title" = "Overzicht tabblad aanbieders";
+"overview_tab_providers_title" = "Providers voor het samengevoegde pictogram";
 "configure" = "Configureer…";
-"overview_enable_merge_icons_hint" = "Schakel Pictogrammen samenvoegen in om de providers van tabbladen Overzicht te configureren.";
+"overview_enable_merge_icons_hint" = "Schakel Pictogrammen samenvoegen in om de providers van het samengevoegde pictogram te kiezen.";
 "overview_no_providers_hint" = "Er zijn geen ingeschakelde providers beschikbaar voor Overzicht.";
-"overview_rows_follow_order" = "Overzichtsrijen volgen altijd de volgorde van de provider.";
+"overview_rows_follow_order" = "Het samengevoegde pictogram toont een van deze providers. Het overzichtsmenu toont alle ingeschakelde providers.";
 "overview_no_providers_selected" = "Geen aanbieders geselecteerd";
 "agent_sessions_title" = "Agentsessies";
 "agent_sessions_subtitle" = "Toon lokale en via SSH gevonden Codex- en Claude Code-sessies in het menu.";
@@ -1798,7 +1795,6 @@
 "Enable Antigravity provider" = "Schakel de Antigravity-provider in";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "Schakel accountwidgets in CodexBar → Instellingen → Menu → Widgets in. Bewerk vervolgens deze widget om een ​​account te kiezen.";
 "Error: %@" = "Fout: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "Voorbeelden: alt+cmd+2, shift+right. Vernieuwen (cmd+r), Instellingen (cmd+,) en Afsluiten (cmd+q) zijn gereserveerd.";
 "Export Preferences…" = "Voorkeuren exporteren...";
 "External Codex OAuth sources" = "Externe Codex OAuth-bronnen";
 "Extra usage balance" = "Extra gebruikssaldo";
@@ -1851,7 +1847,6 @@
 "My AI subscriptions · last %d days" = "Mijn AI-abonnementen · de afgelopen %d-dagen";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "Genoemd AWS-profiel uit ~/.aws/config. Kan ook worden ingesteld met AWS_PROFILE.";
-"Next provider" = "Volgende aanbieder";
 "No active account" = "Geen actief account";
 "No cookie header pasted." = "Geen cookie-header geplakt.";
 "No matching OpenAI web session found for %@." = "Er is geen overeenkomende OpenAI-websessie gevonden voor %@.";
@@ -1927,14 +1922,11 @@
 "Preferences could not be transferred" = "Voorkeuren kunnen niet worden overgedragen";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Voorkeur voor Go-gebruikslimieten. Leest ook OPENCODE_API_KEY.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "Voorkom de inactieve systeemslaap terwijl een lokaal agentproces actief is, zelfs als het inactief is. Gebruikt batterijvermogen; verhindert niet dat het deksel wordt gesloten of dat de display in slaap valt.";
-"Previous provider" = "Vorige aanbieder";
 "Primary quota" = "Primaire Quotum";
 "Prioritize exhausted quotas" = "Geef prioriteit aan uitgeputte Quotum";
 "Profile name" = "Naam van configuratieprofiel";
 "Provider %@" = "Aanbieder %@";
 "Provider + Metric" = "Aanbieder + Metriek";
-"Provider Switcher Shortcuts" = "Snelkoppelingen naar providerwisselaars";
-"Provider Switcher Shortcuts…" = "Snelkoppelingen naar providerwisselaar…";
 "Provider service status: %@" = "Servicestatus provider: %@";
 "Quota estimated from local usage history" = "Quotum geschat op basis van lokale gebruiksgeschiedenis";
 "Quota from the selected dev.meta.ai browser team" = "Quotum van het geselecteerde dev.meta.ai-browserteam";
@@ -1963,7 +1955,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "Opgeslagen in het lokale configuratiebestand van CodexBar. Of stel GITKRAKEN_API_TOKEN in.";
 "Scoped weekly" = "Wekelijks Quotum voor het geselecteerde bereik";
 "Secondary quota" = "Secundaire Quotum";
-"Select position %@" = "Positie %@ selecteren";
 "Select the provider and account to display in the widget." = "Selecteer de provider en het account dat u in de widget wilt weergeven.";
 "Select the provider and metric to display." = "Selecteer de provider en Metriek die u wilt weergeven.";
 "Select the provider and usage window to display." = "Selecteer de provider en het gebruiksvenster dat u wilt weergeven.";
@@ -2001,7 +1992,6 @@
 "The pasted header is sent only to this tenant." = "De geplakte header wordt alleen naar deze tenant verzonden.";
 "The selected Codex profile has no verified account email." = "Het geselecteerde Codex-profiel heeft geen geverifieerd account-e-mailadres.";
 "The selected managed Codex account is unavailable." = "Het geselecteerde beheerde Codex-account is niet beschikbaar.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "Deze sneltoetsen werken terwijl het menu voor het wisselen van provider open is. Gebruik `ctrl`, `alt`, `shift` en `cmd` met een letter, cijfer, `left` of `right`; gebruik `none` om een actie uit te schakelen.";
 "Third quota" = "Derde Quotum";
 "Today cost" = "Vandaag kosten";
 "Token Refreshed" = "Token vernieuwd";
@@ -2647,6 +2637,12 @@
 "Daily spend · %@" = "Dagelijkse uitgaven · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Geldt voor het geselecteerde tokenaccount ‘%@’. Elk account behoudt zijn eigen limieten.";
 "Applies to the OpenAI API key, not to token accounts." = "Geldt voor de OpenAI API-sleutel, niet voor tokenaccounts.";
+"No providers enabled" = "Geen providers ingeschakeld";
+"5-hour limit" = "Limiet van 5 uur";
+"Weekly limit" = "Weeklimiet";
+"account_detail_usage_title" = "Gebruik van %@";
+"account_detail_used" = "%@ gebruikt";
+"account_detail_history" = "Geschiedenis";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar zal macOS Keychain om het Muse Code login-token vragen, zodat het uw Muse Code-abonnementsgebruik kan ophalen. Klik op OK om door te gaan.";
 /* Claude Platform provider */
 "API credit" = "API-tegoed";

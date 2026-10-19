@@ -244,85 +244,6 @@ struct StatusMenuCodexSwitcherTests {
     }
 
     @Test
-    func `merged codex menu smart refresh keeps account switcher visible`() throws {
-        self.disableMenuCardsForTesting()
-        StatusItemController.setMenuRefreshEnabledForTesting(true)
-        defer { StatusItemController.setMenuRefreshEnabledForTesting(false) }
-
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        settings.selectedMenuProvider = .codex
-        settings.multiAccountMenuLayout = .segmented
-
-        let registry = ProviderRegistry.shared
-        for provider in UsageProvider.allCases {
-            guard let metadata = registry.metadata[provider] else { continue }
-            settings.setProviderEnabled(
-                provider: provider,
-                metadata: metadata,
-                enabled: provider == .codex || provider == .claude)
-        }
-
-        let managedAccountID = try #require(UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-111111111111"))
-        let managedAccount = ManagedCodexAccount(
-            id: managedAccountID,
-            email: "managed@example.com",
-            managedHomePath: "/tmp/managed-home",
-            createdAt: 1,
-            updatedAt: 2,
-            lastAuthenticatedAt: 2)
-        let storeURL = try self.makeManagedAccountStoreURL(accounts: [managedAccount])
-        defer {
-            settings._test_managedCodexAccountStoreURL = nil
-            settings._test_liveSystemCodexAccount = nil
-            try? FileManager.default.removeItem(at: storeURL)
-        }
-
-        settings._test_managedCodexAccountStoreURL = storeURL
-        settings._test_liveSystemCodexAccount = ObservedSystemCodexAccount(
-            email: "live@example.com",
-            codexHomePath: "/Users/test/.codex",
-            observedAt: Date())
-        settings.codexActiveSource = .liveSystem
-        _ = settings.codexVisibleAccountProjection
-
-        let fetcher = UsageFetcher()
-        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
-            store: store,
-            settings: settings,
-            account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
-            statusBar: self.makeStatusBarForTesting())
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let menu = controller.makeMenu()
-        controller.menuWillOpen(menu)
-
-        #expect(menu.items.count(where: { $0.view is CodexAccountSwitcherView }) == 1)
-
-        controller.menuContentVersion &+= 1
-        controller.refreshOpenMenusIfNeeded()
-
-        #expect(menu.items.count(where: { $0.view is CodexAccountSwitcherView }) == 1)
-
-        settings._test_liveSystemCodexAccount = nil
-        controller.menuContentVersion &+= 1
-        controller.refreshOpenMenusIfNeeded()
-
-        #expect(menu.items.count(where: { $0.view is CodexAccountSwitcherView }) == 1)
-
-        controller.menuDidClose(menu)
-        controller.menuContentVersion &+= 1
-        controller.menuWillOpen(menu)
-
-        #expect(menu.items.count(where: { $0.view is CodexAccountSwitcherView }) == 0)
-    }
-
-    @Test
     func `codex menu can select preserved switcher row during transient account projection`() throws {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
@@ -1009,7 +930,7 @@ extension StatusMenuCodexSwitcherTests {
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
-        settings.mergeIcons = true
+        settings.mergeIcons = false
         settings.selectedMenuProvider = .codex
         settings.multiAccountMenuLayout = .segmented
 
@@ -1093,7 +1014,7 @@ extension StatusMenuCodexSwitcherTests {
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
-        settings.mergeIcons = true
+        settings.mergeIcons = false
         settings.selectedMenuProvider = .codex
         settings.multiAccountMenuLayout = .segmented
 

@@ -70,15 +70,11 @@ extension StatusItemController {
         self.openMenuInvalidationRetryTask = nil
         self.codexAccountMenuProjectionRevalidationTask?.cancel()
         self.codexAccountMenuProjectionRevalidationTask = nil
-        self.providerSelectionUIRefreshTask?.cancel()
-        self.providerSelectionUIRefreshTask = nil
         self.deferredMergedIconRenderAfterTracking = false
-        self.providerSwitcherPointerInteractionMenuID = nil
-        self.pendingProviderSwitcherPointerRebuild = nil
     }
 
     private func clearShutdownMenuState() {
-        self.removeProviderSwitcherShortcutMonitor()
+        self.removeMenuTrackingShortcutMonitor()
         self.menuRefreshTasks.removeAll(keepingCapacity: false)
         self.closedMenuRebuildTasks.removeAll(keepingCapacity: false)
         self.closedMenuRebuildRequests.cancelAll()
@@ -95,7 +91,6 @@ extension StatusItemController {
         self.pendingMenuBaselineResyncs.removeAll(keepingCapacity: false)
         self.menuCardHeightCache.removeAll(keepingCapacity: false)
         self.measuredStandardMenuWidthCache.removeAll(keepingCapacity: false)
-        self.mergedSwitcherContentCaches.removeAll(keepingCapacity: false)
         self.menuProviders.removeAll(keepingCapacity: false)
         self.menuReadinessSignatures.removeAll(keepingCapacity: false)
         self.menuIdentitySignatures.removeAll(keepingCapacity: false)

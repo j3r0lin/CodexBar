@@ -699,8 +699,10 @@ extension StatusMenuViewportRestoreTests {
         controller.menuRefreshEnabledOverrideForTesting = true
         let menu = controller.makeMenu(for: .codex)
         controller.menuWillOpen(menu)
-        let settingsItem = try #require(menu.items.first { $0.title == "Settings..." })
-        controller.menu(menu, willHighlight: settingsItem)
+        // The footer is a custom view; a plain titled item is what AppKit highlights natively.
+        let nativeItem = NSMenuItem(title: "Native", action: nil, keyEquivalent: "")
+        menu.addItem(nativeItem)
+        controller.menu(menu, willHighlight: nativeItem)
 
         var scheduledCount = 0
         var restoreCount = 0
@@ -748,7 +750,7 @@ extension StatusMenuViewportRestoreTests {
         await task.value
         #expect(scheduled.count == 1)
 
-        let settingsItem = try #require(menu.items.first { $0.title == "Settings..." })
+        let settingsItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
         controller.menu(menu, willHighlight: settingsItem)
         scheduled.removeFirst()()
 
@@ -841,8 +843,8 @@ extension StatusMenuViewportRestoreTests {
         controller.menuRefreshEnabledOverrideForTesting = true
         let menu = controller.makeMenu(for: .codex)
         controller.menuWillOpen(menu)
-        let refreshItem = try #require(menu.items.first(where: controller.isPersistentRefreshItem))
-        let refreshView = try #require(refreshItem.view as? PersistentRefreshMenuView)
+        let refreshItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
+        let refreshButton = try #require((refreshItem.view as? MenuFooterBarView)?.button(labeled: "Refresh"))
         controller.menu(menu, willHighlight: refreshItem)
 
         var scheduled: [@MainActor () -> Void] = []
@@ -855,17 +857,18 @@ extension StatusMenuViewportRestoreTests {
             controller.refreshOpenMenusAfterExplicitStoreAction()
         }
 
-        #expect(refreshView.accessibilityPerformPress())
+        #expect(refreshButton.accessibilityPerformPress())
         for _ in 0..<20 where controller.manualRefreshTasks[.provider(.codex)] == nil {
             await Task.yield()
         }
         let task = try #require(controller.manualRefreshTasks[.provider(.codex)])
         #expect(controller.highlightedMenuItems[ObjectIdentifier(menu)] == nil)
-        #expect(!refreshItem.isEnabled)
+        let footer = try #require(refreshItem.view as? MenuFooterBarView)
+        #expect(footer.isSpinning(systemImageName: "arrow.clockwise"))
 
         gate.resume()
         await task.value
-        #expect(refreshItem.isEnabled)
+        #expect(!footer.isSpinning(systemImageName: "arrow.clockwise"))
         #expect(scheduled.count == 1)
 
         scheduled.removeFirst()()
@@ -1253,107 +1256,15 @@ extension StatusMenuViewportRestoreTests {
     }
 
     @Test
-    func `merged selection change discards originating refresh restore`() async throws {
+    func `queued refresh captures a detail submenu hover before its task starts`() async throws {
         let settings = self.makeSettings()
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
         self.enableOnly([.claude, .codex], settings: settings)
-        settings.selectedMenuProvider = .claude
-        settings.mergedMenuLastSelectedWasOverview = false
 
         let controller = self.makeController(settings: settings)
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
-        let menu = controller.makeMenu()
-        controller.mergedMenu = menu
-        controller.menuWillOpen(menu)
-
-        let gate = ViewportRefreshGate()
-        var scheduledCount = 0
-        controller._test_menuViewportRestoreScheduler = { _ in scheduledCount += 1 }
-        controller._test_manualRefreshOperation = {
-            await gate.wait()
-            controller.refreshOpenMenusAfterExplicitStoreAction()
-        }
-        controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.claude)] == nil {
-            await Task.yield()
-        }
-        let task = try #require(controller.manualRefreshTasks[.provider(.claude)])
-
-        settings.selectedMenuProvider = .codex
-        gate.resume()
-        await task.value
-
-        #expect(scheduledCount == 0)
-        #expect(controller.menuSession.pendingViewportRestores.isEmpty)
-    }
-
-    @Test
-    func `merged selection ABA discards originating refresh restore`() async throws {
-        let settings = self.makeSettings()
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        self.enableOnly([.claude, .codex], settings: settings)
-        settings.mergedOverviewSelectedProviders = []
-        settings.selectedMenuProvider = .claude
-        settings.mergedMenuLastSelectedWasOverview = false
-
-        let controller = self.makeController(settings: settings)
-        defer { controller.releaseStatusItemsForTesting() }
-        controller.menuRefreshEnabledOverrideForTesting = true
-        controller._test_providerSwitcherMenuRebuildDebounceNanoseconds = UInt64.max
-        let menu = controller.makeMenu()
-        controller.mergedMenu = menu
-        controller.menuWillOpen(menu)
-        defer { controller.menuDidClose(menu) }
-
-        let gate = ViewportRefreshGate()
-        var scheduled: [@MainActor () -> Void] = []
-        var restoreCount = 0
-        controller._test_menuViewportRestoreScheduler = { scheduled.append($0) }
-        controller._test_menuViewportRestoreObserver = { _ in restoreCount += 1 }
-        controller._test_manualRefreshOperation = {
-            await gate.wait()
-            controller.refreshOpenMenusAfterExplicitStoreAction()
-        }
-        controller.refreshMenuProviderNow(in: menu)
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.claude)] == nil {
-            await Task.yield()
-        }
-        let task = try #require(controller.manualRefreshTasks[.provider(.claude)])
-
-        gate.resume()
-        await task.value
-        #expect(scheduled.count == 1)
-
-        let initialGeneration = try #require(controller.menuSession
-            .menuInteractionGeneration(for: ObjectIdentifier(menu)))
-        controller.selectOverviewProvider(.codex, menu: menu)
-        controller.selectOverviewProvider(.claude, menu: menu)
-        #expect(settings.selectedMenuProvider == .claude)
-        #expect(controller.menuSession.menuInteractionGeneration(for: ObjectIdentifier(menu)) == initialGeneration + 2)
-
-        scheduled.removeFirst()()
-
-        #expect(restoreCount == 0)
-        #expect(controller.menuSession.pendingViewportRestores.isEmpty)
-    }
-
-    @Test
-    func `queued refresh captures menu interaction before its task starts`() async throws {
-        let settings = self.makeSettings()
-        settings.refreshFrequency = .manual
-        settings.mergeIcons = true
-        self.enableOnly([.claude, .codex], settings: settings)
-        settings.mergedOverviewSelectedProviders = []
-        settings.selectedMenuProvider = .claude
-        settings.mergedMenuLastSelectedWasOverview = false
-
-        let controller = self.makeController(settings: settings)
-        defer { controller.releaseStatusItemsForTesting() }
-        controller.menuRefreshEnabledOverrideForTesting = true
-        controller._test_providerSwitcherMenuRebuildDebounceNanoseconds = UInt64.max
         let menu = try #require(controller.makeMenu() as? StatusItemMenu)
         controller.mergedMenu = menu
         controller.menuWillOpen(menu)
@@ -1370,18 +1281,20 @@ extension StatusMenuViewportRestoreTests {
         menu.requestPersistentRefreshAction()
         let actionGeneration = try #require(controller.menuSession
             .menuInteractionGeneration(for: ObjectIdentifier(menu)))
-        controller.selectOverviewProvider(.codex, menu: menu)
-        controller.selectOverviewProvider(.claude, menu: menu)
-        #expect(controller.menuSession.menuInteractionGeneration(for: ObjectIdentifier(menu)) == actionGeneration + 2)
+        let row = try #require(menu.items.first { ($0.representedObject as? String) == "overviewRow-codex" })
+        let detail = try #require(row.submenu)
+        detail.delegate?.menuWillOpen?(detail)
+        #expect(controller.menuSession.menuInteractionGeneration(for: ObjectIdentifier(menu)) == actionGeneration + 1)
 
-        for _ in 0..<20 where controller.manualRefreshTasks[.provider(.claude)] == nil {
+        for _ in 0..<20 where controller.manualRefreshTasks[.global] == nil {
             await Task.yield()
         }
-        let task = try #require(controller.manualRefreshTasks[.provider(.claude)])
+        let task = try #require(controller.manualRefreshTasks[.global])
         #expect(controller.menuSession.pendingViewportRestores.isEmpty)
 
         gate.resume()
         await task.value
+        detail.delegate?.menuDidClose?(detail)
 
         #expect(scheduledCount == 0)
         #expect(controller.menuSession.pendingViewportRestores.isEmpty)
@@ -1483,7 +1396,37 @@ extension StatusMenuViewportRestoreTests {
         // Menu items exist but no view is hosted in a menu window, so the private
         // scroll view cannot be resolved and the restore must bail out quietly.
         #expect(StatusItemController.attachedMenuScrollView(in: menu) == nil)
-        controller.restoreMenuViewportToTop(menu)
+        controller.restoreMenuViewport(menu, topDistance: 40)
+    }
+
+    @Test
+    func `viewport restore returns to the scroll position the refresh started from`() {
+        for flipped in [true, false] {
+            let geometry = MenuViewportGeometry(
+                documentID: ObjectIdentifier(NSObject()),
+                clipID: ObjectIdentifier(NSObject()),
+                documentSize: CGSize(width: 340, height: 900),
+                documentIsFlipped: flipped,
+                clipSize: CGSize(width: 340, height: 500),
+                clipOrigin: CGPoint(x: 0, y: flipped ? 150 : 250))
+            let distance = StatusItemController.menuViewportTopDistance(geometry)
+            #expect(distance == 150)
+            // Rows above grew by 60pt during the refresh; the viewport goes back 150pt below the top.
+            let target = StatusItemController.menuViewportOffset(
+                topDistance: distance,
+                documentIsFlipped: flipped,
+                documentHeight: 960,
+                clipHeight: 500,
+                currentOffset: flipped ? 0 : 460)
+            #expect(target == (flipped ? 150 : 310))
+            // A distance past the new end is clamped to the bottom.
+            #expect(StatusItemController.menuViewportOffset(
+                topDistance: 2000,
+                documentIsFlipped: flipped,
+                documentHeight: 960,
+                clipHeight: 500,
+                currentOffset: flipped ? 0 : 460) == (flipped ? 460 : 0))
+        }
     }
 
     private func keyEvent(_ characters: String, keyCode: UInt16) throws -> NSEvent {

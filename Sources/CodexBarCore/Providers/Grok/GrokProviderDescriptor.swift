@@ -104,7 +104,10 @@ public enum GrokProviderDescriptor {
             presentation: ProviderUsagePresentation(
                 rateWindowLabeler: { metadata, snapshot, now in
                     ProviderRateWindowLabels(
-                        primary: Self.displayLabel(window: snapshot.primary, now: now) ?? metadata.sessionLabel,
+                        primary: Self.displayLabel(
+                            window: snapshot.primary,
+                            now: now,
+                            infersPeriodFromReset: !snapshot.isMagpieSourced) ?? metadata.sessionLabel,
                         secondary: metadata.weeklyLabel,
                         tertiary: metadata.opusLabel ?? "Sonnet",
                         showsTertiary: metadata.supportsOpus)
@@ -158,13 +161,22 @@ public enum GrokProviderDescriptor {
 
     /// Grok's current untyped credits surface is the weekly credit pool (#2929). Keep explicit
     /// durations authoritative, but do not lose the weekly label near the end of an untyped window.
-    public static func displayLabel(window: RateWindow?, now: Date = .now) -> String? {
+    /// Magpie-sourced windows pass `infersPeriodFromReset: false`: their period comes only from a
+    /// known duration or a parseable window name, and a reset time never implies one.
+    public static func displayLabel(
+        window: RateWindow?,
+        now: Date = .now,
+        infersPeriodFromReset: Bool = true) -> String?
+    {
         guard let window else { return nil }
-        if let label = self.primaryLabel(window: window, now: now) {
+        if let minutes = window.windowMinutes {
+            return self.primaryLabel(duration: TimeInterval(minutes) * 60)
+        }
+        guard infersPeriodFromReset else { return nil }
+        if let label = self.primaryLabel(resetsAt: window.resetsAt, now: now) {
             return label
         }
-        guard window.windowMinutes == nil, window.resetsAt != nil else { return nil }
-        return "Weekly"
+        return window.resetsAt != nil ? "Weekly" : nil
     }
 
     private static func primaryLabel(duration seconds: TimeInterval) -> String? {

@@ -32,6 +32,8 @@ struct ClaudeProviderImplementation: ProviderImplementation {
         _ = settings.claudeSwapShowSingleAccount
         _ = settings.claudeSwapExecutablePath
         _ = settings.claudeSwapSource
+        _ = settings.magpieSourceEnabled
+        _ = settings.magpieQuotasURL
     }
 
     @MainActor
@@ -174,7 +176,7 @@ struct ClaudeProviderImplementation: ProviderImplementation {
                 actions: [],
                 inlineFields: [claudeSwapExecutableField],
                 isVisible: nil,
-                isEnabled: nil,
+                isEnabled: { !context.settings.magpieSourceEnabled },
                 onChange: nil,
                 onAppDidBecomeActive: nil,
                 onAppearWhenEnabled: nil),
@@ -185,7 +187,7 @@ struct ClaudeProviderImplementation: ProviderImplementation {
                 binding: claudeSwapShowSingleAccountBinding,
                 statusText: nil,
                 actions: [],
-                isVisible: { context.settings.claudeSwapEnabled },
+                isVisible: { context.settings.claudeSwapEffectivelyEnabled },
                 isEnabled: nil,
                 onChange: nil,
                 onAppDidBecomeActive: nil,
@@ -194,7 +196,22 @@ struct ClaudeProviderImplementation: ProviderImplementation {
     }
 
     @MainActor
+    private static func claudeMagpieStatusText(store: UsageStore, settings: SettingsStore) -> String? {
+        guard settings.magpieSourceEnabled else { return nil }
+        if let error = store.magpieLastError {
+            return error
+        }
+        guard let refreshedAt = store.magpieLastRefreshAt else { return nil }
+        let accounts = store.claudeAccountSource.accounts.count
+        let accountsText = accounts == 1 ? "1 account" : "\(accounts) accounts"
+        return "\(accountsText), updated \(refreshedAt.relativeDescription())"
+    }
+
+    @MainActor
     private static func claudeSwapStatusText(store: UsageStore, settings: SettingsStore) -> String? {
+        if settings.magpieSourceEnabled {
+            return "Off while magpie accounts are on."
+        }
         guard settings.claudeSwapEnabled else { return nil }
         if settings.claudeSwapExecutablePath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return ClaudeSwapSetupText(source: settings.claudeSwapSource).missingPathStatus
@@ -274,7 +291,7 @@ struct ClaudeProviderImplementation: ProviderImplementation {
                 options: ClaudeSwapAccountSource.allCases.map {
                     ProviderSettingsPickerOption(id: $0.rawValue, title: $0.label)
                 },
-                isVisible: { context.settings.claudeSwapEnabled },
+                isVisible: { context.settings.claudeSwapEffectivelyEnabled },
                 onChange: nil),
             ProviderCookieSourceUI.picker(
                 id: "claude-cookie-source",
@@ -352,6 +369,8 @@ struct ClaudeProviderImplementation: ProviderImplementation {
     func loginMenuAction(context: ProviderMenuLoginContext)
         -> (label: String, action: MenuDescriptor.MenuAction)?
     {
+        // magpie owns Claude accounts; every action below works on Claude Code's own credentials.
+        guard !context.settings.magpieSourceEnabled else { return nil }
         if self.shouldOfferDirectKeychainReadConsent(context: context) {
             // Terminal unreadable state (#2634/#2650): OAuth cannot recover until the user either opts in
             // to reading Claude Code's Keychain item or usage arrives via the Claude CLI fallback.
@@ -371,8 +390,8 @@ struct ClaudeProviderImplementation: ProviderImplementation {
         }
         let swapOwnsAccountPresentation = ClaudeSwapMenuPrecedence.prefersClaudeSwap(
             provider: context.provider,
-            accountCount: context.store.claudeSwapAccountSnapshots.count,
-            showSingleAccount: context.settings.claudeSwapShowSingleAccount)
+            accountCount: context.store.claudeAccountSource.accounts.count,
+            showSingleAccount: context.store.claudeAccountSource.showSingleAccount)
         guard !context.hasAccount || swapOwnsAccountPresentation else { return nil }
         return (L("Sign in with Claude Code..."), .switchAccount(.claude))
     }

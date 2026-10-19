@@ -870,6 +870,9 @@ extension UsageStore {
         includeCredits: Bool = false,
         claudeOwnerCLIRecoveryOnly: Bool = false) -> ProviderFetchContext
     {
+        #if DEBUG
+        try? NativeProviderIOTestBoundary.intercept?(.context)
+        #endif
         let account = ProviderTokenAccountSelection.selectedAccount(
             provider: provider,
             settings: self.settings,

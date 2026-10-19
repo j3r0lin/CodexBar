@@ -1463,6 +1463,9 @@ public enum ClaudeOAuthCredentialsStore {
         allowClaudeKeychainRepairWithoutPrompt: Bool = true,
         clearInvalidCache: Bool = true) throws -> ClaudeOAuthCredentialRecord
     {
+        #if DEBUG
+        try NativeProviderIOTestBoundary.intercept?(.credential)
+        #endif
         let context = self.currentCollaboratorContext()
         let defaults = self.loginFailureDefaults
         let failureKey = "ClaudeOAuthLastCredentialFailure." + self
@@ -1706,6 +1709,9 @@ public enum ClaudeOAuthCredentialsStore {
     public static func loadFromFile(
         environment: [String: String] = ProcessInfo.processInfo.environment) throws -> Data
     {
+        #if DEBUG
+        try NativeProviderIOTestBoundary.intercept?(.file)
+        #endif
         guard !self.isCurrentCredentialsFileQuarantinedForOAuth(environment: environment) else {
             throw ClaudeOAuthCredentialsError.notFound
         }

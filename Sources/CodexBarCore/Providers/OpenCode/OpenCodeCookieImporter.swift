@@ -29,6 +29,9 @@ public enum OpenCodeCookieImporter {
         preferredBrowsers: [Browser] = [.chrome],
         logger: ((String) -> Void)? = nil) throws -> SessionInfo
     {
+        #if DEBUG
+        try NativeProviderIOTestBoundary.intercept?(.cookie)
+        #endif
         let log: (String) -> Void = { msg in logger?("[opencode-cookie] \(msg)") }
         let installedBrowsers = preferredBrowsers.isEmpty
             ? opencodeCookieImportOrder.cookieImportCandidates(using: browserDetection)

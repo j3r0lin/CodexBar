@@ -19,6 +19,8 @@ struct MenuDescriptor {
 
     struct Section {
         var entries: [Entry]
+        /// The provider's own actions (account, dashboard, status), as opposed to app-wide rows.
+        var isContextual = false
     }
 
     enum Entry {
@@ -52,7 +54,7 @@ struct MenuDescriptor {
         case loginToProvider = "arrow.right.square"
         case settings = "gearshape"
         case about = "info.circle"
-        case quit = "xmark.rectangle"
+        case quit = "power"
         case copyError = "doc.on.doc"
     }
 
@@ -151,11 +153,12 @@ struct MenuDescriptor {
                 managedAccountCoordinator: managedCodexAccountCoordinator,
                 accountPromotionCoordinator: codexAccountPromotionCoordinator,
                 workspacesMenuEnabled: codexWorkspacesMenuEnabled)
-            let actions = Self.actionsSection(
+            var actions = Self.actionsSection(
                 for: provider,
                 store: store,
                 account: account,
                 codexActionContext: codexActionContext)
+            actions.isContextual = true
             if !actions.entries.isEmpty {
                 sections.append(actions)
             }
@@ -721,7 +724,9 @@ struct MenuDescriptor {
                 sessionLabel: metadata.sessionLabel,
                 weeklyLabel: metadata.weeklyLabel)
         } else if provider == .grok {
-            GrokProviderDescriptor.displayLabel(window: snapshot.primary) ?? metadata.sessionLabel
+            GrokProviderDescriptor.displayLabel(
+                window: snapshot.primary,
+                infersPeriodFromReset: !snapshot.isMagpieSourced) ?? metadata.sessionLabel
         } else if provider == .doubao {
             DoubaoProviderDescriptor.primaryLabel(window: snapshot.primary) ?? metadata.sessionLabel
         } else if provider == .sub2api {

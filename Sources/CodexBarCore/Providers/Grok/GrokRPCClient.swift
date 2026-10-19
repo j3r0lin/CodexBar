@@ -43,6 +43,9 @@ final class GrokRPCClient: @unchecked Sendable {
         self.process.standardError = self.output.stderr
 
         do {
+            #if DEBUG
+            try NativeProviderIOTestBoundary.intercept?(.process)
+            #endif
             try self.process.run()
             Self.log.debug("Grok RPC started", metadata: ["binary": resolvedExec])
         } catch {

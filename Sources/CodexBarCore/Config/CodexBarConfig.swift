@@ -8,6 +8,7 @@ public struct CodexBarConfig: Codable, Sendable {
         case providers
         case hooks
         case shareUsageWithCLI
+        case magpie
     }
 
     private enum ProviderCodingKeys: String, CodingKey {
@@ -28,17 +29,22 @@ public struct CodexBarConfig: Codable, Sendable {
     /// Opt-in: the app writes a private usage cache that `codexbar usage` falls back to in SSH sessions whose
     /// locked login keychain breaks a provider's own fetch. Off by default; written to the file only when on.
     public var shareUsageWithCLI: Bool
+    /// Top-level magpie unified-source switch. Absent means magpie owns nothing.
+    public var magpie: MagpieSourceConfig?
 
     public init(
         version: Int = Self.currentVersion,
         providers: [ProviderConfig],
         hooks: HooksConfig? = nil,
-        shareUsageWithCLI: Bool = false)
+        shareUsageWithCLI: Bool = false,
+        magpie: MagpieSourceConfig? = nil)
     {
         self.version = version
         self.providers = providers
         self.hooks = hooks
         self.shareUsageWithCLI = shareUsageWithCLI
+        self.magpie = magpie ?? MagpieSourceConfig.migrating(from: providers)
+        MagpieSourceConfig.stripLegacyKeys(from: &self.providers)
     }
 
     public init(from decoder: any Decoder) throws {
@@ -76,6 +82,12 @@ public struct CodexBarConfig: Codable, Sendable {
         self.providers = providers
         self.hooks = try container.decodeIfPresent(HooksConfig.self, forKey: .hooks)
         self.shareUsageWithCLI = try container.decodeIfPresent(Bool.self, forKey: .shareUsageWithCLI) ?? false
+        // Read compat: the legacy Claude-scoped magpie keys migrate to the top-level config only
+        // when the legacy switch was on. Legacy keys are stripped either way so saves write only
+        // the new config.
+        self.magpie = try container.decodeIfPresent(MagpieSourceConfig.self, forKey: .magpie)
+            ?? MagpieSourceConfig.migrating(from: self.providers)
+        MagpieSourceConfig.stripLegacyKeys(from: &self.providers)
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -83,6 +95,7 @@ public struct CodexBarConfig: Codable, Sendable {
         try container.encode(self.version, forKey: .version)
         try container.encodeIfPresent(self.hooks, forKey: .hooks)
         if self.shareUsageWithCLI { try container.encode(true, forKey: .shareUsageWithCLI) }
+        try container.encodeIfPresent(self.magpie, forKey: .magpie)
         var entries = container.nestedUnkeyedContainer(forKey: .providers)
         var providers = self.providers.makeIterator()
         for unknown in self.unknownProviders {

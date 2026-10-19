@@ -465,6 +465,9 @@ public struct TTYCommandRunner {
         options: Options = Options(),
         onURLDetected: (@Sendable () -> Void)? = nil) throws -> Result
     {
+        #if DEBUG
+        try NativeProviderIOTestBoundary.intercept?(.process)
+        #endif
         let baseEnv = options.baseEnvironment ?? ProcessInfo.processInfo.environment
         guard let resolved = Self.which(binary, environment: baseEnv) else {
             Self.log.warning("PTY binary not found", metadata: ["binary": binary])
@@ -558,8 +561,8 @@ public struct TTYCommandRunner {
         var launchedProcess: SpawnedProcessGroup?
         var didExceedOutputLimit = false
         var didTerminateSynchronously = false
-        /// Always tear down the PTY child (and its process group) even if we throw early
-        /// while bootstrapping the CLI (e.g. when it prompts for login/telemetry).
+        // Always tear down the PTY child (and its process group) even if we throw early
+        // while bootstrapping the CLI (e.g. when it prompts for login/telemetry).
         func cleanup() {
             if !didExceedOutputLimit, let launchedProcess, launchedProcess.isRunning {
                 Self.log.debug("PTY stopping", metadata: ["binary": binaryName])

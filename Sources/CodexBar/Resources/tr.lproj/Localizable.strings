@@ -443,7 +443,7 @@
 "metric_tertiary" = "Üçüncül (%@)";
 "multiple_workspaces_found" = "CodexBar %@ için birden fazla çalışma alanı buldu. Lütfen eklenecek çalışma alanını seçin.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "En fazla %@ sağlayıcı seçin";
+"overview_choose_providers" = "Birleşik simge için en fazla %@ sağlayıcı seçin";
 "remove_account_message" = "%@ CodexBar'dan kaldırılsın mı? Yönetilen Codex ana dizini silinecek.";
 "version_format" = "Sürüm %@";
 "vertex_ai_login_instructions" = "Vertex AI kullanımını izlemek için Google Cloud ile kimlik doğrulaması yapın.\n\n1. Terminal'i açın\n2. Şunu çalıştırın: gcloud auth application-default login\n3. Tarayıcıdaki adımları takip ederek oturum açın\n4. Projenizi ayarlayın: gcloud config set project PROJECT_ID\n\nTerminal şimdi açılsın mı?";
@@ -633,9 +633,6 @@
 "menu_bar_style_critters" = "Canavarlar";
 "menu_bar_style_bars" = "Ölçüm çubukları";
 "menu_bar_style_icon_percent" = "Simge ve yüzde";
-"switcher_rows_title" = "Değiştirici satırları";
-"switcher_rows_icons" = "Sağlayıcı simgeleri";
-"switcher_rows_progress" = "Haftalık ilerleme";
 "usage_bars_fill_title" = "Kullanım çubuklarının dolumu";
 "usage_bars_fill_remaining" = "Kalan miktara göre";
 "usage_bars_fill_used" = "Harcanan miktara göre";
@@ -674,11 +671,11 @@
 "multi_account_layout_subtitle" = "Bölümlü hesap seçiciyi veya alt alta hesap kartlarını seçin.";
 "multi_account_layout_segmented" = "Bölümlü";
 "multi_account_layout_stacked" = "Alt alta";
-"overview_tab_providers_title" = "Genel Bakış sekmesi sağlayıcıları";
+"overview_tab_providers_title" = "Birleşik simge sağlayıcıları";
 "configure" = "Yapılandır…";
-"overview_enable_merge_icons_hint" = "Genel Bakış sekmesindeki sağlayıcıları yapılandırmak için Simgeleri birleştir'i etkinleştirin.";
+"overview_enable_merge_icons_hint" = "Birleşik simgenin sağlayıcılarını seçmek için Simgeleri birleştir'i açın.";
 "overview_no_providers_hint" = "Genel Bakış için kullanılabilir etkin sağlayıcı yok.";
-"overview_rows_follow_order" = "Genel Bakış satırları her zaman sağlayıcı sırasını takip eder.";
+"overview_rows_follow_order" = "Birleşik simge bu sağlayıcılardan birini gösterir. Genel bakış menüsü etkin tüm sağlayıcıları listeler.";
 "overview_no_providers_selected" = "Sağlayıcı seçilmedi";
 "agent_sessions_title" = "Ajan oturumları";
 "agent_sessions_subtitle" = "Menüde yerel ve SSH ile keşfedilen Codex ve Claude Code oturumlarını göster.";
@@ -1802,7 +1799,6 @@
 "Enable Antigravity provider" = "Antigravity sağlayıcısını etkinleştirin";
 "Enable account widgets in CodexBar → Settings → Menu → Widgets. Then edit this widget to choose an account." = "CodexBar → Ayarlar → Menü → Widget'lar bölümünde hesap widget'larını etkinleştirin. Daha sonra bir hesap seçmek için bu widget'ı düzenleyin.";
 "Error: %@" = "Hata: %@";
-"Examples: alt+cmd+2, shift+right. Refresh (cmd+r), Settings (cmd+,) and Quit (cmd+q) are reserved." = "Örnekler: alt+cmd+2, shift+right. Yenile (cmd+r), Ayarlar (cmd+,) ve Çık (cmd+q) ayrılmıştır.";
 "Export Preferences…" = "Tercihleri Dışa Aktar…";
 "External Codex OAuth sources" = "Harici Codex OAuth kaynakları";
 "Extra usage balance" = "Ekstra kullanım bakiyesi";
@@ -1855,7 +1851,6 @@
 "My AI subscriptions · last %d days" = "AI aboneliklerim · son %d günleri";
 "NaN Builders" = "NaN Builders";
 "Named AWS profile from ~/.aws/config. Can also be set with AWS_PROFILE." = "~/.aws/config adresinden AWS profili adlandırıldı. AWS_PROFILE ile de ayarlanabilir.";
-"Next provider" = "Sonraki sağlayıcı";
 "No active account" = "Aktif hesap yok";
 "No cookie header pasted." = "cookie başlığı yapıştırılmadı.";
 "No matching OpenAI web session found for %@." = "%@ için eşleşen OpenAI web oturumu bulunamadı.";
@@ -1931,14 +1926,11 @@
 "Preferences could not be transferred" = "Tercihler aktarılamadı";
 "Preferred for Go usage limits. Also reads OPENCODE_API_KEY." = "Go kullanım sınırları için tercih edilir. Ayrıca OPENCODE_API_KEY okur.";
 "Prevent idle system sleep while a local agent process is running, even when idle. Uses battery power; does not prevent lid-close or display sleep." = "Yerel aracı işlemi çalışırken, boştayken bile sistemin boşta uyumasını önleyin. Pil gücünü kullanır; kapağın kapanmasını veya görüntü uykusunu engellemez.";
-"Previous provider" = "Önceki sağlayıcı";
 "Primary quota" = "Birincil Kota";
 "Prioritize exhausted quotas" = "Tükenmiş Kota'ye öncelik verin";
 "Profile name" = "Yapılandırma profili adı";
 "Provider %@" = "Sağlayıcı %@";
 "Provider + Metric" = "Sağlayıcı + Metrik";
-"Provider Switcher Shortcuts" = "Sağlayıcı Değiştirici Kısayolları";
-"Provider Switcher Shortcuts…" = "Sağlayıcı Değiştirici Kısayolları…";
 "Provider service status: %@" = "Sağlayıcı hizmet durumu: %@";
 "Quota estimated from local usage history" = "Kota yerel kullanım geçmişinden tahmin edilmiştir";
 "Quota from the selected dev.meta.ai browser team" = "Seçilen dev.meta.ai tarayıcı ekibinden Kota";
@@ -1967,7 +1959,6 @@
 "Saved in CodexBar's local config file. Or set GITKRAKEN_API_TOKEN." = "CodexBar'nin yerel yapılandırma dosyasına kaydedildi. Veya GITKRAKEN_API_TOKEN'yi ayarlayın.";
 "Scoped weekly" = "Seçilen kapsam için haftalık Kota";
 "Secondary quota" = "İkincil Kota";
-"Select position %@" = "%@ konumunu seçin";
 "Select the provider and account to display in the widget." = "Widget'ta görüntülenecek sağlayıcıyı ve hesabı seçin.";
 "Select the provider and metric to display." = "Görüntülenecek sağlayıcıyı ve Metrik'yi seçin.";
 "Select the provider and usage window to display." = "Görüntülenecek sağlayıcıyı ve kullanım penceresini seçin.";
@@ -2005,7 +1996,6 @@
 "The pasted header is sent only to this tenant." = "Yapıştırılan başlık yalnızca bu kiracıya gönderilir.";
 "The selected Codex profile has no verified account email." = "Seçilen Codex profilinde doğrulanmış hesap e-postası yok.";
 "The selected managed Codex account is unavailable." = "Seçilen yönetilen Codex hesabı kullanılamıyor.";
-"These shortcuts work while the provider switcher menu is open. Use ctrl, alt, shift and cmd with a letter, digit, left or right; use none to disable an action." = "Bu kısayollar sağlayıcı değiştirme menüsü açıkken çalışır. `ctrl`, `alt`, `shift` ve `cmd` ile bir harf, rakam, `left` veya `right` kullanın; bir eylemi devre dışı bırakmak için `none` kullanın.";
 "Third quota" = "Üçüncü Kota";
 "Today cost" = "Bugünkü maliyet";
 "Token Refreshed" = "token Yenilendi";
@@ -2653,6 +2643,23 @@
 "Daily spend · %@" = "Günlük harcama · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Seçili “%@” token hesabı için geçerlidir. Her hesap kendi sınırlarını korur.";
 "Applies to the OpenAI API key, not to token accounts." = "Token hesapları için değil, OpenAI API anahtarı için geçerlidir.";
+"%lld accounts" = "%lld hesap";
+"Refresh Claude usage" = "Claude kullanımını yenile";
+"No providers enabled" = "Etkin sağlayıcı yok";
+"5-hour limit" = "5 saatlik limit";
+"Weekly limit" = "Haftalık limit";
+"account_detail_usage_title" = "%@ kullanımı";
+"account_detail_used" = "%@ kullanıldı";
+"account_detail_history" = "Geçmiş";
+
+/* Overview card UI */
+"%lld providers" = "%lld sağlayıcı";
+"Auto-refresh on" = "Otomatik yenileme açık";
+"Auto-refresh off" = "Otomatik yenileme kapalı";
+"Last sync: %@" = "Son eşitleme: %@";
+"No matching windows" = "Eşleşen pencere yok";
+"Now" = "Şimdi";
+"resets in %@" = "%@ içinde sıfırlanır";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar, Muse Code abonelik kullanımınızı almak için macOS Anahtar Zinciri'nden Muse Code giriş tokenını isteyecek. Devam etmek için Tamam'a tıklayın.";
 /* Claude Platform provider */
 "API credit" = "API kredisi";

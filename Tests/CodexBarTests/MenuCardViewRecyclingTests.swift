@@ -268,7 +268,7 @@ extension StatusMenuTests {
         #expect(width == 356)
         #expect(StatusItemController.resolvedRenderedMenuWidth(
             menuWidth: 310,
-            trackedWindowWidth: nil) == 310)
+            trackedWindowWidth: nil) == StatusItemController.menuCardBaseWidth)
     }
 
     @Test
@@ -372,7 +372,7 @@ extension StatusMenuTests {
         let settingsItem = menu.items[5]
 
         let shapes = controller.menuContentShapes(in: menu, fromIndex: 0)
-        controller.harvestRecyclableMenuCardViews(in: menu, fromIndex: 0, displacedSelection: nil)
+        controller.harvestRecyclableMenuCardViews(in: menu, fromIndex: 0)
         defer { controller.clearMenuCardViewRecyclePool() }
 
         let scratch = NSMenu()
@@ -389,176 +389,6 @@ extension StatusMenuTests {
         #expect(menu.items[0].view === cardView, "card hosting view should be recycled in place")
         #expect(menu.items[4] === settingsItem, "shared trailing row should be updated in place")
         #expect(menu.items[2].title == "New Provider Action")
-    }
-
-    @Test
-    func `cached provider content replaces native image rows and preserves switch back items`() {
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        let controller = self.makeRecyclingController(settings: settings)
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let outgoing = NSMenuItem(title: "Status Page", action: nil, keyEquivalent: "")
-        outgoing.image = NSImage(size: NSSize(width: 16, height: 16))
-        let incoming = NSMenuItem(title: "Dashboard", action: nil, keyEquivalent: "")
-        incoming.image = NSImage(size: NSSize(width: 16, height: 16))
-        let menu = NSMenu()
-        menu.addItem(outgoing)
-
-        let displacedOutgoing = controller.replaceMenuContentKeepingRowsVisible(
-            menu,
-            fromIndex: 0,
-            with: [incoming])
-
-        #expect(menu.items.first === incoming)
-        #expect(displacedOutgoing.first === outgoing)
-
-        let displacedIncoming = controller.replaceMenuContentKeepingRowsVisible(
-            menu,
-            fromIndex: 0,
-            with: displacedOutgoing)
-
-        #expect(menu.items.first === outgoing)
-        #expect(displacedIncoming.first === incoming)
-    }
-
-    @Test
-    func `cached provider content preserves menu item subclasses across switch back`() {
-        let previousRendering = StatusItemController.menuCardRenderingEnabled
-        StatusItemController.menuCardRenderingEnabled = true
-        defer { StatusItemController.menuCardRenderingEnabled = previousRendering }
-
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        let controller = self.makeRecyclingController(settings: settings)
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let plainItem = NSMenuItem(title: "Overview", action: nil, keyEquivalent: "")
-        let cardItem = controller.makeMenuCardItem(Text("Codex"), id: "codex", width: 300)
-        let menu = NSMenu()
-        menu.addItem(plainItem)
-
-        let displacedPlain = controller.replaceMenuContentKeepingRowsVisible(
-            menu,
-            fromIndex: 0,
-            with: [cardItem])
-
-        #expect(menu.items.first === cardItem)
-        #expect(menu.items.first is MenuCardMenuItem)
-        #expect(displacedPlain.first === plainItem)
-
-        let displacedCard = controller.replaceMenuContentKeepingRowsVisible(
-            menu,
-            fromIndex: 0,
-            with: displacedPlain)
-
-        #expect(menu.items.first === plainItem)
-        #expect(!(menu.items.first is MenuCardMenuItem))
-        #expect(displacedCard.first === cardItem)
-    }
-
-    @Test
-    func `cached card swap keeps the live row in place when heights match`() {
-        let previousRendering = StatusItemController.menuCardRenderingEnabled
-        StatusItemController.menuCardRenderingEnabled = true
-        defer { StatusItemController.menuCardRenderingEnabled = previousRendering }
-
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        let controller = self.makeRecyclingController(settings: settings)
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let liveItem = controller.makeMenuCardItem(
-            Text("Overview").frame(height: 120), id: "overviewRow-codex", width: 300)
-        let incoming = controller.makeMenuCardItem(
-            Text("Claude").frame(height: 120), id: "menuCard-0", width: 300)
-        let liveView = liveItem.view
-        let menu = NSMenu()
-        menu.addItem(liveItem)
-
-        let displaced = controller.replaceMenuContentKeepingRowsVisible(menu, fromIndex: 0, with: [incoming])
-
-        // Flash-free path: same-height payloads swap inside the attached row.
-        #expect(menu.items.first === liveItem)
-        #expect(liveItem.view === liveView)
-        #expect(liveItem.representedObject as? String == "menuCard-0")
-        #expect(displaced.first === incoming)
-    }
-
-    @Test
-    func `cached card swap replaces the live row when heights differ`() {
-        let previousRendering = StatusItemController.menuCardRenderingEnabled
-        StatusItemController.menuCardRenderingEnabled = true
-        defer { StatusItemController.menuCardRenderingEnabled = previousRendering }
-
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        let controller = self.makeRecyclingController(settings: settings)
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let liveItem = controller.makeMenuCardItem(
-            Text("Overview").frame(height: 340), id: "overviewRow-codex", width: 300)
-        let incoming = controller.makeMenuCardItem(
-            Text("Claude").frame(height: 120), id: "menuCard-0", width: 300)
-        let menu = NSMenu()
-        menu.addItem(liveItem)
-
-        let displaced = controller.replaceMenuContentKeepingRowsVisible(menu, fromIndex: 0, with: [incoming])
-
-        // AppKit's table-backed menu keeps a reused row's old height (#3549), so a height change
-        // must present a fresh item that the menu measures.
-        #expect(menu.items.first === incoming)
-        #expect(displaced.first === liveItem)
-        #expect(liveItem.menu == nil)
-
-        let displacedBack = controller.replaceMenuContentKeepingRowsVisible(menu, fromIndex: 0, with: displaced)
-        #expect(menu.items.first === liveItem)
-        #expect(displacedBack.first === incoming)
-    }
-
-    @Test
-    func `cached provider content swap preserves both item sets for switch back`() {
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        let controller = self.makeRecyclingController(settings: settings)
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let switcher = NSMenuItem(title: "Switcher", action: nil, keyEquivalent: "")
-        let outgoing = [
-            NSMenuItem(title: "Overview Card", action: nil, keyEquivalent: ""),
-            NSMenuItem.separator(),
-            NSMenuItem(title: "Overview Action", action: nil, keyEquivalent: ""),
-        ]
-        let incoming = [
-            NSMenuItem(title: "Codex Card", action: nil, keyEquivalent: ""),
-            NSMenuItem.separator(),
-            NSMenuItem(title: "Codex Usage", action: nil, keyEquivalent: ""),
-            NSMenuItem(title: "Codex Settings", action: nil, keyEquivalent: ""),
-        ]
-        let menu = NSMenu()
-        menu.addItem(switcher)
-        outgoing.forEach(menu.addItem)
-
-        let displacedOutgoing = controller.replaceMenuContentKeepingRowsVisible(
-            menu,
-            fromIndex: 1,
-            with: incoming)
-
-        #expect(menu.items.first === switcher)
-        #expect(menu.items.dropFirst().map(\.title) == ["Codex Card", "", "Codex Usage", "Codex Settings"])
-        #expect(Array(menu.items[1...3]).map(ObjectIdentifier.init) == outgoing.map(ObjectIdentifier.init))
-        #expect(displacedOutgoing.map(ObjectIdentifier.init) == incoming.prefix(3).map(ObjectIdentifier.init))
-        #expect(displacedOutgoing.map(\.title) == ["Overview Card", "", "Overview Action"])
-
-        let displacedIncoming = controller.replaceMenuContentKeepingRowsVisible(
-            menu,
-            fromIndex: 1,
-            with: displacedOutgoing)
-
-        #expect(Array(menu.items.dropFirst()).map(ObjectIdentifier.init) == outgoing.map(ObjectIdentifier.init))
-        #expect(displacedIncoming.map(ObjectIdentifier.init) == incoming.map(ObjectIdentifier.init))
-        #expect(displacedIncoming.allSatisfy { $0.menu == nil })
-        #expect(displacedIncoming.map(\.title) == ["Codex Card", "", "Codex Usage", "Codex Settings"])
     }
 
     @Test
@@ -619,7 +449,6 @@ extension StatusMenuTests {
         controller.harvestRecyclableMenuCardViews(
             in: menu,
             fromIndex: 0,
-            displacedSelection: nil,
             preserveHighlightedItem: true)
         defer { controller.clearMenuCardViewRecyclePool() }
         #expect(!hosting.highlightState.isHighlighted)
@@ -676,81 +505,6 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `harvesting consumes only the displaced selection cache entry`() {
-        StatusItemController.setMenuRefreshEnabledForTesting(false)
-        let previousRendering = StatusItemController.menuCardRenderingEnabled
-        StatusItemController.menuCardRenderingEnabled = true
-        defer { StatusItemController.menuCardRenderingEnabled = previousRendering }
-
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        settings.refreshFrequency = .manual
-        let controller = self.makeRecyclingController(settings: settings)
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let menu = NSMenu()
-        let item = controller.makeMenuCardItem(Text("card"), id: "menuCard", width: 300, onClick: {})
-        menu.addItem(item)
-
-        let entry = CachedMergedSwitcherMenuContent(
-            requiredMenuContentVersion: 0,
-            menuWidth: 300,
-            codexAccountDisplay: nil,
-            tokenAccountDisplay: nil,
-            localizationSignature: "",
-            items: [])
-        controller.mergedSwitcherContentCaches[ObjectIdentifier(menu)] = [
-            .overview: entry,
-            .provider(.codex): entry,
-        ]
-        controller.harvestRecyclableMenuCardViews(
-            in: menu,
-            fromIndex: 0,
-            displacedSelection: .provider(.codex))
-        defer { controller.clearMenuCardViewRecyclePool() }
-
-        #expect(controller.menuCardViewRecyclePool.count == 1)
-        #expect(item.view == nil)
-        let remaining = controller.mergedSwitcherContentCaches[ObjectIdentifier(menu)]
-        #expect(remaining?[.provider(.codex)] == nil)
-        #expect(remaining?[.overview] != nil)
-    }
-
-    @Test
-    func `harvesting consumes displaced cache when card rendering is disabled`() {
-        let previousRendering = StatusItemController.menuCardRenderingEnabled
-        StatusItemController.menuCardRenderingEnabled = false
-        defer { StatusItemController.menuCardRenderingEnabled = previousRendering }
-
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        let controller = self.makeRecyclingController(settings: settings)
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let menu = NSMenu()
-        let entry = CachedMergedSwitcherMenuContent(
-            requiredMenuContentVersion: 0,
-            menuWidth: 300,
-            codexAccountDisplay: nil,
-            tokenAccountDisplay: nil,
-            localizationSignature: "",
-            items: [])
-        controller.mergedSwitcherContentCaches[ObjectIdentifier(menu)] = [
-            .overview: entry,
-            .provider(.codex): entry,
-        ]
-
-        controller.harvestRecyclableMenuCardViews(
-            in: menu,
-            fromIndex: 0,
-            displacedSelection: .provider(.codex))
-
-        let remaining = controller.mergedSwitcherContentCaches[ObjectIdentifier(menu)]
-        #expect(remaining?[.provider(.codex)] == nil)
-        #expect(remaining?[.overview] != nil)
-    }
-
-    @Test
     func `type compatible leftover is adopted across card identifiers`() {
         StatusItemController.setMenuRefreshEnabledForTesting(false)
         let previousRendering = StatusItemController.menuCardRenderingEnabled
@@ -768,7 +522,7 @@ extension StatusMenuTests {
         menu.addItem(original)
         let originalView = original.view
 
-        controller.harvestRecyclableMenuCardViews(in: menu, fromIndex: 0, displacedSelection: nil)
+        controller.harvestRecyclableMenuCardViews(in: menu, fromIndex: 0)
         defer { controller.clearMenuCardViewRecyclePool() }
         let switched = controller.makeMenuCardItem(Text("claude usage"), id: "menuCard", width: 300)
 
@@ -798,7 +552,7 @@ extension StatusMenuTests {
             return
         }
 
-        controller.harvestRecyclableMenuCardViews(in: menu, fromIndex: 0, displacedSelection: nil)
+        controller.harvestRecyclableMenuCardViews(in: menu, fromIndex: 0)
         defer { controller.clearMenuCardViewRecyclePool() }
         let rebuilt = controller.makeMenuCardItem(Text("after"), id: "menuCard", width: 300)
 
@@ -869,7 +623,7 @@ extension StatusMenuTests {
         #expect(hosting.highlightState.isHighlighted)
         #expect(controller.highlightedMenuItems[ObjectIdentifier(menu)] === item)
 
-        controller.harvestRecyclableMenuCardViews(in: menu, fromIndex: 0, displacedSelection: nil)
+        controller.harvestRecyclableMenuCardViews(in: menu, fromIndex: 0)
         defer { controller.clearMenuCardViewRecyclePool() }
 
         #expect(!hosting.highlightState.isHighlighted)
@@ -898,7 +652,7 @@ extension StatusMenuTests {
         menu.addItem(original)
         let originalView = original.view
 
-        controller.harvestRecyclableMenuCardViews(in: menu, fromIndex: 0, displacedSelection: nil)
+        controller.harvestRecyclableMenuCardViews(in: menu, fromIndex: 0)
         defer { controller.clearMenuCardViewRecyclePool() }
         let rebuilt = controller.makeMenuCardItem(Image(systemName: "clock"), id: "menuCard", width: 300)
 
@@ -936,7 +690,7 @@ extension StatusMenuTests {
             return
         }
 
-        controller.harvestRecyclableMenuCardViews(in: menu, fromIndex: 0, displacedSelection: nil)
+        controller.harvestRecyclableMenuCardViews(in: menu, fromIndex: 0)
         defer { controller.clearMenuCardViewRecyclePool() }
         let provider = controller.makeMenuCardItem(Text("Provider"), id: "provider", width: 300)
 
@@ -988,7 +742,7 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `disabled hover preserves card and refresh colors`() throws {
+    func `disabled hover preserves card colors`() throws {
         StatusItemController.setMenuRefreshEnabledForTesting(false)
         let previousRendering = StatusItemController.menuCardRenderingEnabled
         StatusItemController.menuCardRenderingEnabled = true
@@ -1011,14 +765,12 @@ extension StatusMenuTests {
             onClick: { clicks += 1 })
         let provider = controller.makeMenuCardItem(
             Text("Codex"), id: "provider-codex", width: 300, onClick: { clicks += 1 })
-        let refresh = controller.makePersistentRefreshItem(title: "Refresh", menu: menu, width: 300)
-        for item in [overview, provider, refresh] {
+        for item in [overview, provider] {
             menu.addItem(item)
         }
         let overviewView = try #require(overview.view as? MenuRowContainerView)
         let providerView = try #require(provider.view as? MenuRowContainerView)
         let selection = try #require(overviewView.subviews.compactMap { $0 as? NSVisualEffectView }.first)
-        let refreshSelection = try #require(refresh.view?.subviews.compactMap { $0 as? NSVisualEffectView }.first)
 
         controller.menu(menu, willHighlight: overview)
         #expect(controller.highlightedMenuItems[ObjectIdentifier(menu)] === overview)
@@ -1030,11 +782,6 @@ extension StatusMenuTests {
         #expect(!providerView.highlightState.isHighlighted)
         #expect(providerView._test_simulateRuntimeClick())
         #expect(clicks == 2)
-        controller.menu(menu, willHighlight: refresh)
-        #expect(refreshSelection.isHidden)
-
-        controller.menu(menu, willHighlight: refresh, eventType: .keyDown)
-        #expect(!refreshSelection.isHidden)
         controller.menu(menu, willHighlight: overview, eventType: .keyDown)
         #expect(selection.layer?.opacity == 1)
         controller.menu(menu, willHighlight: provider, eventType: .keyDown)
@@ -1053,7 +800,6 @@ extension StatusMenuTests {
             onClick: {}))
         scratch.addItem(controller.makeMenuCardItem(
             Text("Updated Codex"), id: "provider-codex", width: 300, onClick: {}))
-        scratch.addItem(controller.makePersistentRefreshItem(title: "Refresh", menu: menu, width: 300))
         controller.reconcileMenuContent(menu, fromIndex: 0, shapes: shapes, with: scratch)
         let updatedView = try #require(menu.items[1].view as? MenuRowContainerView)
         #expect(controller.highlightedMenuItems[ObjectIdentifier(menu)] === menu.items[1])
@@ -1063,58 +809,5 @@ extension StatusMenuTests {
         settings.highlightMenuCardsOnHover = true
         controller.menu(menu, willHighlight: menu.items[1], eventType: .mouseMoved)
         #expect(updatedView.highlightState.isHighlighted)
-    }
-
-    @Test
-    func `overview and provider rows swap payloads without detaching their containers`() {
-        StatusItemController.setMenuRefreshEnabledForTesting(false)
-        let previousRendering = StatusItemController.menuCardRenderingEnabled
-        StatusItemController.menuCardRenderingEnabled = true
-        defer { StatusItemController.menuCardRenderingEnabled = previousRendering }
-
-        let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
-        let controller = self.makeRecyclingController(settings: settings)
-        defer { controller.releaseStatusItemsForTesting() }
-
-        let overviewItem = controller.makeMenuCardItem(
-            Text("Overview"),
-            id: "overview",
-            width: 300,
-            submenu: NSMenu(),
-            usesGPUSelection: true,
-            onClick: {})
-        let providerItem = controller.makeMenuCardItem(
-            Text("Provider"),
-            id: "provider",
-            width: 300,
-            onClick: {})
-        let menu = NSMenu()
-        menu.addItem(overviewItem)
-        guard let attachedContainer = overviewItem.view as? MenuRowContainerView,
-              let cachedContainer = providerItem.view as? MenuRowContainerView
-        else {
-            Issue.record("expected shared menu row containers")
-            return
-        }
-
-        let displaced = controller.replaceMenuContentKeepingRowsVisible(
-            menu,
-            fromIndex: 0,
-            with: [providerItem])
-
-        #expect(menu.items[0] === overviewItem)
-        #expect(menu.items[0].view === attachedContainer)
-        #expect(!attachedContainer.usesGPUSelectionForTesting)
-        #expect(!attachedContainer.hasGPUSelectionLayerForTesting)
-        #expect(displaced.count == 1)
-        #expect(displaced[0] === providerItem)
-        #expect(displaced[0].view === cachedContainer)
-        #expect(cachedContainer.usesGPUSelectionForTesting)
-        #expect(cachedContainer.hasGPUSelectionLayerForTesting)
-        for container in [attachedContainer, cachedContainer] {
-            #expect(!container.allowsVibrancy)
-            #expect(container.subviews.last?.allowsVibrancy == false)
-        }
     }
 }

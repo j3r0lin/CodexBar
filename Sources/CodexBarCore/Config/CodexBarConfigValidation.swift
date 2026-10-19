@@ -44,8 +44,23 @@ public enum CodexBarConfigValidator {
             self.validateProvider(entry, issues: &issues)
         }
         self.validateHooks(config.hooks, issues: &issues)
+        self.validateMagpie(config.magpie, issues: &issues)
 
         return issues
+    }
+
+    private static func validateMagpie(_ magpie: MagpieSourceConfig?, issues: inout [CodexBarConfigIssue]) {
+        guard let raw = magpie?.quotasURL?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !raw.isEmpty
+        else { return }
+        if MagpieQuotasReader.quotasURL(from: raw) == nil {
+            issues.append(CodexBarConfigIssue(
+                severity: .error,
+                provider: nil,
+                field: "magpie.quotasURL",
+                code: "invalid_magpie_quotas_url",
+                message: "The magpie quotas URL must be an http(s) URL."))
+        }
     }
 
     private static func validateHooks(_ hooks: HooksConfig?, issues: inout [CodexBarConfigIssue]) {

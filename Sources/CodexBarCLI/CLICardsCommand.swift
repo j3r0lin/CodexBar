@@ -31,6 +31,14 @@ extension CodexBarCLI {
 
         for provider in providerList {
             let status = setup.includeStatus ? await Self.fetchStatus(for: provider) : nil
+            if let result = await Self.fetchMagpieUsageIfOwned(
+                provider: provider, status: status, tokenContext: tokenContext, command: command)
+            {
+                if result.exitCode != .success { exitCode = result.exitCode }
+                cards.append(contentsOf: result.cards)
+                failures.append(contentsOf: result.cardFailures)
+                continue
+            }
             let claudeSwapEligible = CLIClaudeSwapCards.isEligible(
                 provider: provider,
                 integrationEnabled: claudeConfig?.claudeSwapEnabled == true,
