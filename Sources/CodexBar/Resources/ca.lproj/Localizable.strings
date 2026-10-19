@@ -2700,3 +2700,9 @@
 "Move up" = "Mou amunt";
 "Move down" = "Mou avall";
 "Leave blank to keep the saved credential." = "Deixeu-ho en blanc per conservar la credencial desada.";
+
+"Monthly limit" = "Límit mensual";
+"Use magpie for gateway providers" = "Utilitza magpie per als proveïdors de passarel·la";
+"Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "Els proveïdors de passarel·la no requereixen iniciar sessió localment. El cost, els crèdits i l’historial no estan disponibles. L’interruptor anterior, exclusiu de Claude, ara s’aplica a tots els proveïdors que comunica magpie.";
+"magpie quotas URL" = "URL de quotes de magpie";
+"Waiting for magpie discovery" = "S’està esperant la detecció de magpie";

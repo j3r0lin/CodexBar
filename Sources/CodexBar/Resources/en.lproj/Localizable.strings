@@ -2650,6 +2650,7 @@
 "No providers enabled" = "No providers enabled";
 "5-hour limit" = "5-hour limit";
 "Weekly limit" = "Weekly limit";
+"Monthly limit" = "Monthly limit";
 "account_detail_usage_title" = "%@ Usage";
 "account_detail_used" = "%@ Used";
 "account_detail_history" = "History";
@@ -2703,3 +2704,8 @@
 "Move up" = "Move up";
 "Move down" = "Move down";
 "Leave blank to keep the saved credential." = "Leave blank to keep the saved credential.";
+
+"Use magpie for gateway providers" = "Use magpie for gateway providers";
+"Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie.";
+"magpie quotas URL" = "magpie quotas URL";
+"Waiting for magpie discovery" = "Waiting for magpie discovery";

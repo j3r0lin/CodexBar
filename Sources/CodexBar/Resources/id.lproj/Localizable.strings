@@ -2700,3 +2700,9 @@
 "Move up" = "Pindah ke atas";
 "Move down" = "Pindah ke bawah";
 "Leave blank to keep the saved credential." = "Biarkan kosong untuk mempertahankan kredensial tersimpan.";
+
+"Monthly limit" = "Batas bulanan";
+"Use magpie for gateway providers" = "Gunakan magpie untuk penyedia gateway";
+"Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "Penyedia gateway tidak memerlukan login lokal. Biaya, kredit, dan riwayat tidak tersedia. Sakelar yang sebelumnya hanya untuk Claude kini berlaku untuk setiap penyedia yang dilaporkan oleh magpie.";
+"magpie quotas URL" = "URL kuota magpie";
+"Waiting for magpie discovery" = "Menunggu penemuan magpie";

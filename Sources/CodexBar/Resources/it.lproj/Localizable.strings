@@ -2702,3 +2702,9 @@
 "Move up" = "Sposta su";
 "Move down" = "Sposta giù";
 "Leave blank to keep the saved credential." = "Lascia vuoto per mantenere la credenziale salvata.";
+
+"Monthly limit" = "Limite mensile";
+"Use magpie for gateway providers" = "Usa magpie per i provider gateway";
+"Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "I provider gateway non richiedono un accesso locale. Costi, crediti e cronologia non sono disponibili. L’interruttore precedentemente riservato a Claude ora si applica a tutti i provider segnalati da magpie.";
+"magpie quotas URL" = "URL delle quote magpie";
+"Waiting for magpie discovery" = "In attesa del rilevamento di magpie";

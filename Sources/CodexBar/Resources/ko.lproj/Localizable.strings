@@ -2655,3 +2655,19 @@
 "Move up" = "위로 이동";
 "Move down" = "아래로 이동";
 "Leave blank to keep the saved credential." = "저장된 인증 정보를 유지하려면 비워 두세요.";
+
+"Monthly limit" = "월간 한도";
+"Use magpie for gateway providers" = "게이트웨이 공급자에 magpie 사용";
+"Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "게이트웨이 공급자는 로컬 로그인이 필요하지 않습니다. 비용, 크레딧 및 기록은 사용할 수 없습니다. 이전에 Claude에만 적용되던 스위치가 이제 magpie에서 보고하는 모든 공급자에 적용됩니다.";
+"magpie quotas URL" = "magpie 할당량 URL";
+"Waiting for magpie discovery" = "magpie 검색 대기 중";
+
+"%lld accounts" = "계정 %lld개";
+"%lld providers" = "공급자 %lld개";
+"Auto-refresh off" = "자동 새로 고침 꺼짐";
+"Auto-refresh on" = "자동 새로 고침 켜짐";
+"Last sync: %@" = "마지막 동기화: %@";
+"No matching windows" = "일치하는 창 없음";
+"Now" = "지금";
+"Refresh Claude usage" = "Claude 사용량 새로 고침";
+"resets in %@" = "%@ 후 재설정";

@@ -2687,3 +2687,19 @@
 "Move up" = "Mover para cima";
 "Move down" = "Mover para baixo";
 "Leave blank to keep the saved credential." = "Deixe em branco para manter a credencial salva.";
+
+"Monthly limit" = "Limite mensal";
+"Use magpie for gateway providers" = "Usar magpie para provedores de gateway";
+"Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "Provedores de gateway não exigem login local. Custo, créditos e histórico não estão disponíveis. A opção antes exclusiva do Claude agora se aplica a todos os provedores informados pelo magpie.";
+"magpie quotas URL" = "URL de cotas do magpie";
+"Waiting for magpie discovery" = "Aguardando a descoberta do magpie";
+
+"%lld accounts" = "%lld contas";
+"%lld providers" = "%lld provedores";
+"Auto-refresh off" = "Atualização automática desativada";
+"Auto-refresh on" = "Atualização automática ativada";
+"Last sync: %@" = "Última sincronização: %@";
+"No matching windows" = "Nenhuma janela correspondente";
+"Now" = "Agora";
+"Refresh Claude usage" = "Atualizar uso do Claude";
+"resets in %@" = "renova em %@";

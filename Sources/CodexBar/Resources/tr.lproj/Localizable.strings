@@ -2701,3 +2701,9 @@
 "Move up" = "Yukarı taşı";
 "Move down" = "Aşağı taşı";
 "Leave blank to keep the saved credential." = "Kayıtlı kimlik bilgisini korumak için boş bırakın.";
+
+"Monthly limit" = "Aylık limit";
+"Use magpie for gateway providers" = "Ağ geçidi sağlayıcıları için magpie kullan";
+"Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "Ağ geçidi sağlayıcıları yerel oturum açma gerektirmez. Maliyet, kredi ve geçmiş kullanılamaz. Daha önce yalnızca Claude için olan anahtar artık magpie tarafından bildirilen tüm sağlayıcılar için geçerlidir.";
+"magpie quotas URL" = "magpie kota URL’si";
+"Waiting for magpie discovery" = "magpie keşfi bekleniyor";

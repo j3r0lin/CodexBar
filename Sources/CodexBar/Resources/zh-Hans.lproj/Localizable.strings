@@ -2690,3 +2690,9 @@
 "Move up" = "上移";
 "Move down" = "下移";
 "Leave blank to keep the saved credential." = "留空以保留已保存的凭据。";
+
+"Monthly limit" = "每月限额";
+"Use magpie for gateway providers" = "对网关提供商使用 magpie";
+"Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "网关提供商无需本地登录。费用、额度和历史记录不可用。原先仅适用于 Claude 的开关现在适用于 magpie 报告的所有提供商。";
+"magpie quotas URL" = "magpie 配额 URL";
+"Waiting for magpie discovery" = "等待 magpie 发现提供商";

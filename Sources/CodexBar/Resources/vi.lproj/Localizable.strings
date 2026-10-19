@@ -2688,3 +2688,19 @@
 "Move up" = "Di chuyển lên";
 "Move down" = "Di chuyển xuống";
 "Leave blank to keep the saved credential." = "Để trống để giữ thông tin xác thực đã lưu.";
+
+"Monthly limit" = "Giới hạn hằng tháng";
+"Use magpie for gateway providers" = "Dùng magpie cho nhà cung cấp cổng";
+"Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "Nhà cung cấp cổng không yêu cầu đăng nhập cục bộ. Chi phí, tín dụng và lịch sử không khả dụng. Công tắc trước đây chỉ dành cho Claude hiện áp dụng cho mọi nhà cung cấp do magpie báo cáo.";
+"magpie quotas URL" = "URL hạn mức magpie";
+"Waiting for magpie discovery" = "Đang chờ magpie phát hiện";
+
+"%lld accounts" = "%lld tài khoản";
+"%lld providers" = "%lld nhà cung cấp";
+"Auto-refresh off" = "Tắt tự động làm mới";
+"Auto-refresh on" = "Bật tự động làm mới";
+"Last sync: %@" = "Đồng bộ lần cuối: %@";
+"No matching windows" = "Không có cửa sổ phù hợp";
+"Now" = "Bây giờ";
+"Refresh Claude usage" = "Làm mới mức sử dụng Claude";
+"resets in %@" = "đặt lại sau %@";

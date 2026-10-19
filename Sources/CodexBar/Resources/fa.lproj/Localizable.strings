@@ -2691,3 +2691,19 @@
 "Move up" = "انتقال به بالا";
 "Move down" = "انتقال به پایین";
 "Leave blank to keep the saved credential." = "برای حفظ اطلاعات ورود ذخیره‌شده، خالی بگذارید.";
+
+"Monthly limit" = "سقف ماهانه";
+"Use magpie for gateway providers" = "استفاده از magpie برای ارائه‌دهندگان درگاه";
+"Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "ارائه‌دهندگان درگاه به ورود محلی نیاز ندارند. هزینه، اعتبار و سابقه در دسترس نیستند. کلید قبلی که فقط برای Claude بود، اکنون برای همهٔ ارائه‌دهندگان گزارش‌شده توسط magpie اعمال می‌شود.";
+"magpie quotas URL" = "نشانی URL سهمیه‌های magpie";
+"Waiting for magpie discovery" = "در انتظار شناسایی توسط magpie";
+
+"%lld accounts" = "%lld حساب";
+"%lld providers" = "%lld ارائه‌دهنده";
+"Auto-refresh off" = "تازه سازی خودکار خاموش است";
+"Auto-refresh on" = "تازه سازی خودکار روشن است";
+"Last sync: %@" = "آخرین همگام‌سازی: %@";
+"No matching windows" = "پنجرهٔ مطابقی وجود ندارد";
+"Now" = "اکنون";
+"Refresh Claude usage" = "تازه سازی مصرف Claude";
+"resets in %@" = "بازنشانی در %@";

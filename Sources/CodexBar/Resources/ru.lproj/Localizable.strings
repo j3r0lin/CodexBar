@@ -2688,3 +2688,19 @@
 "Move up" = "Переместить вверх";
 "Move down" = "Переместить вниз";
 "Leave blank to keep the saved credential." = "Оставьте поле пустым, чтобы сохранить текущие учётные данные.";
+
+"Monthly limit" = "Месячный лимит";
+"Use magpie for gateway providers" = "Использовать magpie для провайдеров шлюза";
+"Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "Провайдеры шлюза не требуют локального входа. Стоимость, кредиты и история недоступны. Переключатель, ранее предназначенный только для Claude, теперь применяется ко всем провайдерам, о которых сообщает magpie.";
+"magpie quotas URL" = "URL квот magpie";
+"Waiting for magpie discovery" = "Ожидание обнаружения magpie";
+
+"%lld accounts" = "%lld аккаунтов";
+"%lld providers" = "%lld провайдеров";
+"Auto-refresh off" = "Автообновление отключено";
+"Auto-refresh on" = "Автообновление включено";
+"Last sync: %@" = "Последняя синхронизация: %@";
+"No matching windows" = "Нет подходящих окон";
+"Now" = "Сейчас";
+"Refresh Claude usage" = "Обновить использование Claude";
+"resets in %@" = "сбрасывается через %@";

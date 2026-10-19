@@ -2687,3 +2687,19 @@
 "Move up" = "上へ移動";
 "Move down" = "下へ移動";
 "Leave blank to keep the saved credential." = "保存済みの認証情報を維持するには空欄にしてください。";
+
+"Monthly limit" = "月間上限";
+"Use magpie for gateway providers" = "ゲートウェイプロバイダに magpie を使用";
+"Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "ゲートウェイプロバイダではローカルログインは不要です。費用、クレジット、履歴は利用できません。従来 Claude 専用だったスイッチは、magpie が報告するすべてのプロバイダに適用されます。";
+"magpie quotas URL" = "magpie クォータ URL";
+"Waiting for magpie discovery" = "magpie による検出を待機中";
+
+"%lld accounts" = "%lld 個のアカウント";
+"%lld providers" = "%lld 件のプロバイダ";
+"Auto-refresh off" = "自動更新オフ";
+"Auto-refresh on" = "自動更新オン";
+"Last sync: %@" = "最終同期: %@";
+"No matching windows" = "一致するウィンドウがありません";
+"Now" = "現在";
+"Refresh Claude usage" = "Claude の使用状況を更新";
+"resets in %@" = "%@ 後にリセット";

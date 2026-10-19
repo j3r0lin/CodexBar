@@ -2674,3 +2674,12 @@
 "Move up" = "上移";
 "Move down" = "下移";
 "Leave blank to keep the saved credential." = "留空以保留已儲存的憑證。";
+
+"Monthly limit" = "每月限額";
+"Use magpie for gateway providers" = "對閘道提供者使用 magpie";
+"Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "閘道提供者無需本機登入。費用、額度和歷史記錄無法使用。原先僅適用於 Claude 的開關現在適用於 magpie 回報的所有提供者。";
+"magpie quotas URL" = "magpie 配額 URL";
+"Waiting for magpie discovery" = "等待 magpie 偵測提供者";
+
+"%lld accounts" = "%lld 個帳戶";
+"Refresh Claude usage" = "重新整理 Claude 用量";

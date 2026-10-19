@@ -2687,3 +2687,19 @@
 "Move up" = "Перемістити вгору";
 "Move down" = "Перемістити вниз";
 "Leave blank to keep the saved credential." = "Залиште порожнім, щоб зберегти поточні облікові дані.";
+
+"Monthly limit" = "Місячний ліміт";
+"Use magpie for gateway providers" = "Використовувати magpie для провайдерів шлюзу";
+"Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "Провайдери шлюзу не потребують локального входу. Вартість, кредити та історія недоступні. Перемикач, який раніше стосувався лише Claude, тепер застосовується до всіх провайдерів, про яких повідомляє magpie.";
+"magpie quotas URL" = "URL квот magpie";
+"Waiting for magpie discovery" = "Очікування виявлення magpie";
+
+"%lld accounts" = "%lld акаунтів";
+"%lld providers" = "%lld провайдерів";
+"Auto-refresh off" = "Автооновлення вимкнено";
+"Auto-refresh on" = "Автооновлення увімкнено";
+"Last sync: %@" = "Остання синхронізація: %@";
+"No matching windows" = "Немає відповідних вікон";
+"Now" = "Зараз";
+"Refresh Claude usage" = "Оновити використання Claude";
+"resets in %@" = "скидання через %@";

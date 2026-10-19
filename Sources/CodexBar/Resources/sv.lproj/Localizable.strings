@@ -2686,3 +2686,19 @@
 "Move up" = "Flytta upp";
 "Move down" = "Flytta ned";
 "Leave blank to keep the saved credential." = "Lämna tomt för att behålla de sparade inloggningsuppgifterna.";
+
+"Monthly limit" = "Månadsgräns";
+"Use magpie for gateway providers" = "Använd magpie för gatewayleverantörer";
+"Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "Gatewayleverantörer kräver ingen lokal inloggning. Kostnad, krediter och historik är inte tillgängliga. Reglaget som tidigare bara gällde Claude gäller nu alla leverantörer som magpie rapporterar.";
+"magpie quotas URL" = "URL för magpie-kvoter";
+"Waiting for magpie discovery" = "Väntar på identifiering via magpie";
+
+"%lld accounts" = "%lld konton";
+"%lld providers" = "%lld leverantörer";
+"Auto-refresh off" = "Automatisk uppdatering av";
+"Auto-refresh on" = "Automatisk uppdatering på";
+"Last sync: %@" = "Senaste synkronisering: %@";
+"No matching windows" = "Inga matchande fönster";
+"Now" = "Nu";
+"Refresh Claude usage" = "Uppdatera Claude-användning";
+"resets in %@" = "återställs om %@";
