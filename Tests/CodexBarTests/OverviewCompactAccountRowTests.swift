@@ -19,9 +19,9 @@ struct OverviewCompactAccountRowTests {
     }
 
     @Test
-    func `a pace phrase under the reset countdown does not make the row taller`() {
+    func `a pace tick and tint do not change the row height`() {
         let reset = Self.now.addingTimeInterval(3 * 86400)
-        func height(paceText: String?) -> CGFloat {
+        func height(pacePercent: Double?, tone: OverviewCompactAccountRow.PaceTone) -> CGFloat {
             self.height(OverviewCompactAccountRow(
                 name: "Claude",
                 shortWindow: nil,
@@ -29,12 +29,12 @@ struct OverviewCompactAccountRowTests {
                 width: Self.width,
                 namedLines: [
                     .init(label: "5h", used: 40, resetsAt: reset),
-                    .init(label: "7d", used: 60, resetsAt: reset, paceText: paceText),
+                    .init(label: "7d", used: 60, resetsAt: reset, pacePercent: pacePercent, paceTone: tone),
                 ],
                 now: Self.now))
         }
-        let plain = height(paceText: nil)
-        let paced = height(paceText: "Runs out in 1d 4h")
+        let plain = height(pacePercent: nil, tone: .neutral)
+        let paced = height(pacePercent: 50, tone: .runsOut)
         #expect(paced == plain)
     }
 

@@ -36,23 +36,6 @@ enum UsagePaceText {
             stage: pace.stage)
     }
 
-    /// The one phrase an Overview row has room for: the run-out time when the pace empties the window
-    /// before reset, otherwise the reserve/deficit/on-pace label.
-    static func overviewPhrase(
-        provider: UsageProvider?,
-        pace: UsagePace,
-        now: Date = .init()) -> (text: String, tone: OverviewCompactAccountRow.PaceTone)
-    {
-        let detail = self.weeklyDetail(provider: provider, pace: pace, now: now)
-        if !pace.willLastToReset, pace.etaSeconds != nil, let rightLabel = detail.rightLabel {
-            return (rightLabel, .runsOut)
-        }
-        switch pace.stage {
-        case .slightlyAhead, .ahead, .farAhead: return (detail.leftLabel, .deficit)
-        case .onTrack, .slightlyBehind, .behind, .farBehind: return (detail.leftLabel, .neutral)
-        }
-    }
-
     static func sessionEquivalentDetail(forecast: SessionEquivalentForecast) -> SessionEquivalentDetail {
         let leftText = Self.sessionQuotaEstimateText(forecast.estimatedWindowsToExhaustWeekly)
         let rightText = Self.windowsUntilResetText(forecast.windowsUntilReset)

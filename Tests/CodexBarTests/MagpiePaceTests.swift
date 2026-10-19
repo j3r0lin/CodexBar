@@ -44,7 +44,7 @@ struct MagpiePaceTests {
     @Test
     func `half the week used at half the week elapsed is on pace`() throws {
         let line = try #require(Self.weeklyLine(of: Self.row(windows: [Self.weekly(used: 50)])))
-        #expect(line.paceText != nil)
+        #expect(try abs(#require(line.pacePercent) - 50) < 0.001)
         #expect(line.paceTone == .neutral)
     }
 
@@ -67,7 +67,7 @@ struct MagpiePaceTests {
         #expect(pace.willLastToReset)
         let line = try #require(Self.weeklyLine(of: Self.row(windows: [Self.weekly(used: 20)])))
         #expect(line.paceTone == .neutral)
-        #expect(line.paceText != nil)
+        #expect(line.pacePercent != nil)
     }
 
     @Test
@@ -81,20 +81,20 @@ struct MagpiePaceTests {
     }
 
     @Test
-    func `pace phrase sits on the longest window with pace only`() throws {
+    func `pace tick sits on the longest window with pace only`() throws {
         let session = MagpieQuotaWindow(
             name: "5 hours",
             usedPercent: 40,
             resetsAt: Self.now.addingTimeInterval(2.5 * 3600))
         let lines = try #require(Self.row(windows: [session, Self.weekly(used: 80)]).compactLines(now: Self.now))
-        #expect(lines.map { $0.paceText != nil } == [false, true])
+        #expect(lines.map { $0.pacePercent != nil } == [false, true])
     }
 
     @Test
     func `two accounts of one provider get independent pace`() throws {
         let heavy = try #require(Self.weeklyLine(of: Self.row("claude:a", windows: [Self.weekly(used: 80)])))
         let light = try #require(Self.weeklyLine(of: Self.row("claude:b", windows: [Self.weekly(used: 20)])))
-        #expect(heavy.paceText != light.paceText)
+        #expect(heavy.pacePercent == light.pacePercent)
         #expect(heavy.paceTone != light.paceTone)
     }
 

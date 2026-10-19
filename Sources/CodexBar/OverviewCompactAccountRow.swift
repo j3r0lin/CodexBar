@@ -183,14 +183,27 @@ struct OverviewCompactAccountRow: View {
         case neutral
         case deficit
         case runsOut
+
+        init(pace: UsagePace) {
+            if !pace.willLastToReset, pace.etaSeconds != nil {
+                self = .runsOut
+                return
+            }
+            switch pace.stage {
+            case .slightlyAhead, .ahead, .farAhead: self = .deficit
+            case .onTrack, .slightlyBehind, .behind, .farBehind: self = .neutral
+            }
+        }
     }
 
     struct Line: Equatable {
         let label: String
         let used: Double
         let resetsAt: Date?
-        /// Short pace phrase shown under the reset countdown; nil when the window has no pace.
-        var paceText: String?
+        /// Where the linear pace says usage should be by now, drawn as a tick on the bar; nil when the
+        /// window has no pace.
+        var pacePercent: Double?
+        /// Tints the percent when the pace is a deficit or runs out before reset.
         var paceTone: PaceTone = .neutral
     }
 
@@ -340,41 +353,30 @@ struct OverviewCompactAccountRow: View {
                 .frame(width: Self.labelWidth, alignment: .leading)
             Text("\(Int(line.used.rounded()))%")
                 .font(.system(size: 13, weight: .semibold).monospacedDigit())
-                .foregroundStyle(line.used > 0 ? color : OverviewPalette.neutral)
+                .foregroundStyle(Self.percentColor(line, severity: color))
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
                 .frame(width: Self.percentWidth, alignment: .trailing)
-            UsageBar(used: line.used, color: color, trackColor: Self.trackColor, height: 6)
-            self.caption(line)
-        }
-    }
-
-    /// The reset countdown; a window with a pace phrase stacks it underneath, in 9pt so both fit the
-    /// fixed line height.
-    private func caption(_ line: Line) -> some View {
-        let reset = line.resetsAt.map { L("resets in %@", Self.countdown(to: $0, now: self.now)) } ?? "—"
-        return VStack(alignment: .leading, spacing: 0) {
-            Text(reset)
-                .font(.system(size: line.paceText == nil ? 10 : 9).monospacedDigit())
+            UsageBar(
+                used: line.used,
+                color: color,
+                trackColor: Self.trackColor,
+                height: 6,
+                pacePercent: line.pacePercent)
+            Text(line.resetsAt.map { L("resets in %@", Self.countdown(to: $0, now: self.now)) } ?? "—")
+                .font(.system(size: 10).monospacedDigit())
                 .foregroundStyle(OverviewPalette.reset)
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
-            if let paceText = line.paceText {
-                Text(paceText)
-                    .font(.system(size: 9).monospacedDigit())
-                    .foregroundStyle(Self.paceColor(line.paceTone))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-            }
+                .frame(width: Self.resetWidth, alignment: .leading)
         }
-        .frame(width: Self.resetWidth, alignment: .leading)
     }
 
-    static func paceColor(_ tone: PaceTone) -> Color {
-        switch tone {
-        case .neutral: OverviewPalette.caption
-        case .deficit: OverviewPalette.warning
+    static func percentColor(_ line: Line, severity: Color) -> Color {
+        switch line.paceTone {
         case .runsOut: OverviewPalette.critical
+        case .deficit: OverviewPalette.warning
+        case .neutral: line.used > 0 ? severity : OverviewPalette.neutral
         }
     }
 

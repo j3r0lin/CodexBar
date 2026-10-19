@@ -157,7 +157,7 @@ struct OverviewUsageRow {
         return now.timeIntervalSince(readAt) > threshold
     }
 
-    /// The compact lines of a magpie row. The pace phrase goes on the longest window that has a
+    /// The compact lines of a magpie row. The pace tick and tint go on the longest window that has a
     /// pace, since that is the one a reader plans against.
     func compactLines(now: Date) -> [OverviewCompactAccountRow.Line]? {
         guard let namedWindows else { return nil }
@@ -166,9 +166,8 @@ struct OverviewUsageRow {
         return namedWindows.map { window in
             var line = OverviewCompactAccountRow.Line(label: window.label, used: window.used, resetsAt: window.resetsAt)
             if let longest, longest.0 == window {
-                let phrase = UsagePaceText.overviewPhrase(provider: self.nativeProvider, pace: longest.1, now: now)
-                line.paceText = phrase.text
-                line.paceTone = phrase.tone
+                line.pacePercent = longest.1.expectedUsedPercent
+                line.paceTone = .init(pace: longest.1)
             }
             return line
         }
