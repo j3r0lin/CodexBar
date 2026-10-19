@@ -2699,7 +2699,5 @@
 "Auto-refresh off" = "Автооновлення вимкнено";
 "Auto-refresh on" = "Автооновлення увімкнено";
 "Last sync: %@" = "Остання синхронізація: %@";
-"No matching windows" = "Немає відповідних вікон";
-"Now" = "Зараз";
 "Refresh Claude usage" = "Оновити використання Claude";
 "resets in %@" = "скидання через %@";

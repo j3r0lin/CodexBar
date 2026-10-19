@@ -423,7 +423,7 @@ extension StatusItemController {
         let rows = self.overviewUsageRows(visibleProviders: providerScopes.visible)
 
         self.addOverviewHeader(to: menu, width: menuWidth)
-        self.addOverviewFilterBar(to: menu, rows: rows, width: menuWidth, captureMenu: captureMenu)
+        self.addOverviewProviderCount(to: menu, rows: rows, width: menuWidth)
         guard !rows.isEmpty else { return false }
 
         let t0 = CACurrentMediaTime()
@@ -510,9 +510,9 @@ extension StatusItemController {
             let namedLines = row.namedWindows?.map {
                 OverviewCompactAccountRow.Line(label: $0.label, used: $0.used, resetsAt: $0.resetsAt)
             }
-            let slots = row.slotOverride ?? (namedLines == nil
+            let slots = namedLines == nil
                 ? OverviewCompactAccountRow.slots(of: row.snapshot, provider: row.nativeProvider)
-                : (short: nil, long: nil))
+                : (short: nil, long: nil)
             let icon = self.overviewProviderIcon(for: row)
             let rowView = OverviewCompactAccountRow(
                 name: isGrouped ? row.accountName ?? row.providerName : row.providerName,
@@ -562,30 +562,14 @@ extension StatusItemController {
             containsInteractiveControls: true))
     }
 
-    /// The "N providers" line with the Now / 5h / 7d filter. The choice persists and rebuilds the menu.
-    private func addOverviewFilterBar(
-        to menu: NSMenu,
-        rows: [OverviewUsageRow],
-        width: CGFloat,
-        captureMenu: NSMenu?)
-    {
-        let selection = self.settings.overviewWindowFilter
+    private func addOverviewProviderCount(to menu: NSMenu, rows: [OverviewUsageRow], width: CGFloat) {
+        let providerCount = Set(rows.map(\.groupKey)).count
         menu.addItem(self.makeMenuCardItem(
-            OverviewWindowFilterBarView(
-                providerCount: Set(rows.map(\.groupKey)).count,
-                selection: selection,
-                onSelect: { [weak self, weak captureMenu] filter in
-                    guard let self else { return }
-                    self.advanceMenuInteraction(for: captureMenu)
-                    self.settings.overviewWindowFilter = filter
-                    self.invalidateMenus(refreshOpenMenus: true)
-                },
-                width: width),
-            id: "overviewFilterBar",
+            OverviewProviderCountView(providerCount: providerCount, width: width),
+            id: "overviewProviderCount",
             width: width,
-            heightCacheScope: "overviewFilterBar",
-            heightCacheFingerprint: "filter-\(selection.rawValue)",
-            containsInteractiveControls: true))
+            heightCacheScope: "overviewProviderCount",
+            heightCacheFingerprint: "providers-\(providerCount)"))
     }
 
     /// The distinct window labels a provider group holds, in row order ("5h / 7d").
@@ -597,8 +581,7 @@ extension StatusItemController {
                     labels.append(window.label)
                 }
             } else {
-                let slots = row.slotOverride
-                    ?? OverviewCompactAccountRow.slots(of: row.snapshot, provider: row.nativeProvider)
+                let slots = OverviewCompactAccountRow.slots(of: row.snapshot, provider: row.nativeProvider)
                 for window in [slots.short, slots.long].compactMap(\.self) {
                     let label = OverviewCompactAccountRow.windowLabel(
                         window,
@@ -705,8 +688,7 @@ extension StatusItemController {
         for account in magpieAccounts where !coveredWireIDs.contains(account.provider.wireID) {
             rows.append(self.magpieOverviewRow(for: account, hidePersonalInfo: hidePersonalInfo))
         }
-        let filter = self.settings.overviewWindowFilter
-        return rows.compactMap { $0.filtered(to: filter) }
+        return rows
     }
 
     private func magpieOverviewRow(
@@ -744,9 +726,8 @@ extension StatusItemController {
     }
 
     private func addOverviewEmptyState(to menu: NSMenu) {
-        let filtered = self.settings.overviewWindowFilter != .now
         let item = NSMenuItem(
-            title: filtered ? L("No matching windows") : L("No providers enabled"),
+            title: L("No providers enabled"),
             action: nil,
             keyEquivalent: "")
         item.isEnabled = false

@@ -2703,7 +2703,5 @@
 "Auto-refresh off" = "تازه سازی خودکار خاموش است";
 "Auto-refresh on" = "تازه سازی خودکار روشن است";
 "Last sync: %@" = "آخرین همگام‌سازی: %@";
-"No matching windows" = "پنجرهٔ مطابقی وجود ندارد";
-"Now" = "اکنون";
 "Refresh Claude usage" = "تازه سازی مصرف Claude";
 "resets in %@" = "بازنشانی در %@";

@@ -379,21 +379,6 @@ struct OverviewCompactAccountRow: View {
         return (short, long)
     }
 
-    /// The filter bucket of a native window by its duration: a day or less is a session window,
-    /// under a month is weekly, and anything longer or untyped is neither.
-    static func windowKind(
-        of window: RateWindow,
-        provider: UsageProvider?,
-        infersPeriodFromReset: Bool = true) -> OverviewWindowFilter.WindowKind
-    {
-        guard let minutes = nativeMinutes(
-            window, provider: provider, infersPeriodFromReset: infersPeriodFromReset)
-        else { return .other }
-        if minutes <= 1440 { return .session }
-        if minutes < 28 * 1440 { return .weekly }
-        return .other
-    }
-
     /// Grok's descriptor owns the fallback for its untyped credit pool; human-readable reset
     /// descriptions never determine the quota period. Magpie-sourced windows get no fallback:
     /// their period comes from a known duration or a parseable window name only.

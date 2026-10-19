@@ -2698,7 +2698,5 @@
 "Auto-refresh off" = "Automatisk uppdatering av";
 "Auto-refresh on" = "Automatisk uppdatering på";
 "Last sync: %@" = "Senaste synkronisering: %@";
-"No matching windows" = "Inga matchande fönster";
-"Now" = "Nu";
 "Refresh Claude usage" = "Uppdatera Claude-användning";
 "resets in %@" = "återställs om %@";

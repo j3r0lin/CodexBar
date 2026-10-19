@@ -5,15 +5,13 @@ import XCTest
 @testable import CodexBarCore
 
 /// Opt-in card-UI proof: pops the real merged Overview menu with synthetic magpie and native data,
-/// then screenshots the live menu window for the Now filter, the 7d filter, a collapsed Claude group,
-/// and one detail submenu. Runs only when CODEXBAR_CARD_UI_PROOF_DIR is set.
+/// then screenshots the live menu window, a collapsed Claude group, and one detail submenu. Runs only when
+/// CODEXBAR_CARD_UI_PROOF_DIR is set.
 @MainActor
 final class StatusMenuCardUINativeProofTests: XCTestCase {
     private enum Phase {
         case settleNow
         case captureNow
-        case settle7d
-        case capture7d
         case settleCollapsed
         case captureCollapsed
         case closing
@@ -142,14 +140,13 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
         defer { detailTimer.invalidate() }
         detail.popUp(positioning: nil, at: NSPoint(x: 120, y: 120), in: host.contentView)
 
-        for name in ["cardui-now", "cardui-7d", "cardui-collapsed", "cardui-detail"] {
+        for name in ["cardui-overview", "cardui-collapsed", "cardui-detail"] {
             let png = directory.appendingPathComponent("\(name).png")
             XCTAssertTrue(FileManager.default.fileExists(atPath: png.path), "missing \(name).png")
         }
     }
 
-    /// One step of the capture state machine: settle, capture the Now filter, switch to 7d,
-    /// capture, collapse the Claude group, capture, close.
+    /// One step of the capture state machine: settle, capture, collapse the Claude group, capture, close.
     @objc private func tickOverviewCapture() {
         guard let menu = self.proofMenu,
               let controller = self.proofController,
@@ -163,17 +160,7 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
             self.settleTicks += 1
             if self.settleTicks >= 4 { self.phase = .captureNow }
         case .captureNow:
-            Self.capture(window: menuWindow, name: "cardui-now", into: directory)
-            fixture.settings.overviewWindowFilter = .sevenDays
-            controller.invalidateMenus(refreshOpenMenus: true)
-            self.settleTicks = 0
-            self.phase = .settle7d
-        case .settle7d:
-            self.settleTicks += 1
-            if self.settleTicks >= 4 { self.phase = .capture7d }
-        case .capture7d:
-            Self.capture(window: menuWindow, name: "cardui-7d", into: directory)
-            fixture.settings.overviewWindowFilter = .now
+            Self.capture(window: menuWindow, name: "cardui-overview", into: directory)
             fixture.settings.overviewCollapsedProviderGroups = ["claude"]
             controller.invalidateMenus(refreshOpenMenus: true)
             self.settleTicks = 0
@@ -252,7 +239,6 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
         }
         fixture.settings.mergeIcons = true
         fixture.settings.mergedMenuLastSelectedWasOverview = true
-        fixture.settings.overviewWindowFilter = .now
         fixture.settings.overviewCollapsedProviderGroups = []
 
         func window(_ minutes: Int?, _ used: Double, _ resetMinutes: Double?) -> RateWindow {

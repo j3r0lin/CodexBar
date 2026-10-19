@@ -2667,7 +2667,5 @@
 "Auto-refresh off" = "자동 새로 고침 꺼짐";
 "Auto-refresh on" = "자동 새로 고침 켜짐";
 "Last sync: %@" = "마지막 동기화: %@";
-"No matching windows" = "일치하는 창 없음";
-"Now" = "지금";
 "Refresh Claude usage" = "Claude 사용량 새로 고침";
 "resets in %@" = "%@ 후 재설정";

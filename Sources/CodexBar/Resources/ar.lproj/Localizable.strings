@@ -2703,7 +2703,5 @@
 "Auto-refresh off" = "التحديث التلقائي مغلق";
 "Auto-refresh on" = "التحديث التلقائي مفعّل";
 "Last sync: %@" = "آخر مزامنة: %@";
-"No matching windows" = "لا توجد نوافذ مطابقة";
-"Now" = "الآن";
 "Refresh Claude usage" = "تحديث استخدام Claude";
 "resets in %@" = "إعادة التعيين في %@";

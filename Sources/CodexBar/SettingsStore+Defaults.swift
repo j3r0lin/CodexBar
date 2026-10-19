@@ -879,11 +879,6 @@ extension SettingsStore {
         set { self.setDefault(\.mergedOverviewAllAccounts, newValue, key: "mergedOverviewAllAccounts") }
     }
 
-    var overviewWindowFilter: OverviewWindowFilter {
-        get { OverviewWindowFilter(rawValue: self.defaultsState.overviewWindowFilterRaw) ?? .now }
-        set { self.setDefault(\.overviewWindowFilterRaw, newValue.rawValue, key: "overviewWindowFilter") }
-    }
-
     /// Group keys (provider raw values or magpie wire IDs) whose account list is collapsed in the Overview.
     var overviewCollapsedProviderGroups: Set<String> {
         get { Set(self.defaultsState.overviewCollapsedProviderGroupsRaw) }

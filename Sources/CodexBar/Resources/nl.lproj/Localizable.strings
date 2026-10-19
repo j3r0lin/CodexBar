@@ -2696,7 +2696,5 @@
 "Auto-refresh off" = "Automatisch vernieuwen uit";
 "Auto-refresh on" = "Automatisch vernieuwen aan";
 "Last sync: %@" = "Laatste synchronisatie: %@";
-"No matching windows" = "Geen overeenkomende vensters";
-"Now" = "Nu";
 "Refresh Claude usage" = "Claude-gebruik vernieuwen";
 "resets in %@" = "resetten over %@";

@@ -2660,8 +2660,6 @@
 "Auto-refresh on" = "Auto-refresh on";
 "Auto-refresh off" = "Auto-refresh off";
 "Last sync: %@" = "Last sync: %@";
-"No matching windows" = "No matching windows";
-"Now" = "Now";
 "resets in %@" = "resets in %@";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue.";
 /* Claude Platform provider */

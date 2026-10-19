@@ -685,8 +685,6 @@ extension SettingsStore {
             mergedOverviewLayoutRaw: userDefaults.string(forKey: "mergedOverviewLayout")
                 ?? MergedOverviewLayout.detailed.rawValue,
             mergedOverviewAllAccounts: userDefaults.bool(forKey: "mergedOverviewAllAccounts"),
-            overviewWindowFilterRaw: userDefaults.string(forKey: "overviewWindowFilter")
-                ?? OverviewWindowFilter.now.rawValue,
             overviewCollapsedProviderGroupsRaw: userDefaults.array(
                 forKey: "overviewCollapsedProviderGroups") as? [String] ?? [],
             mergeIconsStacked: userDefaults.object(forKey: "mergeIconsStacked") as? Bool ?? false,

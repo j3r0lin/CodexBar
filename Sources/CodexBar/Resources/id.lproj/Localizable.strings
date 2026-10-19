@@ -2656,8 +2656,6 @@
 "Auto-refresh on" = "Segarkan otomatis aktif";
 "Auto-refresh off" = "Segarkan otomatis nonaktif";
 "Last sync: %@" = "Sinkronisasi terakhir: %@";
-"No matching windows" = "Tidak ada jendela yang cocok";
-"Now" = "Sekarang";
 "resets in %@" = "diatur ulang dalam %@";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar akan meminta token login Muse Code dari Keychain macOS agar dapat mengambil penggunaan langganan Muse Code Anda. Klik OK untuk melanjutkan.";
 /* Claude Platform provider */

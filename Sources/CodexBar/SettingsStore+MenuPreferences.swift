@@ -51,37 +51,6 @@ enum MergedOverviewLayout: String, CaseIterable {
     }
 }
 
-/// Overview window filter: the full list, only session (5h) windows, or only weekly (7d) windows.
-/// Monthly, model-unscoped and untyped windows belong to neither filtered view, so both hide them.
-enum OverviewWindowFilter: String, CaseIterable {
-    case now
-    case fiveHours = "5h"
-    case sevenDays = "7d"
-
-    /// The coarse bucket a quota window falls into for filtering.
-    enum WindowKind {
-        case session
-        case weekly
-        case other
-    }
-
-    func includes(_ kind: WindowKind) -> Bool {
-        switch self {
-        case .now: true
-        case .fiveHours: kind == .session
-        case .sevenDays: kind == .weekly
-        }
-    }
-
-    var segmentTitle: String {
-        switch self {
-        case .now: L("Now")
-        case .fiveHours: "5h"
-        case .sevenDays: "7d"
-        }
-    }
-}
-
 enum ResetTimesOption: String, CaseIterable {
     case countdown
     case clock

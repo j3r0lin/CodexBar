@@ -2630,8 +2630,6 @@
 "Auto-refresh on" = "自動重新整理已開啟";
 "Auto-refresh off" = "自動重新整理已關閉";
 "Last sync: %@" = "上次同步：%@";
-"No matching windows" = "沒有相符的視窗";
-"Now" = "現在";
 "resets in %@" = "%@ 後重置";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar 將向 macOS 鑰匙圈要求 Muse Code 登入 token，以取得你的 Muse Code 訂閱使用量。按一下「確定」繼續。";
 /* Claude Platform provider */

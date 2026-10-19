@@ -2699,7 +2699,5 @@
 "Auto-refresh off" = "自動更新オフ";
 "Auto-refresh on" = "自動更新オン";
 "Last sync: %@" = "最終同期: %@";
-"No matching windows" = "一致するウィンドウがありません";
-"Now" = "現在";
 "Refresh Claude usage" = "Claude の使用状況を更新";
 "resets in %@" = "%@ 後にリセット";

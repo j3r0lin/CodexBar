@@ -30,7 +30,7 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `overview chrome adds the header, the filter bar and the footer status`() throws {
+    func `overview chrome adds the header, the provider count and the footer status`() throws {
         self.disableMenuCardsForTesting()
         let (settings, store) = self.makeOverviewFixture()
         enableTestProviders([.claude, .codex], settings: settings)
@@ -52,7 +52,7 @@ extension StatusMenuTests {
 
         let ids = menu.items.compactMap { $0.representedObject as? String }
         #expect(ids.contains("overviewHeader"))
-        #expect(ids.contains("overviewFilterBar"))
+        #expect(ids.contains("overviewProviderCount"))
         #expect(ids.contains("overviewFooterStatus"))
         #expect(ids.first == "overviewHeader")
         #expect(ids.last == "overviewFooterStatus")
@@ -68,7 +68,7 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `window filter hides non-matching windows and drops empty rows`() throws {
+    func `overview retains every magpie window and provider`() throws {
         self.disableMenuCardsForTesting()
         let (settings, store) = self.makeOverviewFixture()
         enableTestProviders([.claude, .codex], settings: settings)
@@ -103,24 +103,14 @@ extension StatusMenuTests {
         let controller = self.makeOverviewController(settings: settings, store: store)
         defer { controller.releaseStatusItemsForTesting() }
 
-        let unfiltered = controller.overviewUsageRows(visibleProviders: [.claude, .codex])
-        let claude = try #require(unfiltered.first { $0.groupKey == "claude" })
-        #expect(claude.namedWindows?.count == 2)
-        #expect(unfiltered.contains { $0.groupKey == "futurewire" })
-
-        settings.overviewWindowFilter = .fiveHours
-        let sessionOnly = controller.overviewUsageRows(visibleProviders: [.claude, .codex])
-        #expect(sessionOnly.first { $0.groupKey == "claude" }?.namedWindows?.map(\.label) == ["5h"])
-        #expect(!sessionOnly.contains { $0.groupKey == "futurewire" })
-
-        settings.overviewWindowFilter = .sevenDays
-        let weeklyOnly = controller.overviewUsageRows(visibleProviders: [.claude, .codex])
-        #expect(weeklyOnly.first { $0.groupKey == "claude" }?.namedWindows?.map(\.label) == ["7d"])
-        #expect(weeklyOnly.contains { $0.groupKey == "futurewire" })
+        let rows = controller.overviewUsageRows(visibleProviders: [.claude, .codex])
+        let claude = try #require(rows.first { $0.groupKey == "claude" })
+        #expect(claude.namedWindows?.map(\.label) == ["5h", "7d"])
+        #expect(rows.first { $0.groupKey == "futurewire" }?.namedWindows?.map(\.label) == ["7d"])
     }
 
     @Test
-    func `window filter keeps only the matching native slot`() throws {
+    func `overview retains both native windows`() throws {
         self.disableMenuCardsForTesting()
         let (settings, store) = self.makeOverviewFixture()
         enableTestProviders([.claude, .codex], settings: settings)
@@ -141,17 +131,10 @@ extension StatusMenuTests {
         let controller = self.makeOverviewController(settings: settings, store: store)
         defer { controller.releaseStatusItemsForTesting() }
 
-        settings.overviewWindowFilter = .fiveHours
-        let sessionOnly = try #require(
+        let row = try #require(
             controller.overviewUsageRows(visibleProviders: [.claude, .codex]).first { $0.groupKey == "codex" })
-        #expect(sessionOnly.slotOverride?.short != nil)
-        #expect(sessionOnly.slotOverride?.long == nil)
-
-        settings.overviewWindowFilter = .sevenDays
-        let weeklyOnly = try #require(
-            controller.overviewUsageRows(visibleProviders: [.claude, .codex]).first { $0.groupKey == "codex" })
-        #expect(weeklyOnly.slotOverride?.short == nil)
-        #expect(weeklyOnly.slotOverride?.long != nil)
+        #expect(row.snapshot?.primary?.usedPercent == 22)
+        #expect(row.snapshot?.secondary?.usedPercent == 60)
     }
 
     @Test
@@ -200,25 +183,5 @@ extension StatusMenuTests {
             zaiTokenStore: NoopZaiTokenStore(),
             syntheticTokenStore: NoopSyntheticTokenStore())
         #expect(reloaded.overviewCollapsedProviderGroups == ["claude"])
-    }
-
-    @Test
-    func `window filter persists and unknown values fall back to now`() {
-        let settings = self.makeSettings()
-        #expect(settings.overviewWindowFilter == .now)
-        settings.overviewWindowFilter = .sevenDays
-        let reloaded = SettingsStore(
-            userDefaults: settings.userDefaults,
-            configStore: settings.configStore,
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore())
-        #expect(reloaded.overviewWindowFilter == .sevenDays)
-        settings.userDefaults.set("bogus", forKey: "overviewWindowFilter")
-        let reloadedBogus = SettingsStore(
-            userDefaults: settings.userDefaults,
-            configStore: settings.configStore,
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore())
-        #expect(reloadedBogus.overviewWindowFilter == .now)
     }
 }

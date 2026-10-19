@@ -2657,8 +2657,6 @@
 "Auto-refresh on" = "Otomatik yenileme açık";
 "Auto-refresh off" = "Otomatik yenileme kapalı";
 "Last sync: %@" = "Son eşitleme: %@";
-"No matching windows" = "Eşleşen pencere yok";
-"Now" = "Şimdi";
 "resets in %@" = "%@ içinde sıfırlanır";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar, Muse Code abonelik kullanımınızı almak için macOS Anahtar Zinciri'nden Muse Code giriş tokenını isteyecek. Devam etmek için Tamam'a tıklayın.";
 /* Claude Platform provider */

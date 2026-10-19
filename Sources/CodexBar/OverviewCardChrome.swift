@@ -110,12 +110,8 @@ struct OverviewCardHeaderView: View {
     }
 }
 
-/// The "N providers" line with the Now / 5h / 7d segmented control. Segments are hosted buttons so
-/// the choice applies without closing the menu; the selection is persisted by the caller's closure.
-struct OverviewWindowFilterBarView: View {
+struct OverviewProviderCountView: View {
     let providerCount: Int
-    let selection: OverviewWindowFilter
-    let onSelect: (OverviewWindowFilter) -> Void
     let width: CGFloat
 
     var body: some View {
@@ -125,39 +121,10 @@ struct OverviewWindowFilterBarView: View {
                 .foregroundStyle(OverviewPalette.caption)
                 .lineLimit(1)
             Spacer(minLength: 8)
-            self.segmentedControl
         }
         .padding(.horizontal, OverviewCompactAccountRow.horizontalPadding)
         .padding(.vertical, 4)
         .frame(width: self.width, alignment: .leading)
-    }
-
-    private var segmentedControl: some View {
-        HStack(spacing: 2) {
-            ForEach(OverviewWindowFilter.allCases, id: \.rawValue) { filter in
-                Button {
-                    self.onSelect(filter)
-                } label: {
-                    Text(filter.segmentTitle)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(self.selection == filter ? Color.white : OverviewPalette.caption)
-                        .frame(minWidth: 38, minHeight: 20)
-                        .padding(.horizontal, 4)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                .fill(self.selection == filter ? Color.white.opacity(0.16) : .clear))
-                }
-                .buttonStyle(.plain)
-                .menuCardInteractiveControl()
-            }
-        }
-        .padding(2)
-        .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color.white.opacity(0.06)))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1))
     }
 }
 

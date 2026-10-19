@@ -2656,8 +2656,6 @@
 "Auto-refresh on" = "Actualització automàtica activada";
 "Auto-refresh off" = "Actualització automàtica desactivada";
 "Last sync: %@" = "Darrera sincronització: %@";
-"No matching windows" = "No hi ha finestres coincidents";
-"Now" = "Ara";
 "resets in %@" = "es reinicia en %@";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar demanarà a Clauer de macOS el token d'inici de sessió de Muse Code per obtenir l'ús de la teva subscripció a Muse Code. Premeu D'acord per continuar.";
 /* Claude Platform provider */

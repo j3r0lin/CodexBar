@@ -2701,7 +2701,5 @@
 "Auto-refresh off" = "ปิดการรีเฟรชอัตโนมัติ";
 "Auto-refresh on" = "เปิดการรีเฟรชอัตโนมัติ";
 "Last sync: %@" = "ซิงค์ล่าสุด: %@";
-"No matching windows" = "ไม่มีหน้าต่างที่ตรงกัน";
-"Now" = "ตอนนี้";
 "Refresh Claude usage" = "รีเฟรชการใช้งาน Claude";
 "resets in %@" = "รีเซ็ตใน %@";

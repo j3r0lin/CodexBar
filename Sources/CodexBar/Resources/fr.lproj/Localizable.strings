@@ -2698,7 +2698,5 @@
 "Auto-refresh off" = "Actualisation automatique désactivée";
 "Auto-refresh on" = "Actualisation automatique activée";
 "Last sync: %@" = "Dernière synchronisation : %@";
-"No matching windows" = "Aucune fenêtre correspondante";
-"Now" = "Maintenant";
 "Refresh Claude usage" = "Actualiser l’utilisation de Claude";
 "resets in %@" = "réinitialisé dans %@";

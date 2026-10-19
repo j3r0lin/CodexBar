@@ -2700,7 +2700,5 @@
 "Auto-refresh off" = "Tắt tự động làm mới";
 "Auto-refresh on" = "Bật tự động làm mới";
 "Last sync: %@" = "Đồng bộ lần cuối: %@";
-"No matching windows" = "Không có cửa sổ phù hợp";
-"Now" = "Bây giờ";
 "Refresh Claude usage" = "Làm mới mức sử dụng Claude";
 "resets in %@" = "đặt lại sau %@";
