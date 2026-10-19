@@ -423,9 +423,9 @@ extension StatusMenuTests {
             environmentBase: [:])
         store.magpieTransport = { _ in throw CancellationError() }
         settings.magpieSourceEnabled = true
-        // Hand-built rows bypass the projection's canonicalization: this account still carries
-        // the non-canonical "grok-plugin" reference, so only the Overview's own wire-ID set can
-        // keep it in Grok's slot.
+        /// Hand-built rows bypass the projection's canonicalization: this account still carries
+        /// the non-canonical "grok-plugin" reference, so only the Overview's own wire-ID set can
+        /// keep it in Grok's slot.
         func account(
             _ wireID: String,
             _ opaque: String,
