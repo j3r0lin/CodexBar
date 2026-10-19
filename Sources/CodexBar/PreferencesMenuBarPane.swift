@@ -121,13 +121,8 @@ struct MenuBarPane: View {
 
                 self.overviewProviderRow
                     .disabled(!self.settings.mergeIcons)
-                Toggle(isOn: self.$settings.mergedOverviewAllAccounts) {
-                    SettingsRowLabel(
-                        L("Show all accounts in Overview"),
-                        subtitle: L(
-                            "Expand cached account usage. The six-provider limit still applies."))
-                }
-                .disabled(!self.settings.mergeIcons)
+                // No "Show all accounts in Overview" toggle: this fork's Overview rows come from
+                // overviewUsageRows, which never reads mergedOverviewAllAccounts, so it would do nothing.
             } header: {
                 Text(L("section_combined_icon"))
             }
