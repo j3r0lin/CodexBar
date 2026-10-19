@@ -54,7 +54,18 @@ struct OverviewUsageRow {
             case .weekly: "7d"
             case .monthly: "Mo"
             case let .scopedWeekly(model): model
-            case .other: window.name
+            case .other: self.compactDuration(window.name) ?? window.name
+            }
+        }
+
+        /// "30 days" -> "30d", "12 hours" -> "12h": a long wire name would be truncated in the label column.
+        private static func compactDuration(_ name: String) -> String? {
+            let parts = name.split(separator: " ")
+            guard parts.count == 2, let count = Int(parts[0]) else { return nil }
+            switch parts[1].lowercased() {
+            case "day", "days": return "\(count)d"
+            case "hour", "hours": return "\(count)h"
+            default: return nil
             }
         }
 

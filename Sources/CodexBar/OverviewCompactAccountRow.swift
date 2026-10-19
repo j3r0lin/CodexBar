@@ -213,10 +213,10 @@ struct OverviewCompactAccountRow: View {
     /// The transparent gap between two cards.
     static let blockGap: CGFloat = 10
     static let horizontalPadding: CGFloat = 12
-    /// Icon plus a provider name; account names under a group header get a narrower column.
+    /// Icon plus name. Account rows under a group header reserve the icon's space, so every row
+    /// shares this column and the label, percent, bar and reset columns start at the same x.
     /// Sized so "OpenCode Go" (88pt at 13pt semibold) fits beside the 18pt icon.
-    static let providerNameColumn: CGFloat = 124
-    static let accountNameColumn: CGFloat = 92
+    static let nameColumn: CGFloat = 124
     /// Fits the scoped-weekly model labels ("Fable" is 27pt at 10pt medium) alongside "5h"/"7d"/"Mo".
     static let labelWidth: CGFloat = 32
     /// Fits "100%" at 13pt semibold with monospaced digits.
@@ -256,9 +256,7 @@ struct OverviewCompactAccountRow: View {
                 HStack(alignment: .center, spacing: 8) {
                     self.nameColumn
                     self.windowLines
-                    if self.showsDetailChevron {
-                        self.detailChevron
-                    }
+                    self.detailChevron
                 }
             }
         }
@@ -269,18 +267,14 @@ struct OverviewCompactAccountRow: View {
 
     private var nameColumn: some View {
         HStack(spacing: 8) {
-            if self.namesProvider {
-                OverviewProviderIcon(image: self.icon, isTemplate: self.iconIsTemplate)
-            }
+            self.leadingIcon
             Text(self.name)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(self.nameColor)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(
-            width: (self.namesProvider ? Self.providerNameColumn : Self.accountNameColumn) - 8,
-            alignment: .leading)
+        .frame(width: Self.nameColumn - 8, alignment: .leading)
     }
 
     private var nameColor: Color {
@@ -308,9 +302,7 @@ struct OverviewCompactAccountRow: View {
     /// white: the red message carries the error on its own. Icon and chevron centre on the card.
     private func errorLines(_ errorText: String) -> some View {
         HStack(alignment: .center, spacing: 8) {
-            if self.namesProvider {
-                OverviewProviderIcon(image: self.icon, isTemplate: self.iconIsTemplate)
-            }
+            self.leadingIcon
             VStack(alignment: .leading, spacing: 2) {
                 Text(self.name)
                     .font(.system(size: 13, weight: .semibold))
@@ -323,19 +315,29 @@ struct OverviewCompactAccountRow: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            if self.showsDetailChevron {
-                self.detailChevron
-            }
+            self.detailChevron
         }
         .padding(.vertical, 4)
     }
 
-    /// The trailing "›" of a lone provider card, matching the payload indicator's style.
+    /// The provider icon, or an empty slot of the same size on account rows.
+    @ViewBuilder
+    private var leadingIcon: some View {
+        if self.namesProvider {
+            OverviewProviderIcon(image: self.icon, isTemplate: self.iconIsTemplate)
+        } else {
+            Color.clear.frame(width: 18, height: 18)
+        }
+    }
+
+    /// The trailing "›" of a lone provider card, matching the payload indicator's style. Account rows
+    /// keep its space invisible so their bars end where the lone cards' bars do.
     private var detailChevron: some View {
         Image(systemName: "chevron.forward")
             .font(.caption2.weight(.semibold))
             .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
             .padding(.trailing, 2)
+            .opacity(self.showsDetailChevron ? 1 : 0)
     }
 
     private func windowLine(@ViewBuilder content: () -> some View) -> some View {
