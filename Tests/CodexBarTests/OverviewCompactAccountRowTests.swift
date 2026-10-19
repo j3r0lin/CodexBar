@@ -35,7 +35,6 @@ struct OverviewCompactAccountRowTests {
         }
         let plain = height(paceText: nil)
         let paced = height(paceText: "Runs out in 1d 4h")
-        print("ROWHEIGHT plain=\(plain) paced=\(paced)")
         #expect(paced == plain)
     }
 
