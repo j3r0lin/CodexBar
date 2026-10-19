@@ -37,7 +37,9 @@ extension StatusItemController {
                 errorText: row.isMagpie ? row.detailErrorText : nil,
                 width: width,
                 history: history,
-                model: row.isMagpie ? nil : row.model),
+                model: row.isMagpie ? nil : row.model,
+                readAt: row.readAt,
+                quotaWarningThresholds: self.overviewQuotaWarningThresholds(for: row)),
             id: "overviewDetail-\(row.providerName)" + (row.accountName.map { "-\($0)" } ?? ""),
             width: width,
             // The pool holds the parent menu's row views; a detail card built first would take one of them.
@@ -48,6 +50,15 @@ extension StatusItemController {
             submenu.addItem(self.makeRefreshClaudeAccountItem(accountID))
         }
         return submenu
+    }
+
+    /// The warning thresholds that govern a magpie row's windows, resolved for its native provider the way
+    /// the menu card resolves them; empty for providers without a native counterpart.
+    private func overviewQuotaWarningThresholds(for row: OverviewUsageRow) -> [QuotaWarningWindow: [Int]] {
+        guard row.isMagpie, let provider = row.nativeProvider else { return [:] }
+        return Dictionary(uniqueKeysWithValues: QuotaWarningWindow.allCases.map {
+            ($0, self.store.quotaWarningMarkerThresholds(provider: provider, window: $0))
+        })
     }
 
     /// The card draws usage history itself, so the full usage-history chart is left out when it has some.

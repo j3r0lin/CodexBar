@@ -28,12 +28,29 @@ enum UsagePaceText {
         return L("Pace: %@", detail.leftLabel)
     }
 
-    static func weeklyDetail(provider: UsageProvider, pace: UsagePace, now: Date = .init()) -> WeeklyDetail {
+    static func weeklyDetail(provider: UsageProvider?, pace: UsagePace, now: Date = .init()) -> WeeklyDetail {
         WeeklyDetail(
             leftLabel: self.detailLeftLabel(for: pace),
             rightLabel: self.detailRightLabel(for: pace, provider: provider, context: .weekly, now: now),
             expectedUsedPercent: pace.expectedUsedPercent,
             stage: pace.stage)
+    }
+
+    /// The one phrase an Overview row has room for: the run-out time when the pace empties the window
+    /// before reset, otherwise the reserve/deficit/on-pace label.
+    static func overviewPhrase(
+        provider: UsageProvider?,
+        pace: UsagePace,
+        now: Date = .init()) -> (text: String, tone: OverviewCompactAccountRow.PaceTone)
+    {
+        let detail = self.weeklyDetail(provider: provider, pace: pace, now: now)
+        if !pace.willLastToReset, pace.etaSeconds != nil, let rightLabel = detail.rightLabel {
+            return (rightLabel, .runsOut)
+        }
+        switch pace.stage {
+        case .slightlyAhead, .ahead, .farAhead: return (detail.leftLabel, .deficit)
+        case .onTrack, .slightlyBehind, .behind, .farBehind: return (detail.leftLabel, .neutral)
+        }
     }
 
     static func sessionEquivalentDetail(forecast: SessionEquivalentForecast) -> SessionEquivalentDetail {
@@ -90,7 +107,7 @@ enum UsagePaceText {
 
     private static func detailRightLabel(
         for pace: UsagePace,
-        provider: UsageProvider,
+        provider: UsageProvider?,
         context: DetailContext,
         now: Date) -> String?
     {
@@ -117,9 +134,11 @@ enum UsagePaceText {
         return riskLabel
     }
 
-    private static func combinedLastsLabel(for pace: UsagePace, provider: UsageProvider) -> String {
-        let paceCapability = ProviderDescriptorRegistry.descriptor(for: provider).pace
-        guard paceCapability.showsHeadroomHint else { return L("Lasts until reset") }
+    private static func combinedLastsLabel(for pace: UsagePace, provider: UsageProvider?) -> String {
+        // Providers without a native descriptor (unknown magpie wire IDs) get no headroom hint.
+        guard let provider,
+              ProviderDescriptorRegistry.descriptor(for: provider).pace.showsHeadroomHint
+        else { return L("Lasts until reset") }
         guard let speedLabel = self.speedHintLabel(for: pace) else {
             return L("Lasts until reset")
         }

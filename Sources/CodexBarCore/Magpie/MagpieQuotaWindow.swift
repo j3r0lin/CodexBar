@@ -49,6 +49,8 @@ public struct MagpieQuotaWindow: Sendable, Equatable {
             TimeInterval(self.sessionWindowMinutes * 60)
         case self.weeklyWindowName:
             TimeInterval(self.weeklyWindowMinutes * 60)
+        case let name where name.hasPrefix(self.scopedWeeklyPrefix):
+            TimeInterval(self.weeklyWindowMinutes * 60)
         default:
             nil
         }

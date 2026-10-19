@@ -218,7 +218,7 @@ extension UsageStore {
             now: now)
     }
 
-    private func quotaWarningMarkerThresholds(provider: UsageProvider, window: QuotaWarningWindow) -> [Int] {
+    func quotaWarningMarkerThresholds(provider: UsageProvider, window: QuotaWarningWindow) -> [Int] {
         guard self.settings.quotaWarningMarkersVisible,
               self.settings.quotaWarningEnabled(provider: provider, window: window)
         else { return [] }

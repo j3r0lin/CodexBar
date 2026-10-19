@@ -19,6 +19,27 @@ struct OverviewCompactAccountRowTests {
     }
 
     @Test
+    func `a pace phrase under the reset countdown does not make the row taller`() {
+        let reset = Self.now.addingTimeInterval(3 * 86400)
+        func height(paceText: String?) -> CGFloat {
+            self.height(OverviewCompactAccountRow(
+                name: "Claude",
+                shortWindow: nil,
+                longWindow: nil,
+                width: Self.width,
+                namedLines: [
+                    .init(label: "5h", used: 40, resetsAt: reset),
+                    .init(label: "7d", used: 60, resetsAt: reset, paceText: paceText),
+                ],
+                now: Self.now))
+        }
+        let plain = height(paceText: nil)
+        let paced = height(paceText: "Runs out in 1d 4h")
+        print("ROWHEIGHT plain=\(plain) paced=\(paced)")
+        #expect(paced == plain)
+    }
+
+    @Test
     func `a reset time is written with a space between its units`() {
         #expect(self.countdown(minutes: 140) == "2h 20m")
         #expect(self.countdown(minutes: 9900) == "6d 21h")

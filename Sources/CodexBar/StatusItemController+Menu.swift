@@ -507,9 +507,8 @@ extension StatusItemController {
             // A collapsed group is just its header.
             if groupCollapsed { continue }
             let submenu = self.makeOverviewDetailSubmenu(row: row, width: menuWidth)
-            let namedLines = row.namedWindows?.map {
-                OverviewCompactAccountRow.Line(label: $0.label, used: $0.used, resetsAt: $0.resetsAt)
-            }
+            let now = Date()
+            let namedLines = row.compactLines(now: now)
             let slots = namedLines == nil
                 ? OverviewCompactAccountRow.slots(of: row.snapshot, provider: row.nativeProvider)
                 : (short: nil, long: nil)
@@ -529,7 +528,11 @@ extension StatusItemController {
                 showsErrorFlag: row.showsErrorFlag,
                 namedLines: namedLines,
                 showsDetailChevron: !isGrouped,
-                infersPeriodFromReset: !row.isMagpie)
+                infersPeriodFromReset: !row.isMagpie,
+                isStale: row.isStale(
+                    now: now,
+                    threshold: OverviewUsageRow.staleThreshold(for: self.settings.refreshFrequency)),
+                now: now)
             let item = self.makeMenuCardItem(
                 rowView,
                 id: identifier,

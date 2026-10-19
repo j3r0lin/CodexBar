@@ -174,13 +174,24 @@ struct OverviewCompactAccountRow: View {
     var showsDetailChevron = false
     /// Native rows let Grok infer a period from the reset time; magpie-sourced windows never do.
     var infersPeriodFromReset = true
+    /// The reading is older than the refresh cadence allows; its numbers are drawn dimmed.
+    var isStale = false
     var now = Date()
     @Environment(\.menuItemHighlighted) private var isHighlighted
+
+    enum PaceTone: Equatable {
+        case neutral
+        case deficit
+        case runsOut
+    }
 
     struct Line: Equatable {
         let label: String
         let used: Double
         let resetsAt: Date?
+        /// Short pace phrase shown under the reset countdown; nil when the window has no pace.
+        var paceText: String?
+        var paceTone: PaceTone = .neutral
     }
 
     /// Every line puts the same element in the same column, so each part is sized here and the bar
@@ -275,6 +286,7 @@ struct OverviewCompactAccountRow: View {
                     self.windowLine { self.reading(lines[index]) }
                 }
             }
+            .opacity(self.isStale ? 0.5 : 1)
         }
     }
 
@@ -333,12 +345,36 @@ struct OverviewCompactAccountRow: View {
                 .fixedSize(horizontal: true, vertical: false)
                 .frame(width: Self.percentWidth, alignment: .trailing)
             UsageBar(used: line.used, color: color, trackColor: Self.trackColor, height: 6)
-            Text(line.resetsAt.map { L("resets in %@", Self.countdown(to: $0, now: self.now)) } ?? "—")
-                .font(.system(size: 10).monospacedDigit())
+            self.caption(line)
+        }
+    }
+
+    /// The reset countdown; a window with a pace phrase stacks it underneath, in 9pt so both fit the
+    /// fixed line height.
+    private func caption(_ line: Line) -> some View {
+        let reset = line.resetsAt.map { L("resets in %@", Self.countdown(to: $0, now: self.now)) } ?? "—"
+        return VStack(alignment: .leading, spacing: 0) {
+            Text(reset)
+                .font(.system(size: line.paceText == nil ? 10 : 9).monospacedDigit())
                 .foregroundStyle(OverviewPalette.reset)
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
-                .frame(width: Self.resetWidth, alignment: .leading)
+            if let paceText = line.paceText {
+                Text(paceText)
+                    .font(.system(size: 9).monospacedDigit())
+                    .foregroundStyle(Self.paceColor(line.paceTone))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+        }
+        .frame(width: Self.resetWidth, alignment: .leading)
+    }
+
+    static func paceColor(_ tone: PaceTone) -> Color {
+        switch tone {
+        case .neutral: OverviewPalette.caption
+        case .deficit: OverviewPalette.warning
+        case .runsOut: OverviewPalette.critical
         }
     }
 
@@ -468,16 +504,35 @@ struct UsageBar: View {
     let color: Color
     let trackColor: Color
     let height: CGFloat
+    /// Where the linear pace says usage should be by now; drawn as a tick standing out of the bar.
+    var pacePercent: Double?
+    /// Used-percent positions of the user's quota-warning thresholds, drawn as thin ticks in the bar.
+    var warningMarkerPercents: [Double] = []
 
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
-                Rectangle().fill(self.trackColor)
-                Rectangle()
-                    .fill(self.color)
-                    .frame(width: Self.fillWidth(used: self.used, barWidth: proxy.size.width, height: self.height))
+                ZStack(alignment: .leading) {
+                    Rectangle().fill(self.trackColor)
+                    Rectangle()
+                        .fill(self.color)
+                        .frame(width: Self.fillWidth(used: self.used, barWidth: proxy.size.width, height: self.height))
+                    ForEach(self.warningMarkerPercents, id: \.self) { percent in
+                        Rectangle()
+                            .fill(Color.black.opacity(0.55))
+                            .frame(width: 1.5)
+                            .offset(x: proxy.size.width * min(100, max(0, percent)) / 100 - 0.75)
+                    }
+                }
+                .clipShape(Capsule())
+                if let pacePercent {
+                    Capsule()
+                        .fill(Color.white)
+                        .frame(width: 2, height: self.height + 4)
+                        .offset(x: proxy.size.width * min(100, max(0, pacePercent)) / 100 - 1)
+                }
             }
-            .clipShape(Capsule())
+            .frame(height: proxy.size.height)
         }
         .frame(height: self.height)
     }

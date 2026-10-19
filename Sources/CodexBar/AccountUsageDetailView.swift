@@ -25,6 +25,10 @@ struct AccountUsageDetailView: View {
     /// The caller's menu-card model, already filtered by the user's hidden usage items.
     var model: UsageMenuCardView.Model?
     var now = Date()
+    /// Magpie rows: when the gateway last read the account, shown as "Updated ...".
+    var readAt: Date?
+    /// Magpie rows: the already-resolved warning thresholds per window kind; empty draws no markers.
+    var quotaWarningThresholds: [QuotaWarningWindow: [Int]] = [:]
     static let historyDays = 30
 
     struct Block: Equatable {
@@ -33,12 +37,23 @@ struct AccountUsageDetailView: View {
         let used: Double
         /// Absolute reset time when the raw window has one, else the menu card's own reset text.
         var resetText: String?
+        /// Linear-pace readings for magpie windows with a known length; nil elsewhere.
+        var paceLeftText: String?
+        var paceRightText: String?
+        var pacePercent: Double?
+        var warningMarkerPercents: [Double] = []
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             self.header
-            let blocks = self.namedWindows.map(Self.blocks(of:)) ?? Self.blocks(of: self.snapshot, model: self.model)
+            let blocks = self.namedWindows.map {
+                Self.blocks(
+                    of: $0,
+                    provider: self.provider,
+                    now: self.now,
+                    quotaWarningThresholds: self.quotaWarningThresholds)
+            } ?? Self.blocks(of: self.snapshot, model: self.model)
             if blocks.isEmpty, !self.hasSupplementalContent, self.errorText == nil {
                 Text(L("No data"))
                     .font(.system(size: 13))
@@ -49,6 +64,11 @@ struct AccountUsageDetailView: View {
                 }
             }
             self.supplementalView
+            if let readAt {
+                Text(L("Updated %@", readAt.relativeDescription(now: self.now)))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
             if let errorText {
                 Text(errorText)
                     .font(.system(size: 11))
@@ -187,7 +207,24 @@ struct AccountUsageDetailView: View {
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }
-            UsageBar(used: block.used, color: color, trackColor: OverviewCompactAccountRow.trackColor, height: 6)
+            UsageBar(
+                used: block.used,
+                color: color,
+                trackColor: OverviewCompactAccountRow.trackColor,
+                height: 6,
+                pacePercent: block.pacePercent,
+                warningMarkerPercents: block.warningMarkerPercents)
+            if block.paceLeftText != nil || block.paceRightText != nil {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    if let left = block.paceLeftText {
+                        Text(left).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                    Spacer(minLength: 8)
+                    if let right = block.paceRightText {
+                        Text(right).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                }
+            }
         }
     }
 
@@ -271,9 +308,16 @@ struct AccountUsageDetailView: View {
     }
 
     /// One block per window a magpie account reported, each under its own name with its reset time.
-    static func blocks(of named: [OverviewUsageRow.NamedWindow]) -> [Block] {
+    static func blocks(
+        of named: [OverviewUsageRow.NamedWindow],
+        provider: UsageProvider? = nil,
+        now: Date = Date(),
+        quotaWarningThresholds: [QuotaWarningWindow: [Int]] = [:]) -> [Block]
+    {
         named.map { window in
-            Block(
+            let detail = window.pace(now: now)
+                .map { UsagePaceText.weeklyDetail(provider: provider, pace: $0, now: now) }
+            return Block(
                 title: window.title,
                 window: RateWindow(
                     usedPercent: window.used,
@@ -281,7 +325,15 @@ struct AccountUsageDetailView: View {
                     resetsAt: window.resetsAt,
                     resetDescription: nil),
                 used: window.used,
-                resetText: window.resetsAt.map(Self.resetText))
+                resetText: window.resetsAt.map(Self.resetText),
+                paceLeftText: detail?.leftLabel,
+                paceRightText: detail?.rightLabel,
+                pacePercent: detail?.expectedUsedPercent,
+                warningMarkerPercents: window.quotaWarningWindow.map {
+                    UsageMenuCardView.Model.warningMarkerPercents(
+                        thresholds: quotaWarningThresholds[$0],
+                        showUsed: true)
+                } ?? [])
         }
     }
 
