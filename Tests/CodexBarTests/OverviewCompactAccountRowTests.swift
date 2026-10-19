@@ -39,6 +39,20 @@ struct OverviewCompactAccountRowTests {
     }
 
     @Test
+    func `a long name wraps to a second line and grows a single-window row`() {
+        func height(_ name: String) -> CGFloat {
+            self.height(OverviewCompactAccountRow(
+                name: name,
+                shortWindow: nil,
+                longWindow: Self.window(40, minutes: 300),
+                width: Self.width,
+                namesProvider: true,
+                now: Self.now))
+        }
+        #expect(height("Some Very Long Provider Name") > height("Codex"))
+    }
+
+    @Test
     func `a reset time is written with a space between its units`() {
         #expect(self.countdown(minutes: 140) == "2h 20m")
         #expect(self.countdown(minutes: 9900) == "6d 21h")

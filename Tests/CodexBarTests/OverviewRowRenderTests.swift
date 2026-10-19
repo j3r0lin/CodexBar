@@ -81,4 +81,73 @@ struct OverviewRowRenderTests {
         let png = try #require(bitmap.representation(using: .png, properties: [:]))
         try png.write(to: URL(fileURLWithPath: dir).appendingPathComponent("overview-rows.png"))
     }
+
+    /// Writes the paced 7d bar and the long-name layouts when CODEXBAR_ROW_RENDER_DIR is set, for
+    /// comparing the bar thickness and the name wrapping by eye.
+    @Test
+    func `render pace bar and long names`() throws {
+        guard let dir = ProcessInfo.processInfo.environment["CODEXBAR_ROW_RENDER_DIR"] else { return }
+        let now = Date()
+        let width: CGFloat = 400
+        func line(
+            _ label: String,
+            _ used: Double,
+            pace: Double? = nil,
+            tone: OverviewCompactAccountRow.PaceTone = .neutral)
+            -> OverviewCompactAccountRow.Line
+        {
+            .init(
+                label: label,
+                used: used,
+                resetsAt: now.addingTimeInterval(3 * 86400),
+                pacePercent: pace,
+                paceTone: tone)
+        }
+        func row(_ name: String, _ lines: [OverviewCompactAccountRow.Line], provider: Bool = true)
+            -> OverviewCompactAccountRow
+        {
+            OverviewCompactAccountRow(
+                name: name,
+                shortWindow: nil,
+                longWindow: nil,
+                width: width,
+                namesProvider: provider,
+                namedLines: lines,
+                now: now)
+        }
+        func write(_ name: String, _ content: some View) throws {
+            let view = content
+                .padding(.vertical, 6)
+                .background(Color(red: 0.14, green: 0.14, blue: 0.16))
+                .environment(\.colorScheme, .dark)
+            let renderer = ImageRenderer(content: view)
+            renderer.scale = 2
+            let bitmap = try NSBitmapImageRep(cgImage: #require(renderer.cgImage))
+            let png = try #require(bitmap.representation(using: .png, properties: [:]))
+            try png.write(to: URL(fileURLWithPath: dir).appendingPathComponent("\(name).png"))
+        }
+        try write("pace-bars", VStack(alignment: .leading, spacing: 8) {
+            row("Claude", [line("5h", 40), line("7d", 40, pace: 50)])
+            row("Codex", [line("5h", 40), line("7d", 60, pace: 50, tone: .runsOut)])
+        })
+        try write("long-names", VStack(alignment: .leading, spacing: 8) {
+            row("Some Very Long Provider Name", [line("5h", 40), line("7d", 40, pace: 50)])
+            row("OpenCode Go", [line("5h", 40), line("7d", 40, pace: 50)])
+            row("Some Very Long Account Name", [line("5h", 40)], provider: false)
+            OverviewProviderGroupHeader(
+                title: "Some Very Long Provider Name · 12 accounts",
+                windowHint: "5h / 7d",
+                icon: nil,
+                iconIsTemplate: true,
+                collapsed: false,
+                width: width)
+            OverviewProviderGroupHeader(
+                title: "Claude · 3 accounts",
+                windowHint: "5h / 7d",
+                icon: nil,
+                iconIsTemplate: true,
+                collapsed: false,
+                width: width)
+        })
+    }
 }

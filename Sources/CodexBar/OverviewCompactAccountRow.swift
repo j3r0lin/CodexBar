@@ -275,8 +275,8 @@ struct OverviewCompactAccountRow: View {
             Text(self.name)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(self.nameColor)
-                .lineLimit(1)
-                .truncationMode(.middle)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(
             width: (self.namesProvider ? Self.providerNameColumn : Self.accountNameColumn) - 8,
@@ -473,13 +473,18 @@ struct OverviewProviderGroupHeader: View {
     let collapsed: Bool
     let width: CGFloat
 
+    /// A longer title wraps onto a second line instead of pushing the window hint and chevron.
+    static let titleMaxWidth: CGFloat = 220
+
     var body: some View {
         HStack(spacing: 8) {
             OverviewProviderIcon(image: self.icon, isTemplate: self.iconIsTemplate)
             Text(self.title)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
-                .lineLimit(1)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: Self.titleMaxWidth, alignment: .leading)
             Spacer(minLength: 8)
             if !self.windowHint.isEmpty {
                 Text(self.windowHint)
@@ -506,7 +511,8 @@ struct UsageBar: View {
     let color: Color
     let trackColor: Color
     let height: CGFloat
-    /// Where the linear pace says usage should be by now; drawn as a tick standing out of the bar.
+    /// Where the linear pace says usage should be by now; drawn as a tick inside the bar so the bar keeps its
+    /// thickness.
     var pacePercent: Double?
     /// Used-percent positions of the user's quota-warning thresholds, drawn as thin ticks in the bar.
     var warningMarkerPercents: [Double] = []
@@ -519,6 +525,12 @@ struct UsageBar: View {
                     Rectangle()
                         .fill(self.color)
                         .frame(width: Self.fillWidth(used: self.used, barWidth: proxy.size.width, height: self.height))
+                    if let pacePercent {
+                        Rectangle()
+                            .fill(Color.white)
+                            .frame(width: 2)
+                            .offset(x: proxy.size.width * min(100, max(0, pacePercent)) / 100 - 1)
+                    }
                     ForEach(self.warningMarkerPercents, id: \.self) { percent in
                         Rectangle()
                             .fill(Color.black.opacity(0.55))
@@ -526,13 +538,8 @@ struct UsageBar: View {
                             .offset(x: proxy.size.width * min(100, max(0, percent)) / 100 - 0.75)
                     }
                 }
+                .frame(height: self.height)
                 .clipShape(Capsule())
-                if let pacePercent {
-                    Capsule()
-                        .fill(Color.white)
-                        .frame(width: 2, height: self.height + 4)
-                        .offset(x: proxy.size.width * min(100, max(0, pacePercent)) / 100 - 1)
-                }
             }
             .frame(height: proxy.size.height)
         }
