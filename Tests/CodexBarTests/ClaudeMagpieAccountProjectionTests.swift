@@ -8,6 +8,23 @@ struct MagpieAccountProjectionTests {
     }
 
     @Test
+    func `unlimited flags parse leniently and never project into native usage`() throws {
+        let rows = try self.project("""
+        {"data":[{"provider":"claude","windows":[
+          {"name":"5 hours","used":0,"unlimited":true},
+          {"name":"7 days","used":23,"unlimited":false},
+          {"name":"Month","used":12,"unlimited":"unexpected"}]}]}
+        """)
+        let account = try #require(rows.first)
+        #expect(account.windows.first?.unlimited == true)
+        #expect(account.limitedWindows.map(\.name) == ["7 days", "Month"])
+        let usage = try #require(MagpieUsageProjection.usageSnapshot(for: account))
+        #expect(usage.primary == nil)
+        #expect(usage.secondary?.usedPercent == 23)
+        #expect(usage.tertiary?.usedPercent == 12)
+    }
+
+    @Test
     func `all providers and unknown windows survive malformed siblings`() throws {
         let rows = try self.project("""
         {"data":[{"provider":"claude","user":"one@example.com","windows":[{"name":"5 hours","used":12}]},

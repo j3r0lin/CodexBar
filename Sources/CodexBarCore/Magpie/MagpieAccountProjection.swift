@@ -19,6 +19,14 @@ public struct MagpieAccountSnapshot: Identifiable, Sendable, Equatable {
     /// 1-based position within this provider's own listing; privacy-safe `Account N` labels use it.
     public let ordinal: Int
     public let windows: [MagpieQuotaWindow]
+    public var limitedWindows: [MagpieQuotaWindow] {
+        self.windows.filter { !$0.unlimited }
+    }
+
+    public var hasOnlyUnlimitedWindows: Bool {
+        !self.windows.isEmpty && self.windows.allSatisfy(\.unlimited)
+    }
+
     public let readAt: Date?
     public let isActive: Bool
     public let usesLastKnownUsage: Bool

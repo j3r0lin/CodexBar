@@ -368,6 +368,38 @@ struct OverviewRowRenderTests {
         try write("a-overview-list", list.padding(.vertical, 6))
     }
 
+    @Test
+    func `render unlimited quota filtering`() throws {
+        guard ProcessInfo.processInfo.environment["CODEXBAR_SIDE_PAGE_RENDER_DIR"] != nil else { return }
+        let accounts = try MagpieAccountProjection.snapshots(from: MagpieQuotasReader.rows(from: Data("""
+        {"data":[{"provider":"unlimited-provider","windows":[{"name":"Limit","used":0,"unlimited":true}]},
+          {"provider":"claude","alias":"all-unlimited","windows":[{"name":"5 hours","used":0,"unlimited":true}]},
+          {"provider":"claude","alias":"mixed-account","user":"fixture","windows":[
+            {"name":"5 hours","used":0,"unlimited":true},{"name":"7 days","used":42}]}]}
+        """.utf8)))
+        let visible = accounts.filter { !$0.hasOnlyUnlimitedWindows }
+        #expect(visible.count == 1)
+        let view = VStack(alignment: .leading, spacing: 0) {
+            Text("Overview · \(Set(visible.map(\.provider.wireID)).count) provider")
+                .font(.system(size: 12, weight: .semibold))
+                .padding(12)
+            ForEach(visible) { account in
+                let row = OverviewUsageRow.magpie(
+                    account: account,
+                    providerName: account.provider.displayName,
+                    accountName: account.displayLabel)
+                OverviewCompactAccountRow(
+                    name: "\(account.provider.displayName) · \(account.displayLabel)",
+                    shortWindow: nil,
+                    longWindow: nil,
+                    width: 400,
+                    namedLines: row.compactLines(now: Date()),
+                    now: Date())
+            }
+        }
+        try Self.writeSidePageRender("unlimited-filtered-overview", view.padding(.vertical, 6))
+    }
+
     /// Writes the side pages and the footer when CODEXBAR_SIDE_PAGE_RENDER_DIR is set: synthetic readings,
     /// placeholder names only.
     @Test

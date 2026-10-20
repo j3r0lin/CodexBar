@@ -79,7 +79,9 @@ extension UsageStore {
     /// magpie providers for the Overview: every account row from the latest response. Providers
     /// with no windows and no error are not shown.
     var magpieOverviewSnapshots: [MagpieAccountSnapshot] {
-        self.magpieAccountSnapshots.filter { !$0.windows.isEmpty || $0.error != nil }
+        self.magpieAccountSnapshots.filter {
+            !$0.hasOnlyUnlimitedWindows && (!$0.windows.isEmpty || $0.error != nil)
+        }
     }
 
     // MARK: - Claude account source (menus, widgets)

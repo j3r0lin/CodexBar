@@ -149,6 +149,7 @@ public enum MagpieQuotasReader {
         let used: Double?
         let resetsAt: String?
         let pool: String?
+        let unlimited: Lenient<Bool>?
     }
 
     private static func row(_ row: Row) -> MagpieQuotaRow {
@@ -161,7 +162,8 @@ public enum MagpieQuotasReader {
                 name: name,
                 usedPercent: used,
                 resetsAt: ISO8601DateParser.parse(window.resetsAt),
-                pool: window.pool.flatMap { $0.isEmpty ? nil : $0 })
+                pool: window.pool.flatMap { $0.isEmpty ? nil : $0 },
+                unlimited: window.unlimited?.value == true)
         }
         return MagpieQuotaRow(
             provider: row.provider,

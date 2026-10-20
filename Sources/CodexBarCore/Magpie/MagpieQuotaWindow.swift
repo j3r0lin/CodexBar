@@ -29,6 +29,7 @@ public struct MagpieQuotaWindow: Sendable, Equatable {
 
     public let name: String
     public let usedPercent: Double
+    public let unlimited: Bool
     public let resetsAt: Date?
     /// Window length when known; nil when the wire does not report one and the name does not
     /// imply a fixed length (monthly and unknown windows stay nil).
@@ -47,11 +48,13 @@ public struct MagpieQuotaWindow: Sendable, Equatable {
         usedPercent: Double,
         resetsAt: Date?,
         duration: TimeInterval? = nil,
-        pool: String? = nil)
+        pool: String? = nil,
+        unlimited: Bool = false)
     {
         self.name = name
         self.pool = pool
         self.usedPercent = usedPercent
+        self.unlimited = unlimited
         self.resetsAt = resetsAt
         self.duration = duration ?? Self.impliedDuration(forName: name)
         self.semantics = Self.semantics(forName: name, duration: duration)

@@ -12,10 +12,10 @@ public enum MagpieUsageProjection {
     {
         guard account.error != MagpieAccountProjection.unstableIdentityError,
               let provider = account.provider.nativeProvider else { return nil }
-        let session = account.windows.first { $0.semantics == .session }
-        let weekly = account.windows.first { $0.semantics == .weekly }
-        let monthly = account.windows.first { $0.semantics == .monthly }
-        let scoped = account.windows.compactMap { window -> ClaudeScopedWeeklyLimitMapper.Limit? in
+        let session = account.limitedWindows.first { $0.semantics == .session }
+        let weekly = account.limitedWindows.first { $0.semantics == .weekly }
+        let monthly = account.limitedWindows.first { $0.semantics == .monthly }
+        let scoped = account.limitedWindows.compactMap { window -> ClaudeScopedWeeklyLimitMapper.Limit? in
             guard case let .scopedWeekly(model) = window.semantics else { return nil }
             return ClaudeScopedWeeklyLimitMapper.Limit(
                 kind: "weekly_scoped",
@@ -70,7 +70,7 @@ public enum MagpieUsageProjection {
         in accounts: [MagpieAccountSnapshot],
         now: Date = Date()) -> [ProviderAccountUsageSnapshot]
     {
-        accounts.filter { $0.provider.nativeProvider == provider }.map { account in
+        accounts.filter { $0.provider.nativeProvider == provider && !$0.hasOnlyUnlimitedWindows }.map { account in
             let snapshot = self.usageSnapshot(for: account, now: now)
             return ProviderAccountUsageSnapshot(
                 id: account.id,

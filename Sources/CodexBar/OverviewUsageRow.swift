@@ -187,7 +187,7 @@ struct OverviewUsageRow {
         accountName: String,
         history: MagpieQuotaHistory? = nil) -> OverviewUsageRow
     {
-        let windows = account.windows.map { window in
+        let windows = account.limitedWindows.map { window in
             NamedWindow(
                 window: window,
                 history: history?.points(for: account.id, window: window.historyName) ?? [])

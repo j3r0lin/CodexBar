@@ -269,6 +269,49 @@ extension StatusMenuTests {
     }
 
     @Test
+    func `unlimited magpie accounts disappear from Overview and mixed accounts keep limited windows`() throws {
+        let settings = self.makeSettings()
+        settings.statusChecksEnabled = false
+        settings.refreshFrequency = .manual
+        settings.mergeIcons = true
+        settings.mergedMenuLastSelectedWasOverview = true
+        enableTestProviders([], settings: settings)
+        let fetcher = UsageFetcher(environment: [:])
+        let store = UsageStore(
+            fetcher: fetcher,
+            browserDetection: BrowserDetection(cacheTTL: 0),
+            settings: settings,
+            startupBehavior: .testing,
+            environmentBase: [:])
+        store.magpieTransport = { _ in throw CancellationError() }
+        settings.magpieSourceEnabled = true
+        store.magpieAccountSnapshots = try MagpieAccountProjection
+            .snapshots(from: MagpieQuotasReader.rows(from: Data("""
+            {"data":[{"provider":"unlimited-provider","windows":[{"name":"Limit","used":0,"unlimited":true}]},
+              {"provider":"claude","alias":"unlimited-account","windows":[
+                {"name":"5 hours","used":0,"unlimited":true}]},
+              {"provider":"claude","alias":"mixed-account","user":"fixture","windows":[
+                {"name":"5 hours","used":0,"unlimited":true},{"name":"7 days","used":42}]}]}
+            """.utf8)))
+        let controller = StatusItemController(
+            store: store,
+            settings: settings,
+            account: fetcher.loadAccountInfo(),
+            updater: DisabledUpdaterController(),
+            preferencesSelection: PreferencesSelection(),
+            statusBar: self.makeStatusBarForTesting())
+        defer { controller.releaseStatusItemsForTesting() }
+        let rows = controller.overviewUsageRows(visibleProviders: [])
+        #expect(rows.count == 1)
+        #expect(Set(rows.map(\.groupKey)).count == 1)
+        #expect(rows.first?.accountName == "mixed-account")
+        #expect(rows.first?.namedWindows?.map(\.label) == ["7d"])
+        #expect(store.magpieOverviewSnapshots.count == 1)
+        #expect(MagpieUsageProjection.providerAccountSnapshots(for: .claude, in: store.magpieAccountSnapshots)
+            .count == 1)
+    }
+
+    @Test
     func `magpie Overview includes disabled and unknown providers with every named window`() throws {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
