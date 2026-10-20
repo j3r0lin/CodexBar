@@ -2644,15 +2644,12 @@
 "No providers enabled" = "Non hai provedores activados";
 "5-hour limit" = "Límite de 5 horas";
 "Weekly limit" = "Límite semanal";
-"account_detail_usage_title" = "Uso de %@";
 "account_detail_used" = "%@ usado";
-"account_detail_history" = "Historial";
 
 /* Overview card UI */
 "%lld providers" = "%lld provedores";
 "Auto-refresh on" = "Actualización automática activada";
 "Auto-refresh off" = "Actualización automática desactivada";
-"Last sync: %@" = "Última sincronización: %@";
 "resets in %@" = "reiníciase en %@";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar pediralle ao Chaveiro de macOS o token de inicio de sesión de Muse Code para obter o uso da túa subscrición a Muse Code. Preme Aceptar para continuar.";
 /* Claude Platform provider */
@@ -2701,3 +2698,6 @@
 "Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "Os provedores de pasarela non requiren iniciar sesión localmente. O custo, os créditos e o historial non están dispoñibles. O interruptor anterior, exclusivo de Claude, agora aplícase a todos os provedores que comunica magpie.";
 "magpie quotas URL" = "URL das cotas de magpie";
 "Waiting for magpie discovery" = "Agardando pola detección de magpie";
+"Tomorrow %@" = "Mañá %@";
+"Runs out %@ at this pace" = "Esgótase %@ a este ritmo";
+"Lasts past the reset at this pace" = "Dura máis alá do restablecemento a este ritmo";

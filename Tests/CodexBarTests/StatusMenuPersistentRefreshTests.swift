@@ -1076,7 +1076,6 @@ extension StatusMenuPersistentRefreshTests {
 
         let overviewGate = ManualRefreshGate()
         controller._test_manualRefreshOperation = { await overviewGate.wait() }
-        let refreshItem = try #require(menu.items.first { $0.view is MenuFooterBarView })
         controller.performPersistentRefreshAction(in: ObjectIdentifier(menu))
         for _ in 0..<20 where controller.manualRefreshTasks[.global] == nil {
             await Task.yield()

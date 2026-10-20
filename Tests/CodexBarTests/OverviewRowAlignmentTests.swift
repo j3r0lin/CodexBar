@@ -65,6 +65,23 @@ struct OverviewRowAlignmentTests {
                 extent == first,
                 "\(Self.scenarios[index].name) bar extent \(extent) != \(first): \(report)")
         }
+        // Nothing trails the reset column, so the bar runs up to it.
+        let barEnd = Self.width - OverviewCompactAccountRow.blockInset - OverviewCompactAccountRow.horizontalPadding
+            - OverviewCompactAccountRow.resetWidth - 8
+        #expect(abs(first.end - Int(barEnd * Self.scale)) <= 2, "bar ends at \(first.end): \(report)")
+    }
+
+    @Test
+    func `the reset column fits every countdown a row shows`() {
+        let font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .regular)
+        let widest = stride(from: 0, through: 31 * 1440, by: 7).map { minutes in
+            let text = OverviewCompactAccountRow.countdown(
+                to: Self.now.addingTimeInterval(TimeInterval(minutes * 60) + 30),
+                now: Self.now)
+            return (text as NSString).size(withAttributes: [.font: font]).width
+        }.max() ?? 0
+        #expect(widest <= OverviewCompactAccountRow.resetWidth)
+        #expect(OverviewCompactAccountRow.resetWidth - widest < 1)
     }
 
     @Test
@@ -94,7 +111,6 @@ struct OverviewRowAlignmentTests {
             width: self.width,
             namesProvider: scenario.provider,
             namedLines: lines,
-            showsDetailChevron: scenario.provider,
             now: self.now)
             .background(Color(red: 0.14, green: 0.14, blue: 0.16))
             .environment(\.colorScheme, .dark)

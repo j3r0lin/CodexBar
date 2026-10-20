@@ -2643,9 +2643,7 @@
 "No providers enabled" = "有効なプロバイダがありません";
 "5-hour limit" = "5時間の上限";
 "Weekly limit" = "週間の上限";
-"account_detail_usage_title" = "%@ の使用状況";
 "account_detail_used" = "%@ 使用済み";
-"account_detail_history" = "履歴";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar は Muse Code のサブスクリプション使用量を取得するために、macOS キーチェーンに Muse Code のログイン トークンへのアクセスを求めます。続けるには OK をクリックしてください。";
 /* Claude Platform provider */
 "API credit" = "API クレジット";
@@ -2698,6 +2696,8 @@
 "%lld providers" = "%lld 件のプロバイダ";
 "Auto-refresh off" = "自動更新オフ";
 "Auto-refresh on" = "自動更新オン";
-"Last sync: %@" = "最終同期: %@";
 "Refresh Claude usage" = "Claude の使用状況を更新";
 "resets in %@" = "%@ 後にリセット";
+"Tomorrow %@" = "明日 %@";
+"Runs out %@ at this pace" = "このペースだと %@ に使い切ります";
+"Lasts past the reset at this pace" = "このペースならリセットまで持ちます";

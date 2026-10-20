@@ -2645,9 +2645,7 @@
 "No providers enabled" = "ไม่ได้เปิดใช้ผู้ให้บริการ";
 "5-hour limit" = "ขีดจำกัด 5 ชั่วโมง";
 "Weekly limit" = "ขีดจำกัดรายสัปดาห์";
-"account_detail_usage_title" = "การใช้งาน %@";
 "account_detail_used" = "ใช้ไป %@";
-"account_detail_history" = "ประวัติ";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar จะขอโทเค็นเข้าสู่ระบบ Muse Code จาก macOS Keychain เพื่อให้สามารถดึงข้อมูลการใช้งานการสมัครสมาชิก Muse Code ของคุณได้ คลิก ตกลง เพื่อดำเนินการต่อ";
 /* Claude Platform provider */
 "API credit" = "เครดิต API";
@@ -2700,6 +2698,8 @@
 "%lld providers" = "%lld ผู้ให้บริการ";
 "Auto-refresh off" = "ปิดการรีเฟรชอัตโนมัติ";
 "Auto-refresh on" = "เปิดการรีเฟรชอัตโนมัติ";
-"Last sync: %@" = "ซิงค์ล่าสุด: %@";
 "Refresh Claude usage" = "รีเฟรชการใช้งาน Claude";
 "resets in %@" = "รีเซ็ตใน %@";
+"Tomorrow %@" = "พรุ่งนี้ %@";
+"Runs out %@ at this pace" = "ด้วยอัตรานี้จะหมด %@";
+"Lasts past the reset at this pace" = "ด้วยอัตรานี้จะพอถึงการรีเซ็ต";

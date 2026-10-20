@@ -2644,9 +2644,7 @@
 "No providers enabled" = "Chưa bật nhà cung cấp nào";
 "5-hour limit" = "Giới hạn 5 giờ";
 "Weekly limit" = "Giới hạn hằng tuần";
-"account_detail_usage_title" = "Mức dùng %@";
 "account_detail_used" = "Đã dùng %@";
-"account_detail_history" = "Lịch sử";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar sẽ yêu cầu macOS Keychain cung cấp token đăng nhập Muse Code để nó có thể tìm nạp mức sử dụng gói đăng ký Muse Code của bạn. Nhấn OK để tiếp tục.";
 /* Claude Platform provider */
 "API credit" = "Tín dụng API";
@@ -2699,6 +2697,8 @@
 "%lld providers" = "%lld nhà cung cấp";
 "Auto-refresh off" = "Tắt tự động làm mới";
 "Auto-refresh on" = "Bật tự động làm mới";
-"Last sync: %@" = "Đồng bộ lần cuối: %@";
 "Refresh Claude usage" = "Làm mới mức sử dụng Claude";
 "resets in %@" = "đặt lại sau %@";
+"Tomorrow %@" = "Ngày mai %@";
+"Runs out %@ at this pace" = "Với tốc độ này sẽ hết lúc %@";
+"Lasts past the reset at this pace" = "Với tốc độ này sẽ đủ đến lúc đặt lại";

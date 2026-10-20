@@ -32,10 +32,9 @@ struct StatusMenuMergedOverviewRefreshTests {
         controller.store.refreshingProviders.insert(.opencode)
         controller.updateMenuFooterBars()
         #expect(controller.isRefreshActionInFlight(for: menu))
-        // The Overview footer bar carries only About and Quit; refresh and Settings live in the header.
-        let footer = try #require(menu.items.compactMap { $0.view as? MenuFooterBarView }.first)
-        #expect(footer.button(labeled: L("Refresh")) == nil)
-        #expect(footer.button(labeled: L("Quit")) != nil)
+        // About and Quit live in the footer row, so the Overview menu has no icon bar.
+        #expect(!menu.items.contains { $0.view is MenuFooterBarView })
+        #expect(menu.items.contains { $0.representedObject as? String == "overviewFooterStatus" })
         #expect(menu.items.contains { $0.representedObject as? String == "overviewHeader" })
 
         var requestCount = 0

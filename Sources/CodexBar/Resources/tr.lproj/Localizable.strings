@@ -2648,15 +2648,12 @@
 "No providers enabled" = "Etkin sağlayıcı yok";
 "5-hour limit" = "5 saatlik limit";
 "Weekly limit" = "Haftalık limit";
-"account_detail_usage_title" = "%@ kullanımı";
 "account_detail_used" = "%@ kullanıldı";
-"account_detail_history" = "Geçmiş";
 
 /* Overview card UI */
 "%lld providers" = "%lld sağlayıcı";
 "Auto-refresh on" = "Otomatik yenileme açık";
 "Auto-refresh off" = "Otomatik yenileme kapalı";
-"Last sync: %@" = "Son eşitleme: %@";
 "resets in %@" = "%@ içinde sıfırlanır";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar, Muse Code abonelik kullanımınızı almak için macOS Anahtar Zinciri'nden Muse Code giriş tokenını isteyecek. Devam etmek için Tamam'a tıklayın.";
 /* Claude Platform provider */
@@ -2705,3 +2702,6 @@
 "Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "Ağ geçidi sağlayıcıları yerel oturum açma gerektirmez. Maliyet, kredi ve geçmiş kullanılamaz. Daha önce yalnızca Claude için olan anahtar artık magpie tarafından bildirilen tüm sağlayıcılar için geçerlidir.";
 "magpie quotas URL" = "magpie kota URL’si";
 "Waiting for magpie discovery" = "magpie keşfi bekleniyor";
+"Tomorrow %@" = "Yarın %@";
+"Runs out %@ at this pace" = "Bu hızla %@ biter";
+"Lasts past the reset at this pace" = "Bu hızla sıfırlamaya kadar yeter";

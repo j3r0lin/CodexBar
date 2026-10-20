@@ -32,7 +32,7 @@ private final class SwitcherRefreshManualGate {
 @Suite(.serialized)
 struct StatusMenuSwitcherRefreshTests {
     @Test
-    func `in-place merged update resizes the footer bar to the rendered menu width`() throws {
+    func `in-place merged update resizes the footer row to the rendered menu width`() throws {
         let previousMenuCardRendering = StatusItemController.menuCardRenderingEnabled
         let previousMenuRefresh = StatusItemController.menuRefreshEnabled
         StatusItemController.menuCardRenderingEnabled = true
@@ -84,8 +84,10 @@ struct StatusMenuSwitcherRefreshTests {
 
         let expectedWidth = controller.renderedMenuWidth(for: menu)
         #expect(expectedWidth == 420)
-        let refreshView = try #require(menu.items.first { $0.view is MenuFooterBarView }?.view)
-        #expect(abs(refreshView.frame.width - expectedWidth) <= 0.5)
+        let footerView = try #require(menu.items.first {
+            $0.representedObject as? String == "overviewFooterStatus"
+        }?.view)
+        #expect(abs(footerView.frame.width - expectedWidth) <= 0.5)
     }
 
     @Test

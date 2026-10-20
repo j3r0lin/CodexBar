@@ -161,6 +161,7 @@ extension UsageStore {
             self.lastSourceLabels.removeValue(forKey: provider.instanceID)
         }
         self.magpieAccountSnapshots = []
+        self.magpieQuotaHistory = nil
         self.magpieLastRefreshAt = nil
         self.magpieLastError = nil
         self.magpieDiscoveryCompleted = false
@@ -217,11 +218,19 @@ extension UsageStore {
             }
         }
         let quotasURL = self.settings.magpieQuotasURL
+        // The history rides along with every quota read: row pace needs it when the menu is built. Its
+        // failure never fails the quota refresh; rows fall back to linear pace without it.
+        let transport = self.magpieTransport
+        async let history = try? MagpieQuotasReader.readHistory(quotasURL: quotasURL, transport: transport)
         do {
             let rows = try await MagpieQuotasReader.readRows(
                 quotasURL: quotasURL,
-                transport: self.magpieTransport)
+                transport: transport)
+            let fetchedHistory = await history
             guard self.isCurrentMagpieRefresh(quotasURL: quotasURL, epoch: epoch) else { return }
+            if let fetchedHistory {
+                self.magpieQuotaHistory = fetchedHistory
+            }
             let incoming = MagpieAccountProjection.snapshots(from: rows)
             var snapshots = incoming
             var retainedProviders: [String] = []

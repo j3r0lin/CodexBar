@@ -99,29 +99,90 @@ struct MagpiePaceTests {
     }
 
     @Test
-    func `detail blocks carry the pace line, the expected-usage marker and warning markers`() throws {
-        let windows = [OverviewUsageRow.NamedWindow(window: Self.weekly(used: 80))]
-        let block = try #require(AccountUsageDetailView.blocks(
-            of: windows,
-            now: Self.now,
-            quotaWarningThresholds: [.weekly: [20]]).first)
-        let marker = try #require(block.pacePercent)
-        #expect(abs(marker - 50) < 0.001)
-        #expect(block.paceLeftText != nil)
-        #expect(block.paceRightText != nil)
-        #expect(block.warningMarkerPercents == [80])
+    func `detail blocks say whether the window lasts to its reset`() throws {
+        let heavy = try #require(AccountUsageDetailView.blocks(
+            of: [OverviewUsageRow.NamedWindow(window: Self.weekly(used: 80))],
+            now: Self.now).first)
+        guard case let .runsOut(date) = heavy.outlook else {
+            Issue.record("expected a run-out, got \(String(describing: heavy.outlook))")
+            return
+        }
+        #expect(date < Self.now.addingTimeInterval(3.5 * Self.day))
+        let light = try #require(AccountUsageDetailView.blocks(
+            of: [OverviewUsageRow.NamedWindow(window: Self.weekly(used: 20))],
+            now: Self.now).first)
+        #expect(light.outlook == .lastsPastReset)
     }
 
     @Test
-    func `detail blocks of a monthly window carry no pace and no warning markers`() throws {
+    func `detail blocks of a monthly window carry no pace`() throws {
         let windows = [OverviewUsageRow.NamedWindow(window: Self.weekly("Month", used: 60, remaining: 10 * Self.day))]
-        let block = try #require(AccountUsageDetailView.blocks(
-            of: windows,
-            now: Self.now,
-            quotaWarningThresholds: [.weekly: [20], .session: [20]]).first)
-        #expect(block.pacePercent == nil)
-        #expect(block.paceLeftText == nil)
-        #expect(block.warningMarkerPercents.isEmpty)
+        let block = try #require(AccountUsageDetailView.blocks(of: windows, now: Self.now).first)
+        #expect(block.outlook == nil)
+    }
+
+    /// Readings of the current week, one an hour up to now, falling `perHour` points from `startLeft`.
+    private static func readings(
+        hours: Int,
+        startLeft: Double,
+        perHour: Double,
+        remaining: TimeInterval = 3.5 * day) -> [MagpieQuotaHistoryPoint]
+    {
+        let reset = self.now.addingTimeInterval(remaining)
+        return (0...hours).map { hour in
+            MagpieQuotaHistoryPoint(
+                at: self.now.addingTimeInterval(TimeInterval(hour - hours) * 3600),
+                left: startLeft - Double(hour) * perHour,
+                start: reset.addingTimeInterval(-7 * self.day),
+                resetsAt: reset)
+        }
+    }
+
+    private static func weeklyLine(window: MagpieQuotaWindow, history: [MagpieQuotaHistoryPoint])
+        -> OverviewCompactAccountRow.Line?
+    {
+        let named = OverviewUsageRow.NamedWindow(window: window, history: history)
+        let row = OverviewUsageRow(
+            groupKey: "claude",
+            providerName: "Claude",
+            nativeProvider: .claude,
+            accountID: nil,
+            accountName: nil,
+            namedWindows: [named],
+            snapshot: nil,
+            model: nil,
+            errorText: nil,
+            showsErrorFlag: false,
+            detailErrorText: nil,
+            readAt: nil)
+        return row.compactLines(now: self.now)?.first
+    }
+
+    @Test
+    func `a steep recent burn runs out before reset although the linear pace lasts`() throws {
+        // 20% used at mid-week lasts on the linear pace, but the last six hours burned 3 points an hour.
+        let line = try #require(Self.weeklyLine(
+            window: Self.weekly(used: 20),
+            history: Self.readings(hours: 6, startLeft: 100, perHour: 3)))
+        #expect(line.paceTone == .runsOut)
+        #expect(try abs(#require(line.pacePercent) - 50) < 0.001)
+    }
+
+    @Test
+    func `a slow recent burn lasts although usage is ahead of the even burn`() throws {
+        // 80% used at mid-week runs out on the linear pace; the readings barely move.
+        let line = try #require(Self.weeklyLine(
+            window: Self.weekly(used: 80),
+            history: Self.readings(hours: 6, startLeft: 20.6, perHour: 0.1)))
+        #expect(line.paceTone == .deficit)
+    }
+
+    @Test
+    func `too few readings fall back to the linear pace`() throws {
+        let line = try #require(Self.weeklyLine(
+            window: Self.weekly(used: 20),
+            history: Array(Self.readings(hours: 6, startLeft: 100, perHour: 3).suffix(2))))
+        #expect(line.paceTone == .neutral)
     }
 
     @Test

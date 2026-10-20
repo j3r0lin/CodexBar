@@ -13,6 +13,8 @@ enum OverviewPalette {
     static let reset = Color.white.opacity(0.60)
     /// Names and idle readings.
     static let neutral = Color.white.opacity(0.55)
+    /// A quota curve's shading where more is left than an even burn would leave.
+    static let reserve = Color(red: 0.24, green: 0.84, blue: 0.44)
 
     static func color(usedPercent used: Double) -> Color {
         if used >= 90 { return self.critical }
@@ -169,9 +171,6 @@ struct OverviewCompactAccountRow: View {
     /// Magpie rows pass every window the gateway reported, each under its own label, instead of
     /// the short/long slots a native snapshot fills.
     var namedLines: [Line]?
-    /// Lone provider cards draw their own detail chevron so it centres on the card instead of
-    /// the menu item's frame (the shared payload indicator sits on the item, gap included).
-    var showsDetailChevron = false
     /// Native rows let Grok infer a period from the reset time; magpie-sourced windows never do.
     var infersPeriodFromReset = true
     /// The reading is older than the refresh cadence allows; its numbers are drawn dimmed.
@@ -184,8 +183,16 @@ struct OverviewCompactAccountRow: View {
         case deficit
         case runsOut
 
-        init(pace: UsagePace) {
-            if !pace.willLastToReset, pace.etaSeconds != nil {
+        /// A fitted run-out from magpie's readings decides whether the window runs out; the linear pace
+        /// decides it only without one. Either way the deficit tint marks usage ahead of the even burn
+        /// that still lasts to the reset.
+        init(pace: UsagePace, fitted: MagpieQuotaTrend.Eta? = nil) {
+            let runsOut = switch fitted {
+            case .runsOut: true
+            case .lastsPastReset: false
+            case nil: !pace.willLastToReset && pace.etaSeconds != nil
+            }
+            if runsOut {
                 self = .runsOut
                 return
             }
@@ -221,8 +228,8 @@ struct OverviewCompactAccountRow: View {
     static let labelWidth: CGFloat = 32
     /// Fits "100%" at 13pt semibold with monospaced digits.
     static let percentWidth: CGFloat = 38
-    /// Fits "26d 13h" at 10pt with monospaced digits.
-    static let resetWidth: CGFloat = 46
+    /// Fits the widest countdown, "23h 59m" (43.4pt at 10pt with monospaced digits; "26d 13h" is 40.9pt).
+    static let resetWidth: CGFloat = 44
     /// Every window line keeps this height so lines pitch evenly within and across accounts.
     static let lineHeight: CGFloat = 22
 
@@ -256,7 +263,6 @@ struct OverviewCompactAccountRow: View {
                 HStack(alignment: .center, spacing: 8) {
                     self.nameColumn
                     self.windowLines
-                    self.detailChevron
                 }
             }
         }
@@ -299,7 +305,7 @@ struct OverviewCompactAccountRow: View {
 
     /// An error-only provider names itself in full on the first line and wraps the message below it,
     /// so neither the name nor the message is truncated into the narrow name column. The name stays
-    /// white: the red message carries the error on its own. Icon and chevron centre on the card.
+    /// white: the red message carries the error on its own.
     private func errorLines(_ errorText: String) -> some View {
         HStack(alignment: .center, spacing: 8) {
             self.leadingIcon
@@ -315,7 +321,6 @@ struct OverviewCompactAccountRow: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            self.detailChevron
         }
         .padding(.vertical, 4)
     }
@@ -328,16 +333,6 @@ struct OverviewCompactAccountRow: View {
         } else {
             Color.clear.frame(width: 18, height: 18)
         }
-    }
-
-    /// The trailing "›" of a lone provider card, matching the payload indicator's style. Account rows
-    /// keep its space invisible so their bars end where the lone cards' bars do.
-    private var detailChevron: some View {
-        Image(systemName: "chevron.forward")
-            .font(.caption2.weight(.semibold))
-            .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
-            .padding(.trailing, 2)
-            .opacity(self.showsDetailChevron ? 1 : 0)
     }
 
     private func windowLine(@ViewBuilder content: () -> some View) -> some View {

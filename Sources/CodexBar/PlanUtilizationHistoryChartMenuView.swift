@@ -69,11 +69,6 @@ struct PlanUtilizationHistoryChartMenuView: View {
     private let emptyModel: Model
     private let width: CGFloat
 
-    /// False when no series has a single point, which the chart draws as its empty-state text.
-    var hasPoints: Bool {
-        self.modelsBySeriesID.values.contains { !$0.points.isEmpty }
-    }
-
     @State private var selectedSeriesID: String?
     @State private var selectedPointID: Date?
 

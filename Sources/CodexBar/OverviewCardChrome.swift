@@ -59,30 +59,16 @@ struct OverviewCardHeaderView: View {
     /// The refresh affordance spins down to a progress indicator while a manual refresh runs, the
     /// same feedback the old footer bar gave through its icon animation.
     private var refreshButton: some View {
-        Button {
-            self.cardAction.perform?(.refresh)
-        } label: {
+        OverviewIconButton(action: .refresh, help: L("Refresh")) {
             Group {
                 if self.isRefreshing {
                     ProgressView()
                         .controlSize(.small)
                 } else {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Color.white.opacity(0.85))
+                    OverviewSymbol.image("arrow.clockwise")
                 }
             }
-            .frame(width: 30, height: 30)
-            .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color.white.opacity(0.08)))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(Color.white.opacity(0.10), lineWidth: 1))
         }
-        .buttonStyle(.plain)
-        .help(L("Refresh"))
-        .menuCardInteractiveControl()
     }
 
     private func button(
@@ -90,23 +76,70 @@ struct OverviewCardHeaderView: View {
         label: String,
         action: MenuDescriptor.MenuAction) -> some View
     {
+        OverviewIconButton(action: action, help: label) {
+            OverviewSymbol.image(systemName)
+        }
+    }
+}
+
+/// The icon button the Overview header and footer share, hosted so a press reaches the button instead
+/// of the menu row. The header's primary actions sit on a filled, stroked square; the footer's rarely
+/// used ones stay bare and only show the square under the pointer, so they don't outweigh the status.
+struct OverviewIconButton<Label: View>: View {
+    enum Weight {
+        case primary
+        case secondary
+    }
+
+    let action: MenuDescriptor.MenuAction
+    let help: String
+    var weight: Weight = .primary
+    @ViewBuilder var label: () -> Label
+    @Environment(\.providerCardAction) private var cardAction
+    @State private var hovering = false
+
+    private var fillOpacity: Double {
+        switch self.weight {
+        case .primary: 0.08
+        case .secondary: self.hovering ? 0.10 : 0
+        }
+    }
+
+    var body: some View {
         Button {
-            self.cardAction.perform?(action)
+            self.cardAction.perform?(self.action)
         } label: {
-            Image(systemName: systemName)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(Color.white.opacity(0.85))
+            self.label()
+                .opacity(self.weight == .secondary && !self.hovering ? 0.75 : 1)
                 .frame(width: 30, height: 30)
                 .background(
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(Color.white.opacity(0.08)))
+                        .fill(Color.white.opacity(self.fillOpacity)))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(Color.white.opacity(0.10), lineWidth: 1))
+                        .stroke(Color.white.opacity(self.weight == .primary ? 0.10 : 0), lineWidth: 1))
+                .contentShape(Rectangle())
+                // A menu window is never key, so hover comes from MouseLocationReader's `.activeAlways`
+                // tracking area, as on the menu charts. Behind the label so the press still reaches the button.
+                .background {
+                    if self.weight == .secondary {
+                        MouseLocationReader { self.hovering = $0 != nil }
+                    }
+                }
         }
         .buttonStyle(.plain)
-        .help(label)
+        .help(self.help)
+        .accessibilityLabel(self.help)
         .menuCardInteractiveControl()
+    }
+}
+
+enum OverviewSymbol {
+    /// One weight and size for every Overview chrome icon, so no button reads heavier than its neighbours.
+    static func image(_ systemName: String) -> some View {
+        Image(systemName: systemName)
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(Color.white.opacity(0.85))
     }
 }
 
@@ -128,14 +161,18 @@ struct OverviewProviderCountView: View {
     }
 }
 
-/// The bottom line of the Overview menu: whether auto-refresh runs, and when data last landed.
-struct OverviewFooterStatusView: View {
+/// The bottom row of the Overview menu: whether auto-refresh runs on the left, About and Quit on the
+/// right as bare icons that only show the header's button square on hover. No line sits above it: the last card's
+/// border already closes
+/// the content, the same way the header meets the first card.
+struct OverviewFooterView: View {
     let autoRefreshOn: Bool
-    let lastSyncText: String
+    let aboutHelp: String
+    let quitHelp: String
     let width: CGFloat
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             Circle()
                 .fill(self.autoRefreshOn
                     ? Color(red: 0.24, green: 0.84, blue: 0.44)
@@ -146,10 +183,12 @@ struct OverviewFooterStatusView: View {
                 .foregroundStyle(OverviewPalette.caption)
                 .lineLimit(1)
             Spacer(minLength: 8)
-            Text(self.lastSyncText)
-                .font(.system(size: 11))
-                .foregroundStyle(OverviewPalette.caption)
-                .lineLimit(1)
+            OverviewIconButton(action: .about, help: self.aboutHelp, weight: .secondary) {
+                OverviewSymbol.image("info.circle")
+            }
+            OverviewIconButton(action: .quit, help: self.quitHelp, weight: .secondary) {
+                OverviewSymbol.image("power")
+            }
         }
         .padding(.horizontal, OverviewCompactAccountRow.horizontalPadding)
         .padding(.vertical, 6)

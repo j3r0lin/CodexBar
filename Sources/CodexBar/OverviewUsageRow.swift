@@ -15,35 +15,38 @@ struct OverviewUsageRow {
         /// Window length when the gateway or the window's name fixes it; month and unknown windows
         /// have none and therefore no pace.
         let duration: TimeInterval?
-        /// The quota-warning settings that govern this window; nil for month and unknown windows.
-        let quotaWarningWindow: QuotaWarningWindow?
+        /// magpie's readings of this window, oldest first; empty when it kept none.
+        let history: [MagpieQuotaHistoryPoint]
 
-        init(window: MagpieQuotaWindow) {
+        init(window: MagpieQuotaWindow, history: [MagpieQuotaHistoryPoint] = []) {
             self.label = Self.label(for: window)
             self.title = Self.title(for: window)
             self.used = min(100, max(0, window.usedPercent))
             self.resetsAt = window.resetsAt
             self.duration = window.duration
-            self.quotaWarningWindow = switch window.semantics {
-            case .session: .session
-            case .weekly, .scopedWeekly: .weekly
-            case .monthly, .other: nil
-            }
+            self.history = history
         }
 
-        /// Linear pace from this window's own reading, never from another account's history. Windows
-        /// without a known length have none, and a day-or-shorter window waits for 3% of its time
-        /// to pass so a fresh reset does not project nonsense.
+        /// Linear pace from this window's own reading, never from another account's history.
         func pace(now: Date) -> UsagePace? {
-            guard let duration, duration > 0 else { return nil }
-            let window = RateWindow(
-                usedPercent: self.used,
-                windowMinutes: Int(duration / 60),
-                resetsAt: self.resetsAt,
-                resetDescription: nil)
-            guard let pace = UsagePace.weekly(window: window, now: now) else { return nil }
-            if duration <= 86400, pace.expectedUsedPercent < 3 { return nil }
-            return pace
+            OverviewUsageRow.linearPace(used: self.used, duration: self.duration, resetsAt: self.resetsAt, now: now)
+        }
+
+        /// The window's current cycle read from its history, nil without readings.
+        func trend(now: Date) -> Trend? {
+            guard let cycle = MagpieQuotaTrend.currentCycle(points: self.history, resetsAt: self.resetsAt, now: now)
+            else { return nil }
+            return Trend(
+                cycle: cycle,
+                readings: self.history.filter { $0.at >= cycle.start && $0.at <= now },
+                current: MagpieQuotaTrend.cyclePoints(self.history, cycle: cycle, now: now),
+                eta: MagpieQuotaTrend.eta(points: self.history, cycle: cycle, now: now))
+        }
+
+        /// Where this window is heading: the run-out fitted to its readings, else the linear pace.
+        func outlook(now: Date) -> PaceOutlook? {
+            if let eta = self.trend(now: now)?.eta { return PaceOutlook(eta) }
+            return self.pace(now: now).flatMap { PaceOutlook(pace: $0, now: now) }
         }
 
         /// Slots and labels follow the window's semantics, never its reset-description text:
@@ -77,6 +80,53 @@ struct OverviewUsageRow {
             case .scopedWeekly, .other: window.name
             }
         }
+    }
+
+    /// One window's current cycle from magpie's history: what the side page's curve draws and what the
+    /// fitted pace reads.
+    struct Trend: Equatable {
+        let cycle: MagpieQuotaTrend.Cycle
+        /// Readings inside the cycle up to now; a cycle break among them starts a new stretch of line.
+        let readings: [MagpieQuotaHistoryPoint]
+        /// Readings since the last cycle break, which the shading against the even burn covers.
+        let current: [MagpieQuotaHistoryPoint]
+        let eta: MagpieQuotaTrend.Eta?
+    }
+
+    enum PaceOutlook: Equatable {
+        case runsOut(Date)
+        case lastsPastReset
+
+        init(_ eta: MagpieQuotaTrend.Eta) {
+            switch eta {
+            case let .runsOut(date): self = .runsOut(date)
+            case .lastsPastReset: self = .lastsPastReset
+            }
+        }
+
+        init?(pace: UsagePace, now: Date) {
+            if pace.willLastToReset {
+                self = .lastsPastReset
+            } else if let eta = pace.etaSeconds {
+                self = .runsOut(now.addingTimeInterval(eta))
+            } else {
+                return nil
+            }
+        }
+    }
+
+    /// Linear pace of a window with a known length. A day-or-shorter window waits for 3% of its time
+    /// to pass so a fresh reset does not project nonsense.
+    static func linearPace(used: Double, duration: TimeInterval?, resetsAt: Date?, now: Date) -> UsagePace? {
+        guard let duration, duration > 0 else { return nil }
+        let window = RateWindow(
+            usedPercent: used,
+            windowMinutes: Int(duration / 60),
+            resetsAt: resetsAt,
+            resetDescription: nil)
+        guard let pace = UsagePace.weekly(window: window, now: now) else { return nil }
+        if duration <= 86400, pace.expectedUsedPercent < 3 { return nil }
+        return pace
     }
 
     /// Grouping key: the provider's raw value for native rows, the wire ID for magpie rows.
@@ -134,9 +184,14 @@ struct OverviewUsageRow {
     static func magpie(
         account: MagpieAccountSnapshot,
         providerName: String,
-        accountName: String) -> OverviewUsageRow
+        accountName: String,
+        history: MagpieQuotaHistory? = nil) -> OverviewUsageRow
     {
-        let windows = account.windows.map(NamedWindow.init(window:))
+        let windows = account.windows.map { window in
+            NamedWindow(
+                window: window,
+                history: history?.points(for: account.id, window: window.historyName) ?? [])
+        }
         return OverviewUsageRow(
             groupKey: account.provider.wireID,
             providerName: providerName,
@@ -178,7 +233,7 @@ struct OverviewUsageRow {
             var line = OverviewCompactAccountRow.Line(label: window.label, used: window.used, resetsAt: window.resetsAt)
             if let longest, longest.0 == window {
                 line.pacePercent = longest.1.expectedUsedPercent
-                line.paceTone = .init(pace: longest.1)
+                line.paceTone = .init(pace: longest.1, fitted: window.trend(now: now)?.eta)
             }
             return line
         }

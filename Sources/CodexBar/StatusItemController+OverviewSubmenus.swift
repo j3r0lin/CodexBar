@@ -3,16 +3,13 @@ import CodexBarCore
 
 extension StatusItemController {
     /// Hover submenu of an Overview row: the shared usage detail, a Claude refresh item on magpie rows,
-    /// then the provider's history chart and its own actions. The chart and actions are built on first
-    /// open so unopened rows stay cheap. Magpie rows never build them: a magpie account holds no native
-    /// history, cost, or provider actions of its own.
+    /// then the provider's cost or credits chart and its own actions. The chart and actions are built on
+    /// first open so unopened rows stay cheap. Magpie rows never build them: a magpie account holds no
+    /// native cost or provider actions of its own.
     func makeOverviewDetailSubmenu(
         row: OverviewUsageRow,
         width: CGFloat) -> NSMenu
     {
-        let history = row.isMagpie || row.nativeProvider == nil
-            ? []
-            : self.overviewDetailHistory(for: row.nativeProvider!)
         let submenu = OverviewDetailMenu(controller: self) { [weak self] submenu in
             guard let self, !row.isMagpie, let provider = row.nativeProvider, let model = row.model
             else { return }
@@ -20,13 +17,13 @@ extension StatusItemController {
                 to: submenu,
                 provider: provider,
                 model: model,
-                width: width,
-                includesUsageHistory: history.isEmpty)
+                width: width)
             self.appendOverviewRowActions(to: submenu, provider: provider, width: width, inlineChartID: chartID)
         }
         submenu.autoenablesItems = false
         submenu.minimumWidth = width
         submenu.appearance = StatusMenuAppearance.menuAppearance
+        let now = Date()
         submenu.addItem(self.makeMenuCardItem(
             AccountUsageDetailView(
                 provider: row.nativeProvider,
@@ -36,10 +33,12 @@ extension StatusItemController {
                 namedWindows: row.namedWindows,
                 errorText: row.isMagpie ? row.detailErrorText : nil,
                 width: width,
-                history: history,
                 model: row.isMagpie ? nil : row.model,
+                now: now,
                 readAt: row.readAt,
-                quotaWarningThresholds: self.overviewQuotaWarningThresholds(for: row)),
+                isStale: row.isStale(
+                    now: now,
+                    threshold: OverviewUsageRow.staleThreshold(for: self.settings.refreshFrequency))),
             id: "overviewDetail-\(row.providerName)" + (row.accountName.map { "-\($0)" } ?? ""),
             width: width,
             // The pool holds the parent menu's row views; a detail card built first would take one of them.
@@ -52,45 +51,21 @@ extension StatusItemController {
         return submenu
     }
 
-    /// The warning thresholds that govern a magpie row's windows, resolved for its native provider the way
-    /// the menu card resolves them; empty for providers without a native counterpart.
-    private func overviewQuotaWarningThresholds(for row: OverviewUsageRow) -> [QuotaWarningWindow: [Int]] {
-        guard row.isMagpie, let provider = row.nativeProvider else { return [:] }
-        return Dictionary(uniqueKeysWithValues: QuotaWarningWindow.allCases.map {
-            ($0, self.store.quotaWarningMarkerThresholds(provider: provider, window: $0))
-        })
-    }
-
-    /// The card draws usage history itself, so the full usage-history chart is left out when it has some.
-    private func overviewDetailHistory(for provider: UsageProvider) -> [Double?] {
-        guard self.store.supportsPlanUtilizationHistory(for: provider),
-              !self.store.shouldHidePlanUtilizationMenuItem(for: provider)
-        else { return [] }
-        let histories = self.store.planUtilizationHistorySelection(for: provider, readOnly: true).histories
-        return AccountUsageDetailView.dailyPeaks(histories, now: Date())
-    }
-
-    /// Appends the row's history chart inline and returns its chart identifier, or nil when there is none.
+    /// Appends the row's cost, credits or storage chart inline and returns its chart identifier, or nil when
+    /// there is none. The usage-history chart stays out: the detail card's windows already cover usage.
     private func appendOverviewRowChart(
         to submenu: NSMenu,
         provider: UsageProvider,
         model: UsageMenuCardView.Model,
-        width: CGFloat,
-        includesUsageHistory: Bool) -> String?
+        width: CGFloat) -> String?
     {
         guard let chartMenu = self.makeOverviewRowSubmenu(
             provider: provider,
             model: model,
-            width: width,
-            includesUsageHistory: includesUsageHistory)
+            width: width)
         else { return nil }
         self.hydrateHostedSubviewMenuIfNeeded(chartMenu, width: width)
-        // An empty history hydrates to a lone "No data available" row or a chart of empty-state text;
-        // show no chart at all then.
-        let hasHistory = self.usageHistoryHasPoints(for: provider)
-        var chartItems = chartMenu.items.filter {
-            ($0.representedObject as? String) != Self.usageHistoryChartID || hasHistory
-        }
+        var chartItems = chartMenu.items
         while chartItems.last?.isSeparatorItem == true {
             chartItems.removeLast()
         }
@@ -166,8 +141,7 @@ extension StatusItemController {
     func makeOverviewRowSubmenu(
         provider: UsageProvider,
         model: UsageMenuCardView.Model,
-        width: CGFloat,
-        includesUsageHistory: Bool = true) -> NSMenu?
+        width: CGFloat) -> NSMenu?
     {
         if provider == .openai,
            self.settings.costSummaryShowsSubmenu(for: provider),
@@ -188,9 +162,6 @@ extension StatusItemController {
            model.tokenUsage != nil,
            let submenu = self.makeCostHistorySubmenu(provider: provider, width: width)
         {
-            return submenu
-        }
-        if includesUsageHistory, let submenu = self.makeUsageHistorySubmenu(provider: provider, width: width) {
             return submenu
         }
         return self.makeStorageBreakdownSubmenu(provider: provider, width: width)

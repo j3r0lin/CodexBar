@@ -221,11 +221,21 @@ enum ProviderSwitcherTrackingRunLoopScheduler {
 }
 
 extension StatusItemController {
+    /// A menu answers ⌘R, ⌘, and ⌘Q while tracking when it shows either icon bar: the provider menu's
+    /// footer bar, or the Overview footer's About and Quit buttons. The same monitor carries the
+    /// Overview's scroll-wheel navigation, which has nothing of its own to key off.
+    func menuOffersPersistentShortcuts(_ menu: NSMenu) -> Bool {
+        menu.items.contains {
+            $0.view is MenuFooterBarView
+                || ($0.representedObject as? String) == "overviewFooterStatus"
+        }
+    }
+
     func installMenuTrackingShortcutMonitorIfNeeded(for menu: NSMenu) {
         guard self.isMenuRefreshEnabled else {
             return
         }
-        guard menu.items.contains(where: { $0.view is MenuFooterBarView }) else {
+        guard self.menuOffersPersistentShortcuts(menu) else {
             return
         }
 
@@ -264,7 +274,7 @@ extension StatusItemController {
             self.advanceMenuInteraction(for: menu)
         }
         if let action = StatusItemMenu.persistentAction(for: event),
-           menu.items.contains(where: { $0.view is MenuFooterBarView })
+           self.menuOffersPersistentShortcuts(menu)
         {
             if let menu = menu as? StatusItemMenu {
                 menu.performPersistentAction(action)

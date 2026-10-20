@@ -351,7 +351,8 @@ extension StatusItemController {
                 to: menu,
                 width: context.menuWidth,
                 provider: context.currentProvider,
-                footerBarActions: overviewChrome ? [.about, .quit] : nil)
+                // The Overview footer row carries About and Quit itself, so it gets no icon bar.
+                footerBarActions: overviewChrome ? [] : nil)
             self.appendOverviewFooterStatusIfNeeded(
                 to: menu,
                 switcherSelection: overviewChrome ? .overview : nil,
@@ -527,7 +528,6 @@ extension StatusItemController {
                 errorText: row.errorText,
                 showsErrorFlag: row.showsErrorFlag,
                 namedLines: namedLines,
-                showsDetailChevron: !isGrouped,
                 infersPeriodFromReset: !row.isMagpie,
                 isStale: row.isStale(
                     now: now,
@@ -543,7 +543,9 @@ extension StatusItemController {
                 showsSubmenuIndicator: false,
                 usesGPUSelection: true,
                 tightVerticalFit: true,
-                selectionBlock: isGrouped && startsProvider ? .top : block)
+                // An account row continues the card its group header opens, so its highlight keeps square
+                // top corners and rounds only the card's last row.
+                selectionBlock: block)
             menu.addItem(item)
         }
         return true
@@ -618,34 +620,31 @@ extension StatusItemController {
         self.invalidateMenus(refreshOpenMenus: true)
     }
 
-    /// The green-dot status line at the bottom of the Overview menu.
+    /// The status-and-actions row at the bottom of the Overview menu. It drops the native separator
+    /// left above it, which runs edge to edge past the card inset.
     func appendOverviewFooterStatusIfNeeded(
         to menu: NSMenu,
         switcherSelection: ProviderSwitcherSelection?,
         width: CGFloat)
     {
         guard switcherSelection == .overview else { return }
+        if menu.items.last?.isSeparatorItem == true {
+            menu.removeItem(at: menu.items.count - 1)
+        }
         let autoRefresh = self.settings.refreshFrequency != .manual
-        let lastSyncText = L(
-            "Last sync: %@",
-            self.overviewLastSyncDate().map { Self.overviewFooterTimeFormatter.string(from: $0) } ?? "—")
+        let version = AppVersion.shortVersion
         menu.addItem(self.makeMenuCardItem(
-            OverviewFooterStatusView(
+            OverviewFooterView(
                 autoRefreshOn: autoRefresh,
-                lastSyncText: lastSyncText,
+                aboutHelp: L("About CodexBar") + (version.isEmpty ? "" : " (v\(version))"),
+                quitHelp: L("Quit"),
                 width: width),
             id: "overviewFooterStatus",
             width: width,
             heightCacheScope: "overviewFooterStatus",
-            heightCacheFingerprint: "footer-\(autoRefresh)"))
+            heightCacheFingerprint: "footer-\(autoRefresh)",
+            containsInteractiveControls: true))
     }
-
-    private static let overviewFooterTimeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .none
-        formatter.timeStyle = .short
-        return formatter
-    }()
 
     /// The freshest reading behind the Overview: native snapshot updates and magpie reads.
     private func overviewLastSyncDate() -> Date? {
@@ -701,7 +700,8 @@ extension StatusItemController {
         OverviewUsageRow.magpie(
             account: account,
             providerName: L(account.provider.displayName),
-            accountName: Self.magpieAccountRowName(account, hidePersonalInfo: hidePersonalInfo))
+            accountName: Self.magpieAccountRowName(account, hidePersonalInfo: hidePersonalInfo),
+            history: self.store.magpieQuotaHistory)
     }
 
     /// The row label of one magpie account: an ordinal in privacy mode, otherwise the alias or

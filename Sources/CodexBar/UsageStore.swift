@@ -177,6 +177,9 @@ final class UsageStore {
     var magpieLastRefreshAt: Date?
     var magpieLastError: String?
     var magpieRevision: UInt64 = 0
+    /// Window readings behind the Overview curves and fitted pace. Lands with the quota refresh that
+    /// fetched it (and its `magpieRevision` bump); a failed history fetch keeps the previous one.
+    @ObservationIgnored var magpieQuotaHistory: MagpieQuotaHistory?
     /// False until the first magpie discovery attempt finishes; known-mapped providers pause native
     /// reads while false so enabling the switch never races a credential read.
     var magpieDiscoveryCompleted = false

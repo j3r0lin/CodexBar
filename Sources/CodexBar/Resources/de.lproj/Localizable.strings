@@ -2641,9 +2641,7 @@
 "No providers enabled" = "Keine Anbieter aktiviert";
 "5-hour limit" = "5-Stunden-Limit";
 "Weekly limit" = "Wochenlimit";
-"account_detail_usage_title" = "%@-Nutzung";
 "account_detail_used" = "%@ genutzt";
-"account_detail_history" = "Verlauf";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar fragt den macOS-Schlüsselbund nach dem Muse Code Login-Token, damit es Ihre Muse Code Abonnementnutzung abrufen kann. Klicken Sie auf OK, um fortzufahren.";
 /* Claude Platform provider */
 "API credit" = "API-Guthaben";
@@ -2696,6 +2694,8 @@
 "%lld providers" = "%lld Anbieter";
 "Auto-refresh off" = "Automatische Aktualisierung aus";
 "Auto-refresh on" = "Automatische Aktualisierung an";
-"Last sync: %@" = "Letzte Synchronisierung: %@";
 "Refresh Claude usage" = "Claude-Nutzung aktualisieren";
 "resets in %@" = "zurückgesetzt in %@";
+"Tomorrow %@" = "Morgen %@";
+"Runs out %@ at this pace" = "Bei diesem Tempo aufgebraucht %@";
+"Lasts past the reset at this pace" = "Reicht bei diesem Tempo bis zum Reset";

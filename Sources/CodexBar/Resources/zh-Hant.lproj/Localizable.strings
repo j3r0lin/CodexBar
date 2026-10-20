@@ -2621,15 +2621,12 @@
 "No providers enabled" = "未啟用任何提供者";
 "5-hour limit" = "5 小時限額";
 "Weekly limit" = "每週限額";
-"account_detail_usage_title" = "%@ 用量";
 "account_detail_used" = "已用 %@";
-"account_detail_history" = "歷史";
 
 /* Overview card UI */
 "%lld providers" = "%lld 個供應商";
 "Auto-refresh on" = "自動重新整理已開啟";
 "Auto-refresh off" = "自動重新整理已關閉";
-"Last sync: %@" = "上次同步：%@";
 "resets in %@" = "%@ 後重置";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar 將向 macOS 鑰匙圈要求 Muse Code 登入 token，以取得你的 Muse Code 訂閱使用量。按一下「確定」繼續。";
 /* Claude Platform provider */
@@ -2681,3 +2678,6 @@
 
 "%lld accounts" = "%lld 個帳戶";
 "Refresh Claude usage" = "重新整理 Claude 用量";
+"Tomorrow %@" = "明天 %@";
+"Runs out %@ at this pace" = "依此速度將於 %@ 用完";
+"Lasts past the reset at this pace" = "依此速度可撐到重置";

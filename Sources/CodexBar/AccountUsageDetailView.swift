@@ -2,12 +2,12 @@ import AppKit
 import CodexBarCore
 import SwiftUI
 
-/// Usage detail of one account or provider, shown in the Overview row's detail submenu: a header with the
-/// provider icon, then one block per window the provider reported, each with its name, a bar, the used
-/// percentage and the absolute reset time, and a 30-day history of the provider's longest window when one
-/// was recorded.
+/// Usage detail of one account or provider, shown in the Overview row's detail submenu: the account's name
+/// and when it was read, then one block per window the provider reported with its used percentage, its
+/// reset time, where its pace is heading and, for magpie accounts with readings, its current cycle's curve.
 struct AccountUsageDetailView: View {
     static let defaultWidth: CGFloat = 240
+    static let curveHeight: CGFloat = 30
 
     let provider: UsageProvider?
     let providerName: String
@@ -17,66 +17,50 @@ struct AccountUsageDetailView: View {
     /// Magpie rows pass every window the gateway reported, each under its own name (Month,
     /// model-scoped weekly, unknown wire names included), instead of the snapshot's lanes.
     var namedWindows: [OverviewUsageRow.NamedWindow]?
-    /// Shown under the window blocks, e.g. a last-known retention note on a magpie row.
+    /// The account's error. Without windows it replaces them; beside retained windows it explains them.
     var errorText: String?
     var width: CGFloat = Self.defaultWidth
-    /// Daily peaks, oldest first; nil marks a day without a sample. Empty hides the history.
-    var history: [Double?] = []
     /// The caller's menu-card model, already filtered by the user's hidden usage items.
     var model: UsageMenuCardView.Model?
     var now = Date()
-    /// Magpie rows: when the gateway last read the account, shown as "Updated ...".
+    /// Magpie rows: when the gateway last read the account. Native rows use the snapshot's time.
     var readAt: Date?
-    /// Magpie rows: the already-resolved warning thresholds per window kind; empty draws no markers.
-    var quotaWarningThresholds: [QuotaWarningWindow: [Int]] = [:]
-    static let historyDays = 30
+    /// The reading is older than the refresh cadence allows; its numbers are dimmed as on the row.
+    var isStale = false
 
     struct Block: Equatable {
-        let title: String
+        var title: String
         let window: RateWindow
         let used: Double
-        /// Absolute reset time when the raw window has one, else the menu card's own reset text.
+        /// "Resets <clock>" when the raw window has a reset time, else the menu card's own reset text.
         var resetText: String?
-        /// Linear-pace readings for magpie windows with a known length; nil elsewhere.
-        var paceLeftText: String?
-        var paceRightText: String?
-        var pacePercent: Double?
-        var warningMarkerPercents: [Double] = []
+        var outlook: OverviewUsageRow.PaceOutlook?
+        /// Magpie windows with readings of their current cycle; nil draws no curve.
+        var trend: OverviewUsageRow.Trend?
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 16) {
             self.header
-            let blocks = self.namedWindows.map {
-                Self.blocks(
-                    of: $0,
-                    provider: self.provider,
-                    now: self.now,
-                    quotaWarningThresholds: self.quotaWarningThresholds)
-            } ?? Self.blocks(of: self.snapshot, model: self.model)
-            if blocks.isEmpty, !self.hasSupplementalContent, self.errorText == nil {
-                Text(L("No data"))
-                    .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
+            if let errorText, self.namedWindows?.isEmpty == true {
+                self.errorView(errorText)
             } else {
-                ForEach(blocks.indices, id: \.self) { index in
-                    self.blockView(blocks[index])
+                let blocks = self.namedWindows.map { Self.blocks(of: $0, now: self.now) }
+                    ?? Self.blocks(of: self.snapshot, model: self.model, now: self.now)
+                if blocks.isEmpty, !self.hasSupplementalContent, self.errorText == nil {
+                    Text(L("No data"))
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(blocks.indices, id: \.self) { index in
+                        self.blockView(blocks[index])
+                    }
+                    .opacity(self.isStale ? 0.5 : 1)
                 }
-            }
-            self.supplementalView
-            if let readAt {
-                Text(L("Updated %@", readAt.relativeDescription(now: self.now)))
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-            }
-            if let errorText {
-                Text(errorText)
-                    .font(.system(size: 11))
-                    .foregroundStyle(OverviewPalette.warning)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            if self.history.contains(where: { $0 != nil }) {
-                self.historyView
+                self.supplementalView
+                if let errorText {
+                    self.errorView(errorText)
+                }
             }
         }
         .padding(.horizontal, 18)
@@ -84,32 +68,47 @@ struct AccountUsageDetailView: View {
         .frame(width: self.width, alignment: .leading)
     }
 
+    private var updatedAt: Date? {
+        self.readAt ?? self.snapshot?.updatedAt
+    }
+
     private var header: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
+        HStack(alignment: .center, spacing: 10) {
             Self.icon(for: self.provider)
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
-                .frame(width: 20, height: 20)
+                .frame(width: 18, height: 18)
                 .foregroundStyle(.primary)
-                .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 6 }
-            Text(L("account_detail_usage_title", self.providerName))
-                .font(.system(size: 17, weight: .bold))
+            Text(self.accountName ?? self.providerName)
+                .font(.system(size: 15, weight: .bold))
                 .lineLimit(1)
-                .fixedSize()
-            if let accountName {
-                Text(accountName)
-                    .font(.system(size: 13))
+                .truncationMode(.middle)
+            Spacer(minLength: 8)
+            if let updatedAt {
+                Text(L("Updated %@", Self.clockText(updatedAt, now: self.now)))
+                    .font(.system(size: 11).monospacedDigit())
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                    .truncationMode(.middle)
+                    .fixedSize()
             }
         }
     }
 
+    private func errorView(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 12))
+            .foregroundStyle(OverviewPalette.warning)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
     private func sectionHeader(_ title: String, trailing: String?) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(title).overviewSectionTitleStyle().lineLimit(1)
+            // Not upper-cased: magpie windows use the row's short labels ("5h", "7d"), which read wrong as "5H".
+            Text(title)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(OverviewPalette.accent)
+                .lineLimit(1)
             Spacer(minLength: 8)
             if let trailing {
                 Text(trailing)
@@ -201,72 +200,40 @@ struct AccountUsageDetailView: View {
             self.sectionHeader(block.title, trailing: block.resetText)
             HStack(alignment: .firstTextBaseline, spacing: 5) {
                 Text("\(Int(block.used.rounded()))%")
-                    .font(.system(size: 22, weight: .semibold).monospacedDigit())
+                    .font(.system(size: 20, weight: .semibold).monospacedDigit())
                     .foregroundStyle(color)
                 Text(L("used"))
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
-            }
-            UsageBar(
-                used: block.used,
-                color: color,
-                trackColor: OverviewCompactAccountRow.trackColor,
-                height: 6,
-                pacePercent: block.pacePercent,
-                warningMarkerPercents: block.warningMarkerPercents)
-            if block.paceLeftText != nil || block.paceRightText != nil {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    if let left = block.paceLeftText {
-                        Text(left).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
-                    }
-                    Spacer(minLength: 8)
-                    if let right = block.paceRightText {
-                        Text(right).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
-                    }
+                Spacer(minLength: 8)
+                if let outlook = block.outlook {
+                    Text(Self.paceText(outlook, now: self.now))
+                        .font(.system(size: 11).monospacedDigit())
+                        .foregroundStyle(Self.paceColor(outlook))
+                        .lineLimit(1)
                 }
+            }
+            if let trend = block.trend, trend.current.count >= 2 {
+                QuotaCycleCurve(trend: trend, now: self.now)
+                    .frame(height: Self.curveHeight)
             }
         }
     }
 
-    /// Thin bars without axes or grid: the history is there for its trend, not for reading values.
-    private var historyView: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            self.sectionHeader(L("account_detail_history"), trailing: L("Last %d days", Self.historyDays))
-            GeometryReader { proxy in
-                HStack(alignment: .bottom, spacing: 1) {
-                    ForEach(self.history.indices, id: \.self) { index in
-                        UnevenRoundedRectangle(topLeadingRadius: 1, topTrailingRadius: 1)
-                            .fill(OverviewPalette.accent)
-                            .frame(height: proxy.size.height * min(1, max(0, (self.history[index] ?? 0) / 100)))
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                    }
-                }
-            }
-            .frame(height: 40)
+    static func paceText(_ outlook: OverviewUsageRow.PaceOutlook, now: Date) -> String {
+        switch outlook {
+        case let .runsOut(date):
+            L("Runs out %@ at this pace", Self.clockText(max(date, now.addingTimeInterval(60)), now: now))
+        case .lastsPastReset:
+            L("Lasts past the reset at this pace")
         }
     }
 
-    /// One value per day for the last `days` days, oldest first: the highest reading of the longest
-    /// recorded window on that day, or nil when the day has no sample. Empty when nothing was recorded.
-    static func dailyPeaks(
-        _ histories: [PlanUtilizationSeriesHistory],
-        now: Date,
-        days: Int = Self.historyDays,
-        calendar: Calendar = .current) -> [Double?]
-    {
-        guard let series = histories.filter({ !$0.entries.isEmpty }).max(by: { $0.windowMinutes < $1.windowMinutes })
-        else { return [] }
-        let today = calendar.startOfDay(for: now)
-        var peaks = [Double?](repeating: nil, count: days)
-        for entry in series.entries {
-            let day = calendar.startOfDay(for: entry.capturedAt)
-            guard let offset = calendar.dateComponents([.day], from: day, to: today).day,
-                  (0..<days).contains(offset)
-            else { continue }
-            let index = days - 1 - offset
-            peaks[index] = max(peaks[index] ?? 0, min(100, max(0, entry.usedPercent)))
+    private static func paceColor(_ outlook: OverviewUsageRow.PaceOutlook) -> Color {
+        switch outlook {
+        case .runsOut: OverviewPalette.critical
+        case .lastsPastReset: Color.secondary
         }
-        return peaks.contains(where: { $0 != nil }) ? peaks : []
     }
 
     private static func icon(for provider: UsageProvider?) -> Image {
@@ -281,17 +248,22 @@ struct AccountUsageDetailView: View {
     /// Every window with a real reading. Without a model that is the snapshot's own windows; with one it is
     /// the model's metrics, which already carry the user's hidden items and optional-usage gates and cover
     /// lanes the raw snapshot lacks (Codex monthly credits). A metric that matches a raw window keeps the
-    /// window's absolute reset date.
-    static func blocks(of snapshot: UsageSnapshot?, model: UsageMenuCardView.Model? = nil) -> [Block] {
-        guard let model else { return self.snapshotBlocks(of: snapshot) }
-        let raw = Self.snapshotBlocks(of: snapshot)
+    /// window's reset time and pace.
+    static func blocks(
+        of snapshot: UsageSnapshot?,
+        model: UsageMenuCardView.Model? = nil,
+        now: Date = Date()) -> [Block]
+    {
+        let raw = Self.snapshotBlocks(of: snapshot, now: now)
+        guard let model else { return raw }
         return model.metrics.compactMap { metric -> Block? in
             guard metric.statusText == nil else { return nil }
             let used = metric.percentStyle == .used ? metric.percent : 100 - metric.percent
             if let window = Self.rawWindow(id: metric.id, in: snapshot),
-               let block = raw.first(where: { $0.window == window })
+               var block = raw.first(where: { $0.window == window })
             {
-                return Block(title: metric.title, window: window, used: block.used, resetText: block.resetText)
+                block.title = metric.title
+                return block
             }
             let window = RateWindow(usedPercent: used, windowMinutes: nil, resetsAt: nil, resetDescription: nil)
             return Block(title: metric.title, window: window, used: used, resetText: metric.resetText)
@@ -307,56 +279,51 @@ struct AccountUsageDetailView: View {
         }
     }
 
-    /// One block per window a magpie account reported, each under its own name with its reset time.
-    static func blocks(
-        of named: [OverviewUsageRow.NamedWindow],
-        provider: UsageProvider? = nil,
-        now: Date = Date(),
-        quotaWarningThresholds: [QuotaWarningWindow: [Int]] = [:]) -> [Block]
-    {
+    /// One block per window a magpie account reported, each under its own name, with the pace fitted to
+    /// its readings when magpie kept enough of them.
+    static func blocks(of named: [OverviewUsageRow.NamedWindow], now: Date = Date()) -> [Block] {
         named.map { window in
-            let detail = window.pace(now: now)
-                .map { UsagePaceText.weeklyDetail(provider: provider, pace: $0, now: now) }
-            return Block(
-                title: window.title,
+            Block(
+                title: window.label,
                 window: RateWindow(
                     usedPercent: window.used,
                     windowMinutes: nil,
                     resetsAt: window.resetsAt,
                     resetDescription: nil),
                 used: window.used,
-                resetText: window.resetsAt.map(Self.resetText),
-                paceLeftText: detail?.leftLabel,
-                paceRightText: detail?.rightLabel,
-                pacePercent: detail?.expectedUsedPercent,
-                warningMarkerPercents: window.quotaWarningWindow.map {
-                    UsageMenuCardView.Model.warningMarkerPercents(
-                        thresholds: quotaWarningThresholds[$0],
-                        showUsed: true)
-                } ?? [])
+                resetText: window.resetsAt.map { Self.resetText($0, now: now) },
+                outlook: window.outlook(now: now),
+                trend: window.trend(now: now))
         }
     }
 
     /// Every window with a real reading, in the provider's order, followed by its named extra windows.
-    private static func snapshotBlocks(of snapshot: UsageSnapshot?) -> [Block] {
+    private static func snapshotBlocks(of snapshot: UsageSnapshot?, now: Date) -> [Block] {
         guard let snapshot else { return [] }
         let lanes = [snapshot.primary, snapshot.secondary, snapshot.tertiary].compactMap { window -> Block? in
-            guard let window, let used = OverviewCompactAccountRow.used(window) else { return nil }
-            return Block(
-                title: Self.windowTitle(window),
-                window: window,
-                used: used,
-                resetText: window.resetsAt.map(Self.resetText))
+            guard let window else { return nil }
+            return Self.nativeBlock(title: Self.windowTitle(window), window: window, now: now)
         }
         let extras = (snapshot.extraRateWindows ?? []).compactMap { named -> Block? in
-            guard named.usageKnown, let used = OverviewCompactAccountRow.used(named.window) else { return nil }
-            return Block(
-                title: named.title,
-                window: named.window,
-                used: used,
-                resetText: named.window.resetsAt.map(Self.resetText))
+            guard named.usageKnown else { return nil }
+            return Self.nativeBlock(title: named.title, window: named.window, now: now)
         }
         return lanes + extras
+    }
+
+    private static func nativeBlock(title: String, window: RateWindow, now: Date) -> Block? {
+        guard let used = OverviewCompactAccountRow.used(window) else { return nil }
+        let pace = OverviewUsageRow.linearPace(
+            used: used,
+            duration: window.windowMinutes.map { TimeInterval($0) * 60 },
+            resetsAt: window.resetsAt,
+            now: now)
+        return Block(
+            title: title,
+            window: window,
+            used: used,
+            resetText: window.resetsAt.map { Self.resetText($0, now: now) },
+            outlook: pace.flatMap { OverviewUsageRow.PaceOutlook(pace: $0, now: now) })
     }
 
     static func windowTitle(_ window: RateWindow) -> String {
@@ -368,9 +335,34 @@ struct AccountUsageDetailView: View {
         return L("account_detail_window_minutes", minutes)
     }
 
-    static func resetText(_ date: Date) -> String {
-        let style = Date.FormatStyle(locale: codexBarLocalizedResourceLocale())
-            .month(.abbreviated).day().hour().minute()
-        return L("Resets %@", date.formatted(style))
+    static func resetText(_ date: Date, now: Date) -> String {
+        L("Resets %@", self.clockText(date, now: now))
+    }
+
+    /// A time on the 24-hour clock, as magpie's tray writes reset times: "14:30" today, "Tomorrow 09:00",
+    /// "Thu 14:30" later this week (Monday to Sunday), else "Oct 12 08:05". Earlier days get the date too,
+    /// so an old "Updated" time never reads as today's.
+    static func clockText(_ date: Date, now: Date, calendar: Calendar = .current) -> String {
+        let locale = codexBarLocalizedResourceLocale()
+        let clock = DateFormatter()
+        clock.locale = Locale(identifier: "en_US_POSIX")
+        clock.timeZone = calendar.timeZone
+        clock.dateFormat = "HH:mm"
+        let time = clock.string(from: date)
+        let days = calendar.dateComponents(
+            [.day],
+            from: calendar.startOfDay(for: now),
+            to: calendar.startOfDay(for: date)).day ?? 0
+        if days == 0 { return time }
+        if days == 1 { return L("Tomorrow %@", time) }
+        // Days left in this Monday-to-Sunday week; Calendar numbers Sunday 1 through Saturday 7.
+        let daysLeftInWeek = 6 - (calendar.component(.weekday, from: now) + 5) % 7
+        var style = Date.FormatStyle(locale: locale, calendar: calendar, timeZone: calendar.timeZone)
+        if days > 1, days <= daysLeftInWeek {
+            style = style.weekday(.abbreviated)
+        } else {
+            style = style.month(.abbreviated).day()
+        }
+        return "\(date.formatted(style)) \(time)"
     }
 }

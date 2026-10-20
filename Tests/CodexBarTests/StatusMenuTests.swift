@@ -594,11 +594,9 @@ struct StatusMenuTests {
         }
         #expect(!titles.contains { $0.hasPrefix("About CodexBar") })
 
-        // The Overview footer bar carries only About and Quit; refresh and Settings live in the header.
-        let footer = try #require(menu.items.compactMap { $0.view as? MenuFooterBarView }.first)
-        #expect(footer.button(labeled: "Refresh") == nil)
-        #expect(footer.button(labeled: "Settings...") == nil)
-        #expect(footer.button(labeled: "Quit") != nil)
+        // About and Quit live in the footer row, so the Overview menu has no icon bar.
+        #expect(!menu.items.contains { $0.view is MenuFooterBarView })
+        #expect(menu.items.contains { $0.representedObject as? String == "overviewFooterStatus" })
 
         let statusMenu = try #require(menu as? StatusItemMenu)
         let refreshKey = try self.footerKeyEvent("r")
@@ -1388,10 +1386,10 @@ extension StatusMenuTests {
         let ids = self.representedIDs(in: menu)
         let overviewRows = ids.filter { $0.hasPrefix("overviewRow-") }
         #expect(Set(overviewRows) == Set(enabledProviders.map { "overviewRow-\($0.rawValue)" }))
-        // The card header opens the menu; providers sit in their own blocks, so the only separator is
-        // the one before the actions.
+        // The card header opens the menu and the footer row closes it; providers sit in their own
+        // blocks, so no native separator is drawn.
         #expect(ids.first == "overviewHeader")
-        #expect(menu.items.count(where: \.isSeparatorItem) == 1)
+        #expect(menu.items.count(where: \.isSeparatorItem) == 0)
     }
 
     @Test

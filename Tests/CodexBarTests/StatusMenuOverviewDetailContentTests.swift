@@ -244,16 +244,17 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `magpie detail blocks keep each window's name and reset time`() {
+    func `magpie detail blocks use the row's window labels and keep reset times`() {
         let reset = Date(timeIntervalSince1970: 1_800_000_000)
         let windows = [
             OverviewUsageRow.NamedWindow(window: MagpieQuotaWindow(name: "Month", usedPercent: 62, resetsAt: reset)),
             OverviewUsageRow.NamedWindow(window: MagpieQuotaWindow(name: "Daily", usedPercent: 30, resetsAt: nil)),
         ]
-        let blocks = AccountUsageDetailView.blocks(of: windows)
-        #expect(blocks.map(\.title) == ["Monthly limit", "Daily"])
+        let now = reset.addingTimeInterval(-86400 * 10)
+        let blocks = AccountUsageDetailView.blocks(of: windows, now: now)
+        #expect(blocks.map(\.title) == windows.map(\.label))
         #expect(blocks.map(\.used) == [62, 30])
-        #expect(blocks[0].resetText == AccountUsageDetailView.resetText(reset))
+        #expect(blocks[0].resetText == AccountUsageDetailView.resetText(reset, now: now))
         #expect(blocks[1].resetText == nil)
     }
 
@@ -328,42 +329,65 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `detail draws recorded history itself and adds no second usage chart`() throws {
-        func detailCardHeight(history: Bool) throws -> (CGFloat, [String]) {
-            let (controller, store, _) = self.makeOverviewController(
-                providers: [.opencodego, .codex], rendersCards: true)
-            defer { controller.releaseStatusItemsForTesting() }
-            let now = Date()
-            store._setSnapshotForTesting(
-                UsageSnapshot(
-                    primary: RateWindow(usedPercent: 20, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
-                    secondary: nil,
-                    updatedAt: now),
-                provider: .opencodego)
-            if history {
-                store.planUtilizationHistory[UsageProvider.opencodego.instanceID] = PlanUtilizationHistoryBuckets(
-                    unscoped: [PlanUtilizationSeriesHistory(
-                        name: .session,
-                        windowMinutes: 300,
-                        entries: [PlanUtilizationHistoryEntry(
-                            capturedAt: now.addingTimeInterval(-86400),
-                            usedPercent: 40,
-                            resetsAt: now.addingTimeInterval(-86400 + 3600))])])
-            }
-            let menu = controller.makeMenu()
-            controller.menuWillOpen(menu)
-            let detail = try self.openDetail(of: .opencodego, in: menu)
-            let card = try #require(detail.items.first?.view)
-            card.layoutSubtreeIfNeeded()
-            let ids = detail.items.compactMap { $0.representedObject as? String }
-            return (card.frame.height, ids)
+    func `detail adds no usage history chart even when history was recorded`() throws {
+        let (controller, store, _) = self.makeOverviewController(providers: [.opencodego, .codex], rendersCards: true)
+        defer { controller.releaseStatusItemsForTesting() }
+        let now = Date()
+        store._setSnapshotForTesting(
+            UsageSnapshot(
+                primary: RateWindow(usedPercent: 20, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
+                secondary: nil,
+                updatedAt: now),
+            provider: .opencodego)
+        store.planUtilizationHistory[UsageProvider.opencodego.instanceID] = PlanUtilizationHistoryBuckets(
+            unscoped: [PlanUtilizationSeriesHistory(
+                name: .session,
+                windowMinutes: 300,
+                entries: [PlanUtilizationHistoryEntry(
+                    capturedAt: now.addingTimeInterval(-86400),
+                    usedPercent: 40,
+                    resetsAt: now.addingTimeInterval(-86400 + 3600))])])
+        let menu = controller.makeMenu()
+        controller.menuWillOpen(menu)
+        let detail = try self.openDetail(of: .opencodego, in: menu)
+        let ids = detail.items.compactMap { $0.representedObject as? String }
+        #expect(!ids.contains(StatusItemController.usageHistoryChartID))
+    }
+
+    @Test
+    func `account rows under a group header continue its card when highlighted`() throws {
+        let (controller, store, settings) = self.makeOverviewController(
+            providers: [.claude, .codex],
+            rendersCards: true)
+        defer { controller.releaseStatusItemsForTesting() }
+        store.magpieTransport = { _ in
+            try await Task.sleep(for: .seconds(3600))
+            throw CancellationError()
         }
-        let without = try detailCardHeight(history: false)
-        let with = try detailCardHeight(history: true)
-        #expect(with.0 > without.0)
-        for ids in [with.1, without.1] {
-            #expect(!ids.contains(StatusItemController.usageHistoryChartID))
-            #expect(!ids.contains(StatusItemController.costHistoryChartID))
+        settings.magpieSourceEnabled = true
+        let accounts = ["one", "two", "three"].enumerated().map { index, name in
+            MagpieAccountSnapshot(
+                id: ProviderAccountIdentity(source: "magpie", opaqueID: "claude:\(name)"),
+                provider: MagpieProviderMapping.reference(for: "claude"),
+                displayLabel: name,
+                accountEmail: nil,
+                ordinal: index + 1,
+                windows: [MagpieQuotaWindow(name: "5 hours", usedPercent: 12, resetsAt: nil)],
+                readAt: Date(),
+                isActive: index == 0,
+                error: nil)
         }
+        store.magpieAccountSnapshots = accounts
+
+        let menu = controller.makeMenu()
+        controller.menuWillOpen(menu)
+        let blocks = try accounts.map { account in
+            let item = try #require(menu.items.first {
+                ($0.representedObject as? String) == "overviewRow-claude#\(account.id.opaqueID)"
+            })
+            return try #require((item.view as? MenuRowContainerView)?.rowPayload.selectionBlock)
+        }
+        #expect(blocks.map(\.roundsTop) == [false, false, false])
+        #expect(blocks.map(\.roundsBottom) == [false, false, true])
     }
 }

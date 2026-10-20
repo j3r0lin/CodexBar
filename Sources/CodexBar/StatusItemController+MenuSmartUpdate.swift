@@ -77,7 +77,8 @@ extension StatusItemController {
             width: context.menuWidth,
             provider: context.currentProvider,
             captureMenu: captureMenu,
-            footerBarActions: overviewChrome ? [.about, .quit] : nil)
+            // The Overview footer row carries About and Quit itself, so it gets no icon bar.
+            footerBarActions: overviewChrome ? [] : nil)
         self.appendOverviewFooterStatusIfNeeded(
             to: target,
             switcherSelection: overviewChrome ? .overview : nil,

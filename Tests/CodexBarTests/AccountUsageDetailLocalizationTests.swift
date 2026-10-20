@@ -33,10 +33,60 @@ struct AccountUsageDetailLocalizationTests {
     func `reset lines are localized`() {
         let reset = Date(timeIntervalSince1970: 1_000_000)
         CodexBarLocalizationOverride.$appLanguage.withValue("en") {
-            #expect(AccountUsageDetailView.resetText(reset).hasPrefix("Resets "))
+            #expect(AccountUsageDetailView.resetText(reset, now: reset).hasPrefix("Resets "))
         }
         CodexBarLocalizationOverride.$appLanguage.withValue("zh-Hans") {
-            #expect(AccountUsageDetailView.resetText(reset).hasPrefix("重置于 "))
+            #expect(AccountUsageDetailView.resetText(reset, now: reset).hasPrefix("重置于 "))
+        }
+    }
+
+    @Test
+    func `clock times name today, tomorrow, the rest of this week, then the date`() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(TimeZone(identifier: "UTC"))
+        func at(_ day: Int, _ hour: Int, _ minute: Int = 0) throws -> Date {
+            try #require(calendar.date(from: DateComponents(
+                year: 2026,
+                month: 10,
+                day: day,
+                hour: hour,
+                minute: minute)))
+        }
+        // 2026-10-20 is a Tuesday; its week runs to Sunday the 25th.
+        let now = try at(20, 9)
+        let cases = try [
+            (at(20, 14, 30), "14:30"),
+            (at(21, 9, 5), "Tomorrow 09:05"),
+            (at(22, 14, 30), "Thu 14:30"),
+            (at(25, 8), "Sun 08:00"),
+            (at(26, 8), "Oct 26 08:00"),
+            (at(19, 23), "Oct 19 23:00"),
+        ]
+        let tomorrow = try at(21, 9, 5)
+        CodexBarLocalizationOverride.$appLanguage.withValue("en") {
+            for (date, expected) in cases {
+                #expect(AccountUsageDetailView.clockText(date, now: now, calendar: calendar) == expected)
+            }
+        }
+        CodexBarLocalizationOverride.$appLanguage.withValue("zh-Hans") {
+            #expect(AccountUsageDetailView.clockText(tomorrow, now: now, calendar: calendar) == "明天 09:05")
+        }
+    }
+
+    @Test
+    func `pace lines are translated in every catalog`() throws {
+        let resources = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Sources/CodexBar/Resources")
+        let keys = ["Tomorrow %@", "Runs out %@ at this pace", "Lasts past the reset at this pace"]
+        for language in AppLanguage.allCases where language != .system {
+            let url = resources.appendingPathComponent("\(language.rawValue).lproj/Localizable.strings")
+            let catalog = try #require(NSDictionary(contentsOf: url) as? [String: String])
+            for key in keys {
+                #expect(catalog[key]?.isEmpty == false, "\(language.rawValue): \(key)")
+            }
         }
     }
 
@@ -63,11 +113,6 @@ struct AccountUsageDetailLocalizationTests {
             primary: self.window(minutes: 300, used: 38, resetsAt: now.addingTimeInterval(2 * 3600)),
             secondary: self.window(minutes: 7 * 1440, used: 95, resetsAt: reset),
             updatedAt: now)
-        let history: [Double?] = (0..<30).map { (day: Int) -> Double? in
-            if day % 7 == 3 { return nil }
-            let lift = day > 22 ? 20 : 0
-            return Double(10 + (day * 37) % 60 + lift)
-        }
         let view = HStack(alignment: .top, spacing: 24) {
             AccountUsageDetailView(provider: .grok, providerName: "Grok", snapshot: grok, width: 340, now: now)
             AccountUsageDetailView(
@@ -76,7 +121,6 @@ struct AccountUsageDetailLocalizationTests {
                 accountName: "claude-1",
                 snapshot: claude,
                 width: 340,
-                history: history,
                 now: now)
         }
         .padding(24)
@@ -120,34 +164,5 @@ struct AccountUsageDetailLocalizationTests {
             let png = try #require(bitmap.representation(using: .png, properties: [:]))
             try png.write(to: URL(fileURLWithPath: dir).appendingPathComponent("detail-cards.png"))
         }
-    }
-}
-
-extension AccountUsageDetailLocalizationTests {
-    @Test
-    func `daily peaks keep the highest reading per day of the longest window`() throws {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = try #require(TimeZone(identifier: "UTC"))
-        let now = Date(timeIntervalSince1970: 1_800_000_000)
-        func entry(daysAgo: Double, _ used: Double) -> PlanUtilizationHistoryEntry {
-            PlanUtilizationHistoryEntry(
-                capturedAt: now.addingTimeInterval(-daysAgo * 86400),
-                usedPercent: used,
-                resetsAt: nil)
-        }
-        let weekly = PlanUtilizationSeriesHistory(
-            name: "weekly",
-            windowMinutes: 10080,
-            entries: [entry(daysAgo: 0, 20), entry(daysAgo: 0, 35), entry(daysAgo: 2, 50), entry(daysAgo: 40, 90)])
-        let session = PlanUtilizationSeriesHistory(
-            name: "session",
-            windowMinutes: 300,
-            entries: [entry(daysAgo: 1, 99)])
-        let peaks = AccountUsageDetailView.dailyPeaks([session, weekly], now: now, calendar: calendar)
-        #expect(peaks.count == 30)
-        #expect(peaks.last == 35)
-        #expect(peaks[27] == 50)
-        #expect(peaks[28] == nil)
-        #expect(AccountUsageDetailView.dailyPeaks([], now: now).isEmpty)
     }
 }

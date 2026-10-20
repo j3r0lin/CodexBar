@@ -2643,9 +2643,7 @@
 "No providers enabled" = "Немає увімкнених провайдерів";
 "5-hour limit" = "Ліміт на 5 годин";
 "Weekly limit" = "Тижневий ліміт";
-"account_detail_usage_title" = "Використання %@";
 "account_detail_used" = "Використано %@";
-"account_detail_history" = "Історія";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar запитає у macOS Keychain маркер входу Muse Code, щоб отримати дані про використання вашої підписки Muse Code. Натисніть OK, щоб продовжити.";
 /* Claude Platform provider */
 "API credit" = "Кредит API";
@@ -2698,6 +2696,8 @@
 "%lld providers" = "%lld провайдерів";
 "Auto-refresh off" = "Автооновлення вимкнено";
 "Auto-refresh on" = "Автооновлення увімкнено";
-"Last sync: %@" = "Остання синхронізація: %@";
 "Refresh Claude usage" = "Оновити використання Claude";
 "resets in %@" = "скидання через %@";
+"Tomorrow %@" = "Завтра %@";
+"Runs out %@ at this pace" = "За такого темпу закінчиться %@";
+"Lasts past the reset at this pace" = "За такого темпу вистачить до скидання";

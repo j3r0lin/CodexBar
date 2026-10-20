@@ -2644,9 +2644,7 @@
 "No providers enabled" = "Нет включённых провайдеров";
 "5-hour limit" = "Лимит на 5 часов";
 "Weekly limit" = "Недельный лимит";
-"account_detail_usage_title" = "Использование %@";
 "account_detail_used" = "Использовано %@";
-"account_detail_history" = "История";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar запросит у macOS Keychain токен входа Muse Code, чтобы получить данные об использовании вашей подписки Muse Code. Нажмите OK, чтобы продолжить.";
 /* Claude Platform provider */
 "API credit" = "Кредит API";
@@ -2699,6 +2697,8 @@
 "%lld providers" = "%lld провайдеров";
 "Auto-refresh off" = "Автообновление отключено";
 "Auto-refresh on" = "Автообновление включено";
-"Last sync: %@" = "Последняя синхронизация: %@";
 "Refresh Claude usage" = "Обновить использование Claude";
 "resets in %@" = "сбрасывается через %@";
+"Tomorrow %@" = "Завтра %@";
+"Runs out %@ at this pace" = "При таком темпе закончится %@";
+"Lasts past the reset at this pace" = "При таком темпе хватит до сброса";

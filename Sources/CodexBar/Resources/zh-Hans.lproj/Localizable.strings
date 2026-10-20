@@ -2637,15 +2637,12 @@
 "No providers enabled" = "未启用任何提供商";
 "5-hour limit" = "5 小时限额";
 "Weekly limit" = "每周限额";
-"account_detail_usage_title" = "%@ 用量";
 "account_detail_used" = "已用 %@";
-"account_detail_history" = "历史";
 
 /* Overview card UI */
 "%lld providers" = "%lld 个提供商";
 "Auto-refresh on" = "自动刷新已开启";
 "Auto-refresh off" = "自动刷新已关闭";
-"Last sync: %@" = "上次同步：%@";
 "resets in %@" = "%@ 后重置";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar 将向 macOS 钥匙串请求 Muse Code 登录 token，以获取你的 Muse Code 订阅用量。点击“确定”继续。";
 /* Claude Platform provider */
@@ -2694,3 +2691,6 @@
 "Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "网关提供商无需本地登录。费用、额度和历史记录不可用。原先仅适用于 Claude 的开关现在适用于 magpie 报告的所有提供商。";
 "magpie quotas URL" = "magpie 配额 URL";
 "Waiting for magpie discovery" = "等待 magpie 发现提供商";
+"Tomorrow %@" = "明天 %@";
+"Runs out %@ at this pace" = "按此速度将于 %@ 用完";
+"Lasts past the reset at this pace" = "按此速度可撑到重置";

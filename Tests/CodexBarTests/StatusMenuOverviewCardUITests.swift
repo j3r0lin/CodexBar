@@ -30,7 +30,7 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `overview chrome adds the header, the provider count and the footer status`() throws {
+    func `overview chrome adds the header, the provider count and the footer status`() {
         self.disableMenuCardsForTesting()
         let (settings, store) = self.makeOverviewFixture()
         enableTestProviders([.claude, .codex], settings: settings)
@@ -57,14 +57,10 @@ extension StatusMenuTests {
         #expect(ids.first == "overviewHeader")
         #expect(ids.last == "overviewFooterStatus")
 
-        // Refresh and Settings moved to the header; the footer bar keeps About and Quit.
-        let bar = try #require(menu.items.first {
-            $0.representedObject as? String == StatusItemController.menuFooterBarItemID
-        })
-        let barView = try #require(bar.view as? MenuFooterBarView)
-        #expect(barView.button(labeled: L("Refresh")) == nil)
-        #expect(barView.button(labeled: L("Settings...")) == nil)
-        #expect(barView.button(labeled: L("Quit")) != nil)
+        // About and Quit live in the footer row, so the Overview menu has no icon bar.
+        #expect(!menu.items.contains { $0.view is MenuFooterBarView })
+        // No edge-to-edge native separator above the footer; the last card's border closes the content.
+        #expect(menu.items.dropLast().last?.isSeparatorItem == false)
     }
 
     @Test

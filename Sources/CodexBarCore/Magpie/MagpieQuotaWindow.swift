@@ -34,9 +34,23 @@ public struct MagpieQuotaWindow: Sendable, Equatable {
     /// imply a fixed length (monthly and unknown windows stay nil).
     public let duration: TimeInterval?
     public let semantics: Semantics
+    /// The shared pool a window belongs to, when magpie reports one.
+    public let pool: String?
 
-    public init(name: String, usedPercent: Double, resetsAt: Date?, duration: TimeInterval? = nil) {
+    /// The name magpie's quota history keeps this window's readings under.
+    public var historyName: String {
+        self.pool.map { "\($0) · \(self.name)" } ?? self.name
+    }
+
+    public init(
+        name: String,
+        usedPercent: Double,
+        resetsAt: Date?,
+        duration: TimeInterval? = nil,
+        pool: String? = nil)
+    {
         self.name = name
+        self.pool = pool
         self.usedPercent = usedPercent
         self.resetsAt = resetsAt
         self.duration = duration ?? Self.impliedDuration(forName: name)

@@ -2651,15 +2651,12 @@
 "5-hour limit" = "5-hour limit";
 "Weekly limit" = "Weekly limit";
 "Monthly limit" = "Monthly limit";
-"account_detail_usage_title" = "%@ Usage";
 "account_detail_used" = "%@ Used";
-"account_detail_history" = "History";
 
 /* Overview card UI */
 "%lld providers" = "%lld providers";
 "Auto-refresh on" = "Auto-refresh on";
 "Auto-refresh off" = "Auto-refresh off";
-"Last sync: %@" = "Last sync: %@";
 "resets in %@" = "resets in %@";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue.";
 /* Claude Platform provider */
@@ -2707,3 +2704,6 @@
 "Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie.";
 "magpie quotas URL" = "magpie quotas URL";
 "Waiting for magpie discovery" = "Waiting for magpie discovery";
+"Tomorrow %@" = "Tomorrow %@";
+"Runs out %@ at this pace" = "Runs out %@ at this pace";
+"Lasts past the reset at this pace" = "Lasts past the reset at this pace";

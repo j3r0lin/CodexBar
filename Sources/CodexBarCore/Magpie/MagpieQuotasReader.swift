@@ -3,7 +3,7 @@ import Foundation
 public enum MagpieQuotasReaderError: LocalizedError, Sendable {
     case invalidURL
     case httpStatus(Int)
-    case responseTooLarge(byteCount: Int)
+    case responseTooLarge(byteCount: Int, limit: Int)
     case malformedResponse
 
     public var errorDescription: String? {
@@ -12,9 +12,8 @@ public enum MagpieQuotasReaderError: LocalizedError, Sendable {
             "The magpie quotas URL is not a valid http(s) URL."
         case let .httpStatus(status):
             "magpie returned HTTP \(status)."
-        case let .responseTooLarge(byteCount):
-            "magpie returned \(byteCount) bytes; refusing to parse more than " +
-                "\(MagpieQuotasReader.maxResponseBytes)."
+        case let .responseTooLarge(byteCount, limit):
+            "magpie returned \(byteCount) bytes; refusing to parse more than \(limit)."
         case .malformedResponse:
             "magpie returned a quota response CodexBar cannot read."
         }
@@ -95,7 +94,7 @@ public enum MagpieQuotasReader {
             throw MagpieQuotasReaderError.httpStatus(http.statusCode)
         }
         guard data.count <= self.maxResponseBytes else {
-            throw MagpieQuotasReaderError.responseTooLarge(byteCount: data.count)
+            throw MagpieQuotasReaderError.responseTooLarge(byteCount: data.count, limit: self.maxResponseBytes)
         }
         return try self.rows(from: data)
     }
@@ -149,20 +148,11 @@ public enum MagpieQuotasReader {
         let name: String?
         let used: Double?
         let resetsAt: String?
+        let pool: String?
     }
 
     private static func row(_ row: Row) -> MagpieQuotaRow {
-        // magpie formats `user` as "<email> · <organization>"; either side may be absent.
-        let user = row.user?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let email: String
-        let organization: String
-        if let range = user.range(of: self.userSeparator) {
-            email = String(user[..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
-            organization = String(user[range.upperBound...]).trimmingCharacters(in: .whitespaces)
-        } else {
-            email = user
-            organization = ""
-        }
+        let (email, organization) = self.splitUser(row.user)
         let alias = row.alias?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let windows = (row.windows ?? []).compactMap(\.value).compactMap { window -> MagpieQuotaWindow? in
             // Negative usage is malformed; values above 100 are reported as-is and the UI clamps.
@@ -170,7 +160,8 @@ public enum MagpieQuotasReader {
             return MagpieQuotaWindow(
                 name: name,
                 usedPercent: used,
-                resetsAt: ISO8601DateParser.parse(window.resetsAt))
+                resetsAt: ISO8601DateParser.parse(window.resetsAt),
+                pool: window.pool.flatMap { $0.isEmpty ? nil : $0 })
         }
         return MagpieQuotaRow(
             provider: row.provider,
@@ -181,5 +172,113 @@ public enum MagpieQuotasReader {
             readAt: ISO8601DateParser.parse(row.readAt),
             windows: windows,
             error: row.error)
+    }
+
+    /// magpie formats `user` as "<email> · <organization>"; either side may be absent.
+    static func splitUser(_ raw: String?) -> (email: String, organization: String) {
+        let user = raw?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard let range = user.range(of: self.userSeparator) else { return (user, "") }
+        return (
+            String(user[..<range.lowerBound]).trimmingCharacters(in: .whitespaces),
+            String(user[range.upperBound...]).trimmingCharacters(in: .whitespaces))
+    }
+
+    // MARK: - History
+
+    /// Seven days covers a weekly window's whole cycle, which is all the curve and the pace fit read.
+    public static let historyDays = 7
+    /// A week of readings is a few hundred KB per handful of accounts; the cap leaves room for many
+    /// more accounts while still refusing a runaway body.
+    public static let maxHistoryResponseBytes = 16 * 1_048_576
+
+    /// The history endpoint sits under the configured quotas URL: `<quotas>/history?days=N`.
+    public static func historyURL(from configured: String?, days: Int = Self.historyDays) -> URL? {
+        guard let quotas = self.quotasURL(from: configured),
+              var components = URLComponents(url: quotas, resolvingAgainstBaseURL: false)
+        else { return nil }
+        components.path = (components.path.hasSuffix("/") ? components.path : components.path + "/") + "history"
+        components.queryItems = [URLQueryItem(name: "days", value: String(days))]
+        return components.url
+    }
+
+    /// Reads every account's window readings with one unauthenticated GET, like `readRows`.
+    public static func readHistory(
+        quotasURL configured: String?,
+        transport: Transport = Self.urlSessionTransport) async throws -> MagpieQuotaHistory
+    {
+        guard let url = self.historyURL(from: configured) else {
+            throw MagpieQuotasReaderError.invalidURL
+        }
+        var request = URLRequest(url: url, timeoutInterval: self.defaultTimeout)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        let (data, response) = try await transport(request)
+        try Task.checkCancellation()
+        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+            throw MagpieQuotasReaderError.httpStatus(http.statusCode)
+        }
+        guard data.count <= self.maxHistoryResponseBytes else {
+            throw MagpieQuotasReaderError.responseTooLarge(byteCount: data.count, limit: self.maxHistoryResponseBytes)
+        }
+        return try self.history(from: data)
+    }
+
+    public static func history(from data: Data) throws -> MagpieQuotaHistory {
+        let response: HistoryResponse
+        do {
+            response = try JSONDecoder().decode(HistoryResponse.self, from: data)
+        } catch {
+            throw MagpieQuotasReaderError.malformedResponse
+        }
+        // One formatter pair for the whole body: a week holds thousands of timestamps.
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let plain = ISO8601DateFormatter()
+        func date(_ raw: String?) -> Date? {
+            guard let raw, !raw.isEmpty else { return nil }
+            return fractional.date(from: raw) ?? plain.date(from: raw)
+        }
+        let accounts = response.data.compactMap(\.value).map { account in
+            MagpieQuotaHistoryAccount(
+                provider: account.provider,
+                user: account.user ?? "",
+                lines: (account.lines ?? []).compactMap(\.value).compactMap { line in
+                    guard let name = line.name else { return nil }
+                    let points = (line.points ?? []).compactMap(\.value).compactMap { point in
+                        // Same rule as quota windows: a reading must be a finite, non-negative percent.
+                        guard let at = date(point.at), let left = point.left, left.isFinite, left >= 0
+                        else { return nil as MagpieQuotaHistoryPoint? }
+                        return MagpieQuotaHistoryPoint(
+                            at: at,
+                            left: left,
+                            start: date(point.start),
+                            resetsAt: date(point.resetsAt))
+                    }
+                    return MagpieQuotaHistoryAccount.Line(name: name, points: points)
+                })
+        }
+        return MagpieQuotaHistory(accounts: accounts)
+    }
+
+    private struct HistoryResponse: Decodable {
+        let data: [Lenient<HistoryAccount>]
+    }
+
+    private struct HistoryAccount: Decodable {
+        let provider: String
+        let user: String?
+        let lines: [Lenient<HistoryLine>]?
+    }
+
+    private struct HistoryLine: Decodable {
+        let name: String?
+        let points: [Lenient<HistoryPoint>]?
+    }
+
+    private struct HistoryPoint: Decodable {
+        let at: String?
+        let left: Double?
+        let start: String?
+        let resetsAt: String?
     }
 }

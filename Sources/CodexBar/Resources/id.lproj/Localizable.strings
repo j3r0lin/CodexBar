@@ -2647,15 +2647,12 @@
 "No providers enabled" = "Tidak ada penyedia yang diaktifkan";
 "5-hour limit" = "Batas 5 jam";
 "Weekly limit" = "Batas mingguan";
-"account_detail_usage_title" = "Penggunaan %@";
 "account_detail_used" = "%@ terpakai";
-"account_detail_history" = "Riwayat";
 
 /* Overview card UI */
 "%lld providers" = "%lld penyedia";
 "Auto-refresh on" = "Segarkan otomatis aktif";
 "Auto-refresh off" = "Segarkan otomatis nonaktif";
-"Last sync: %@" = "Sinkronisasi terakhir: %@";
 "resets in %@" = "diatur ulang dalam %@";
 "CodexBar will ask macOS Keychain for the Muse Code login token so it can fetch your Muse Code subscription usage. Click OK to continue." = "CodexBar akan meminta token login Muse Code dari Keychain macOS agar dapat mengambil penggunaan langganan Muse Code Anda. Klik OK untuk melanjutkan.";
 /* Claude Platform provider */
@@ -2704,3 +2701,6 @@
 "Gateway providers do not require local login. Cost, credits, and history are unavailable. The previous Claude-only switch now applies to every provider reported by magpie." = "Penyedia gateway tidak memerlukan login lokal. Biaya, kredit, dan riwayat tidak tersedia. Sakelar yang sebelumnya hanya untuk Claude kini berlaku untuk setiap penyedia yang dilaporkan oleh magpie.";
 "magpie quotas URL" = "URL kuota magpie";
 "Waiting for magpie discovery" = "Menunggu penemuan magpie";
+"Tomorrow %@" = "Besok %@";
+"Runs out %@ at this pace" = "Habis %@ dengan laju ini";
+"Lasts past the reset at this pace" = "Cukup hingga reset dengan laju ini";
