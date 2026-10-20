@@ -15,7 +15,6 @@ extension StatusItemController {
     /// usage bars collapse under it.
     static let overviewMenuMinimumWidth: CGFloat = 400
     static let overviewRowIdentifierPrefix = "overviewRow-"
-    static let overviewGroupHeadingIdentifierPrefix = "overviewHeading-"
     static let menuFooterBarItemID = "menuFooterBar"
     static let menuFooterActions: [MenuDescriptor.MenuAction] = [.refresh, .settings, .about, .quit]
     private static let defaultMenuOpenRefreshDelay: Duration = .seconds(1.2)
@@ -417,8 +416,7 @@ extension StatusItemController {
     private func addOverviewRows(
         to menu: NSMenu,
         enabledProviders: [UsageProvider],
-        menuWidth: CGFloat,
-        captureMenu: NSMenu? = nil) -> Bool
+        menuWidth: CGFloat) -> Bool
     {
         let providerScopes = self.overviewProviderScopes(enabledProviders: enabledProviders)
         let rows = self.overviewUsageRows(visibleProviders: providerScopes.visible)
@@ -465,48 +463,12 @@ extension StatusItemController {
             menu.addItem(.separator())
         }
 
-        // A provider with several accounts gets a collapsible group header; a lone account is its own card.
-        let collapsedGroups = self.settings.overviewCollapsedProviderGroups
+        // Every account is its own card; only a provider with several accounts names the account.
         let accountCounts = Dictionary(rows.map { ($0.groupKey, 1) }, uniquingKeysWith: +)
-        for (index, row) in rows.enumerated() {
+        for row in rows {
             let isGrouped = (accountCounts[row.groupKey] ?? 1) > 1
-            let startsProvider = index == 0 || rows[index - 1].groupKey != row.groupKey
-            let endsProvider = index == rows.count - 1 || rows[index + 1].groupKey != row.groupKey
-            let groupCollapsed = isGrouped && collapsedGroups.contains(row.groupKey)
             let identifier = "\(Self.overviewRowIdentifierPrefix)\(row.groupKey)"
                 + (row.accountID.map { "#\($0.opaqueID)" } ?? "")
-            // Each provider is one bordered card; a grouped provider's header opens its card.
-            let block: OverviewBlockPosition = switch (isGrouped || !startsProvider, endsProvider) {
-            case (false, true): .single
-            case (false, false): .top
-            case (true, true): .bottom
-            case (true, false): .middle
-            }
-            if isGrouped, startsProvider {
-                let groupKey = row.groupKey
-                let icon = self.overviewProviderIcon(for: row)
-                let heading = self.makeMenuCardItem(
-                    OverviewProviderGroupHeader(
-                        title: "\(row.providerName) · " + L("%lld accounts", accountCounts[groupKey] ?? 0),
-                        windowHint: self.overviewWindowHint(for: rows, groupKey: groupKey),
-                        icon: icon.image,
-                        iconIsTemplate: icon.isTemplate,
-                        collapsed: groupCollapsed,
-                        width: menuWidth),
-                    id: "\(Self.overviewGroupHeadingIdentifierPrefix)\(groupKey)",
-                    width: menuWidth,
-                    heightCacheScope: "overviewAccountGroupHeading",
-                    heightCacheFingerprint: groupCollapsed ? "heading-collapsed" : "heading",
-                    usesGPUSelection: true,
-                    tightVerticalFit: true,
-                    selectionBlock: groupCollapsed ? .single : .top,
-                    onClick: { [weak self, weak captureMenu] in
-                        self?.toggleOverviewGroupCollapsed(groupKey, menu: captureMenu)
-                    })
-                menu.addItem(heading)
-            }
-            // A collapsed group is just its header.
-            if groupCollapsed { continue }
             let submenu = self.makeOverviewDetailSubmenu(row: row, width: menuWidth)
             let now = Date()
             let namedLines = row.compactLines(now: now)
@@ -519,12 +481,11 @@ extension StatusItemController {
                 shortWindow: slots.short,
                 longWindow: slots.long,
                 width: menuWidth,
-                namesProvider: !isGrouped,
+                namesProvider: true,
                 provider: row.nativeProvider,
-                icon: isGrouped ? nil : icon.image,
+                icon: icon.image,
                 iconIsTemplate: icon.isTemplate,
-                block: block,
-                showsAccountDivider: isGrouped && !startsProvider,
+                block: .single,
                 errorText: row.errorText,
                 showsErrorFlag: row.showsErrorFlag,
                 namedLines: namedLines,
@@ -538,14 +499,12 @@ extension StatusItemController {
                 id: identifier,
                 width: menuWidth,
                 heightCacheScope: "overviewCompactRow",
-                heightCacheFingerprint: "compact-\(block)-\(max(1, rowView.lines.count))-\(row.errorText ?? "")",
+                heightCacheFingerprint: "compact-single-\(max(1, rowView.lines.count))-\(row.errorText ?? "")",
                 submenu: submenu,
                 showsSubmenuIndicator: false,
                 usesGPUSelection: true,
                 tightVerticalFit: true,
-                // An account row continues the card its group header opens, so its highlight keeps square
-                // top corners and rounds only the card's last row.
-                selectionBlock: block)
+                selectionBlock: .single)
             menu.addItem(item)
         }
         return true
@@ -577,28 +536,6 @@ extension StatusItemController {
             heightCacheFingerprint: "providers-\(providerCount)"))
     }
 
-    /// The distinct window labels a provider group holds, in row order ("5h / 7d").
-    private func overviewWindowHint(for rows: [OverviewUsageRow], groupKey: String) -> String {
-        var labels: [String] = []
-        for row in rows where row.groupKey == groupKey {
-            if let windows = row.namedWindows {
-                for window in windows where !labels.contains(window.label) {
-                    labels.append(window.label)
-                }
-            } else {
-                let slots = OverviewCompactAccountRow.slots(of: row.snapshot, provider: row.nativeProvider)
-                for window in [slots.short, slots.long].compactMap(\.self) {
-                    let label = OverviewCompactAccountRow.windowLabel(
-                        window,
-                        provider: row.nativeProvider,
-                        infersPeriodFromReset: !row.isMagpie)
-                    if !labels.contains(label) { labels.append(label) }
-                }
-            }
-        }
-        return labels.joined(separator: " / ")
-    }
-
     /// The brand icon for a row's provider, coloured when a curated asset exists; a nil image makes
     /// the row draw the generic cube for providers the app has never heard of.
     private func overviewProviderIcon(for row: OverviewUsageRow) -> (image: NSImage?, isTemplate: Bool) {
@@ -606,18 +543,6 @@ extension StatusItemController {
               let image = ProviderBrandIcon.image(for: provider, style: .brand)
         else { return (nil, true) }
         return (image, image.isTemplate)
-    }
-
-    private func toggleOverviewGroupCollapsed(_ groupKey: String, menu: NSMenu?) {
-        self.advanceMenuInteraction(for: menu)
-        var collapsed = self.settings.overviewCollapsedProviderGroups
-        if collapsed.contains(groupKey) {
-            collapsed.remove(groupKey)
-        } else {
-            collapsed.insert(groupKey)
-        }
-        self.settings.overviewCollapsedProviderGroups = collapsed
-        self.invalidateMenus(refreshOpenMenus: true)
     }
 
     /// The status-and-actions row at the bottom of the Overview menu. It drops the native separator
@@ -880,8 +805,7 @@ extension StatusItemController {
             if self.addOverviewRows(
                 to: menu,
                 enabledProviders: enabledProviders,
-                menuWidth: context.menuWidth,
-                captureMenu: captureMenu)
+                menuWidth: context.menuWidth)
             {
                 menu.addItem(.separator())
             } else {

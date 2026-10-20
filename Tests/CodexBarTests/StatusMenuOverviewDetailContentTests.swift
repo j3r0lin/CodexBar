@@ -355,7 +355,7 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `account rows under a group header continue its card when highlighted`() throws {
+    func `each magpie account has an independent card without a group heading`() throws {
         let (controller, store, settings) = self.makeOverviewController(
             providers: [.claude, .codex],
             rendersCards: true)
@@ -365,6 +365,7 @@ extension StatusMenuTests {
             throw CancellationError()
         }
         settings.magpieSourceEnabled = true
+        settings.overviewCollapsedProviderGroups = ["claude"]
         let accounts = ["one", "two", "three"].enumerated().map { index, name in
             MagpieAccountSnapshot(
                 id: ProviderAccountIdentity(source: "magpie", opaqueID: "claude:\(name)"),
@@ -387,7 +388,7 @@ extension StatusMenuTests {
             })
             return try #require((item.view as? MenuRowContainerView)?.rowPayload.selectionBlock)
         }
-        #expect(blocks.map(\.roundsTop) == [false, false, false])
-        #expect(blocks.map(\.roundsBottom) == [false, false, true])
+        #expect(blocks.allSatisfy { $0 == .single })
+        #expect(!menu.items.contains { ($0.representedObject as? String)?.hasPrefix("overviewHeading-") == true })
     }
 }

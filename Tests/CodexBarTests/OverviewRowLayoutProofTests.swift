@@ -78,30 +78,21 @@ struct OverviewRowLayoutProofTests {
                 short: self.window(96, minutes: 2 * 60 + 20),
                 long: self.window(15, minutes: 6 * 1440 + 21 * 60),
                 namesProvider: true)
-            OverviewProviderGroupHeader(
-                title: "Claude · 3 accounts",
-                windowHint: "5h / 7d",
-                icon: nil,
-                iconIsTemplate: true,
-                collapsed: false,
-                width: Self.width)
             self.row(
                 name: "a",
                 short: self.window(46, minutes: 18),
                 long: self.window(95, minutes: 9 * 60 + 58),
-                block: .middle)
+                block: .single)
             self.row(
                 name: "b",
                 short: self.window(0, minutes: nil),
                 long: self.window(84, minutes: 1440 + 9 * 60),
-                block: .middle,
-                divider: true)
+                block: .single)
             self.row(
                 name: "c",
                 short: self.window(0, minutes: nil),
                 long: self.window(100, minutes: 2 * 60 + 58),
-                block: .bottom,
-                divider: true)
+                block: .single)
             self.row(
                 name: "Kimi Code",
                 short: self.window(8, minutes: 4 * 1440 + 2 * 60),
@@ -128,8 +119,7 @@ struct OverviewRowLayoutProofTests {
         short: RateWindow?,
         long: RateWindow?,
         block: OverviewBlockPosition = .single,
-        namesProvider: Bool = false,
-        divider: Bool = false) -> some View
+        namesProvider: Bool = true) -> some View
     {
         OverviewCompactAccountRow(
             name: name,
@@ -138,7 +128,6 @@ struct OverviewRowLayoutProofTests {
             width: self.width,
             namesProvider: namesProvider,
             block: block,
-            showsAccountDivider: divider,
             now: self.now)
     }
 

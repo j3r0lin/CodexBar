@@ -32,13 +32,6 @@ struct OverviewRowRenderTests {
             Account(name: "claude-2", session: window(300, 0, 70), weekly: window(10080, 98, 248)),
         ]
         let view = VStack(alignment: .leading, spacing: 0) {
-            OverviewProviderGroupHeader(
-                title: "Claude · 3 accounts",
-                windowHint: "5h / 7d",
-                icon: nil,
-                iconIsTemplate: true,
-                collapsed: false,
-                width: width)
             ForEach(accounts.indices, id: \.self) { index in
                 let account = accounts[index]
                 OverviewCompactAccountRow(
@@ -46,8 +39,7 @@ struct OverviewRowRenderTests {
                     shortWindow: account.session,
                     longWindow: account.weekly,
                     width: width,
-                    block: index == accounts.count - 1 ? .bottom : .middle,
-                    showsAccountDivider: index > 0,
+                    namesProvider: true,
                     now: now)
             }
             OverviewCompactAccountRow(
@@ -134,20 +126,6 @@ struct OverviewRowRenderTests {
             row("Some Very Long Provider Name", [line("5h", 40), line("7d", 40, pace: 50)])
             row("OpenCode Go", [line("5h", 40), line("7d", 40, pace: 50)])
             row("Some Very Long Account Name", [line("5h", 40)], provider: false)
-            OverviewProviderGroupHeader(
-                title: "Some Very Long Provider Name · 12 accounts",
-                windowHint: "5h / 7d",
-                icon: nil,
-                iconIsTemplate: true,
-                collapsed: false,
-                width: width)
-            OverviewProviderGroupHeader(
-                title: "Claude · 3 accounts",
-                windowHint: "5h / 7d",
-                icon: nil,
-                iconIsTemplate: true,
-                collapsed: false,
-                width: width)
         })
     }
 
@@ -167,27 +145,21 @@ struct OverviewRowRenderTests {
         }
         let context = VStack(alignment: .leading, spacing: 0) {
             OverviewCardHeaderView(title: "CodexBar", updatedText: "Updated 2m ago", width: width)
-            OverviewProviderGroupHeader(
-                title: "Claude · 2 accounts",
-                windowHint: "5h / 7d",
-                icon: nil,
-                iconIsTemplate: true,
-                collapsed: false,
-                width: width)
             OverviewCompactAccountRow(
                 name: "claude",
                 shortWindow: window(300, 46),
                 longWindow: window(10080, 10),
                 width: width,
-                block: .middle,
+                namesProvider: true,
+                block: .single,
                 now: now)
             OverviewCompactAccountRow(
                 name: "claude-1",
                 shortWindow: window(300, 12),
                 longWindow: window(10080, 98),
                 width: width,
-                block: .bottom,
-                showsAccountDivider: true,
+                namesProvider: true,
+                block: .single,
                 now: now)
         }
         func write(_ name: String, _ content: some View) throws {
@@ -301,8 +273,7 @@ struct OverviewRowRenderTests {
             _ name: String,
             _ lines: [OverviewCompactAccountRow.Line],
             provider: Bool = true,
-            block: OverviewBlockPosition = .single,
-            divider: Bool = false) -> OverviewCompactAccountRow
+            block: OverviewBlockPosition = .single) -> OverviewCompactAccountRow
         {
             OverviewCompactAccountRow(
                 name: name,
@@ -311,7 +282,6 @@ struct OverviewRowRenderTests {
                 width: width,
                 namesProvider: provider,
                 block: block,
-                showsAccountDivider: divider,
                 namedLines: lines,
                 now: now)
         }
@@ -352,16 +322,9 @@ struct OverviewRowRenderTests {
         ]
         let list = VStack(alignment: .leading, spacing: 0) {
             row("Codex", [line("5h", 12, resetIn: 3 * hour), line("7d", 41, resetIn: 4 * day, pace: 45)])
-            OverviewProviderGroupHeader(
-                title: "Claude · 3 accounts",
-                windowHint: "5h / 7d / Fable",
-                icon: nil,
-                iconIsTemplate: true,
-                collapsed: false,
-                width: width)
-            highlighted(row("account-1", account1, provider: false, block: .middle), block: .middle)
-            row("account-2", account2, provider: false, block: .middle, divider: true)
-            row("account-3", account3, provider: false, block: .bottom, divider: true)
+            highlighted(row("account-1", account1, provider: true, block: .single), block: .single)
+            row("account-2", account2, provider: true, block: .single)
+            row("account-3", account3, provider: true, block: .single)
             row("Kimi Code", kimi)
             row("Grok", [line("7d", 1, resetIn: 6 * day + 22 * hour, pace: 2)])
         }

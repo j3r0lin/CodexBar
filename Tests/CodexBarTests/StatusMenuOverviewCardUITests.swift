@@ -134,7 +134,7 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `a collapsed provider group keeps only its header and the state persists`() {
+    func `saved group collapse state leaves every account visible without group headings`() {
         self.disableMenuCardsForTesting()
         let (settings, store) = self.makeOverviewFixture()
         enableTestProviders([.claude, .codex], settings: settings)
@@ -164,13 +164,12 @@ extension StatusMenuTests {
         }
 
         let expanded = rowIDs()
-        #expect(expanded.contains { $0.hasPrefix("overviewRow-claude#") })
-        #expect(expanded.contains("overviewHeading-claude"))
+        #expect(expanded.filter { $0.hasPrefix("overviewRow-claude#") }.count == 2)
+        #expect(!expanded.contains { $0.hasPrefix("overviewHeading-") })
 
         settings.overviewCollapsedProviderGroups = ["claude"]
         let collapsed = rowIDs()
-        #expect(!collapsed.contains { $0.hasPrefix("overviewRow-claude#") })
-        #expect(collapsed.contains("overviewHeading-claude"))
+        #expect(collapsed == expanded)
 
         // The choice survives a settings reload from the same defaults.
         let reloaded = SettingsStore(

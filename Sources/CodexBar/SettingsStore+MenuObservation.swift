@@ -109,7 +109,6 @@ extension SettingsStore {
         _ = self.mergeIcons
         _ = self.mergedOverviewLayout
         _ = self.mergedOverviewAllAccounts
-        _ = self.overviewCollapsedProviderGroups
         _ = self.mergeIconsStacked
         _ = self.mergeIconStackedTopProviderRaw
         _ = self.mergeIconStackedBottomProviderRaw

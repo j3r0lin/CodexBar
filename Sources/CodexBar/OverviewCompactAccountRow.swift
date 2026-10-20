@@ -155,14 +155,12 @@ struct OverviewCompactAccountRow: View {
     let shortWindow: RateWindow?
     let longWindow: RateWindow?
     let width: CGFloat
-    /// A lone provider row carries the provider's icon; an account row under a group header does not.
+    /// Shows the provider icon beside the name.
     var namesProvider = false
     var provider: UsageProvider?
     var icon: NSImage?
     var iconIsTemplate = true
     var block: OverviewBlockPosition = .single
-    /// A hairline above the row separates it from the previous account inside the same card.
-    var showsAccountDivider = false
     /// A provider that only has an error shows it in place of its usage.
     var errorText: String?
     /// The account keeps its readings alongside an error (last-known retention, unstable
@@ -220,8 +218,7 @@ struct OverviewCompactAccountRow: View {
     /// The transparent gap between two cards.
     static let blockGap: CGFloat = 10
     static let horizontalPadding: CGFloat = 12
-    /// Icon plus name. Account rows under a group header reserve the icon's space, so every row
-    /// shares this column and the label, percent, bar and reset columns start at the same x.
+    /// Icon plus name; every row shares this column so the window columns start at the same x.
     /// Sized so "OpenCode" fits whole on the first line beside the 18pt icon; longer names wrap at words.
     static let nameColumn: CGFloat = 106
     /// Fits the scoped-weekly model labels ("Fable" is 27pt at 10pt medium) alongside "5h"/"7d"/"Mo".
@@ -251,12 +248,6 @@ struct OverviewCompactAccountRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if self.showsAccountDivider {
-                Rectangle()
-                    .fill(Color.white.opacity(0.08))
-                    .frame(height: 1)
-                    .padding(.vertical, 3)
-            }
             if let errorText {
                 self.errorLines(errorText)
             } else {
@@ -456,47 +447,6 @@ struct OverviewCompactAccountRow: View {
         if days > 0 { return "\(days)d \(hours)h" }
         if hours > 0 { return "\(hours)h \(mins)m" }
         return "\(mins)m"
-    }
-}
-
-/// Header of a multi-account provider card: brand icon, the "Provider · N accounts" title, the
-/// window kinds the group holds, and the chevron that collapses the account list. Tapping the row
-/// toggles the collapse; the row view itself stays passive.
-struct OverviewProviderGroupHeader: View {
-    let title: String
-    let windowHint: String
-    let icon: NSImage?
-    let iconIsTemplate: Bool
-    let collapsed: Bool
-    let width: CGFloat
-
-    /// A longer title wraps onto a second line instead of pushing the window hint and chevron.
-    static let titleMaxWidth: CGFloat = 220
-
-    var body: some View {
-        HStack(spacing: 8) {
-            OverviewProviderIcon(image: self.icon, isTemplate: self.iconIsTemplate)
-            Text(self.title)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.white)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: Self.titleMaxWidth, alignment: .leading)
-            Spacer(minLength: 8)
-            if !self.windowHint.isEmpty {
-                Text(self.windowHint)
-                    .font(.system(size: 10))
-                    .foregroundStyle(OverviewPalette.caption)
-                    .lineLimit(1)
-            }
-            Image(systemName: self.collapsed ? "chevron.right" : "chevron.down")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(OverviewPalette.caption)
-        }
-        .padding(.horizontal, OverviewCompactAccountRow.horizontalPadding)
-        .padding(.vertical, 5)
-        .overviewBlock(self.collapsed ? .single : .top)
-        .frame(width: self.width, alignment: .leading)
     }
 }
 
