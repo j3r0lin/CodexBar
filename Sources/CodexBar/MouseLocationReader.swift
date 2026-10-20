@@ -1,25 +1,63 @@
 import AppKit
 import SwiftUI
 
+/// Draws the footer's hover square in AppKit. NSMenu tracking neither drains the main queue nor
+/// repaints a SwiftUI hosting view, so the SwiftUI hover state cannot become visible on its own.
+@MainActor
+enum MenuHoverOverlay {
+    static func update(around view: NSView, hovering: Bool) {
+        guard let container = sequence(first: view, next: { $0.superview })
+            .first(where: { $0 is MenuRowContainerView })
+        else { return }
+        let frame = view.convert(view.bounds, to: container)
+        let existing = container.subviews.compactMap { $0 as? HoverView }
+        if hovering {
+            let overlay = existing.first ?? HoverView()
+            overlay.frame = frame
+            if overlay.superview !== container {
+                container.addSubview(overlay, positioned: .below, relativeTo: nil)
+            }
+        } else {
+            existing.forEach { $0.removeFromSuperview() }
+        }
+    }
+
+    final class HoverView: NSView {
+        override init(frame frameRect: NSRect) {
+            super.init(frame: frameRect)
+            self.wantsLayer = true
+            self.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.10).cgColor
+            self.layer?.cornerRadius = 8
+        }
+
+        @available(*, unavailable)
+        required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+    }
+}
+
 /// Lightweight NSView-based mouse tracking with local coordinates.
 ///
 /// Why: SwiftUI's `onHover` doesn't provide location, but we want "hover a bar to see values" on macOS.
 @MainActor
 struct MouseLocationReader: NSViewRepresentable {
     let onMoved: (CGPoint?) -> Void
+    var drawsHoverOverlay = false
 
     func makeNSView(context: Context) -> TrackingView {
         let view = TrackingView()
         view.onMoved = self.onMoved
+        view.drawsHoverOverlay = self.drawsHoverOverlay
         return view
     }
 
     func updateNSView(_ nsView: TrackingView, context: Context) {
         nsView.onMoved = self.onMoved
+        nsView.drawsHoverOverlay = self.drawsHoverOverlay
     }
 
     final class TrackingView: NSView {
         var onMoved: ((CGPoint?) -> Void)?
+        var drawsHoverOverlay = false
         private var trackingArea: NSTrackingArea?
 
         override var isFlipped: Bool {
@@ -53,17 +91,30 @@ struct MouseLocationReader: NSViewRepresentable {
 
         override func mouseEntered(with event: NSEvent) {
             super.mouseEntered(with: event)
-            self.onMoved?(self.convert(event.locationInWindow, from: nil))
+            self.report(self.convert(event.locationInWindow, from: nil))
         }
 
         override func mouseMoved(with event: NSEvent) {
             super.mouseMoved(with: event)
-            self.onMoved?(self.convert(event.locationInWindow, from: nil))
+            self.report(self.convert(event.locationInWindow, from: nil))
+        }
+
+        private func report(_ location: CGPoint?) {
+            self.onMoved?(location)
+            if self.drawsHoverOverlay {
+                MenuHoverOverlay.update(around: self, hovering: location != nil)
+            }
+        }
+
+        /// The footer reader covers its button. A hit would stop the menu row from forwarding the press
+        /// to that button, so pointer tracking stays active while clicks pass through.
+        override func hitTest(_ point: NSPoint) -> NSView? {
+            self.drawsHoverOverlay ? nil : super.hitTest(point)
         }
 
         override func mouseExited(with event: NSEvent) {
             super.mouseExited(with: event)
-            self.onMoved?(nil)
+            self.report(nil)
         }
     }
 }

@@ -120,10 +120,11 @@ struct OverviewIconButton<Label: View>: View {
                         .stroke(Color.white.opacity(self.weight == .primary ? 0.10 : 0), lineWidth: 1))
                 .contentShape(Rectangle())
                 // A menu window is never key, so hover comes from MouseLocationReader's `.activeAlways`
-                // tracking area, as on the menu charts. Behind the label so the press still reaches the button.
-                .background {
+                // tracking area, as on the menu charts. An overlay (not a background) keeps that area inside
+                // this button's 30pt frame instead of the expanded frame SwiftUI gives a background.
+                .overlay {
                     if self.weight == .secondary {
-                        MouseLocationReader { self.hovering = $0 != nil }
+                        MouseLocationReader(onMoved: { self.hovering = $0 != nil }, drawsHoverOverlay: true)
                     }
                 }
         }
