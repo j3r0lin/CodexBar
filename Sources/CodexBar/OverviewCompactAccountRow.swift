@@ -215,14 +215,14 @@ struct OverviewCompactAccountRow: View {
     static let horizontalPadding: CGFloat = 12
     /// Icon plus name. Account rows under a group header reserve the icon's space, so every row
     /// shares this column and the label, percent, bar and reset columns start at the same x.
-    /// Sized so "OpenCode Go" (88pt at 13pt semibold) fits beside the 18pt icon.
-    static let nameColumn: CGFloat = 124
+    /// Sized so "OpenCode" fits whole on the first line beside the 18pt icon; longer names wrap at words.
+    static let nameColumn: CGFloat = 106
     /// Fits the scoped-weekly model labels ("Fable" is 27pt at 10pt medium) alongside "5h"/"7d"/"Mo".
     static let labelWidth: CGFloat = 32
     /// Fits "100%" at 13pt semibold with monospaced digits.
     static let percentWidth: CGFloat = 38
-    /// Fits "resets in 5d 21h" at 10pt with monospaced digits.
-    static let resetWidth: CGFloat = 100
+    /// Fits "26d 13h" at 10pt with monospaced digits.
+    static let resetWidth: CGFloat = 46
     /// Every window line keeps this height so lines pitch evenly within and across accounts.
     static let lineHeight: CGFloat = 22
 
@@ -365,7 +365,7 @@ struct OverviewCompactAccountRow: View {
                 trackColor: Self.trackColor,
                 height: 6,
                 pacePercent: line.pacePercent)
-            Text(line.resetsAt.map { L("resets in %@", Self.countdown(to: $0, now: self.now)) } ?? "—")
+            Text(line.resetsAt.map { Self.countdown(to: $0, now: self.now) } ?? "—")
                 .font(.system(size: 10).monospacedDigit())
                 .foregroundStyle(OverviewPalette.reset)
                 .lineLimit(1)

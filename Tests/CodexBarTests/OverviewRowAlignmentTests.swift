@@ -20,7 +20,7 @@ struct OverviewRowAlignmentTests {
 
     private static let scenarios = [
         Scenario(name: "Codex", provider: true, labels: ["5h", "7d"]),
-        Scenario(name: "claude", provider: false, labels: ["5h", "7d", "Fable"]),
+        Scenario(name: "OpenCode Go", provider: true, labels: ["5h", "7d"]),
         Scenario(name: "claude-1", provider: false, labels: ["5h", "7d", "Fable"]),
         Scenario(name: "Kimi Code", provider: true, labels: ["5h", "7d", "30d"]),
         Scenario(name: "Grok", provider: true, labels: ["7d"]),
@@ -84,7 +84,7 @@ struct OverviewRowAlignmentTests {
             OverviewCompactAccountRow.Line(
                 label: label,
                 used: 40,
-                resetsAt: self.now.addingTimeInterval(3 * 86400),
+                resetsAt: self.now.addingTimeInterval(label == "30d" ? 26 * 86400 + 13 * 3600 : 3 * 86400),
                 pacePercent: label == "7d" ? 50 : nil)
         }
         return OverviewCompactAccountRow(
@@ -118,10 +118,10 @@ struct OverviewRowAlignmentTests {
         Span(start: spans.map(\.start).min() ?? -1, end: spans.map(\.end).max() ?? -1)
     }
 
-    /// Pixel column where the scan for bars starts: past the card inset, padding and the icon-plus-name
-    /// area (124pt), so names and icons never count.
+    /// Scan past the shared name column so names and icons never count as bars.
     private static var scanStart: Int {
-        Int((OverviewCompactAccountRow.blockInset + OverviewCompactAccountRow.horizontalPadding + 124) * self.scale)
+        let contentInset = OverviewCompactAccountRow.blockInset + OverviewCompactAccountRow.horizontalPadding
+        return Int((contentInset + OverviewCompactAccountRow.nameColumn) * self.scale)
     }
 
     private static func differs(_ a: NSColor, _ b: NSColor) -> Bool {
