@@ -602,7 +602,7 @@ extension StatusItemController {
                 coveredWireIDs.formUnion(wireIDs)
                 rows += magpieAccounts
                     .filter { wireIDs.contains($0.provider.wireID) }
-                    .map { self.magpieOverviewRow(for: $0, hidePersonalInfo: hidePersonalInfo) }
+                    .compactMap { self.magpieOverviewRow(for: $0, hidePersonalInfo: hidePersonalInfo) }
                 continue
             }
             guard let model = self.menuCardModel(for: provider) else { continue }
@@ -613,20 +613,24 @@ extension StatusItemController {
                 providerName: L(ProviderDescriptorRegistry.descriptor(for: provider).metadata.displayName)))
         }
         for account in magpieAccounts where !coveredWireIDs.contains(account.provider.wireID) {
-            rows.append(self.magpieOverviewRow(for: account, hidePersonalInfo: hidePersonalInfo))
+            if let row = self.magpieOverviewRow(for: account, hidePersonalInfo: hidePersonalInfo) {
+                rows.append(row)
+            }
         }
         return rows
     }
 
     private func magpieOverviewRow(
         for account: MagpieAccountSnapshot,
-        hidePersonalInfo: Bool) -> OverviewUsageRow
+        hidePersonalInfo: Bool) -> OverviewUsageRow?
     {
-        OverviewUsageRow.magpie(
+        let row = OverviewUsageRow.magpie(
             account: account,
             providerName: L(account.provider.displayName),
             accountName: Self.magpieAccountRowName(account, hidePersonalInfo: hidePersonalInfo),
-            history: self.store.magpieQuotaHistory)
+            history: self.store.magpieQuotaHistory,
+            hiddenItemIDs: account.provider.nativeProvider.map { self.settings.hiddenUsageItemIDs(for: $0) } ?? [])
+        return row.namedWindows?.isEmpty == true && !account.limitedWindows.isEmpty ? nil : row
     }
 
     /// The row label of one magpie account: an ordinal in privacy mode, otherwise the alias or

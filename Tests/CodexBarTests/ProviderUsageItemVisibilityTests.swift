@@ -8,6 +8,122 @@ import Testing
 @MainActor
 struct ProviderUsageItemVisibilityTests {
     @Test
+    func `magpie rows hide the same quota items as their native provider`() throws {
+        let cases: [(String, [(String, String)])] = [
+            ("claude", [
+                ("5 hours", "primary"),
+                ("7 days", "secondary"),
+                ("7 days · Fable", "claude-weekly-scoped-fable"),
+            ]),
+            ("codex", [
+                ("5 hours", "primary"),
+                ("7 days", "secondary"),
+                ("Month", "monthly"),
+                ("7 days · Spark", "codex-spark-weekly"),
+            ]),
+            ("kimi", [
+                ("5 hours", "secondary"),
+                ("7 days", "primary"),
+                ("30 days", "kimi-monthly"),
+                ("Month", "kimi-monthly"),
+            ]),
+            ("opencode-go", [("5 hours", "primary"), ("7 days", "secondary"), ("Month", "tertiary")]),
+            ("grok", [("7 days", "primary"), ("Month", "primary")]),
+        ]
+        for (wireID, mappings) in cases {
+            for (name, metricID) in mappings {
+                let account = try #require(MagpieAccountProjection.snapshots(from: [MagpieQuotaRow(
+                    provider: wireID,
+                    email: "fixture@example.test",
+                    organization: "",
+                    alias: nil,
+                    isLast: true,
+                    readAt: nil,
+                    windows: [
+                        MagpieQuotaWindow(name: name, usedPercent: 90, resetsAt: nil),
+                        MagpieQuotaWindow(name: "Unmapped", usedPercent: 10, resetsAt: nil),
+                    ])]).first)
+                let row = OverviewUsageRow.magpie(
+                    account: account,
+                    providerName: wireID,
+                    accountName: "Fixture",
+                    hiddenItemIDs: [.metric(metricID)])
+                #expect(row.namedWindows?.map(\.title) == ["Unmapped"])
+                #expect(row.compactLines(now: Date())?.map(\.label) == ["Unmapped"])
+                let windows = try #require(row.namedWindows)
+                #expect(AccountUsageDetailView.blocks(of: windows).map(\.used) == [10])
+            }
+        }
+    }
+
+    @Test
+    func `magpie windows with unverified pool identities stay visible`() throws {
+        let account = try #require(MagpieAccountProjection.snapshots(from: [MagpieQuotaRow(
+            provider: "codex",
+            email: "fixture@example.test",
+            organization: "",
+            alias: nil,
+            isLast: true,
+            readAt: nil,
+            windows: [
+                MagpieQuotaWindow(name: "5 hours", usedPercent: 10, resetsAt: nil),
+                MagpieQuotaWindow(name: "5 hours", usedPercent: 20, resetsAt: nil, pool: "Spark"),
+                MagpieQuotaWindow(name: "7 days", usedPercent: 30, resetsAt: nil, pool: "Spark"),
+                MagpieQuotaWindow(name: "5 hours", usedPercent: 40, resetsAt: nil, pool: "Other Limit"),
+            ])]).first)
+        let row = OverviewUsageRow.magpie(
+            account: account,
+            providerName: "Codex",
+            accountName: "Fixture",
+            hiddenItemIDs: [
+                .metric("primary"), .metric("secondary"), .metric("monthly"),
+                .metric("codex-spark"), .metric("codex-spark-weekly"), .metric("codex-other-limit"),
+                .credits, .codexResetCredits, .subscription,
+            ])
+        #expect(row.namedWindows?.map(\.used) == [20, 30, 40])
+        #expect(row.compactLines(now: Date())?.map(\.used) == [20, 30, 40])
+    }
+
+    @Test
+    func `magpie preferences list mapped windows even without native usage`() throws {
+        let settings = Self.settings(
+            defaults: InMemoryUserDefaults(),
+            configStore: testConfigStore(suiteName: "magpie-visibility-\(UUID().uuidString)"))
+        let store = UsageStore(
+            fetcher: UsageFetcher(environment: [:]),
+            browserDetection: BrowserDetection(cacheTTL: 0),
+            settings: settings,
+            startupBehavior: .testing,
+            environmentBase: [:])
+        store.magpieTransport = { _ in throw CancellationError() }
+        settings.magpieSourceEnabled = true
+        store.magpieAccountSnapshots = MagpieAccountProjection.snapshots(from: [MagpieQuotaRow(
+            provider: "opencode-go",
+            email: "fixture@example.test",
+            organization: "",
+            alias: nil,
+            isLast: true,
+            readAt: nil,
+            windows: [
+                MagpieQuotaWindow(name: "5 hours", usedPercent: 10, resetsAt: nil),
+                MagpieQuotaWindow(name: "Month", usedPercent: 20, resetsAt: nil),
+                MagpieQuotaWindow(name: "Unknown", usedPercent: 30, resetsAt: nil),
+            ])])
+        settings.setUsageItemVisible(false, itemID: .metric("tertiary"), for: .opencodego)
+        let items = store.magpieUsageItemDescriptors(for: .opencodego)
+        #expect(items.map(\.title) == ["5 hours", "Month"])
+        #expect(items.map(\.id) == [.metric("primary"), .metric("tertiary")])
+        settings.setUsageItemVisible(true, itemID: .metric("tertiary"), for: .opencodego)
+        let account = try #require(store.magpieAccountSnapshots.first)
+        let row = OverviewUsageRow.magpie(
+            account: account,
+            providerName: "OpenCode Go",
+            accountName: "Fixture",
+            hiddenItemIDs: settings.hiddenUsageItemIDs(for: .opencodego))
+        #expect(row.namedWindows?.count == 3)
+    }
+
+    @Test
     func `globally gated quota rows retain their explanation when unavailable`() {
         for (provider, optionalIDs) in [
             (UsageProvider.codex, ["codex-spark", "codex-spark-weekly", "codex-extra-quota", "monthly"]),

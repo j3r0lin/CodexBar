@@ -1,7 +1,7 @@
 import Foundation
 
 /// Shared mapping for the model-scoped weekly limits returned by both Claude usage APIs.
-enum ClaudeScopedWeeklyLimitMapper {
+package enum ClaudeScopedWeeklyLimitMapper {
     struct Limit {
         let kind: String?
         let group: String?
@@ -46,7 +46,7 @@ enum ClaudeScopedWeeklyLimitMapper {
         return if let trimmed, !trimmed.isEmpty { trimmed } else { nil }
     }
 
-    private static func slug(_ value: String) -> String {
+    package static func slug(_ value: String) -> String {
         var result = ""
         var lastWasDash = false
         for scalar in value.lowercased().unicodeScalars {

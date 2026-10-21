@@ -2,8 +2,8 @@ import CodexBarCore
 import Foundation
 
 /// One row in the merged Overview: a native provider row, or one magpie account row for any
-/// provider the gateway reported, known or unknown. Magpie rows carry every window the gateway
-/// sent under its own label and have no native history, cost, credits, or provider actions.
+/// provider the gateway reported, known or unknown. Magpie rows carry visible windows under the
+/// gateway's labels and have no native cost, credits, or provider actions.
 struct OverviewUsageRow {
     /// One quota window on a magpie row: `label` is the compact tag on the row ("5h", "7d",
     /// "30d", a model name, or the wire name), `title` the heading in the detail card.
@@ -139,7 +139,7 @@ struct OverviewUsageRow {
     let accountID: ProviderAccountIdentity?
     /// Privacy-aware account label, shown on grouped rows and in the detail header.
     let accountName: String?
-    /// Every window the gateway reported for this account; non-nil marks a magpie row.
+    /// Visible limited windows for this account; non-nil marks a magpie row.
     let namedWindows: [NamedWindow]?
     /// Native rows only: the snapshot behind the window slots and the detail card.
     let snapshot: UsageSnapshot?
@@ -185,9 +185,14 @@ struct OverviewUsageRow {
         account: MagpieAccountSnapshot,
         providerName: String,
         accountName: String,
-        history: MagpieQuotaHistory? = nil) -> OverviewUsageRow
+        history: MagpieQuotaHistory? = nil,
+        hiddenItemIDs: Set<ProviderUsageItemID> = []) -> OverviewUsageRow
     {
-        let windows = account.limitedWindows.map { window in
+        let windows = account.limitedWindows.filter { window in
+            guard let provider = account.provider.nativeProvider,
+                  let itemID = ProviderUsageItemID.magpieWindow(window, for: provider) else { return true }
+            return !hiddenItemIDs.contains(itemID)
+        }.map { window in
             NamedWindow(
                 window: window,
                 history: history?.points(for: account.id, window: window.historyName) ?? [])

@@ -66,9 +66,10 @@ struct ProvidersPane: View {
             } : nil
         let visibilityModel = UsageMenuCardView.Model.make(self.store.menuCardInput(
             for: self.provider, context: .settings, optionalUsageOverride: true))
-        let usageItems = ((overview?.usageItems ?? []) + visibilityModel.usageItemDescriptors(
-            includingHidden: self.settings.hiddenUsageItemIDs(for: self.provider),
-            hidePersonalInfo: self.settings.hidePersonalInfo))
+        let usageItems = (self.store.magpieUsageItemDescriptors(for: self.provider) +
+            (overview?.usageItems ?? []) + visibilityModel.usageItemDescriptors(
+                includingHidden: self.settings.hiddenUsageItemIDs(for: self.provider),
+                hidePersonalInfo: self.settings.hidePersonalInfo))
             .reduce(into: [ProviderUsageItemDescriptor]()) { items, item in
                 if !items.contains(where: { $0.id == item.id }) { items.append(item) }
             }

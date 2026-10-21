@@ -39,6 +39,39 @@ struct ProviderUsageItemDescriptor: Identifiable, Equatable, Sendable {
 }
 
 extension ProviderUsageItemID {
+    static func magpieWindow(_ window: MagpieQuotaWindow, for provider: UsageProvider) -> Self? {
+        // No wire evidence yet that a pool name matches a native meteredFeature, so pools stay
+        // visible rather than risk hiding the wrong window.
+        guard window.pool == nil else { return nil }
+        let metricID: String?
+        switch (provider, window.semantics) {
+        case (.claude, .session), (.codex, .session), (.opencodego, .session):
+            metricID = "primary"
+        case (.claude, .weekly), (.codex, .weekly), (.opencodego, .weekly):
+            metricID = "secondary"
+        case (.kimi, .session):
+            metricID = "secondary"
+        case (.kimi, .weekly), (.grok, .weekly), (.grok, .monthly):
+            metricID = "primary"
+        case (.kimi, .monthly):
+            metricID = "kimi-monthly"
+        case (.kimi, .other) where window.name == "30 days":
+            metricID = "kimi-monthly"
+        case (.opencodego, .monthly):
+            metricID = "tertiary"
+        case (.codex, .monthly):
+            metricID = "monthly"
+        case let (.claude, .scopedWeekly(model)):
+            let slug = ClaudeScopedWeeklyLimitMapper.slug(model)
+            metricID = slug.isEmpty ? nil : "claude-weekly-scoped-\(slug)"
+        case let (.codex, .scopedWeekly(model)) where model.lowercased().contains("spark"):
+            metricID = CodexAdditionalRateLimitMapper.sparkWeeklyWindowID
+        default:
+            metricID = nil
+        }
+        return metricID.map(Self.metric)
+    }
+
     @MainActor
     func requiresOptionalUsage(for provider: UsageProvider) -> Bool {
         // Provider-specific by design: Codex extra limits and Claude Extra usage/Routines follow global gates.
@@ -228,6 +261,21 @@ extension UsageMenuCardView.Model {
             projected.providerDetailRawTitles = kept.map(\.rawTitle)
         }
         return projected
+    }
+}
+
+extension UsageStore {
+    func magpieUsageItemDescriptors(for provider: UsageProvider) -> [ProviderUsageItemDescriptor] {
+        guard case .magpie = self.providerSourceRoute(for: provider) else { return [] }
+        var seen = Set<ProviderUsageItemID>()
+        return self.magpieAccountSnapshots.filter { $0.provider.nativeProvider == provider }
+            .flatMap(\.limitedWindows).compactMap { window in
+                guard let id = ProviderUsageItemID.magpieWindow(window, for: provider),
+                      seen.insert(id).inserted else { return nil }
+                let title = PersonalInfoRedactor.redactEmails(
+                    in: window.name, isEnabled: self.settings.hidePersonalInfo) ?? window.name
+                return ProviderUsageItemDescriptor(id: id, title: title)
+            }
     }
 }
 
