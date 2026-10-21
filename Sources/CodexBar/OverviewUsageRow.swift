@@ -6,7 +6,7 @@ import Foundation
 /// sent under its own label and have no native history, cost, credits, or provider actions.
 struct OverviewUsageRow {
     /// One quota window on a magpie row: `label` is the compact tag on the row ("5h", "7d",
-    /// "Mo", a model name, or the wire name), `title` the heading in the detail card.
+    /// "30d", a model name, or the wire name), `title` the heading in the detail card.
     struct NamedWindow: Equatable {
         let label: String
         let title: String
@@ -50,12 +50,12 @@ struct OverviewUsageRow {
         }
 
         /// Slots and labels follow the window's semantics, never its reset-description text:
-        /// "5 hours" is 5h, "7 days" is 7d, "Month" is Mo.
+        /// "5 hours" is 5h, "7 days" is 7d, "Month" is 30d, matching the "30 days" windows beside it.
         private static func label(for window: MagpieQuotaWindow) -> String {
             switch window.semantics {
             case .session: "5h"
             case .weekly: "7d"
-            case .monthly: "Mo"
+            case .monthly: "30d"
             case let .scopedWeekly(model): model
             case .other: self.compactDuration(window.name) ?? window.name
             }

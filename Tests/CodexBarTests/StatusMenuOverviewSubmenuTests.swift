@@ -374,7 +374,7 @@ extension StatusMenuTests {
         let row = try #require(rows.first)
         #expect(rows.count == 3)
         #expect(row.isMagpie)
-        #expect(row.namedWindows?.map(\.label) == ["5h", "7d", "Mo"])
+        #expect(row.namedWindows?.map(\.label) == ["5h", "7d", "30d"])
         #expect(row.namedWindows?.count == 3)
         #expect(row.errorText == nil)
         #expect(controller.overviewUsageRows(visibleProviders: []).count == 3)

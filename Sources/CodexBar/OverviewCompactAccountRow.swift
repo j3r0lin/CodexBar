@@ -221,7 +221,7 @@ struct OverviewCompactAccountRow: View {
     /// Icon plus name; every row shares this column so the window columns start at the same x.
     /// Sized so "OpenCode" fits whole on the first line beside the 18pt icon; longer names wrap at words.
     static let nameColumn: CGFloat = 106
-    /// Fits the scoped-weekly model labels ("Fable" is 27pt at 10pt medium) alongside "5h"/"7d"/"Mo".
+    /// Fits the scoped-weekly model labels ("Fable" is 27pt at 10pt medium) alongside "5h"/"7d"/"30d".
     static let labelWidth: CGFloat = 32
     /// Fits "100%" at 13pt semibold with monospaced digits.
     static let percentWidth: CGFloat = 38
@@ -430,7 +430,7 @@ struct OverviewCompactAccountRow: View {
     {
         guard let minutes = nativeMinutes(window, provider: provider, infersPeriodFromReset: infersPeriodFromReset)
         else { return "—" }
-        if minutes >= 28 * 1440 { return "Mo" }
+        if minutes >= 28 * 1440 { return "30d" }
         if minutes >= 1440 { return "\(minutes / 1440)d" }
         return "\(max(1, minutes / 60))h"
     }
