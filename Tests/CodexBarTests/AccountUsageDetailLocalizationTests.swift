@@ -130,6 +130,16 @@ struct AccountUsageDetailLocalizationTests {
             of: UsageSnapshot(primary: untyped, secondary: nil, updatedAt: Date())).map(\.warningWindow) == [.weekly])
     }
 
+    @Test
+    func `a native detail without a model leaves out the lanes the user hid`() {
+        let snapshot = UsageSnapshot(
+            primary: self.window(minutes: 300, used: 20),
+            secondary: self.window(minutes: 7 * 1440, used: 30),
+            updatedAt: Date())
+        let blocks = AccountUsageDetailView.blocks(of: snapshot, hiddenItemIDs: [.metric("primary")])
+        #expect(blocks.map(\.used) == [30])
+    }
+
     /// Writes the card for a weekly-only provider and a two-window provider when
     /// CODEXBAR_DETAIL_CARD_RENDER_DIR is set, for comparing against the design reference.
     @Test

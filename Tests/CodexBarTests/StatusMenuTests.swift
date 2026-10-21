@@ -606,6 +606,42 @@ struct StatusMenuTests {
         #expect(statusMenu.performKeyEquivalent(with: settingsKey))
         #expect(statusMenu.performKeyEquivalent(with: quitKey))
     }
+
+    @Test(arguments: [true, false])
+    func `overview footer follows the last card directly in either rendering mode`(rendersCards: Bool) throws {
+        let previousRendering = StatusItemController.menuCardRenderingEnabled
+        StatusItemController.menuCardRenderingEnabled = rendersCards
+        StatusItemController.setMenuRefreshEnabledForTesting(false)
+        defer { StatusItemController.menuCardRenderingEnabled = previousRendering }
+        let settings = self.makeSettings()
+        settings.statusChecksEnabled = false
+        settings.refreshFrequency = .manual
+        settings.mergeIcons = true
+        settings.selectedMenuProvider = .codex
+        settings.mergedMenuLastSelectedWasOverview = true
+        enableTestProviders([.codex, .claude], settings: settings)
+        let fetcher = UsageFetcher()
+        let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let controller = StatusItemController(
+            store: store,
+            settings: settings,
+            account: fetcher.loadAccountInfo(),
+            updater: DisabledUpdaterController(),
+            preferencesSelection: PreferencesSelection(),
+            statusBar: self.makeStatusBarForTesting())
+        defer { controller.releaseStatusItemsForTesting() }
+
+        let menu = controller.makeMenu()
+        controller.menuWillOpen(menu)
+
+        let footerIndex = try #require(menu.items.firstIndex {
+            $0.representedObject as? String == "overviewFooterStatus"
+        })
+        #expect(footerIndex == menu.items.count - 1)
+        let beforeFooter = try #require(menu.items[..<footerIndex].last)
+        #expect(!beforeFooter.isSeparatorItem)
+        #expect(beforeFooter.representedObject as? String != "overviewRootDivider")
+    }
 }
 
 @MainActor

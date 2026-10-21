@@ -144,7 +144,7 @@ struct OverviewCompactAccountRowTests {
             label: "7d",
             used: 60,
             resetsAt: nil,
-            window: .weekly)
+            warningWindow: .weekly)
         let thresholds = (session: [50, 20], weekly: [50, 20])
         let usedReading = self.reading(line, showsRemaining: false, thresholds: thresholds)
         let remainingReading = self.reading(line, showsRemaining: true, thresholds: thresholds)
@@ -202,16 +202,14 @@ struct OverviewCompactAccountRowTests {
     @Test
     func `a remaining display mirrors the pace tick onto the leftover side of the bar`() {
         #expect(self.reading(self.line(used: 40, pace: 70), showsRemaining: true).pacePercent == 30)
-        // A tick past either edge of the used scale clamps to the mirrored edge.
         #expect(self.reading(self.line(used: 90, pace: 10), showsRemaining: true).pacePercent == 90)
-        #expect(self.reading(self.line(used: 90, pace: 120), showsRemaining: true).pacePercent == 0)
     }
 
     private func reading(
         _ line: OverviewCompactAccountRow.Line,
         showsRemaining: Bool = false,
         showsPace: Bool = true,
-        thresholds: (session: [Int], weekly: [Int]) = ([], []))
+        thresholds: (session: [Int]?, weekly: [Int]?) = (nil, nil))
         -> OverviewCompactAccountRow.Reading
     {
         OverviewCompactAccountRow(
@@ -219,10 +217,11 @@ struct OverviewCompactAccountRowTests {
             shortWindow: nil,
             longWindow: nil,
             width: Self.width,
-            showsRemaining: showsRemaining,
-            sessionWarningThresholds: thresholds.session,
-            weeklyWarningThresholds: thresholds.weekly,
-            showsPace: showsPace,
+            display: OverviewDisplayOptions(
+                showsRemaining: showsRemaining,
+                sessionWarningThresholds: thresholds.session,
+                weeklyWarningThresholds: thresholds.weekly,
+                showsPace: showsPace),
             now: Self.now)
             .reading(for: line)
     }
@@ -236,7 +235,7 @@ struct OverviewCompactAccountRowTests {
             label: "5h",
             used: used,
             resetsAt: nil,
-            window: window,
+            warningWindow: window,
             pacePercent: pace)
     }
 

@@ -197,19 +197,19 @@ extension StatusMenuTests {
             controller.overviewUsageRows(visibleProviders: [.claude, .codex]).first { $0.groupKey == "codex" })
 
         let used = controller.overviewRowView(for: row, width: 320, isGrouped: false, now: Date())
-        #expect(used.showsRemaining == false)
-        #expect(used.showsPace)
+        #expect(used.display.showsRemaining == false)
+        #expect(used.display.showsPace)
         #expect(used.lines.map { used.reading(for: $0).percent } == [40, 70])
 
         settings.usageBarsShowUsed = false
         let remaining = controller.overviewRowView(for: row, width: 320, isGrouped: false, now: Date())
-        #expect(remaining.showsRemaining)
+        #expect(remaining.display.showsRemaining)
         #expect(remaining.lines.map(\.used) == used.lines.map(\.used))
         #expect(remaining.lines.map { remaining.reading(for: $0).percent } == [60, 30])
 
         settings.paceVisible = false
         let unpace = controller.overviewRowView(for: row, width: 320, isGrouped: false, now: Date())
-        #expect(!unpace.showsPace)
+        #expect(!unpace.display.showsPace)
     }
 
     @Test
@@ -234,8 +234,8 @@ extension StatusMenuTests {
 
         settings.quotaWarningThresholds = [40, 10]
         let view = controller.overviewRowView(for: row, width: 320, isGrouped: false, now: Date())
-        #expect(view.sessionWarningThresholds == [40, 10])
-        #expect(view.weeklyWarningThresholds == [40, 10])
+        #expect(view.display.sessionWarningThresholds == [40, 10])
+        #expect(view.display.weeklyWarningThresholds == [40, 10])
         let line = try #require(view.lines.first)
         #expect(view.reading(for: line).barColor == OverviewPalette.warning)
     }

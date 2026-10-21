@@ -142,6 +142,29 @@ struct MagpiePaceTests {
     }
 
     @Test
+    func `the pace tint goes on the longest window by its resolved length`() throws {
+        let lines = try #require(Self.row(windows: [
+            Self.weekly(used: 80),
+            Self.weekly("Month", used: 90, remaining: 10 * Self.day),
+        ]).compactLines(now: Self.now))
+        let week = try #require(lines.first { $0.label == "7d" })
+        let month = try #require(lines.first { $0.label == "30d" })
+        #expect(month.paceTone != .neutral)
+        #expect(week.paceTone == .neutral)
+    }
+
+    @Test
+    func `a window of a day or less uses session thresholds and unknown lengths use weekly`() throws {
+        let reset = Self.now.addingTimeInterval(Self.day)
+        let lines = try #require(Self.row(windows: [
+            MagpieQuotaWindow(name: "12 hours", usedPercent: 10, resetsAt: reset),
+            MagpieQuotaWindow(name: "Month", usedPercent: 10, resetsAt: reset),
+            MagpieQuotaWindow(name: "Burst", usedPercent: 10, resetsAt: reset),
+        ]).compactLines(now: Self.now))
+        #expect(lines.map(\.warningWindow) == [.session, .weekly, .weekly])
+    }
+
+    @Test
     func `a window whose name states no length has no pace`() {
         let window = MagpieQuotaWindow(
             name: "Burst",

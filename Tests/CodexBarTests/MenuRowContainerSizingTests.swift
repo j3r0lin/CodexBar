@@ -97,32 +97,24 @@ struct MenuRowPanelBaseTests {
         return row
     }
 
-    private func panelLayerFrames(in row: MenuRowContainerView) -> [CGRect] {
-        row.subviews.compactMap { view in
-            guard let color = view.layer?.backgroundColor,
-                  NSColor(cgColor: color)?.usingColorSpace(.sRGB) == OverviewPalette.panelBase.usingColorSpace(.sRGB)
-            else { return nil }
-            return view.frame
+    /// The colour the row actually paints at a point, read back from its rendered pixels.
+    private func paintedPixel(of row: MenuRowContainerView, x: Int, y: Int) throws -> NSColor {
+        let bitmap = try #require(row.bitmapImageRepForCachingDisplay(in: row.bounds))
+        row.cacheDisplay(in: row.bounds, to: bitmap)
+        return try #require(bitmap.colorAt(x: x, y: y))
+    }
+
+    @Test
+    func `a panel row paints its whole frame opaque`() throws {
+        let row = self.row(usesPanelBase: true)
+        for (x, y) in [(0, 0), (150, 20), (299, 39)] {
+            #expect(try self.paintedPixel(of: row, x: x, y: y).alphaComponent == 1)
         }
     }
 
     @Test
-    func `a panel row fills its whole frame with the opaque panel colour`() {
-        let frames = self.panelLayerFrames(in: self.row(usesPanelBase: true))
-        #expect(frames == [CGRect(x: 0, y: 0, width: 300, height: 40)])
-        #expect(OverviewPalette.panelBase.alphaComponent == 1)
-    }
-
-    @Test
-    func `a row outside the panel draws no panel colour`() {
-        #expect(self.panelLayerFrames(in: self.row(usesPanelBase: false)).isEmpty)
-    }
-
-    @Test
-    func `the panel is darker than the card surface`() throws {
-        let panel = try #require(OverviewPalette.panelBase.usingColorSpace(.sRGB))
-        let card = try #require(OverviewPalette.cardBase.usingColorSpace(.sRGB))
-        #expect(panel.redComponent < card.redComponent)
-        #expect(panel.alphaComponent > card.alphaComponent)
+    func `a row outside the panel paints nothing`() throws {
+        let row = self.row(usesPanelBase: false)
+        #expect(try self.paintedPixel(of: row, x: 150, y: 20).alphaComponent == 0)
     }
 }

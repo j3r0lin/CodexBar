@@ -36,10 +36,8 @@ extension StatusItemController {
                 model: row.isMagpie ? nil : row.model,
                 now: now,
                 readAt: row.readAt,
-                showsRemaining: !self.settings.usageBarsShowUsed,
-                sessionWarningThresholds: self.overviewWarningThresholds(.session, provider: row.nativeProvider),
-                weeklyWarningThresholds: self.overviewWarningThresholds(.weekly, provider: row.nativeProvider),
-                showsPace: self.settings.paceVisible,
+                display: self.overviewDisplayOptions(provider: row.nativeProvider),
+                hiddenItemIDs: row.nativeProvider.map { self.settings.hiddenUsageItemIDs(for: $0) } ?? [],
                 isStale: row.isStale(
                     now: now,
                     threshold: OverviewUsageRow.staleThreshold(for: self.settings.refreshFrequency))),

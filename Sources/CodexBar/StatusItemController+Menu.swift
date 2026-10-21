@@ -524,10 +524,7 @@ extension StatusItemController {
             showsErrorFlag: row.showsErrorFlag,
             namedLines: namedLines,
             infersPeriodFromReset: !row.isMagpie,
-            showsRemaining: !self.settings.usageBarsShowUsed,
-            sessionWarningThresholds: self.overviewWarningThresholds(.session, provider: row.nativeProvider),
-            weeklyWarningThresholds: self.overviewWarningThresholds(.weekly, provider: row.nativeProvider),
-            showsPace: self.settings.paceVisible,
+            display: self.overviewDisplayOptions(provider: row.nativeProvider),
             isStale: row.isStale(
                 now: now,
                 threshold: OverviewUsageRow.staleThreshold(for: self.settings.refreshFrequency)),
@@ -535,8 +532,22 @@ extension StatusItemController {
             now: now)
     }
 
+    /// Ends the Overview's card list: the panel-coloured spacer, or a native separator when cards are not
+    /// rendered. The footer removes it again when nothing follows.
+    private func addOverviewRootDivider(to menu: NSMenu, width: CGFloat) {
+        guard self.menuCardRenderingEnabledForController else {
+            menu.addItem(.separator())
+            return
+        }
+        // Unpooled: the footer usually removes this row again, and a pooled view dropped there would shift
+        // every later row onto a different recycled view.
+        menu.addItem(self.makeOverviewPanelSpacer(id: Self.overviewRootDividerID, width: width, recyclesView: false))
+    }
+
+    private static let overviewRootDividerID = "overviewRootDivider"
+
     /// A native separator would draw menu material across the panel; this row keeps the panel colour.
-    private func makeOverviewPanelSpacer(id: String, width: CGFloat) -> NSMenuItem {
+    private func makeOverviewPanelSpacer(id: String, width: CGFloat, recyclesView: Bool = true) -> NSMenuItem {
         self.makeMenuCardItem(
             Color.clear.frame(width: width, height: 6),
             id: id,
@@ -544,7 +555,8 @@ extension StatusItemController {
             heightCacheScope: id,
             heightCacheFingerprint: "spacer",
             tightVerticalFit: true,
-            usesPanelBase: true)
+            usesPanelBase: true,
+            recyclesView: recyclesView)
     }
 
     /// The card header: app icon, title, last-update subtitle, and the refresh/settings buttons.
@@ -592,7 +604,9 @@ extension StatusItemController {
         width: CGFloat)
     {
         guard switcherSelection == .overview else { return }
-        if menu.items.last?.isSeparatorItem == true {
+        if let last = menu.items.last,
+           last.isSeparatorItem || last.representedObject as? String == Self.overviewRootDividerID
+        {
             menu.removeItem(at: menu.items.count - 1)
         }
         let autoRefresh = self.settings.refreshFrequency != .manual
@@ -673,14 +687,18 @@ extension StatusItemController {
         return row.namedWindows?.isEmpty == true && !account.limitedWindows.isEmpty ? nil : row
     }
 
-    /// The user's warning thresholds for one window kind, in the provider's own override when it has
-    /// one. Unknown magpie providers have no override and follow the global values.
-    func overviewWarningThresholds(
-        _ window: QuotaWarningWindow,
-        provider: UsageProvider?) -> [Int]
-    {
-        guard let provider else { return self.settings.quotaWarningThresholds(window) }
-        return self.settings.resolvedQuotaWarningThresholds(provider: provider, window: window)
+    /// The user's display choices for an Overview card and its detail. Warning thresholds come from the
+    /// provider's own override when it has one; unknown magpie providers follow the global values.
+    func overviewDisplayOptions(provider: UsageProvider?) -> OverviewDisplayOptions {
+        func thresholds(_ window: QuotaWarningWindow) -> [Int] {
+            guard let provider else { return self.settings.quotaWarningThresholds(window) }
+            return self.settings.resolvedQuotaWarningThresholds(provider: provider, window: window)
+        }
+        return OverviewDisplayOptions(
+            showsRemaining: !self.settings.usageBarsShowUsed,
+            sessionWarningThresholds: thresholds(.session),
+            weeklyWarningThresholds: thresholds(.weekly),
+            showsPace: self.settings.paceVisible)
     }
 
     /// The row label of one magpie account: an ordinal in privacy mode, otherwise the alias or
@@ -869,10 +887,10 @@ extension StatusItemController {
                 enabledProviders: enabledProviders,
                 menuWidth: context.menuWidth)
             {
-                menu.addItem(.separator())
+                self.addOverviewRootDivider(to: menu, width: context.menuWidth)
             } else {
                 self.addOverviewEmptyState(to: menu, width: context.menuWidth)
-                menu.addItem(.separator())
+                self.addOverviewRootDivider(to: menu, width: context.menuWidth)
             }
         } else {
             let addedOpenAIWebItems = self.addMenuCards(to: menu, context: context, captureMenu: captureMenu)
