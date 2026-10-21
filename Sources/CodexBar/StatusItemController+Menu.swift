@@ -455,12 +455,13 @@ extension StatusItemController {
                     spendSummary.historyCoverageText,
                     spendSummary.pricingCoverageText,
                     spendSummary.provenanceText,
-                ].joined(separator: "|"))
+                ].joined(separator: "|"),
+                usesPanelBase: true)
             menu.addItem(summaryItem)
             if let shareItem = self.makeOverviewShareStatsMenuItem(model: spendModel) {
                 menu.addItem(shareItem)
             }
-            menu.addItem(.separator())
+            menu.addItem(self.makeOverviewPanelSpacer(id: "overviewSpendSpacer", width: menuWidth))
         }
 
         // Every account is its own card; only a provider with several accounts names the account.
@@ -484,7 +485,8 @@ extension StatusItemController {
                 showsSubmenuIndicator: false,
                 usesGPUSelection: true,
                 tightVerticalFit: true,
-                selectionBlock: .single)
+                selectionBlock: .single,
+                usesPanelBase: true)
             menu.addItem(item)
         }
         return true
@@ -533,6 +535,18 @@ extension StatusItemController {
             now: now)
     }
 
+    /// A native separator would draw menu material across the panel; this row keeps the panel colour.
+    private func makeOverviewPanelSpacer(id: String, width: CGFloat) -> NSMenuItem {
+        self.makeMenuCardItem(
+            Color.clear.frame(width: width, height: 6),
+            id: id,
+            width: width,
+            heightCacheScope: id,
+            heightCacheFingerprint: "spacer",
+            tightVerticalFit: true,
+            usesPanelBase: true)
+    }
+
     /// The card header: app icon, title, last-update subtitle, and the refresh/settings buttons.
     private func addOverviewHeader(to menu: NSMenu, width: CGFloat) {
         let updatedText = self.overviewLastSyncDate().map { L("Updated %@", $0.relativeDescription()) }
@@ -546,7 +560,8 @@ extension StatusItemController {
             width: width,
             heightCacheScope: "overviewHeader",
             heightCacheFingerprint: "header",
-            containsInteractiveControls: true))
+            containsInteractiveControls: true,
+            usesPanelBase: true))
     }
 
     private func addOverviewProviderCount(to menu: NSMenu, rows: [OverviewUsageRow], width: CGFloat) {
@@ -556,7 +571,8 @@ extension StatusItemController {
             id: "overviewProviderCount",
             width: width,
             heightCacheScope: "overviewProviderCount",
-            heightCacheFingerprint: "providers-\(providerCount)"))
+            heightCacheFingerprint: "providers-\(providerCount)",
+            usesPanelBase: true))
     }
 
     /// The brand icon for a row's provider, coloured when a curated asset exists; a nil image makes
@@ -591,7 +607,8 @@ extension StatusItemController {
             width: width,
             heightCacheScope: "overviewFooterStatus",
             heightCacheFingerprint: "footer-\(autoRefresh)",
-            containsInteractiveControls: true))
+            containsInteractiveControls: true,
+            usesPanelBase: true))
     }
 
     /// The freshest reading behind the Overview: native snapshot updates and magpie reads.

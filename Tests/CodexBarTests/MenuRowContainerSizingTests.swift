@@ -76,3 +76,53 @@ struct MenuRowContainerSizingTests {
             onClick: nil)
     }
 }
+
+@MainActor
+struct MenuRowPanelBaseTests {
+    private func row(usesPanelBase: Bool) -> MenuRowContainerView {
+        let row = MenuRowContainerView(
+            payload: MenuCardRowPayload(
+                content: AnyView(Color.clear.frame(height: 20)),
+                showsSubmenuIndicator: false,
+                submenuIndicatorAlignment: .topTrailing,
+                submenuIndicatorTopPadding: 0,
+                allowsMenuHighlight: false,
+                containsInteractiveControls: false,
+                usesGPUSelection: false,
+                usesPanelBase: usesPanelBase,
+                onClick: nil),
+            refreshMonitor: nil)
+        row.applyMeasuredSize(width: 300, height: 40)
+        row.layoutSubtreeIfNeeded()
+        return row
+    }
+
+    private func panelLayerFrames(in row: MenuRowContainerView) -> [CGRect] {
+        row.subviews.compactMap { view in
+            guard let color = view.layer?.backgroundColor,
+                  NSColor(cgColor: color)?.usingColorSpace(.sRGB) == OverviewPalette.panelBase.usingColorSpace(.sRGB)
+            else { return nil }
+            return view.frame
+        }
+    }
+
+    @Test
+    func `a panel row fills its whole frame with the opaque panel colour`() {
+        let frames = self.panelLayerFrames(in: self.row(usesPanelBase: true))
+        #expect(frames == [CGRect(x: 0, y: 0, width: 300, height: 40)])
+        #expect(OverviewPalette.panelBase.alphaComponent == 1)
+    }
+
+    @Test
+    func `a row outside the panel draws no panel colour`() {
+        #expect(self.panelLayerFrames(in: self.row(usesPanelBase: false)).isEmpty)
+    }
+
+    @Test
+    func `the panel is darker than the card surface`() throws {
+        let panel = try #require(OverviewPalette.panelBase.usingColorSpace(.sRGB))
+        let card = try #require(OverviewPalette.cardBase.usingColorSpace(.sRGB))
+        #expect(panel.redComponent < card.redComponent)
+        #expect(panel.alphaComponent > card.alphaComponent)
+    }
+}

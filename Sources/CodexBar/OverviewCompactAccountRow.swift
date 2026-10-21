@@ -8,6 +8,11 @@ import SwiftUI
 /// reading as `100 - threshold`. A 0% reading stays neutral white so an unused window reads as empty,
 /// not healthy.
 enum OverviewPalette {
+    /// Fills the whole Overview panel behind its cards: opaque, so the menu material never tints it.
+    static let panelBase = NSColor(srgbRed: 0.10, green: 0.10, blue: 0.11, alpha: 1)
+    /// The card surface, a step lighter than the panel and slightly translucent.
+    static let cardBase = NSColor(srgbRed: 0.14, green: 0.14, blue: 0.16, alpha: 0.9)
+
     static let accent = Color(red: 0x4F / 255, green: 0xD1 / 255, blue: 0xE8 / 255)
     static let warning = Color(red: 1, green: 0xB3 / 255, blue: 0x40 / 255)
     static let critical = Color(red: 1, green: 0x5A / 255, blue: 0x4F / 255)

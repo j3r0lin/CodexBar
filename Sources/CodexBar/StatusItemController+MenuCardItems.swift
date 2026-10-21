@@ -42,6 +42,7 @@ extension StatusItemController {
         usesGPUSelection: Bool = false,
         tightVerticalFit: Bool = false,
         selectionBlock: OverviewBlockPosition? = nil,
+        usesPanelBase: Bool = false,
         recyclesView: Bool = true,
         onClick: (() -> Void)? = nil) -> NSMenuItem
     {
@@ -83,6 +84,7 @@ extension StatusItemController {
             usesGPUSelection: usesGPUSelection,
             tightVerticalFit: tightVerticalFit,
             selectionBlock: selectionBlock,
+            usesPanelBase: usesPanelBase,
             onClick: onClick)
         let hosting: ErasedMenuCardHostingView
         if recyclesView,

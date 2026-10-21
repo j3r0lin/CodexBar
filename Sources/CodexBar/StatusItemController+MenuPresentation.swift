@@ -140,6 +140,8 @@ struct MenuCardRowPayload {
     /// When the row is part of an Overview block, this keeps the hover highlight on that row's
     /// piece of the block instead of the whole menu item.
     var selectionBlock: OverviewBlockPosition?
+    /// Overview root rows fill their whole frame with the panel colour, so the panel reads as one surface.
+    var usesPanelBase: Bool = false
     let onClick: (() -> Void)?
 }
 
@@ -153,6 +155,7 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     private var measuredSize: NSSize?
     private var selectionView: NSView?
     private var blockBaseView: NSView?
+    private var panelBaseView: NSView?
     private(set) var allowsMenuHighlight: Bool
     private var onClick: (() -> Void)?
     private var containsInteractiveControls: Bool
@@ -273,6 +276,7 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
         let selectionFrame = Self.selectionFrame(in: self.bounds, block: self.rowPayload.selectionBlock)
         self.selectionView?.frame = selectionFrame
         self.blockBaseView?.frame = selectionFrame
+        self.panelBaseView?.frame = self.bounds
         self.updateSelectionShape()
     }
 
@@ -437,14 +441,26 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     }
 
     private func configureSelectionMode(animated: Bool) {
+        if self.rowPayload.usesPanelBase {
+            if self.panelBaseView == nil {
+                let base = NSView()
+                base.wantsLayer = true
+                base.layer?.backgroundColor = OverviewPalette.panelBase.cgColor
+                base.autoresizingMask = [.width, .height]
+                self.addSubview(base, positioned: .below, relativeTo: nil)
+                self.panelBaseView = base
+            }
+        } else {
+            self.panelBaseView?.removeFromSuperview()
+            self.panelBaseView = nil
+        }
         if self.rowPayload.selectionBlock != nil {
             if self.blockBaseView == nil {
                 // The base lives in AppKit, not in the SwiftUI card, so the selection layer between them
                 // still brightens the card on hover; the menu material behind would otherwise tint it.
                 let base = NSView()
                 base.wantsLayer = true
-                base.layer?.backgroundColor = NSColor(
-                    srgbRed: 0.14, green: 0.14, blue: 0.16, alpha: 0.9).cgColor
+                base.layer?.backgroundColor = OverviewPalette.cardBase.cgColor
                 base.layer?.masksToBounds = true
                 base.autoresizingMask = [.width, .height]
                 self.addSubview(base, positioned: .below, relativeTo: self.selectionView ?? self.hosting)
