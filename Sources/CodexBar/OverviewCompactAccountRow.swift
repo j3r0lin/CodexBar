@@ -221,8 +221,8 @@ struct OverviewCompactAccountRow: View {
     static let labelWidth: CGFloat = 32
     /// Fits "100%" at 13pt semibold with monospaced digits.
     static let percentWidth: CGFloat = 38
-    /// Fits the widest countdown, "23h 59m" (43.4pt at 10pt with monospaced digits; "26d 13h" is 40.9pt).
-    static let resetWidth: CGFloat = 44
+    /// Fits the widest reset text, "23h 59m · Tmr 23:59" (102.5pt at 10pt with monospaced digits).
+    static let resetWidth: CGFloat = 108
     /// Every window line keeps this height so lines pitch evenly within and across accounts.
     static let lineHeight: CGFloat = 22
 
@@ -336,7 +336,7 @@ struct OverviewCompactAccountRow: View {
                 trackColor: Self.trackColor,
                 height: 6,
                 pacePercent: line.pacePercent)
-            Text(line.resetsAt.map { Self.countdown(to: $0, now: self.now) } ?? "—")
+            Text(Self.resetText(line, now: self.now))
                 .font(.system(size: 10).monospacedDigit())
                 .foregroundStyle(OverviewPalette.reset)
                 .lineLimit(1)
@@ -424,6 +424,36 @@ struct OverviewCompactAccountRow: View {
     static func used(_ window: RateWindow?) -> Double? {
         guard let window, !window.isSyntheticPlaceholder else { return nil }
         return min(100, max(0, window.usedPercent))
+    }
+
+    static func resetText(_ line: Line, now: Date) -> String {
+        guard let date = line.resetsAt else { return "—" }
+        return "\(self.countdown(to: date, now: now)) · \(self.shortClock(date, now: now))"
+    }
+
+    /// A short form of the detail page's clock: today "14:30", tomorrow "Tmr 09:00", later this week
+    /// "Thu 03:00", and beyond that "Oct 28".
+    static func shortClock(_ date: Date, now: Date, calendar: Calendar = .current) -> String {
+        let clock = DateFormatter()
+        clock.locale = Locale(identifier: "en_US_POSIX")
+        clock.timeZone = calendar.timeZone
+        clock.dateFormat = "HH:mm"
+        let time = clock.string(from: date)
+        let days = calendar.dateComponents(
+            [.day],
+            from: calendar.startOfDay(for: now),
+            to: calendar.startOfDay(for: date)).day ?? 0
+        if days == 0 { return time }
+        if days == 1 { return "Tmr \(time)" }
+        let daysLeftInWeek = 6 - (calendar.component(.weekday, from: now) + 5) % 7
+        let style = Date.FormatStyle(
+            locale: Locale(identifier: "en_US_POSIX"),
+            calendar: calendar,
+            timeZone: calendar.timeZone)
+        if days > 1, days <= daysLeftInWeek {
+            return "\(date.formatted(style.weekday(.abbreviated))) \(time)"
+        }
+        return date.formatted(style.month(.abbreviated).day())
     }
 
     static func countdown(to date: Date, now: Date) -> String {

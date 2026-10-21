@@ -88,6 +88,20 @@ struct OverviewCompactAccountRowTests {
     }
 
     @Test
+    func `a reset shows both a countdown and an absolute time only when one exists`() {
+        let resetAt = Self.now.addingTimeInterval(4 * 3600 + 22 * 60)
+        let withReset = OverviewCompactAccountRow.Line(label: "5h", used: 40, resetsAt: resetAt)
+        let shown = OverviewCompactAccountRow.resetText(withReset, now: Self.now)
+        let countdown = OverviewCompactAccountRow.countdown(to: resetAt, now: Self.now)
+        let absolute = OverviewCompactAccountRow.shortClock(resetAt, now: Self.now)
+        #expect(shown.contains(countdown))
+        #expect(shown.contains(absolute))
+        let withoutReset = OverviewCompactAccountRow.Line(label: "5h", used: 0, resetsAt: nil)
+        let absent = OverviewCompactAccountRow.resetText(withoutReset, now: Self.now)
+        #expect(absent.allSatisfy { !$0.isNumber })
+    }
+
+    @Test
     func `a reset time is written with a space between its units`() {
         #expect(self.countdown(minutes: 140) == "2h 20m")
         #expect(self.countdown(minutes: 9900) == "6d 21h")

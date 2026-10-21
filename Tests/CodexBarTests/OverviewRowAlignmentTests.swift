@@ -72,16 +72,18 @@ struct OverviewRowAlignmentTests {
     }
 
     @Test
-    func `the reset column fits every countdown a row shows`() {
+    func `the reset column fits every countdown and absolute time a row shows`() {
         let font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .regular)
         let widest = stride(from: 0, through: 31 * 1440, by: 7).map { minutes in
-            let text = OverviewCompactAccountRow.countdown(
-                to: Self.now.addingTimeInterval(TimeInterval(minutes * 60) + 30),
-                now: Self.now)
+            let line = OverviewCompactAccountRow.Line(
+                label: "30d",
+                used: 40,
+                resetsAt: Self.now.addingTimeInterval(TimeInterval(minutes * 60) + 30))
+            let text = OverviewCompactAccountRow.resetText(line, now: Self.now)
             return (text as NSString).size(withAttributes: [.font: font]).width
         }.max() ?? 0
         #expect(widest <= OverviewCompactAccountRow.resetWidth)
-        #expect(OverviewCompactAccountRow.resetWidth - widest < 1)
+        #expect(OverviewCompactAccountRow.resetWidth - widest < 8)
     }
 
     @Test
