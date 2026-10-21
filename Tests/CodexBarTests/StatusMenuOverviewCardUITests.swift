@@ -134,7 +134,114 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `saved group collapse state leaves every account visible without group headings`() {
+    func `hidden usage items take their windows off a native overview row`() throws {
+        self.disableMenuCardsForTesting()
+        let (settings, store) = self.makeOverviewFixture()
+        enableTestProviders([.claude, .codex], settings: settings)
+        let session = RateWindow(
+            usedPercent: 40,
+            windowMinutes: 300,
+            resetsAt: Date().addingTimeInterval(1800),
+            resetDescription: nil)
+        let weekly = RateWindow(
+            usedPercent: 70,
+            windowMinutes: 7 * 1440,
+            resetsAt: Date().addingTimeInterval(172_800),
+            resetDescription: nil)
+        store._setSnapshotForTesting(
+            UsageSnapshot(primary: session, secondary: weekly, updatedAt: Date()),
+            provider: .codex)
+        let controller = self.makeOverviewController(settings: settings, store: store)
+        defer { controller.releaseStatusItemsForTesting() }
+
+        func lines() throws -> [OverviewCompactAccountRow.Line] {
+            let row = try #require(
+                controller.overviewUsageRows(visibleProviders: [.claude, .codex]).first { $0.groupKey == "codex" })
+            return controller.overviewRowView(for: row, width: 320, isGrouped: false, now: Date()).lines
+        }
+        #expect(try lines().map(\.used) == [40, 70])
+
+        settings.setUsageItemVisible(false, itemID: .metric("primary"), for: .codex)
+        #expect(try lines().map(\.used) == [70])
+
+        settings.setUsageItemVisible(false, itemID: .metric("secondary"), for: .codex)
+        #expect(try lines().isEmpty)
+
+        settings.restoreDefaultUsageItemVisibility(for: .codex)
+        #expect(try lines().count == 2)
+    }
+
+    @Test
+    func `overview rows follow the used or remaining choice and the pace switch`() throws {
+        self.disableMenuCardsForTesting()
+        let (settings, store) = self.makeOverviewFixture()
+        enableTestProviders([.claude, .codex], settings: settings)
+        store._setSnapshotForTesting(
+            UsageSnapshot(
+                primary: RateWindow(
+                    usedPercent: 40,
+                    windowMinutes: 300,
+                    resetsAt: Date().addingTimeInterval(7200),
+                    resetDescription: nil),
+                secondary: RateWindow(
+                    usedPercent: 70,
+                    windowMinutes: 7 * 1440,
+                    resetsAt: Date().addingTimeInterval(4 * 86400),
+                    resetDescription: nil),
+                updatedAt: Date()),
+            provider: .codex)
+        settings.usageBarsShowUsed = true
+        let controller = self.makeOverviewController(settings: settings, store: store)
+        defer { controller.releaseStatusItemsForTesting() }
+        let row = try #require(
+            controller.overviewUsageRows(visibleProviders: [.claude, .codex]).first { $0.groupKey == "codex" })
+
+        let used = controller.overviewRowView(for: row, width: 320, isGrouped: false, now: Date())
+        #expect(used.showsRemaining == false)
+        #expect(used.showsPace)
+        #expect(used.lines.map { used.reading(for: $0).percent } == [40, 70])
+
+        settings.usageBarsShowUsed = false
+        let remaining = controller.overviewRowView(for: row, width: 320, isGrouped: false, now: Date())
+        #expect(remaining.showsRemaining)
+        #expect(remaining.lines.map(\.used) == used.lines.map(\.used))
+        #expect(remaining.lines.map { remaining.reading(for: $0).percent } == [60, 30])
+
+        settings.paceVisible = false
+        let unpace = controller.overviewRowView(for: row, width: 320, isGrouped: false, now: Date())
+        #expect(!unpace.showsPace)
+    }
+
+    @Test
+    func `overview rows use the provider warning thresholds`() throws {
+        self.disableMenuCardsForTesting()
+        let (settings, store) = self.makeOverviewFixture()
+        enableTestProviders([.claude, .codex], settings: settings)
+        store._setSnapshotForTesting(
+            UsageSnapshot(
+                primary: RateWindow(
+                    usedPercent: 60,
+                    windowMinutes: 300,
+                    resetsAt: nil,
+                    resetDescription: nil),
+                secondary: nil,
+                updatedAt: Date()),
+            provider: .codex)
+        let controller = self.makeOverviewController(settings: settings, store: store)
+        defer { controller.releaseStatusItemsForTesting() }
+        let row = try #require(
+            controller.overviewUsageRows(visibleProviders: [.claude, .codex]).first { $0.groupKey == "codex" })
+
+        settings.quotaWarningThresholds = [40, 10]
+        let view = controller.overviewRowView(for: row, width: 320, isGrouped: false, now: Date())
+        #expect(view.sessionWarningThresholds == [40, 10])
+        #expect(view.weeklyWarningThresholds == [40, 10])
+        let line = try #require(view.lines.first)
+        #expect(view.reading(for: line).barColor == OverviewPalette.warning)
+    }
+
+    @Test
+    func `every magpie account keeps its own row without group headings`() {
         self.disableMenuCardsForTesting()
         let (settings, store) = self.makeOverviewFixture()
         enableTestProviders([.claude, .codex], settings: settings)
@@ -163,20 +270,8 @@ extension StatusMenuTests {
             return menu.items.compactMap { $0.representedObject as? String }
         }
 
-        let expanded = rowIDs()
-        #expect(expanded.filter { $0.hasPrefix("overviewRow-claude#") }.count == 2)
-        #expect(!expanded.contains { $0.hasPrefix("overviewHeading-") })
-
-        settings.overviewCollapsedProviderGroups = ["claude"]
-        let collapsed = rowIDs()
-        #expect(collapsed == expanded)
-
-        // The choice survives a settings reload from the same defaults.
-        let reloaded = SettingsStore(
-            userDefaults: settings.userDefaults,
-            configStore: settings.configStore,
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore())
-        #expect(reloaded.overviewCollapsedProviderGroups == ["claude"])
+        let ids = rowIDs()
+        #expect(ids.filter { $0.hasPrefix("overviewRow-claude#") }.count == 2)
+        #expect(!ids.contains { $0.hasPrefix("overviewHeading-") })
     }
 }

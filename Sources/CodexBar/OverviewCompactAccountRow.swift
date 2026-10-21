@@ -2,8 +2,11 @@ import AppKit
 import CodexBarCore
 import SwiftUI
 
-/// Overview colours: one accent for normal readings, orange from 70% and red from 90%, for both the bar
-/// and its number. A 0% reading stays neutral white so an unused window reads as empty, not healthy.
+/// Overview colours: one accent for normal readings, orange from the user's first quota-warning
+/// threshold and red from the second, for both the bar and its number. Without configured thresholds
+/// they fall back to 70% and 90%. The thresholds describe *remaining* quota, so each becomes a used
+/// reading as `100 - threshold`. A 0% reading stays neutral white so an unused window reads as empty,
+/// not healthy.
 enum OverviewPalette {
     static let accent = Color(red: 0x4F / 255, green: 0xD1 / 255, blue: 0xE8 / 255)
     static let warning = Color(red: 1, green: 0xB3 / 255, blue: 0x40 / 255)
@@ -16,9 +19,24 @@ enum OverviewPalette {
     /// A quota curve's shading where more is left than an even burn would leave.
     static let reserve = Color(red: 0.24, green: 0.84, blue: 0.44)
 
-    static func color(usedPercent used: Double) -> Color {
-        if used >= 90 { return self.critical }
-        if used >= 70 { return self.warning }
+    /// Used-percent thresholds above which the reading turns orange and red. `thresholds` are the
+    /// user's remaining-quota warning thresholds, highest first; converted to the used scale, the
+    /// lower one warns and the higher one turns critical. A single threshold leaves red at 90% used,
+    /// and no threshold at all keeps 70/90.
+    static func bounds(forWarningThresholds thresholds: [Int]) -> (warning: Double, critical: Double) {
+        // An empty list means no thresholds, not the settings default; 0 marks a disabled threshold.
+        let active = thresholds.isEmpty ? [] : QuotaWarningThresholds.active(thresholds)
+        guard let highestRemaining = active.first else { return (warning: 70, critical: 90) }
+        let lowestRemaining = active.last ?? highestRemaining
+        return (
+            warning: 100 - Double(highestRemaining),
+            critical: highestRemaining == lowestRemaining ? 90 : 100 - Double(lowestRemaining))
+    }
+
+    static func color(usedPercent used: Double, warningThresholds: [Int] = []) -> Color {
+        let bounds = self.bounds(forWarningThresholds: warningThresholds)
+        if used >= bounds.critical { return self.critical }
+        if used >= bounds.warning { return self.warning }
         return self.accent
     }
 }
@@ -169,6 +187,14 @@ struct OverviewCompactAccountRow: View {
     var namedLines: [Line]?
     /// Native rows let Grok infer a period from the reset time; magpie-sourced windows never do.
     var infersPeriodFromReset = true
+    /// Shows the remaining quota instead of the used one. Severity and pace stay keyed on the used
+    /// reading, so flipping the display never changes a colour or a pace verdict.
+    var showsRemaining = false
+    /// The user's remaining-quota warning thresholds, highest first, per window kind.
+    var sessionWarningThresholds: [Int] = []
+    var weeklyWarningThresholds: [Int] = []
+    /// Draws the pace tick and tints the percent by its pace; off hides both.
+    var showsPace = true
     /// The reading is older than the refresh cadence allows; its numbers are drawn dimmed.
     var isStale = false
     var updatedAt: Date?
@@ -204,6 +230,9 @@ struct OverviewCompactAccountRow: View {
         let label: String
         let used: Double
         let resetsAt: Date?
+        /// Which warning thresholds colour this line; a window of unknown length follows the weekly
+        /// lane, since it is never the five-hour session.
+        var window: QuotaWarningWindow = .weekly
         /// Where the linear pace says usage should be by now, drawn as a tick on the bar; nil when the
         /// window has no pace.
         var pacePercent: Double?
@@ -239,8 +268,23 @@ struct OverviewCompactAccountRow: View {
                     provider: self.provider,
                     infersPeriodFromReset: self.infersPeriodFromReset),
                 used: used,
-                resetsAt: window.resetsAt)
+                resetsAt: window.resetsAt,
+                window: Self.warningWindow(
+                    window,
+                    provider: self.provider,
+                    infersPeriodFromReset: self.infersPeriodFromReset))
         }
+    }
+
+    /// A window of a day or less follows the session thresholds; everything longer, including a window
+    /// whose length is unknown, follows the weekly ones.
+    static func warningWindow(
+        _ window: RateWindow,
+        provider: UsageProvider?,
+        infersPeriodFromReset: Bool = true) -> QuotaWarningWindow
+    {
+        let minutes = self.nativeMinutes(window, provider: provider, infersPeriodFromReset: infersPeriodFromReset)
+        return (minutes ?? .max) <= 1440 ? .session : .weekly
     }
 
     var updatedText: String? {
@@ -306,7 +350,7 @@ struct OverviewCompactAccountRow: View {
         let lines = self.lines
         VStack(alignment: .leading, spacing: 0) {
             ForEach(lines.indices, id: \.self) { index in
-                self.windowLine { self.reading(lines[index]) }
+                self.windowLine { self.readingView(lines[index]) }
             }
         }
         .opacity(self.isStale ? 0.5 : 1)
@@ -317,26 +361,47 @@ struct OverviewCompactAccountRow: View {
             .frame(height: Self.lineHeight)
     }
 
-    private func reading(_ line: Line) -> some View {
-        let color = Self.severityColor(line.used)
+    /// What one line draws. Severity and pace read the used percentage, so `showsRemaining` moves
+    /// only `percent` (and the bar's fill); every colour stays where the used reading puts it.
+    struct Reading: Equatable {
+        let percent: Double
+        let barColor: Color
+        let percentColor: Color
+        /// Pace tick position, nil without a pace or with pace hidden.
+        let pacePercent: Double?
+    }
+
+    func reading(for line: Line) -> Reading {
+        let severity = Self.severityColor(line.used, warningThresholds: self.warningThresholds(for: line.window))
+        return Reading(
+            percent: Self.displayedPercent(line.used, showsRemaining: self.showsRemaining),
+            barColor: severity,
+            percentColor: Self.percentColor(line, severity: severity, showsPace: self.showsPace),
+            pacePercent: self.showsPace
+                ? line.pacePercent.map { Self.displayedPacePercent($0, showsRemaining: self.showsRemaining) }
+                : nil)
+    }
+
+    private func readingView(_ line: Line) -> some View {
+        let reading = self.reading(for: line)
         return HStack(spacing: 8) {
             Text(line.label)
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(OverviewPalette.caption)
                 .lineLimit(1)
                 .frame(width: Self.labelWidth, alignment: .leading)
-            Text("\(Int(line.used.rounded()))%")
+            Text("\(Int(reading.percent.rounded()))%")
                 .font(.system(size: 13, weight: .semibold).monospacedDigit())
-                .foregroundStyle(Self.percentColor(line, severity: color))
+                .foregroundStyle(reading.percentColor)
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
                 .frame(width: Self.percentWidth, alignment: .trailing)
             UsageBar(
-                used: line.used,
-                color: color,
+                used: reading.percent,
+                color: reading.barColor,
                 trackColor: Self.trackColor,
                 height: 6,
-                pacePercent: line.pacePercent)
+                pacePercent: reading.pacePercent)
             Text(Self.resetText(line, now: self.now))
                 .font(.system(size: 10).monospacedDigit())
                 .foregroundStyle(OverviewPalette.reset)
@@ -346,8 +411,28 @@ struct OverviewCompactAccountRow: View {
         }
     }
 
-    static func percentColor(_ line: Line, severity: Color) -> Color {
-        switch line.paceTone {
+    func warningThresholds(for window: QuotaWarningWindow) -> [Int] {
+        switch window {
+        case .session: self.sessionWarningThresholds
+        case .weekly: self.weeklyWarningThresholds
+        }
+    }
+
+    /// The number the row draws: the reading itself, or what is left of it. Severity and pace keep
+    /// working from the used reading, so this only moves the bar's fill and its tick.
+    static func displayedPercent(_ used: Double, showsRemaining: Bool) -> Double {
+        showsRemaining ? 100 - used : used
+    }
+
+    /// The pace tick against `expectedUsed` can fall outside a 0-100 fill once the display flips to
+    /// remaining, so it is clamped rather than allowed to slide off the bar.
+    static func displayedPacePercent(_ expectedUsed: Double, showsRemaining: Bool) -> Double {
+        min(100, max(0, self.displayedPercent(expectedUsed, showsRemaining: showsRemaining)))
+    }
+
+    static func percentColor(_ line: Line, severity: Color, showsPace: Bool = true) -> Color {
+        guard showsPace else { return line.used > 0 ? severity : OverviewPalette.neutral }
+        return switch line.paceTone {
         case .runsOut: OverviewPalette.critical
         case .deficit: OverviewPalette.warning
         case .neutral: line.used > 0 ? severity : OverviewPalette.neutral
@@ -359,19 +444,23 @@ struct OverviewCompactAccountRow: View {
 
     /// The bar and its number share one colour, and a highlighted row keeps it: the selection is painted
     /// behind the row, so the reading survives the highlight.
-    static func severityColor(_ used: Double) -> Color {
-        OverviewPalette.color(usedPercent: used)
+    static func severityColor(_ used: Double, warningThresholds: [Int] = []) -> Color {
+        OverviewPalette.color(usedPercent: used, warningThresholds: warningThresholds)
     }
 
     /// Explicit durations determine the slots. Untyped readings use only provider-owned semantics;
-    /// an unknown reading occupies the long slot first and keeps a duration-free label.
+    /// an unknown reading occupies the long slot first and keeps a duration-free label. A window whose
+    /// usage item the user hid takes no slot, exactly as a hidden magpie window takes no line.
     static func slots(
         of snapshot: UsageSnapshot?,
-        provider: UsageProvider? = nil) -> (short: RateWindow?, long: RateWindow?)
+        provider: UsageProvider? = nil,
+        hiddenItemIDs: Set<ProviderUsageItemID> = []) -> (short: RateWindow?, long: RateWindow?)
     {
         guard let snapshot else { return (nil, nil) }
         let infersPeriod = !snapshot.isMagpieSourced
-        let windows = [snapshot.primary, snapshot.secondary, snapshot.tertiary].compactMap(\.self)
+        let windows = Self.reportedLanes(of: snapshot).compactMap { lane -> RateWindow? in
+            hiddenItemIDs.contains(.metric(lane.id)) ? nil : lane.window
+        }
         var short = windows.first {
             (Self.nativeMinutes($0, provider: provider, infersPeriodFromReset: infersPeriod) ?? .max) <= 1440
         }
@@ -389,6 +478,13 @@ struct OverviewCompactAccountRow: View {
             }
         }
         return (short, long)
+    }
+
+    /// The snapshot's three quota lanes under the ids their usage items carry in Settings.
+    static func reportedLanes(of snapshot: UsageSnapshot?) -> [(id: String, window: RateWindow)] {
+        guard let snapshot else { return [] }
+        return [("primary", snapshot.primary), ("secondary", snapshot.secondary), ("tertiary", snapshot.tertiary)]
+            .compactMap { id, window in window.map { (id: id, window: $0) } }
     }
 
     /// Grok's descriptor owns the fallback for its untyped credit pool; human-readable reset

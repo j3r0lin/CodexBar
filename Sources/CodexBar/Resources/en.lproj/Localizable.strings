@@ -429,7 +429,6 @@
 "metric_tertiary" = "Tertiary (%@)";
 "multiple_workspaces_found" = "CodexBar found multiple workspaces for %@. Please choose the workspace to add.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "Choose up to %@ providers for the merged icon";
 "remove_account_message" = "Remove %@ from CodexBar? Its managed Codex home will be deleted.";
 "version_format" = "Version %@";
 "vertex_ai_login_instructions" = "To track Vertex AI usage, authenticate with Google Cloud.\n\n1. Open Terminal\n2. Run: gcloud auth application-default login\n3. Follow the browser prompts to sign in\n4. Set your project: gcloud config set project PROJECT_ID\n\nOpen Terminal now?";
@@ -655,12 +654,13 @@
 "multi_account_layout_subtitle" = "Choose segmented account switching or stacked account cards.";
 "multi_account_layout_segmented" = "Segmented";
 "multi_account_layout_stacked" = "Stacked";
-"overview_tab_providers_title" = "Merged icon providers";
 "configure" = "Configure…";
-"overview_enable_merge_icons_hint" = "Turn on Merge icons to choose the merged icon's providers.";
-"overview_no_providers_hint" = "No enabled providers available for Overview.";
-"overview_rows_follow_order" = "The merged icon shows one of these providers. The Overview menu lists every enabled provider.";
 "overview_no_providers_selected" = "No providers selected";
+"menu_bar_icon_providers_title" = "Menu bar icon providers";
+"menu_bar_icon_providers_merge_icons_hint" = "Turn on Merge icons to choose which providers appear in the menu bar icon.";
+"menu_bar_icon_providers_no_providers_hint" = "No enabled providers to show in the menu bar icon.";
+"menu_bar_icon_providers_popover_title" = "Show in menu bar icon";
+"menu_bar_icon_providers_popover_subtitle" = "The Overview menu still lists every enabled provider.";
 "agent_sessions_title" = "Agent sessions";
 "agent_sessions_subtitle" = "Show local and SSH-discovered Codex and Claude Code sessions in the menu.";
 "agent_sessions_hosts_title" = "Additional SSH hosts";
@@ -1651,11 +1651,6 @@
 "Est. subtotal (%@): %@" = "Est. subtotal (%@): %@";
 
 "Excluded requests with missing final usage: %d" = "Excluded requests with missing final usage: %d";
-
-"overview_layout_title" = "Overview layout";
-"overview_layout_subtitle" = "Choose how much information Overview shows.";
-"overview_layout_detailed" = "Detailed";
-"overview_layout_compact" = "Compact";
 
 "section_widgets" = "Widgets";
 "account_widgets_title" = "Keep accounts updated for widgets";

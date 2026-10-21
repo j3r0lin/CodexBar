@@ -682,11 +682,7 @@ extension SettingsStore {
                 from: userDefaults),
             jetbrainsIDEBasePath: userDefaults.string(forKey: "jetbrainsIDEBasePath") ?? "",
             mergeIcons: userDefaults.object(forKey: "mergeIcons") as? Bool ?? true,
-            mergedOverviewLayoutRaw: userDefaults.string(forKey: "mergedOverviewLayout")
-                ?? MergedOverviewLayout.detailed.rawValue,
             mergedOverviewAllAccounts: userDefaults.bool(forKey: "mergedOverviewAllAccounts"),
-            overviewCollapsedProviderGroupsRaw: userDefaults.array(
-                forKey: "overviewCollapsedProviderGroups") as? [String] ?? [],
             mergeIconsStacked: userDefaults.object(forKey: "mergeIconsStacked") as? Bool ?? false,
             mergeIconStackedTopProviderRaw: userDefaults.string(forKey: "mergeIconStackedTopProvider"),
             mergeIconStackedBottomProviderRaw: userDefaults.string(forKey: "mergeIconStackedBottomProvider"),

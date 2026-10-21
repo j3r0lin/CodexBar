@@ -9,10 +9,6 @@ struct MenuBarPane: View {
     @Bindable var settings: SettingsStore
     @Bindable var store: UsageStore
 
-    static func overviewProviderLimitText(limit: Int = Self.maxOverviewProviders) -> String {
-        L("overview_choose_providers", String(limit))
-    }
-
     static func inactiveDisplayContrastAvailable(for style: MenuBarIconStyle) -> Bool {
         style == .iconAndPercent
     }
@@ -169,15 +165,15 @@ struct MenuBarPane: View {
                 }
             }
         } label: {
-            SettingsRowLabel(L("overview_tab_providers_title"), subtitle: self.overviewProviderSubtitle)
+            SettingsRowLabel(L("menu_bar_icon_providers_title"), subtitle: self.overviewProviderSubtitle)
         }
     }
 
     private var overviewProviderSubtitle: String {
         if !self.settings.mergeIcons {
-            L("overview_enable_merge_icons_hint")
+            L("menu_bar_icon_providers_merge_icons_hint")
         } else if self.activeProvidersInOrder.isEmpty {
-            L("overview_no_providers_hint")
+            L("menu_bar_icon_providers_no_providers_hint")
         } else {
             self.overviewProviderSelectionSummary
         }
@@ -185,9 +181,9 @@ struct MenuBarPane: View {
 
     private var overviewProviderPopover: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(Self.overviewProviderLimitText())
+            Text(L("menu_bar_icon_providers_popover_title"))
                 .font(.headline)
-            Text(L("overview_rows_follow_order"))
+            Text(L("menu_bar_icon_providers_popover_subtitle"))
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
 

@@ -440,7 +440,6 @@
 "metric_tertiary" = "Terciario (%@)";
 "multiple_workspaces_found" = "CodexBar atopou varios espazos de traballo para %@. Escolle o que queiras engadir.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "Escolle ata %@ provedores para a icona combinada";
 "remove_account_message" = "Queres eliminar %@ de CodexBar? O seu directorio de Codex xestionado eliminarase.";
 "version_format" = "Versión %@";
 "vertex_ai_login_instructions" = "Para facer un seguimento do uso de Vertex AI, autentícate con Google Cloud.\n\n1. Abre o Terminal\n2. Executa: gcloud auth application-default login\n3. Segue as indicacións do navegador para iniciar sesión\n4. Define o teu proxecto: gcloud config set project PROJECT_ID\n\nQueres abrir o Terminal agora?";
@@ -639,12 +638,13 @@
 "multi_account_layout_subtitle" = "Escolle o cambio de conta segmentado ou tarxetas de conta apiladas.";
 "multi_account_layout_segmented" = "Segmentado";
 "multi_account_layout_stacked" = "Apilado";
-"overview_tab_providers_title" = "Provedores da icona combinada";
 "configure" = "Configurar…";
-"overview_enable_merge_icons_hint" = "Activa Combinar iconas para escoller os provedores da icona combinada.";
-"overview_no_providers_hint" = "Non hai provedores activados dispoñibles para o Resumo.";
-"overview_rows_follow_order" = "A icona combinada mostra un destes provedores. O menú Resumo mostra todos os provedores activados.";
 "overview_no_providers_selected" = "Non se seleccionou ningún provedor";
+"menu_bar_icon_providers_title" = "Provedores da icona da barra de menús";
+"menu_bar_icon_providers_merge_icons_hint" = "Activa Combinar iconas para escoller que provedores mostra a icona da barra de menús.";
+"menu_bar_icon_providers_no_providers_hint" = "Non hai provedores activados que mostrar na icona da barra de menús.";
+"menu_bar_icon_providers_popover_title" = "Mostrar na icona da barra de menús";
+"menu_bar_icon_providers_popover_subtitle" = "O menú Resumo segue amosando todos os provedores activados.";
 "agent_sessions_title" = "Sesións de axentes";
 "agent_sessions_subtitle" = "Amosa no menú as sesións de Codex e Claude Code locais e descubertas mediante SSH.";
 "agent_sessions_hosts_title" = "Hosts SSH adicionais";
@@ -1644,11 +1644,6 @@
 "Incomplete" = "Incompleto";
 "Est. subtotal (%@): %@" = "Subtotal estimado (%@): %@";
 "Excluded requests with missing final usage: %d" = "Solicitudes excluídas sen datos de uso finais: %d";
-
-"overview_layout_title" = "Deseño do Resumo";
-"overview_layout_subtitle" = "Escolle canta información mostra o Resumo.";
-"overview_layout_detailed" = "Detallado";
-"overview_layout_compact" = "Compacto";
 
 "section_widgets" = "Widgets";
 "account_widgets_title" = "Manter as contas actualizadas para os widgets";

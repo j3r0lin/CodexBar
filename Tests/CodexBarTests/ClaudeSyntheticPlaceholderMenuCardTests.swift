@@ -79,18 +79,16 @@ struct ClaudeSyntheticPlaceholderMenuCardTests {
 
     @MainActor
     @Test(arguments: [false, true])
-    func `compact overview preserves enterprise spend without quota windows`(showOptional: Bool) throws {
+    func `overview card preserves enterprise spend without quota windows`(showOptional: Bool) throws {
         let model = Self.enterpriseModel(showOptional: showOptional)
-        let row = OverviewMenuCardRowView(model: model, storageText: nil, width: 340, layout: .compact)
         #expect(model.metrics.count == (showOptional ? 1 : 0))
-        #expect(row.usesFullCard == !showOptional)
         #expect(model.providerCost == nil)
         if showOptional {
             let metric = try #require(model.metrics.first)
             #expect(metric.title == "Extra usage")
             #expect(metric.detailText == "Monthly cap: $9.95 / $150.00")
         }
-        #expect(!OverviewMenuCardRowView(model: model, storageText: nil, width: 340).usesFullCard)
+        #expect(model.hasUsageContent)
     }
 
     @MainActor
@@ -100,7 +98,7 @@ struct ClaudeSyntheticPlaceholderMenuCardTests {
             return
         }
         let hosting = NSHostingView(rootView: OverviewMenuCardRowView(
-            model: Self.enterpriseModel(showOptional: true), storageText: nil, width: 340, layout: .compact)
+            model: Self.enterpriseModel(showOptional: true), storageText: nil, width: 340)
             .padding(16)
             .frame(width: 372)
             .environment(\.locale, Locale(identifier: "en"))

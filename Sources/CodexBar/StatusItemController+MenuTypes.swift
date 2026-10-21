@@ -39,28 +39,22 @@ struct OverviewMenuCardRowView: View {
     let model: UsageMenuCardView.Model
     let storageText: String?
     let width: CGFloat
-    var layout: MergedOverviewLayout = .detailed
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if self.usesFullCard {
-                UsageMenuCardView(model: self.model, width: self.width)
-            } else {
-                UsageMenuCardHeaderSectionView(
+            UsageMenuCardHeaderSectionView(
+                model: self.model,
+                showDivider: Self.showsSectionDividers && self.model.hasUsageContent,
+                width: self.width)
+            if self.model.hasUsageContent {
+                UsageMenuCardUsageSectionView(
                     model: self.model,
-                    showDivider: Self.showsSectionDividers && self.model.hasUsageContent,
-                    width: self.width)
-                if self.model.hasUsageContent {
-                    UsageMenuCardUsageSectionView(
-                        model: self.model,
-                        layoutModel: self.model,
-                        showBottomDivider: false,
-                        bottomPadding: 6,
-                        width: self.width,
-                        showsSectionDividers: Self.showsSectionDividers,
-                        compactMetrics: self.layout == .compact)
-                }
+                    layoutModel: self.model,
+                    showBottomDivider: false,
+                    bottomPadding: 6,
+                    width: self.width,
+                    showsSectionDividers: Self.showsSectionDividers)
             }
             if let storageText {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
@@ -80,10 +74,6 @@ struct OverviewMenuCardRowView: View {
             }
         }
         .frame(width: self.width, alignment: .leading)
-    }
-
-    var usesFullCard: Bool {
-        self.layout == .compact && self.model.metrics.isEmpty
     }
 }
 

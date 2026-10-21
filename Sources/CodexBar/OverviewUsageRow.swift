@@ -17,6 +17,8 @@ struct OverviewUsageRow {
         let duration: TimeInterval?
         /// magpie's readings of this window, oldest first; empty when it kept none.
         let history: [MagpieQuotaHistoryPoint]
+        /// The window the reading came from, kept for its semantics (which thresholds colour it).
+        let window: MagpieQuotaWindow
 
         init(window: MagpieQuotaWindow, history: [MagpieQuotaHistoryPoint] = []) {
             self.label = Self.label(for: window)
@@ -25,6 +27,7 @@ struct OverviewUsageRow {
             self.resetsAt = window.resetsAt
             self.duration = window.duration
             self.history = history
+            self.window = window
         }
 
         /// Linear pace from this window's own reading, never from another account's history.
@@ -236,18 +239,31 @@ struct OverviewUsageRow {
     }
 
     /// The compact lines of a magpie row. Every window with a pace gets its tick; the percent tint goes
-    /// only on the longest of them, since that is the one a reader plans against.
-    func compactLines(now: Date) -> [OverviewCompactAccountRow.Line]? {
+    /// only on the longest of them, since that is the one a reader plans against. With pace hidden no
+    /// window gets either.
+    func compactLines(now: Date, showsPace: Bool = true) -> [OverviewCompactAccountRow.Line]? {
         guard let namedWindows else { return nil }
-        let paced = namedWindows.compactMap { window in window.pace(now: now).map { (window, $0) } }
+        let paced = showsPace
+            ? namedWindows.compactMap { window in window.pace(now: now).map { (window, $0) } }
+            : []
         let longest = paced.max { ($0.0.duration ?? 0) < ($1.0.duration ?? 0) }
         return namedWindows.map { window in
-            var line = OverviewCompactAccountRow.Line(label: window.label, used: window.used, resetsAt: window.resetsAt)
+            var line = OverviewCompactAccountRow.Line(
+                label: window.label,
+                used: window.used,
+                resetsAt: window.resetsAt,
+                window: Self.warningWindow(for: window))
             line.pacePercent = paced.first { $0.0 == window }?.1.expectedUsedPercent
             if let longest, longest.0 == window {
                 line.paceTone = .init(pace: longest.1, fitted: window.trend(now: now)?.eta)
             }
             return line
         }
+    }
+
+    /// The session window takes the session warning thresholds; every other window, including a monthly
+    /// or model-scoped one, follows weekly.
+    static func warningWindow(for window: NamedWindow) -> QuotaWarningWindow {
+        window.window.semantics == .session ? .session : .weekly
     }
 }

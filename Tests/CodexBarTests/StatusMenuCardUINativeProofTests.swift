@@ -5,15 +5,13 @@ import XCTest
 @testable import CodexBarCore
 
 /// Opt-in card-UI proof: pops the real merged Overview menu with synthetic magpie and native data,
-/// then screenshots the live menu window, a collapsed Claude group, and one detail submenu. Runs only when
+/// then screenshots the live menu window and one detail submenu. Runs only when
 /// CODEXBAR_CARD_UI_PROOF_DIR is set.
 @MainActor
 final class StatusMenuCardUINativeProofTests: XCTestCase {
     private enum Phase {
         case settleNow
         case captureNow
-        case settleCollapsed
-        case captureCollapsed
         case closing
     }
 
@@ -24,8 +22,6 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
     private var detailTicks = 0
     private var proofMenu: NSMenu?
     private var detailMenu: NSMenu?
-    private var proofController: StatusItemController?
-    private var proofFixture: CodexWorkspacesNavigationFixture?
     private var proofDirectory: URL?
 
     func test_cardUIProof() throws {
@@ -61,8 +57,6 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
         let menu = try XCTUnwrap(controller.makeMenu() as? StatusItemMenu)
         controller.mergedMenu = menu
         self.proofMenu = menu
-        self.proofController = controller
-        self.proofFixture = fixture
         self.proofDirectory = directory
         self.phase = .settleNow
         self.settleTicks = 0
@@ -140,17 +134,15 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
         defer { detailTimer.invalidate() }
         detail.popUp(positioning: nil, at: NSPoint(x: 120, y: 120), in: host.contentView)
 
-        for name in ["cardui-overview", "cardui-collapsed", "cardui-detail"] {
+        for name in ["cardui-overview", "cardui-detail"] {
             let png = directory.appendingPathComponent("\(name).png")
             XCTAssertTrue(FileManager.default.fileExists(atPath: png.path), "missing \(name).png")
         }
     }
 
-    /// One step of the capture state machine: settle, capture, collapse the Claude group, capture, close.
+    /// One step of the capture state machine: settle, capture, close.
     @objc private func tickOverviewCapture() {
         guard let menu = self.proofMenu,
-              let controller = self.proofController,
-              let fixture = self.proofFixture,
               let directory = self.proofDirectory
         else { return }
         let menuWindow = menu.items.compactMap { $0.view?.window }.first
@@ -161,15 +153,6 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
             if self.settleTicks >= 4 { self.phase = .captureNow }
         case .captureNow:
             Self.capture(window: menuWindow, name: "cardui-overview", into: directory)
-            fixture.settings.overviewCollapsedProviderGroups = ["claude"]
-            controller.invalidateMenus(refreshOpenMenus: true)
-            self.settleTicks = 0
-            self.phase = .settleCollapsed
-        case .settleCollapsed:
-            self.settleTicks += 1
-            if self.settleTicks >= 4 { self.phase = .captureCollapsed }
-        case .captureCollapsed:
-            Self.capture(window: menuWindow, name: "cardui-collapsed", into: directory)
             self.phase = .closing
             menu.cancelTracking()
         case .closing:
@@ -239,7 +222,6 @@ final class StatusMenuCardUINativeProofTests: XCTestCase {
         }
         fixture.settings.mergeIcons = true
         fixture.settings.mergedMenuLastSelectedWasOverview = true
-        fixture.settings.overviewCollapsedProviderGroups = []
 
         func window(_ minutes: Int?, _ used: Double, _ resetMinutes: Double?) -> RateWindow {
             RateWindow(

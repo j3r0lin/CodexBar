@@ -445,7 +445,6 @@
 "metric_tertiary" = "الثالثية (%@)";
 "multiple_workspaces_found" = "CodexBar وجدت عدة مساحات عمل ل %@. يرجى اختيار مساحة العمل التي ستضيفها.";
 "ory_session_…=…; csrftoken=…" = "ory_session_...=...; csrftoken=...";
-"overview_choose_providers" = "اختر حتى %@ مزوّدين للأيقونة المدمجة";
 "remove_account_message" = "إزالة %@ من CodexBar؟ سيتم حذف Codex المنزل الذي يديره.";
 "version_format" = "النسخة %@";
 "vertex_ai_login_instructions" = "لتتبع Vertex AI الاستخدام، قم بالتحقق باستخدام Google Cloud.\n\n1. افتح الطرفية\n2. تشغيل: gcloud auth application-default login\n3. اتبع تعليمات المتصفح لتوقيع in\n4. هل تضبط مشروعك: gcloud config set project PROJECT_ID\n\nOpen الآن؟";
@@ -671,12 +670,13 @@
 "multi_account_layout_subtitle" = "اختر تبديل الحسابات المجزأة أو بطاقات الحساب المكدسة.";
 "multi_account_layout_segmented" = "مقسم";
 "multi_account_layout_stacked" = "مكدس";
-"overview_tab_providers_title" = "مزوّدو الأيقونة المدمجة";
 "configure" = "تكوين...";
-"overview_enable_merge_icons_hint" = "فعّل دمج الأيقونات لاختيار مزوّدي الأيقونة المدمجة.";
-"overview_no_providers_hint" = "لا يوجد مزودون مفعلون متاحون للنظرة العامة.";
-"overview_rows_follow_order" = "تعرض الأيقونة المدمجة أحد هؤلاء المزوّدين. تعرض قائمة النظرة العامة كل المزوّدين المفعّلين.";
 "overview_no_providers_selected" = "لم يتم اختيار أي مقدمي خدمة";
+"menu_bar_icon_providers_title" = "مزوّدو أيقونة شريط القوائم";
+"menu_bar_icon_providers_merge_icons_hint" = "فعّل دمج الأيقونات لاختيار المزوّدين الذين تعرضهم أيقونة شريط القوائم.";
+"menu_bar_icon_providers_no_providers_hint" = "لا يوجد مزودون مفعلون لعرضهم في أيقونة شريط القوائم.";
+"menu_bar_icon_providers_popover_title" = "العرض في أيقونة شريط القوائم";
+"menu_bar_icon_providers_popover_subtitle" = "تعرض قائمة النظرة العامة كل المزوّدين المفعّلين.";
 "agent_sessions_title" = "جلسات الوكلاء";
 "agent_sessions_subtitle" = "إظهار جلسات Codex وClaude Code المحلية والمكتشفة عبر SSH في القائمة.";
 "agent_sessions_hosts_title" = "مضيفو SSH إضافيون";
@@ -1649,11 +1649,6 @@
 "Incomplete" = "غير مكتمل";
 "Est. subtotal (%@): %@" = "الإجمالي الفرعي التقديري (%@): %@";
 "Excluded requests with missing final usage: %d" = "الطلبات المستبعدة لعدم توفر بيانات الاستخدام النهائية: %d";
-
-"overview_layout_title" = "تخطيط النظرة العامة";
-"overview_layout_subtitle" = "اختر مقدار المعلومات التي تعرضها النظرة العامة.";
-"overview_layout_detailed" = "مفصل";
-"overview_layout_compact" = "مضغوط";
 
 "section_widgets" = "الأدوات";
 "account_widgets_title" = "تحديث الحسابات للأدوات";

@@ -125,14 +125,6 @@ struct PreferencesPaneSmokeTests {
     }
 
     @Test
-    func `overview provider limit text shows the configured maximum`() {
-        let text = MenuBarPane.overviewProviderLimitText()
-
-        #expect(text.contains("6"))
-        #expect(!text.contains("%@"))
-    }
-
-    @Test
     func `inactive display contrast is available only for icon and percent`() {
         #expect(!MenuBarPane.inactiveDisplayContrastAvailable(for: .critters))
         #expect(!MenuBarPane.inactiveDisplayContrastAvailable(for: .bars))

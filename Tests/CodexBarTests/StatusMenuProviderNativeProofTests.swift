@@ -29,10 +29,6 @@ final class StatusMenuProviderNativeProofTests: XCTestCase {
         let overview = environment["CODEXBAR_STATUS_PROVIDER_PROOF_OVERVIEW"] == "1"
         let compact = environment["CODEXBAR_STATUS_PROVIDER_PROOF_COMPACT"] == "1"
         Self.seedProviderMenu(in: fixture, overview: overview, compact: compact)
-        if overview {
-            fixture.settings.mergedOverviewLayout = MergedOverviewLayout(
-                rawValue: environment["CODEXBAR_STATUS_PROVIDER_PROOF_OVERVIEW_LAYOUT"] ?? "detailed") ?? .detailed
-        }
 
         let oldRendering = StatusItemController.menuCardRenderingEnabled
         let oldRefresh = StatusItemController.menuRefreshEnabled
@@ -241,7 +237,6 @@ final class StatusMenuProviderNativeProofTests: XCTestCase {
             "pid": String(ProcessInfo.processInfo.processIdentifier),
             "window": String(host.windowNumber),
             "menuWindow": String(menu.items.compactMap { $0.view?.window?.windowNumber }.first ?? 0),
-            "overviewLayout": fixture.settings.mergedOverviewLayout.rawValue,
             "selected": fixture.settings.selectedMenuProvider?.rawValue ?? "none",
             "overview": String(fixture.settings.mergedMenuLastSelectedWasOverview),
             "highlighted": menu.highlightedItem?.representedObject as? String ?? "none",

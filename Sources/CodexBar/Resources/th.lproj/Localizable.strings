@@ -445,7 +445,6 @@
 "metric_tertiary" = "ระดับอุดมศึกษา (%@)";
 "multiple_workspaces_found" = "CodexBar พบพื้นที่ทํางานหลายแห่งสําหรับ %@ โปรดเลือกพื้นที่ทํางานที่จะเพิ่ม";
 "ory_session_…=…; csrftoken=…" = "ory_session_...=...; csrftoken=...";
-"overview_choose_providers" = "เลือกผู้ให้บริการได้สูงสุด %@ รายสำหรับไอคอนรวม";
 "remove_account_message" = "ลบ %@ ออกจาก CodexBar? ระบบจะลบหน้าแรก Codex ที่มีการจัดการ";
 "version_format" = "เวอร์ชัน %@";
 "vertex_ai_login_instructions" = "หากต้องการติดตามการใช้งาน Vertex AI ให้ตรวจสอบสิทธิ์ด้วย Google Cloud.\n\n1 เปิดเทอร์มินัล \n2 เรียกใช้: gcloud auth application-default login\n3 ทําตามคําแนะนําของเบราว์เซอร์เพื่อลงชื่อเข้าใช้ \n4 ตั้งค่าโครงการของคุณ: gcloud config set project PROJECT_ID\n\nOpen Terminal ตอนนี้?";
@@ -671,12 +670,13 @@
 "multi_account_layout_subtitle" = "เลือกการสลับบัญชีแบบแบ่งกลุ่มหรือบัตรบัญชีแบบเรียงซ้อน";
 "multi_account_layout_segmented" = "แบ่งกลุ่ม";
 "multi_account_layout_stacked" = "ซ้อนกัน";
-"overview_tab_providers_title" = "ผู้ให้บริการของไอคอนรวม";
 "configure" = "กําหนดค่า...";
-"overview_enable_merge_icons_hint" = "เปิด รวมไอคอน เพื่อเลือกผู้ให้บริการของไอคอนรวม";
-"overview_no_providers_hint" = "ไม่มีผู้ให้บริการที่เปิดใช้งานสําหรับภาพรวม";
-"overview_rows_follow_order" = "ไอคอนรวมแสดงผู้ให้บริการหนึ่งรายจากรายการนี้ เมนูภาพรวมแสดงผู้ให้บริการที่เปิดใช้ทั้งหมด";
 "overview_no_providers_selected" = "ไม่มีผู้ให้บริการที่เลือก";
+"menu_bar_icon_providers_title" = "ผู้ให้บริการของไอคอนแถบเมนู";
+"menu_bar_icon_providers_merge_icons_hint" = "เปิด ผสานไอคอน เพื่อเลือกผู้ให้บริการที่จะแสดงบนไอคอนแถบเมนู";
+"menu_bar_icon_providers_no_providers_hint" = "ไม่มีผู้ให้บริการที่เปิดใช้งานที่จะแสดงบนไอคอนแถบเมนู";
+"menu_bar_icon_providers_popover_title" = "แสดงบนไอคอนแถบเมนู";
+"menu_bar_icon_providers_popover_subtitle" = "เมนูภาพรวมยังคงแสดงผู้ให้บริการที่เปิดใช้ทั้งหมด";
 "agent_sessions_title" = "เซสชันเอเจนต์";
 "agent_sessions_subtitle" = "แสดงเซสชัน Codex และ Claude Code ที่ค้นพบในเครื่องและผ่าน SSH ในเมนู";
 "agent_sessions_hosts_title" = "โฮสต์ SSH เพิ่มเติม";
@@ -1649,11 +1649,6 @@
 "Incomplete" = "ไม่ครบถ้วน";
 "Est. subtotal (%@): %@" = "ยอดรวมย่อยโดยประมาณ (%@): %@";
 "Excluded requests with missing final usage: %d" = "คำขอที่ไม่นับรวมเนื่องจากไม่มีข้อมูลการใช้งานขั้นสุดท้าย: %d";
-
-"overview_layout_title" = "เค้าโครงภาพรวม";
-"overview_layout_subtitle" = "เลือกปริมาณข้อมูลที่จะแสดงในภาพรวม";
-"overview_layout_detailed" = "แบบละเอียด";
-"overview_layout_compact" = "กะทัดรัด";
 
 "section_widgets" = "วิดเจ็ต";
 "account_widgets_title" = "อัปเดตบัญชีสำหรับวิดเจ็ต";

@@ -445,7 +445,6 @@
 "metric_tertiary" = "دوره سوم (%@)";
 "multiple_workspaces_found" = "CodexBar چندین فضای کاری برای %@ پیدا کردم. لطفا فضای کاری را برای افزودن انتخاب کنید.";
 "ory_session_…=…; csrftoken=…" = "ory_session_...=...; csrftoken=...";
-"overview_choose_providers" = "حداکثر %@ ارائه‌دهنده برای نماد ادغام‌شده انتخاب کنید";
 "remove_account_message" = "حذف %@ از CodexBar؟ مدیریت Codex خانه آن حذف خواهد شد.";
 "version_format" = "نسخه %@";
 "vertex_ai_login_instructions" = "برای پیگیری Vertex AI استفاده، با Google Cloud.\n\n1 احراز هویت کنید. ترمینال باز\n2. اجرا: gcloud auth application-default login\n3. دستورالعمل های مرورگر را دنبال کنید تا in\n4 را امضا کنید. پروژه ات را تنظیم کن: gcloud config set project PROJECT_ID\n\nOpen Terminal را همین حالا؟";
@@ -671,12 +670,13 @@
 "multi_account_layout_subtitle" = "کارت های حساب سوئیچینگ تقسیم شده یا کارت های حساب انباشته را انتخاب کنید.";
 "multi_account_layout_segmented" = "بخش بندی شده";
 "multi_account_layout_stacked" = "انباشته شده";
-"overview_tab_providers_title" = "ارائه‌دهندگان نماد ادغام‌شده";
 "configure" = "پیکربندی کن...";
-"overview_enable_merge_icons_hint" = "برای انتخاب ارائه‌دهندگان نماد ادغام‌شده، ادغام نمادها را روشن کنید.";
-"overview_no_providers_hint" = "هیچ ارائه دهنده فعالی برای مرور کلی در دسترس نیست.";
-"overview_rows_follow_order" = "نماد ادغام‌شده یکی از این ارائه‌دهندگان را نشان می‌دهد. منوی نمای کلی همه ارائه‌دهندگان فعال را فهرست می‌کند.";
 "overview_no_providers_selected" = "هیچ ارائه دهنده ای انتخاب نشده است";
+"menu_bar_icon_providers_title" = "ارائه‌دهندگان نماد نوار منو";
+"menu_bar_icon_providers_merge_icons_hint" = "برای انتخاب ارائه‌دهندگانی که در نماد نوار منو نمایش داده می‌شوند، ادغام نمادها را روشن کنید.";
+"menu_bar_icon_providers_no_providers_hint" = "هیچ ارائه‌دهنده فعالی برای نمایش در نماد نوار منو وجود ندارد.";
+"menu_bar_icon_providers_popover_title" = "نمایش در نماد نوار منو";
+"menu_bar_icon_providers_popover_subtitle" = "منوی نمای کلی همچنان همه ارائه‌دهندگان فعال را فهرست می‌کند.";
 "agent_sessions_title" = "جلسات عامل‌ها";
 "agent_sessions_subtitle" = "جلسات محلی و جلسات Codex و Claude Code یافته‌شده از طریق SSH را در منو نمایش دهید.";
 "agent_sessions_hosts_title" = "میزبان‌های SSH اضافی";
@@ -1649,11 +1649,6 @@
 "Incomplete" = "ناقص";
 "Est. subtotal (%@): %@" = "جمع جزئی تخمینی (%@): %@";
 "Excluded requests with missing final usage: %d" = "درخواست‌های حذف‌شده به دلیل نبود داده‌های مصرف نهایی: %d";
-
-"overview_layout_title" = "چیدمان نمای کلی";
-"overview_layout_subtitle" = "میزان اطلاعات نمایش‌داده‌شده در نمای کلی را انتخاب کنید.";
-"overview_layout_detailed" = "با جزئیات";
-"overview_layout_compact" = "فشرده";
 
 "section_widgets" = "ویجت‌ها";
 "account_widgets_title" = "حساب‌ها را برای ویجت‌ها به‌روز نگه دارید";

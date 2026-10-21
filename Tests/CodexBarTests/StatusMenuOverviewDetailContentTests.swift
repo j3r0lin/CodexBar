@@ -365,7 +365,6 @@ extension StatusMenuTests {
             throw CancellationError()
         }
         settings.magpieSourceEnabled = true
-        settings.overviewCollapsedProviderGroups = ["claude"]
         let accounts = ["one", "two", "three"].enumerated().map { index, name in
             MagpieAccountSnapshot(
                 id: ProviderAccountIdentity(source: "magpie", opaqueID: "claude:\(name)"),

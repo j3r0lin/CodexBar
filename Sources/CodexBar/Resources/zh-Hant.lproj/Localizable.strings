@@ -470,7 +470,6 @@
 "metric_tertiary" = "第三（%@）";
 "multiple_workspaces_found" = "CodexBar 發現 %@ 有多個工作區。請選擇要新增的工作區。";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "為合併圖示最多選擇 %@ 個提供者";
 "remove_account_message" = "要從 CodexBar 中移除 %@ 嗎？其託管的 Codex 主目錄將被刪除。";
 "version_format" = "版本 %@";
 "workspaceID is set but only opencode, opencodego, and deepgram support workspaceID." = "已設定 workspaceID，但只有 opencode、opencodego 和 deepgram 支援 workspaceID。";
@@ -664,12 +663,13 @@
 "multi_account_layout_subtitle" = "選擇分段帳號切換或堆疊帳號卡片。";
 "multi_account_layout_segmented" = "分段";
 "multi_account_layout_stacked" = "堆疊";
-"overview_tab_providers_title" = "合併圖示的提供者";
 "configure" = "設定…";
-"overview_enable_merge_icons_hint" = "開啟「合併圖示」後才能選擇合併圖示的提供者。";
-"overview_no_providers_hint" = "「概覽」中沒有可用的已啟用提供者。";
-"overview_rows_follow_order" = "合併圖示會顯示其中一個提供者。概覽選單會列出所有已啟用的提供者。";
 "overview_no_providers_selected" = "未選擇提供者";
+"menu_bar_icon_providers_title" = "選單列圖示提供者";
+"menu_bar_icon_providers_merge_icons_hint" = "開啟「合併圖示」後才能選擇選單列圖示顯示哪些提供者。";
+"menu_bar_icon_providers_no_providers_hint" = "沒有可顯示在選單列圖示中的已啟用提供者。";
+"menu_bar_icon_providers_popover_title" = "在選單列圖示中顯示";
+"menu_bar_icon_providers_popover_subtitle" = "「概覽」選單仍會列出所有已啟用的提供者。";
 "agent_sessions_title" = "Agent 工作階段";
 "agent_sessions_subtitle" = "在選單中顯示本機及透過 SSH 發現的 Codex 和 Claude Code 工作階段。";
 "agent_sessions_hosts_title" = "其他 SSH 主機";
@@ -1676,11 +1676,6 @@
 "Incomplete" = "不完整";
 "Est. subtotal (%@): %@" = "估算小計（%@）：%@";
 "Excluded requests with missing final usage: %d" = "因缺少最終用量而排除的請求：%d";
-
-"overview_layout_title" = "概覽版面";
-"overview_layout_subtitle" = "選擇「概覽」顯示的資訊量。";
-"overview_layout_detailed" = "詳細";
-"overview_layout_compact" = "精簡";
 
 "section_widgets" = "小工具";
 "account_widgets_title" = "為小工具保持帳戶更新";

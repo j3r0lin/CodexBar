@@ -471,30 +471,7 @@ extension StatusItemController {
                 + (row.accountID.map { "#\($0.opaqueID)" } ?? "")
             let submenu = self.makeOverviewDetailSubmenu(row: row, width: menuWidth)
             let now = Date()
-            let namedLines = row.compactLines(now: now)
-            let slots = namedLines == nil
-                ? OverviewCompactAccountRow.slots(of: row.snapshot, provider: row.nativeProvider)
-                : (short: nil, long: nil)
-            let icon = self.overviewProviderIcon(for: row)
-            let rowView = OverviewCompactAccountRow(
-                name: isGrouped ? row.accountName ?? row.providerName : row.providerName,
-                shortWindow: slots.short,
-                longWindow: slots.long,
-                width: menuWidth,
-                namesProvider: true,
-                provider: row.nativeProvider,
-                icon: icon.image,
-                iconIsTemplate: icon.isTemplate,
-                block: .single,
-                errorText: row.errorText,
-                showsErrorFlag: row.showsErrorFlag,
-                namedLines: namedLines,
-                infersPeriodFromReset: !row.isMagpie,
-                isStale: row.isStale(
-                    now: now,
-                    threshold: OverviewUsageRow.staleThreshold(for: self.settings.refreshFrequency)),
-                updatedAt: row.updatedAt,
-                now: now)
+            let rowView = self.overviewRowView(for: row, width: menuWidth, isGrouped: isGrouped, now: now)
             let item = self.makeMenuCardItem(
                 rowView,
                 id: identifier,
@@ -511,6 +488,49 @@ extension StatusItemController {
             menu.addItem(item)
         }
         return true
+    }
+
+    /// One Overview card, carrying the user's display choices: hidden windows, used or remaining
+    /// readings, warning thresholds and pace.
+    func overviewRowView(
+        for row: OverviewUsageRow,
+        width: CGFloat,
+        isGrouped: Bool,
+        now: Date) -> OverviewCompactAccountRow
+    {
+        let namedLines = row.compactLines(now: now, showsPace: self.settings.paceVisible)
+        // Magpie rows filter by window on the projection side; native rows filter by their usage items.
+        let hiddenItemIDs = row.nativeProvider.map { self.settings.hiddenUsageItemIDs(for: $0) } ?? []
+        let slots = namedLines == nil
+            ? OverviewCompactAccountRow.slots(
+                of: row.snapshot,
+                provider: row.nativeProvider,
+                hiddenItemIDs: hiddenItemIDs)
+            : (short: nil, long: nil)
+        let icon = self.overviewProviderIcon(for: row)
+        return OverviewCompactAccountRow(
+            name: isGrouped ? row.accountName ?? row.providerName : row.providerName,
+            shortWindow: slots.short,
+            longWindow: slots.long,
+            width: width,
+            namesProvider: true,
+            provider: row.nativeProvider,
+            icon: icon.image,
+            iconIsTemplate: icon.isTemplate,
+            block: .single,
+            errorText: row.errorText,
+            showsErrorFlag: row.showsErrorFlag,
+            namedLines: namedLines,
+            infersPeriodFromReset: !row.isMagpie,
+            showsRemaining: !self.settings.usageBarsShowUsed,
+            sessionWarningThresholds: self.overviewWarningThresholds(.session, provider: row.nativeProvider),
+            weeklyWarningThresholds: self.overviewWarningThresholds(.weekly, provider: row.nativeProvider),
+            showsPace: self.settings.paceVisible,
+            isStale: row.isStale(
+                now: now,
+                threshold: OverviewUsageRow.staleThreshold(for: self.settings.refreshFrequency)),
+            updatedAt: row.updatedAt,
+            now: now)
     }
 
     /// The card header: app icon, title, last-update subtitle, and the refresh/settings buttons.
@@ -634,6 +654,16 @@ extension StatusItemController {
             history: self.store.magpieQuotaHistory,
             hiddenItemIDs: account.provider.nativeProvider.map { self.settings.hiddenUsageItemIDs(for: $0) } ?? [])
         return row.namedWindows?.isEmpty == true && !account.limitedWindows.isEmpty ? nil : row
+    }
+
+    /// The user's warning thresholds for one window kind, in the provider's own override when it has
+    /// one. Unknown magpie providers have no override and follow the global values.
+    func overviewWarningThresholds(
+        _ window: QuotaWarningWindow,
+        provider: UsageProvider?) -> [Int]
+    {
+        guard let provider else { return self.settings.quotaWarningThresholds(window) }
+        return self.settings.resolvedQuotaWarningThresholds(provider: provider, window: window)
     }
 
     /// The row label of one magpie account: an ordinal in privacy mode, otherwise the alias or

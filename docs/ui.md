@@ -61,15 +61,20 @@ read_when:
   a valid previous position. Valid new positions remain untouched; unrelated defaults are never repaired by this path.
 - The merged menu always opens on the Overview list, with one row per enabled provider. A provider that only has an
   error shows the error text in its row. With no enabled provider the menu shows "No providers enabled".
-- The merged icon follows the first provider selected under "Merged icon providers" (or the highest-usage one among
-  them when Combined icon source is Highest usage). It no longer follows a provider page, since the menu has none.
+- The merged icon follows the first provider selected under "Menu bar icon providers" (or the highest-usage one among
+  them when Combined icon source is Highest usage). That setting only chooses which providers the menu bar icon uses;
+  the Overview menu always lists every enabled provider. It no longer follows a provider page, since the menu has none.
 - Overview row order follows provider order. A provider with several accounts gets a grey "<provider> · N accounts"
   caption with one indented row per account. Hovering a row opens a submenu with that account's five-hour and
   weekly usage, reset times and data age, plus the provider's usage history chart when it has one, followed by the
   provider's own actions: account switchers, Buy Credits, cost and credits submenus, dashboard and status links, and
   login repair. A magpie Claude account row shows only that account's usage and its refresh item.
+- Overview rows follow the shared usage display settings: Visible usage items hide their windows on both native and
+  magpie rows (and in the detail card), the used/remaining choice flips the percentage and bar fill while colors and
+  pace keep reading the used percentage, and hiding pace removes the pace tick, the pace tint and the detail card's
+  pace outlook. Orange and red follow the provider's quota warning thresholds, converted from remaining to used
+  percentage; without configured thresholds they stay at 70% and 90% used. Overview draws no threshold markers.
 - Overview uses native vertical scrolling when its menu exceeds the visible height. Fitted menus retain coarse-wheel provider highlighting; precise input and row submenus keep their native scrolling behavior. Scrolling after Command-R still prevents a pending refresh from resetting the viewport.
-- Menu → Overview layout offers Detailed (default) and Compact. Compact keeps provider/account headers and labeled quota bars, omits their reset/detail lines and supplemental sections, and retains detail-only providers. Visibility choices and the shared Usage & Spend summary continue to apply.
 - Menu-card wrappers use standard non-vibrant view behavior so white GPU-tinted Overview content remains visible on macOS 15. Overview selection stays outside the SwiftUI graph, with native submenu click and drag tracking retained.
 - The global open-menu keyboard shortcut toggles the currently tracked menu closed before opening a new one.
 - Display → Menu Bar → Layout provides presets plus a token editor. Tokens can be clicked to append, dragged from the
@@ -288,7 +293,7 @@ remains available with an explanation; checking it does not override the global 
 Codex and Claude have separate **Limit Reset Credits** and **Plan renewal / expiry** choices. These are
 independent of the global switch. Plan dates appear immediately after the quota rows, before reset credits, labeled
 **Plan renews** or **Plan expires** to distinguish them from quota resets.
-Compact Overview still omits plan dates when quota bars are present. On upgrade, a previously disabled
+On upgrade, a previously disabled
 global switch initializes Claude's reset-credit choice to hidden; users can then enable it independently.
 The one-time migration preserves other saved choices and travels with provider settings through sync.
 Claude also has an **Extra usage** checkbox; it does not hide Admin API spend. Cloud credits retain their

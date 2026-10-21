@@ -25,6 +25,13 @@ struct AccountUsageDetailView: View {
     var now = Date()
     /// Magpie rows: when the gateway last read the account. Native rows use the snapshot's time.
     var readAt: Date?
+    /// Shows the remaining quota instead of the used one; colours keep following the used reading.
+    var showsRemaining = false
+    /// The user's remaining-quota warning thresholds, highest first, per window kind.
+    var sessionWarningThresholds: [Int] = []
+    var weeklyWarningThresholds: [Int] = []
+    /// Draws the pace outlook and colours by it; off leaves the severity colour alone.
+    var showsPace = true
     /// The reading is older than the refresh cadence allows; its numbers are dimmed as on the row.
     var isStale = false
 
@@ -32,6 +39,8 @@ struct AccountUsageDetailView: View {
         var title: String
         let window: RateWindow
         let used: Double
+        /// Which warning thresholds colour this block; a window of unknown length follows weekly.
+        var warningWindow: QuotaWarningWindow = .weekly
         /// "Resets <clock>" when the raw window has a reset time, else the menu card's own reset text.
         var resetText: String?
         var outlook: OverviewUsageRow.PaceOutlook?
@@ -46,7 +55,7 @@ struct AccountUsageDetailView: View {
                 self.errorView(errorText)
             } else {
                 let blocks = self.namedWindows.map { Self.blocks(of: $0, now: self.now) }
-                    ?? Self.blocks(of: self.snapshot, model: self.model, now: self.now)
+                    ?? Self.blocks(of: self.snapshot, provider: self.provider, model: self.model, now: self.now)
                 if blocks.isEmpty, !self.hasSupplementalContent, self.errorText == nil {
                     Text(L("No data"))
                         .font(.system(size: 13))
@@ -195,28 +204,38 @@ struct AccountUsageDetailView: View {
     }
 
     private func blockView(_ block: Block) -> some View {
-        let color = OverviewPalette.color(usedPercent: block.used)
+        let color = OverviewPalette.color(
+            usedPercent: block.used,
+            warningThresholds: self.warningThresholds(for: block.warningWindow))
+        let percent = OverviewCompactAccountRow.displayedPercent(block.used, showsRemaining: self.showsRemaining)
         return VStack(alignment: .leading, spacing: 6) {
             self.sectionHeader(block.title, trailing: block.resetText)
             HStack(alignment: .firstTextBaseline, spacing: 5) {
-                Text("\(Int(block.used.rounded()))%")
+                Text("\(Int(percent.rounded()))%")
                     .font(.system(size: 20, weight: .semibold).monospacedDigit())
                     .foregroundStyle(color)
-                Text(L("used"))
+                Text(self.showsRemaining ? L("usage_percent_suffix_left") : L("used"))
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                 Spacer(minLength: 8)
-                if let outlook = block.outlook {
+                if self.showsPace, let outlook = block.outlook {
                     Text(Self.paceText(outlook, now: self.now))
                         .font(.system(size: 11).monospacedDigit())
                         .foregroundStyle(Self.paceColor(outlook))
                         .lineLimit(1)
                 }
             }
-            if let trend = block.trend, trend.current.count >= 2 {
+            if self.showsPace, let trend = block.trend, trend.current.count >= 2 {
                 QuotaCycleCurve(trend: trend, now: self.now)
                     .frame(height: Self.curveHeight)
             }
+        }
+    }
+
+    private func warningThresholds(for window: QuotaWarningWindow) -> [Int] {
+        switch window {
+        case .session: self.sessionWarningThresholds
+        case .weekly: self.weeklyWarningThresholds
         }
     }
 
@@ -251,10 +270,11 @@ struct AccountUsageDetailView: View {
     /// window's reset time and pace.
     static func blocks(
         of snapshot: UsageSnapshot?,
+        provider: UsageProvider? = nil,
         model: UsageMenuCardView.Model? = nil,
         now: Date = Date()) -> [Block]
     {
-        let raw = Self.snapshotBlocks(of: snapshot, now: now)
+        let raw = Self.snapshotBlocks(of: snapshot, provider: provider, now: now)
         guard let model else { return raw }
         return model.metrics.compactMap { metric -> Block? in
             guard metric.statusText == nil else { return nil }
@@ -265,8 +285,15 @@ struct AccountUsageDetailView: View {
                 block.title = metric.title
                 return block
             }
+            // A metric with no raw window has no length of its own, so it follows the weekly thresholds
+            // like every other window that is not a five-hour session.
             let window = RateWindow(usedPercent: used, windowMinutes: nil, resetsAt: nil, resetDescription: nil)
-            return Block(title: metric.title, window: window, used: used, resetText: metric.resetText)
+            return Block(
+                title: metric.title,
+                window: window,
+                used: used,
+                warningWindow: .weekly,
+                resetText: metric.resetText)
         }
     }
 
@@ -291,6 +318,7 @@ struct AccountUsageDetailView: View {
                     resetsAt: window.resetsAt,
                     resetDescription: nil),
                 used: window.used,
+                warningWindow: OverviewUsageRow.warningWindow(for: window),
                 resetText: window.resetsAt.map { Self.resetText($0, now: now) },
                 outlook: window.outlook(now: now),
                 trend: window.trend(now: now))
@@ -298,20 +326,25 @@ struct AccountUsageDetailView: View {
     }
 
     /// Every window with a real reading, in the provider's order, followed by its named extra windows.
-    private static func snapshotBlocks(of snapshot: UsageSnapshot?, now: Date) -> [Block] {
+    private static func snapshotBlocks(of snapshot: UsageSnapshot?, provider: UsageProvider?, now: Date) -> [Block] {
         guard let snapshot else { return [] }
         let lanes = [snapshot.primary, snapshot.secondary, snapshot.tertiary].compactMap { window -> Block? in
             guard let window else { return nil }
-            return Self.nativeBlock(title: Self.windowTitle(window), window: window, now: now)
+            return Self.nativeBlock(title: Self.windowTitle(window), window: window, provider: provider, now: now)
         }
         let extras = (snapshot.extraRateWindows ?? []).compactMap { named -> Block? in
             guard named.usageKnown else { return nil }
-            return Self.nativeBlock(title: named.title, window: named.window, now: now)
+            return Self.nativeBlock(title: named.title, window: named.window, provider: provider, now: now)
         }
         return lanes + extras
     }
 
-    private static func nativeBlock(title: String, window: RateWindow, now: Date) -> Block? {
+    private static func nativeBlock(
+        title: String,
+        window: RateWindow,
+        provider: UsageProvider?,
+        now: Date) -> Block?
+    {
         guard let used = OverviewCompactAccountRow.used(window) else { return nil }
         let pace = OverviewUsageRow.linearPace(
             used: used,
@@ -322,6 +355,7 @@ struct AccountUsageDetailView: View {
             title: title,
             window: window,
             used: used,
+            warningWindow: OverviewCompactAccountRow.warningWindow(window, provider: provider),
             resetText: window.resetsAt.map { Self.resetText($0, now: now) },
             outlook: pace.flatMap { OverviewUsageRow.PaceOutlook(pace: $0, now: now) })
     }

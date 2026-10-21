@@ -67,15 +67,6 @@ struct MenuPane: View {
                 Toggle(L("show_provider_changelog_links_title"), isOn: self.$settings.providerChangelogLinksEnabled)
                 Toggle(L("highlight_menu_cards_on_hover_title"), isOn: self.$settings.highlightMenuCardsOnHover)
 
-                SettingsMenuPicker(
-                    selection: self.$settings.mergedOverviewLayout,
-                    options: MenuSettingsMenuOptions.mergedOverviewLayouts,
-                    label: {
-                        SettingsRowLabel(L("overview_layout_title"), subtitle: L("overview_layout_subtitle"))
-                    },
-                    optionLabel: { Text($0.label) })
-                    .disabled(!self.settings.mergeIcons)
-
                 Toggle(isOn: self.$settings.showOptionalCreditsAndExtraUsage) {
                     SettingsRowLabel(
                         L("show_credits_extra_usage_title"),

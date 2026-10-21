@@ -9,7 +9,6 @@ extension SettingsStore {
         try document.set("mergeIcons", self.mergeIcons)
         try document.set("mergeIconsStacked", self.mergeIconsStacked)
         try document.set("menuBarColorByProvider", self.menuBarColorByProvider)
-        try document.set("mergedOverviewLayout", self.mergedOverviewLayout.rawValue)
         if self.userDefaults.object(forKey: "mergedOverviewSelectedProviders") != nil {
             let active = self.orderedProviders().filter { self.providerEnablement[$0] ?? false }
             try document.set(
@@ -33,11 +32,6 @@ extension SettingsStore {
         if let value: Bool = try document.value("mergeIcons") { self.mergeIcons = value }
         if let value: Bool = try document.value("mergeIconsStacked") { self.mergeIconsStacked = value }
         if let value: Bool = try document.value("menuBarColorByProvider") { self.menuBarColorByProvider = value }
-        if let value: String = try document.value("mergedOverviewLayout"),
-           let layout = MergedOverviewLayout(rawValue: value)
-        {
-            self.mergedOverviewLayout = layout
-        }
         if let value: [String] = try document.value("mergedOverviewSelectedProviders") {
             self.mergedOverviewSelectedProviders = value.compactMap(ProviderInstanceID.init(rawValue:))
             let active = self.orderedProviders().filter { self.providerEnablement[$0] ?? false }

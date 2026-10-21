@@ -459,7 +459,6 @@
 "metric_tertiary" = "Tertiaire (%@)";
 "multiple_workspaces_found" = "CodexBar a trouvé plusieurs espaces de travail pour %@. Veuillez choisir l'espace de travail à ajouter.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "Choisissez jusqu’à %@ fournisseurs pour l’icône fusionnée";
 "remove_account_message" = "Supprimer %@ de CodexBar ? Sa maison Codex gérée sera supprimée.";
 "version_format" = "Version %@";
 "vertex_ai_login_instructions" = "Pour suivre l'utilisation de Vertex AI, authentifiez-vous auprès de Google Cloud.\n\n1. Ouvrez le terminal\n2. Exécutez : gcloud auth application-default login\n3. Suivez les invites du navigateur pour vous connecter\n4. Définissez votre projet : gcloud config set project PROJECT_ID\n\nOuvrir le terminal maintenant ?";
@@ -665,12 +664,13 @@
 "multi_account_layout_subtitle" = "Choisissez un changement de compte segmenté ou des cartes de compte empilées.";
 "multi_account_layout_segmented" = "Segmenté";
 "multi_account_layout_stacked" = "Empilé";
-"overview_tab_providers_title" = "Fournisseurs de l’icône fusionnée";
 "configure" = "Configurer…";
-"overview_enable_merge_icons_hint" = "Activez Fusionner les icônes pour choisir les fournisseurs de l’icône fusionnée.";
-"overview_no_providers_hint" = "Aucun fournisseur activé disponible pour la présentation.";
-"overview_rows_follow_order" = "L’icône fusionnée affiche l’un de ces fournisseurs. Le menu Aperçu liste tous les fournisseurs activés.";
 "overview_no_providers_selected" = "Aucun fournisseur sélectionné";
+"menu_bar_icon_providers_title" = "Fournisseurs de l’icône de la barre des menus";
+"menu_bar_icon_providers_merge_icons_hint" = "Activez Fusionner les icônes pour choisir les fournisseurs affichés dans l’icône de la barre des menus.";
+"menu_bar_icon_providers_no_providers_hint" = "Aucun fournisseur activé à afficher dans l’icône de la barre des menus.";
+"menu_bar_icon_providers_popover_title" = "Afficher dans l’icône de la barre des menus";
+"menu_bar_icon_providers_popover_subtitle" = "Le menu Aperçu liste toujours tous les fournisseurs activés.";
 "agent_sessions_title" = "Sessions d’agents";
 "agent_sessions_subtitle" = "Afficher dans le menu les sessions Codex et Claude Code locales et découvertes via SSH.";
 "agent_sessions_hosts_title" = "Hôtes SSH supplémentaires";
@@ -1644,11 +1644,6 @@
 "Incomplete" = "Incomplet";
 "Est. subtotal (%@): %@" = "Sous-total estimé (%@) : %@";
 "Excluded requests with missing final usage: %d" = "Requêtes exclues sans données d’utilisation finales : %d";
-
-"overview_layout_title" = "Disposition de la vue d’ensemble";
-"overview_layout_subtitle" = "Choisissez la quantité d’informations affichée dans la vue d’ensemble.";
-"overview_layout_detailed" = "Détaillée";
-"overview_layout_compact" = "Compacte";
 
 "section_widgets" = "Widgets";
 "account_widgets_title" = "Actualiser les comptes pour les widgets";

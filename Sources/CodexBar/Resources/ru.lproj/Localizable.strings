@@ -462,7 +462,6 @@
 "metric_tertiary" = "Третичный (%@)";
 "multiple_workspaces_found" = "CodexBar нашёл несколько рабочих областей для %@. Выберите рабочую область для добавления.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "Выберите до %@ провайдеров для объединённого значка";
 "remove_account_message" = "Удалить %@ из CodexBar? Его управляемый каталог Codex будет удалён.";
 "version_format" = "Версия %@";
 "vertex_ai_login_instructions" = "Чтобы отслеживать использование Vertex AI, авторизуйтесь через Google Cloud.\n\n1. Откройте Terminal\n2. Запустите: gcloud auth application-default login\n3. Следуйте инструкциям в браузере\n4. Укажите проект: gcloud config set project PROJECT_ID\n\nОткрыть Terminal сейчас?";
@@ -666,12 +665,13 @@
 "multi_account_layout_subtitle" = "Выберите сегментированное переключение аккаунтов или сгруппированные карты аккаунтов.";
 "multi_account_layout_segmented" = "Сегментированный";
 "multi_account_layout_stacked" = "Стопкой";
-"overview_tab_providers_title" = "Провайдеры объединённого значка";
 "configure" = "Настроить…";
-"overview_enable_merge_icons_hint" = "Включите «Объединить значки», чтобы выбрать провайдеров объединённого значка.";
-"overview_no_providers_hint" = "Нет включённых провайдеров для обзора.";
-"overview_rows_follow_order" = "Объединённый значок показывает одного из этих провайдеров. Меню «Обзор» показывает всех включённых провайдеров.";
 "overview_no_providers_selected" = "Провайдеры не выбраны";
+"menu_bar_icon_providers_title" = "Провайдеры значка в строке меню";
+"menu_bar_icon_providers_merge_icons_hint" = "Включите «Объединить значки», чтобы выбрать, каких провайдеров показывает значок в строке меню.";
+"menu_bar_icon_providers_no_providers_hint" = "Нет включённых провайдеров для значка в строке меню.";
+"menu_bar_icon_providers_popover_title" = "Показать в значке строки меню";
+"menu_bar_icon_providers_popover_subtitle" = "Меню «Обзор» по-прежнему показывает всех включённых провайдеров.";
 "agent_sessions_title" = "Сеансы агентов";
 "agent_sessions_subtitle" = "Показывать в меню локальные и обнаруженные по SSH сеансы Codex и Claude Code.";
 "agent_sessions_hosts_title" = "Дополнительные SSH-хосты";
@@ -1646,11 +1646,6 @@
 "Incomplete" = "Неполные данные";
 "Est. subtotal (%@): %@" = "Оценка подытога (%@): %@";
 "Excluded requests with missing final usage: %d" = "Исключённые запросы без итоговых данных об использовании: %d";
-
-"overview_layout_title" = "Макет обзора";
-"overview_layout_subtitle" = "Выберите, сколько информации показывать в обзоре.";
-"overview_layout_detailed" = "Подробный";
-"overview_layout_compact" = "Компактный";
 
 "section_widgets" = "Виджеты";
 "account_widgets_title" = "Обновлять данные аккаунтов для виджетов";

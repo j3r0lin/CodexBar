@@ -109,6 +109,137 @@ struct OverviewCompactAccountRowTests {
         #expect(self.countdown(minutes: 52) == "52m")
     }
 
+    @Test
+    func `a hidden usage item takes its window off the row`() {
+        let snapshot = UsageSnapshot(
+            primary: Self.window(40, minutes: 300),
+            secondary: Self.window(70, minutes: 10080),
+            updatedAt: Self.now)
+        let both = OverviewCompactAccountRow.slots(of: snapshot)
+        #expect(both.short != nil)
+        #expect(both.long != nil)
+
+        let sessionHidden = OverviewCompactAccountRow.slots(
+            of: snapshot,
+            hiddenItemIDs: [.metric("primary")])
+        #expect(sessionHidden.short == nil)
+        #expect(sessionHidden.long?.usedPercent == 70)
+
+        let weeklyHidden = OverviewCompactAccountRow.slots(
+            of: snapshot,
+            hiddenItemIDs: [.metric("secondary")])
+        #expect(weeklyHidden.short?.usedPercent == 40)
+        #expect(weeklyHidden.long == nil)
+
+        let allHidden = OverviewCompactAccountRow.slots(
+            of: snapshot,
+            hiddenItemIDs: [.metric("primary"), .metric("secondary")])
+        #expect(allHidden.short == nil)
+        #expect(allHidden.long == nil)
+    }
+
+    @Test
+    func `showing remaining flips the number and the fill but not the severity colour`() {
+        let line = OverviewCompactAccountRow.Line(
+            label: "7d",
+            used: 60,
+            resetsAt: nil,
+            window: .weekly)
+        let thresholds = (session: [50, 20], weekly: [50, 20])
+        let usedReading = self.reading(line, showsRemaining: false, thresholds: thresholds)
+        let remainingReading = self.reading(line, showsRemaining: true, thresholds: thresholds)
+        #expect(usedReading.percent == 60)
+        #expect(remainingReading.percent == 40)
+        #expect(usedReading.barColor == remainingReading.barColor)
+        #expect(usedReading.percentColor == remainingReading.percentColor)
+        #expect(usedReading.barColor == OverviewPalette.warning)
+    }
+
+    @Test
+    func `warning thresholds colour the reading on the used scale of each window`() {
+        let thresholds = (session: [50, 20], weekly: [50, 20])
+        // Remaining 50 and 20 become 50% and 80% used.
+        #expect(self.reading(self.line(used: 30), thresholds: thresholds).barColor == OverviewPalette.accent)
+        #expect(self.reading(self.line(used: 50), thresholds: thresholds).barColor == OverviewPalette.warning)
+        #expect(self.reading(self.line(used: 80, window: .weekly), thresholds: thresholds).barColor ==
+            OverviewPalette.critical)
+        // Disabled thresholds keep the 70/90 fallback.
+        let disabled = (session: [0], weekly: [0])
+        #expect(self.reading(self.line(used: 60, window: .weekly), thresholds: disabled).barColor ==
+            OverviewPalette.accent)
+        #expect(self.reading(self.line(used: 75, window: .weekly), thresholds: disabled).barColor ==
+            OverviewPalette.warning)
+        #expect(self.reading(self.line(used: 92, window: .weekly), thresholds: disabled).barColor ==
+            OverviewPalette.critical)
+    }
+
+    @Test
+    func `each window kind uses its own thresholds`() {
+        let thresholds = (session: [50, 20], weekly: [0])
+        #expect(self.reading(self.line(used: 60), thresholds: thresholds).barColor == OverviewPalette.warning)
+        #expect(self.reading(self.line(used: 60, window: .weekly), thresholds: thresholds).barColor ==
+            OverviewPalette.accent)
+    }
+
+    @Test
+    func `hiding pace drops the tick and the pace tint`() {
+        let line = OverviewCompactAccountRow.Line(
+            label: "7d",
+            used: 40,
+            resetsAt: nil,
+            pacePercent: 70,
+            paceTone: .deficit)
+        let withPace = self.reading(line)
+        #expect(withPace.pacePercent == 70)
+        #expect(withPace.percentColor == OverviewPalette.warning)
+
+        let withoutPace = self.reading(line, showsPace: false)
+        #expect(withoutPace.pacePercent == nil)
+        #expect(withoutPace.percentColor == withoutPace.barColor)
+        #expect(withoutPace.percentColor == OverviewPalette.accent)
+    }
+
+    @Test
+    func `a remaining display mirrors the pace tick onto the leftover side of the bar`() {
+        #expect(self.reading(self.line(used: 40, pace: 70), showsRemaining: true).pacePercent == 30)
+        // A tick past either edge of the used scale clamps to the mirrored edge.
+        #expect(self.reading(self.line(used: 90, pace: 10), showsRemaining: true).pacePercent == 90)
+        #expect(self.reading(self.line(used: 90, pace: 120), showsRemaining: true).pacePercent == 0)
+    }
+
+    private func reading(
+        _ line: OverviewCompactAccountRow.Line,
+        showsRemaining: Bool = false,
+        showsPace: Bool = true,
+        thresholds: (session: [Int], weekly: [Int]) = ([], []))
+        -> OverviewCompactAccountRow.Reading
+    {
+        OverviewCompactAccountRow(
+            name: "Codex",
+            shortWindow: nil,
+            longWindow: nil,
+            width: Self.width,
+            showsRemaining: showsRemaining,
+            sessionWarningThresholds: thresholds.session,
+            weeklyWarningThresholds: thresholds.weekly,
+            showsPace: showsPace,
+            now: Self.now)
+            .reading(for: line)
+    }
+
+    private func line(
+        used: Double,
+        window: QuotaWarningWindow = .session,
+        pace: Double? = nil) -> OverviewCompactAccountRow.Line
+    {
+        OverviewCompactAccountRow.Line(
+            label: "5h",
+            used: used,
+            resetsAt: nil,
+            window: window,
+            pacePercent: pace)
+    }
+
     private func countdown(minutes: Int) -> String {
         OverviewCompactAccountRow.countdown(
             to: Self.now.addingTimeInterval(TimeInterval(minutes * 60)),

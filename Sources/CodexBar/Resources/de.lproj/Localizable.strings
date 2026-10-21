@@ -457,7 +457,6 @@
 "metric_tertiary" = "Tertiärbereich (%@)";
 "multiple_workspaces_found" = "CodexBar hat mehrere Arbeitsbereiche für %@ gefunden. Bitte wählen Sie den Arbeitsbereich aus, den Sie hinzufügen möchten.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "Wähle bis zu %@ Anbieter für das zusammengeführte Symbol";
 "remove_account_message" = "%@ aus CodexBar entfernen? Das verwaltete Codex-Heim wird gelöscht.";
 "version_format" = "Version %@";
 "vertex_ai_login_instructions" = "Um die Vertex AI-Nutzung zu verfolgen, authentifizieren Sie sich bei Google Cloud.\n\n1. Öffnen Sie Terminal\n2. Führen Sie Folgendes aus: gcloud auth application-default login\n3. Befolgen Sie die Anweisungen des Browsers, um sich anzumelden\n4. Legen Sie Ihr Projekt fest: gcloud config set project PROJECT_ID\n\nTerminal jetzt öffnen?";
@@ -665,12 +664,13 @@
 "multi_account_layout_subtitle" = "Wählen Sie segmentierte Kontoumschaltung oder gestapelte Kontokarten.";
 "multi_account_layout_segmented" = "Segmentiert";
 "multi_account_layout_stacked" = "Gestapelt";
-"overview_tab_providers_title" = "Anbieter für das zusammengeführte Symbol";
 "configure" = "Konfigurieren…";
-"overview_enable_merge_icons_hint" = "Aktiviere „Symbole zusammenführen“, um die Anbieter des zusammengeführten Symbols zu wählen.";
-"overview_no_providers_hint" = "Für die Übersicht sind keine aktivierten Anbieter verfügbar.";
-"overview_rows_follow_order" = "Das zusammengeführte Symbol zeigt einen dieser Anbieter. Das Übersichtsmenü listet alle aktivierten Anbieter.";
 "overview_no_providers_selected" = "Keine Anbieter ausgewählt";
+"menu_bar_icon_providers_title" = "Anbieter für das Menüleistensymbol";
+"menu_bar_icon_providers_merge_icons_hint" = "Aktiviere „Symbole zusammenführen“, um die Anbieter des Menüleistensymbols zu wählen.";
+"menu_bar_icon_providers_no_providers_hint" = "Für das Menüleistensymbol sind keine aktivierten Anbieter verfügbar.";
+"menu_bar_icon_providers_popover_title" = "Im Menüleistensymbol anzeigen";
+"menu_bar_icon_providers_popover_subtitle" = "Das Übersichtsmenü listet weiterhin alle aktivierten Anbieter.";
 "agent_sessions_title" = "Agenten-Sitzungen";
 "agent_sessions_subtitle" = "Lokale und über SSH erkannte Codex- und Claude-Code-Sitzungen im Menü anzeigen.";
 "agent_sessions_hosts_title" = "Zusätzliche SSH-Hosts";
@@ -1647,11 +1647,6 @@
 "Incomplete" = "Unvollständig";
 "Est. subtotal (%@): %@" = "Geschätzte Zwischensumme (%@): %@";
 "Excluded requests with missing final usage: %d" = "Ausgeschlossene Anfragen ohne abschließende Nutzungsdaten: %d";
-
-"overview_layout_title" = "Übersichtslayout";
-"overview_layout_subtitle" = "Wählen Sie aus, wie viele Informationen die Übersicht anzeigt.";
-"overview_layout_detailed" = "Detailliert";
-"overview_layout_compact" = "Kompakt";
 
 "section_widgets" = "Widgets";
 "account_widgets_title" = "Konten für Widgets aktuell halten";

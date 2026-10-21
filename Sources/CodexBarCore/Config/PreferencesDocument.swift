@@ -41,7 +41,6 @@ public struct PreferencesDocument: Codable, Sendable {
         ],
         "costSummaryDisplayStyle": ["inlineSummary", "costSubmenu", "both"],
         "workdayTickAppearance": ["hidden", "subtle", "highContrast"],
-        "mergedOverviewLayout": ["detailed", "compact"],
         "unifiedIconSource": ["currentSelection", "highestUsage", "frontmostApp"],
     ]
     private static let thresholdKeys = Set([
@@ -136,7 +135,10 @@ public struct PreferencesDocument: Codable, Sendable {
             // Older exports carry the removed switcher-icons choice; it still imports and is ignored.
             case .bool: Self.boolKeys.contains(key) || key == "switcherShowsIcons"
             case let .string(raw):
-                if key == "magpieQuotasURL" {
+                // Older exports carry the removed Overview layout choice; it still imports and is ignored.
+                if key == "mergedOverviewLayout" {
+                    raw == "detailed" || raw == "compact"
+                } else if key == "magpieQuotasURL" {
                     MagpieQuotasReader.quotasURL(from: raw) != nil
                 } else {
                     Self.stringChoices[key]?.contains(raw)

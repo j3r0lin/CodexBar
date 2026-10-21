@@ -448,7 +448,6 @@
 "metric_tertiary" = "Terciari (%@)";
 "multiple_workspaces_found" = "El CodexBar ha trobat diversos espais de treball per a %@. Trieu l'espai de treball que voleu afegir.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "Tria fins a %@ proveïdors per a la icona combinada";
 "remove_account_message" = "Voleu eliminar %@ del CodexBar? El seu directori Codex gestionat s'esborrarà.";
 "version_format" = "Versió %@";
 "vertex_ai_login_instructions" = "Per fer un seguiment de l'ús de Vertex AI, autentiqueu-vos amb Google Cloud.\n\n1. Obriu el Terminal\n2. Executeu: gcloud auth application-default login\n3. Seguiu les indicacions del navegador per iniciar la sessió\n4. Definiu el vostre projecte: gcloud config set project PROJECT_ID\n\nVoleu obrir el Terminal ara?";
@@ -648,12 +647,13 @@
 "multi_account_layout_subtitle" = "Trieu el canvi de compte segmentat o targetes de compte apilades.";
 "multi_account_layout_segmented" = "Segmentat";
 "multi_account_layout_stacked" = "Apilat";
-"overview_tab_providers_title" = "Proveïdors de la icona combinada";
 "configure" = "Configureu…";
-"overview_enable_merge_icons_hint" = "Activa Combina les icones per triar els proveïdors de la icona combinada.";
-"overview_no_providers_hint" = "No hi ha proveïdors activats disponibles per al Resum.";
-"overview_rows_follow_order" = "La icona combinada mostra un d’aquests proveïdors. El menú Resum mostra tots els proveïdors activats.";
 "overview_no_providers_selected" = "No hi ha cap proveïdor seleccionat";
+"menu_bar_icon_providers_title" = "Proveïdors de la icona de la barra de menús";
+"menu_bar_icon_providers_merge_icons_hint" = "Activa Combina les icones per triar quins proveïdors mostra la icona de la barra de menús.";
+"menu_bar_icon_providers_no_providers_hint" = "No hi ha proveïdors activats per mostrar a la icona de la barra de menús.";
+"menu_bar_icon_providers_popover_title" = "Mostra a la icona de la barra de menús";
+"menu_bar_icon_providers_popover_subtitle" = "El menú Resum continua mostrant tots els proveïdors activats.";
 "agent_sessions_title" = "Sessions d'agents";
 "agent_sessions_subtitle" = "Mostra al menú les sessions locals i descobertes per SSH de Codex i Claude Code.";
 "agent_sessions_hosts_title" = "Amfitrions SSH addicionals";
@@ -1649,11 +1649,6 @@
 "Incomplete" = "Incomplet";
 "Est. subtotal (%@): %@" = "Subtotal estimat (%@): %@";
 "Excluded requests with missing final usage: %d" = "Sol·licituds excloses sense dades d’ús finals: %d";
-
-"overview_layout_title" = "Disseny del Resum";
-"overview_layout_subtitle" = "Trieu quanta informació mostra el Resum.";
-"overview_layout_detailed" = "Detallat";
-"overview_layout_compact" = "Compacte";
 
 "section_widgets" = "Ginys";
 "account_widgets_title" = "Mantén els comptes actualitzats per als ginys";

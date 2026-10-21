@@ -94,6 +94,42 @@ struct AccountUsageDetailLocalizationTests {
         #expect(AccountUsageDetailView.blocks(of: nil).isEmpty)
     }
 
+    @Test
+    func `a magpie detail block follows its window kind for warning thresholds`() throws {
+        let account = try #require(MagpieAccountProjection.snapshots(from: [MagpieQuotaRow(
+            provider: "claude",
+            email: "fixture@example.test",
+            organization: "",
+            alias: nil,
+            isLast: true,
+            readAt: nil,
+            windows: [
+                MagpieQuotaWindow(name: "5 hours", usedPercent: 10, resetsAt: nil),
+                MagpieQuotaWindow(name: "7 days", usedPercent: 20, resetsAt: nil),
+                MagpieQuotaWindow(name: "Month", usedPercent: 30, resetsAt: nil),
+            ])]).first)
+        let row = OverviewUsageRow.magpie(
+            account: account,
+            providerName: "Claude",
+            accountName: "Fixture",
+            hiddenItemIDs: [])
+        let windows = try #require(row.namedWindows)
+        let blocks = AccountUsageDetailView.blocks(of: windows)
+        #expect(blocks.map(\.warningWindow) == [.session, .weekly, .weekly])
+    }
+
+    @Test
+    func `a native detail block follows the session or weekly thresholds by window length`() {
+        let session = self.window(minutes: 300, used: 20)
+        let weekly = self.window(minutes: 7 * 1440, used: 30)
+        let untyped = RateWindow(usedPercent: 40, windowMinutes: nil, resetsAt: nil, resetDescription: nil)
+        let blocks = AccountUsageDetailView.blocks(
+            of: UsageSnapshot(primary: session, secondary: weekly, updatedAt: Date()))
+        #expect(blocks.map(\.warningWindow) == [.session, .weekly])
+        #expect(AccountUsageDetailView.blocks(
+            of: UsageSnapshot(primary: untyped, secondary: nil, updatedAt: Date())).map(\.warningWindow) == [.weekly])
+    }
+
     /// Writes the card for a weekly-only provider and a two-window provider when
     /// CODEXBAR_DETAIL_CARD_RENDER_DIR is set, for comparing against the design reference.
     @Test

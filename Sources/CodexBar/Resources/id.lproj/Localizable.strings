@@ -445,7 +445,6 @@
 "metric_tertiary" = "Tersier (%@)";
 "multiple_workspaces_found" = "CodexBar menemukan beberapa workspace untuk %@. Silakan pilih workspace yang akan ditambahkan.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "Pilih hingga %@ penyedia untuk ikon gabungan";
 "remove_account_message" = "Hapus %@ dari CodexBar? Home Codex terkelolanya akan dihapus.";
 "version_format" = "Versi %@";
 "vertex_ai_login_instructions" = "Untuk melacak penggunaan Vertex AI, autentikasi dengan Google Cloud.\n\n1. Buka Terminal\n2. Jalankan: gcloud auth application-default login\n3. Ikuti petunjuk browser untuk masuk\n4. Atur proyek Anda: gcloud config set project PROJECT_ID\n\nBuka Terminal sekarang?";
@@ -673,12 +672,13 @@
 "multi_account_layout_subtitle" = "Pilih pengalihan akun tersegmentasi atau kartu akun bertumpuk.";
 "multi_account_layout_segmented" = "Tersegmentasi";
 "multi_account_layout_stacked" = "Bertumpuk";
-"overview_tab_providers_title" = "Penyedia ikon gabungan";
 "configure" = "Konfigurasi…";
-"overview_enable_merge_icons_hint" = "Aktifkan Gabungkan ikon untuk memilih penyedia ikon gabungan.";
-"overview_no_providers_hint" = "Tidak ada penyedia aktif untuk Ikhtisar.";
-"overview_rows_follow_order" = "Ikon gabungan menampilkan salah satu penyedia ini. Menu Ringkasan menampilkan semua penyedia yang diaktifkan.";
 "overview_no_providers_selected" = "Tidak ada penyedia dipilih";
+"menu_bar_icon_providers_title" = "Penyedia ikon menu bar";
+"menu_bar_icon_providers_merge_icons_hint" = "Aktifkan Gabungkan ikon untuk memilih penyedia mana yang tampil di ikon menu bar.";
+"menu_bar_icon_providers_no_providers_hint" = "Tidak ada penyedia aktif untuk ditampilkan di ikon menu bar.";
+"menu_bar_icon_providers_popover_title" = "Tampilkan di ikon menu bar";
+"menu_bar_icon_providers_popover_subtitle" = "Menu Ringkasan tetap menampilkan semua penyedia yang diaktifkan.";
 "agent_sessions_title" = "Sesi agen";
 "agent_sessions_subtitle" = "Tampilkan sesi Codex dan Claude Code lokal serta yang ditemukan melalui SSH di menu.";
 "agent_sessions_hosts_title" = "Host SSH tambahan";
@@ -1649,11 +1649,6 @@
 "Incomplete" = "Tidak lengkap";
 "Est. subtotal (%@): %@" = "Subtotal perkiraan (%@): %@";
 "Excluded requests with missing final usage: %d" = "Permintaan yang dikecualikan karena data penggunaan akhir tidak tersedia: %d";
-
-"overview_layout_title" = "Tata letak Ikhtisar";
-"overview_layout_subtitle" = "Pilih seberapa banyak informasi yang ditampilkan Ikhtisar.";
-"overview_layout_detailed" = "Terperinci";
-"overview_layout_compact" = "Ringkas";
 
 "section_widgets" = "Widget";
 "account_widgets_title" = "Perbarui akun untuk widget";

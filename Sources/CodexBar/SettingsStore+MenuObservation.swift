@@ -107,7 +107,6 @@ extension SettingsStore {
         _ = self.zoomMateCookieSource
         _ = self.ollamaCookieSource
         _ = self.mergeIcons
-        _ = self.mergedOverviewLayout
         _ = self.mergedOverviewAllAccounts
         _ = self.mergeIconsStacked
         _ = self.mergeIconStackedTopProviderRaw

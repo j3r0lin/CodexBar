@@ -342,12 +342,13 @@ and notification windows; sound, on-screen alerts and threshold markers; pace vi
 and tick appearance; usage/reset display; local cost display, comparisons and summary style; privacy,
 blink/confetti effects, highest-usage selection, optional credits/extra usage, changelog links, currency
 and alphabetical provider sorting. JSON keys match the `SyncedPreferences` fields. It additionally includes
-`limitResetNotificationsEnabled`, `mergeIcons`, `mergeIconsStacked`, `mergedOverviewLayout`,
-and `mergedOverviewSelectedProviders`. An overview selection is applied intentionally
-to the receiving Mac's active providers, including an empty selection. `weeklyProgressWorkDays: null`
-restores the seven-day default. Missing keys leave the receiving Mac's settings unchanged. `switcherShortcuts` and
-`switcherShowsIcons` from older exports are accepted and ignored; the provider switcher they configured no longer exists. Unknown preference keys,
-unsupported versions and invalid types are rejected before applying changes.
+`limitResetNotificationsEnabled`, `mergeIcons`, `mergeIconsStacked`, and `mergedOverviewSelectedProviders`.
+An overview selection is applied intentionally to the receiving Mac's active providers, including an empty
+selection. `weeklyProgressWorkDays: null` restores the seven-day default. Missing keys leave the receiving Mac's
+settings unchanged. `switcherShortcuts` and `switcherShowsIcons` from older exports are accepted and ignored; the
+provider switcher they configured no longer exists. `mergedOverviewLayout` is accepted and ignored the same way; the
+Overview layout choice no longer exists. Unknown preference keys, unsupported versions and invalid types are
+rejected before applying changes.
 
 Credentials, accounts, hooks, launch at login, global hotkeys, local paths, device identity, iCloud switches,
 debug settings, and consent are excluded. Import does not enable activity-scan consent. Only the existing

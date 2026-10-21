@@ -87,9 +87,7 @@ struct SettingsDefaultsState {
     var providerStorageFootprintsEnabled: Bool
     var jetbrainsIDEBasePath: String
     var mergeIcons: Bool
-    var mergedOverviewLayoutRaw: String
     var mergedOverviewAllAccounts: Bool
-    var overviewCollapsedProviderGroupsRaw: [String]
     var mergeIconsStacked: Bool
     var mergeIconStackedTopProviderRaw: String?
     var mergeIconStackedBottomProviderRaw: String?

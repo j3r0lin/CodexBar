@@ -443,7 +443,6 @@
 "metric_tertiary" = "Üçüncül (%@)";
 "multiple_workspaces_found" = "CodexBar %@ için birden fazla çalışma alanı buldu. Lütfen eklenecek çalışma alanını seçin.";
 "ory_session_…=…; csrftoken=…" = "ory_session_…=…; csrftoken=…";
-"overview_choose_providers" = "Birleşik simge için en fazla %@ sağlayıcı seçin";
 "remove_account_message" = "%@ CodexBar'dan kaldırılsın mı? Yönetilen Codex ana dizini silinecek.";
 "version_format" = "Sürüm %@";
 "vertex_ai_login_instructions" = "Vertex AI kullanımını izlemek için Google Cloud ile kimlik doğrulaması yapın.\n\n1. Terminal'i açın\n2. Şunu çalıştırın: gcloud auth application-default login\n3. Tarayıcıdaki adımları takip ederek oturum açın\n4. Projenizi ayarlayın: gcloud config set project PROJECT_ID\n\nTerminal şimdi açılsın mı?";
@@ -671,12 +670,13 @@
 "multi_account_layout_subtitle" = "Bölümlü hesap seçiciyi veya alt alta hesap kartlarını seçin.";
 "multi_account_layout_segmented" = "Bölümlü";
 "multi_account_layout_stacked" = "Alt alta";
-"overview_tab_providers_title" = "Birleşik simge sağlayıcıları";
 "configure" = "Yapılandır…";
-"overview_enable_merge_icons_hint" = "Birleşik simgenin sağlayıcılarını seçmek için Simgeleri birleştir'i açın.";
-"overview_no_providers_hint" = "Genel Bakış için kullanılabilir etkin sağlayıcı yok.";
-"overview_rows_follow_order" = "Birleşik simge bu sağlayıcılardan birini gösterir. Genel bakış menüsü etkin tüm sağlayıcıları listeler.";
 "overview_no_providers_selected" = "Sağlayıcı seçilmedi";
+"menu_bar_icon_providers_title" = "Menü çubuğu simgesi sağlayıcıları";
+"menu_bar_icon_providers_merge_icons_hint" = "Menü çubuğu simgesinde hangi sağlayıcıların görüneceğini seçmek için Simgeleri birleştir'i açın.";
+"menu_bar_icon_providers_no_providers_hint" = "Menü çubuğu simgesinde gösterilecek etkin sağlayıcı yok.";
+"menu_bar_icon_providers_popover_title" = "Menü çubuğu simgesinde göster";
+"menu_bar_icon_providers_popover_subtitle" = "Genel Bakış menüsü etkin tüm sağlayıcıları göstermeye devam eder.";
 "agent_sessions_title" = "Ajan oturumları";
 "agent_sessions_subtitle" = "Menüde yerel ve SSH ile keşfedilen Codex ve Claude Code oturumlarını göster.";
 "agent_sessions_hosts_title" = "Ek SSH sunucuları";
@@ -1648,11 +1648,6 @@
 "Incomplete" = "Eksik";
 "Est. subtotal (%@): %@" = "Tahmini ara toplam (%@): %@";
 "Excluded requests with missing final usage: %d" = "Nihai kullanım verileri eksik olduğu için hariç tutulan istekler: %d";
-
-"overview_layout_title" = "Genel Bakış düzeni";
-"overview_layout_subtitle" = "Genel Bakış’ın ne kadar bilgi göstereceğini seçin.";
-"overview_layout_detailed" = "Ayrıntılı";
-"overview_layout_compact" = "Kompakt";
 
 "section_widgets" = "Araç takımları";
 "account_widgets_title" = "Araç takımları için hesapları güncel tut";

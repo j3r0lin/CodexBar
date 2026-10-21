@@ -869,23 +869,9 @@ extension SettingsStore {
         set { self.setDefault(\.mergeIcons, newValue, key: "mergeIcons") }
     }
 
-    var mergedOverviewLayout: MergedOverviewLayout {
-        get { MergedOverviewLayout(rawValue: self.defaultsState.mergedOverviewLayoutRaw) ?? .detailed }
-        set { self.setDefault(\.mergedOverviewLayoutRaw, newValue.rawValue, key: "mergedOverviewLayout") }
-    }
-
     var mergedOverviewAllAccounts: Bool {
         get { self.defaultsState.mergedOverviewAllAccounts }
         set { self.setDefault(\.mergedOverviewAllAccounts, newValue, key: "mergedOverviewAllAccounts") }
-    }
-
-    /// Group keys (provider raw values or magpie wire IDs) whose account list is collapsed in the Overview.
-    var overviewCollapsedProviderGroups: Set<String> {
-        get { Set(self.defaultsState.overviewCollapsedProviderGroupsRaw) }
-        set {
-            self.setDefault(
-                \.overviewCollapsedProviderGroupsRaw, newValue.sorted(), key: "overviewCollapsedProviderGroups")
-        }
     }
 
     var mergeIconsStacked: Bool {

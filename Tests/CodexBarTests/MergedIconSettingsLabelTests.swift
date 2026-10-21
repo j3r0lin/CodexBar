@@ -55,8 +55,8 @@ struct MergedIconSettingsLabelTests {
                         UnifiedIconSourcePicker(selection: .constant(.frontmostApp))
                             .disabled(!merged || presentation.effectiveStyle == .stacked)
                         SettingsRowLabel(
-                            L("overview_tab_providers_title"),
-                            subtitle: merged ? "Codex, Claude" : L("overview_enable_merge_icons_hint"))
+                            L("menu_bar_icon_providers_title"),
+                            subtitle: merged ? "Codex, Claude" : L("menu_bar_icon_providers_merge_icons_hint"))
                             .disabled(!merged)
                         Divider()
                         MenuBarLayoutDisplayOptions(
@@ -78,7 +78,7 @@ struct MergedIconSettingsLabelTests {
                     let text = MenuLayoutScreenshotRenderTests.accessibilityText(hosting)
                     for key in [
                         "merge_icons_title", "merged_icon_style_title",
-                        "merged_icon_source_title", "merged_icon_source_frontmost_app", "overview_tab_providers_title",
+                        "merged_icon_source_title", "merged_icon_source_frontmost_app", "menu_bar_icon_providers_title",
                         "menu_bar_layout_size", "menu_bar_layout_gap",
                     ] {
                         #expect(text.contains(L(key)), "Missing accessible label: \(key) in \(mode)")
