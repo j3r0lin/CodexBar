@@ -207,14 +207,16 @@ struct OverviewUsageRow {
             readAt: account.readAt)
     }
 
-    /// A reading older than three refresh intervals no longer reflects the account. Manual refresh
-    /// has no interval to measure against, and adaptive refresh is measured against a 15-minute
-    /// baseline.
+    /// A reading older than three refresh intervals, and at least 30 minutes, no longer reflects the
+    /// account. The floor covers magpie reading accounts it rarely serves less often than CodexBar
+    /// refreshes. Manual refresh has no interval to measure against, and adaptive refresh is measured
+    /// against a 15-minute baseline.
     static func staleThreshold(for frequency: RefreshFrequency) -> TimeInterval? {
+        let floor: TimeInterval = 30 * 60
         switch frequency {
-        case .manual: nil
-        case .adaptive, .adaptiveAgentAware: 3 * 15 * 60
-        default: frequency.seconds.map { 3 * $0 }
+        case .manual: return nil
+        case .adaptive, .adaptiveAgentAware: return max(floor, 3 * 15 * 60)
+        default: return frequency.seconds.map { max(floor, 3 * $0) }
         }
     }
 

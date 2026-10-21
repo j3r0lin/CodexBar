@@ -188,10 +188,19 @@ struct MagpiePaceTests {
     }
 
     @Test
-    func `a reading older than three refresh intervals is stale`() {
+    func `a reading goes stale after 30 minutes on short refresh intervals`() {
         let threshold = OverviewUsageRow.staleThreshold(for: .fiveMinutes)
-        let fresh = Self.row(windows: [Self.weekly(used: 50)], readAt: Self.now.addingTimeInterval(-10 * 60))
-        let old = Self.row(windows: [Self.weekly(used: 50)], readAt: Self.now.addingTimeInterval(-20 * 60))
+        let fresh = Self.row(windows: [Self.weekly(used: 50)], readAt: Self.now.addingTimeInterval(-20 * 60))
+        let old = Self.row(windows: [Self.weekly(used: 50)], readAt: Self.now.addingTimeInterval(-35 * 60))
+        #expect(!fresh.isStale(now: Self.now, threshold: threshold))
+        #expect(old.isStale(now: Self.now, threshold: threshold))
+    }
+
+    @Test
+    func `a reading older than three long refresh intervals is stale`() {
+        let threshold = OverviewUsageRow.staleThreshold(for: .fifteenMinutes)
+        let fresh = Self.row(windows: [Self.weekly(used: 50)], readAt: Self.now.addingTimeInterval(-40 * 60))
+        let old = Self.row(windows: [Self.weekly(used: 50)], readAt: Self.now.addingTimeInterval(-50 * 60))
         #expect(!fresh.isStale(now: Self.now, threshold: threshold))
         #expect(old.isStale(now: Self.now, threshold: threshold))
     }
