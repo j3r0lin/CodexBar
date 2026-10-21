@@ -156,6 +156,7 @@ struct OverviewUsageRow {
     /// When the gateway last read this magpie account; nil on native rows.
     let readAt: Date?
 
+    /// When this row's usage was last read: the gateway read on magpie rows, the snapshot on native ones.
     var updatedAt: Date? {
         self.isMagpie ? self.readAt : self.snapshot?.updatedAt
     }

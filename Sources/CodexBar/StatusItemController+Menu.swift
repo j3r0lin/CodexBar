@@ -501,7 +501,8 @@ extension StatusItemController {
                 width: menuWidth,
                 heightCacheScope: "overviewCompactRow",
                 heightCacheFingerprint: "compact-header-\(rowView.lines.count)-\(row.errorText ?? "")"
-                    + "-\(rowView.name)-\(rowView.updatedText ?? "")",
+                    // The label's length, not its text, can wrap a long name; the text changes every minute.
+                    + "-\(rowView.name)-\(rowView.updatedText?.count ?? 0)",
                 submenu: submenu,
                 showsSubmenuIndicator: false,
                 usesGPUSelection: true,

@@ -243,7 +243,12 @@ struct OverviewCompactAccountRow: View {
     }
 
     var updatedText: String? {
-        self.updatedAt.map { L("Updated %@", Self.countdown(to: self.now, now: $0)) }
+        self.updatedAt.map { L("Updated %@", Self.age(of: $0, now: self.now)) }
+    }
+
+    /// Time since `date`, in the same compact form as the reset countdowns ("3m", "1d 2h").
+    private static func age(of date: Date, now: Date) -> String {
+        self.countdown(to: now, now: date)
     }
 
     var body: some View {
@@ -273,6 +278,7 @@ struct OverviewCompactAccountRow: View {
                         .scaleEffect(14.0 / 18)
                         .frame(width: 14, height: 14)
                 }
+                // An error-only card keeps its name white: the red message carries the error on its own.
                 Text(self.name)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(self.errorText == nil ? self.nameColor : .white)
