@@ -147,9 +147,7 @@ struct OverviewProviderIcon: View {
     }
 }
 
-/// One Overview row per account: the account or provider name on the left, then one line per window
-/// the provider reported, short window first, each with its window label, the percentage, a bar
-/// across the free width and the reset countdown.
+/// One Overview card per account: a compact header above full-width usage lines, short window first.
 struct OverviewCompactAccountRow: View {
     let name: String
     let shortWindow: RateWindow?
@@ -173,6 +171,7 @@ struct OverviewCompactAccountRow: View {
     var infersPeriodFromReset = true
     /// The reading is older than the refresh cadence allows; its numbers are drawn dimmed.
     var isStale = false
+    var updatedAt: Date?
     var now = Date()
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
@@ -218,9 +217,6 @@ struct OverviewCompactAccountRow: View {
     /// The transparent gap between two cards.
     static let blockGap: CGFloat = 10
     static let horizontalPadding: CGFloat = 12
-    /// Icon plus name; every row shares this column so the window columns start at the same x.
-    /// Sized so "OpenCode" fits whole on the first line beside the 18pt icon; longer names wrap at words.
-    static let nameColumn: CGFloat = 106
     /// Fits the scoped-weekly model labels ("Fable" is 27pt at 10pt medium) alongside "5h"/"7d"/"30d".
     static let labelWidth: CGFloat = 32
     /// Fits "100%" at 13pt semibold with monospaced digits.
@@ -246,15 +242,22 @@ struct OverviewCompactAccountRow: View {
         }
     }
 
+    var updatedText: String? {
+        self.updatedAt.map { L("Updated %@", Self.countdown(to: self.now, now: $0)) }
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 4) {
+            self.header
             if let errorText {
-                self.errorLines(errorText)
+                Text(errorText)
+                    .font(.system(size: 10))
+                    .foregroundStyle(MenuHighlightStyle.error(self.isHighlighted))
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                HStack(alignment: .center, spacing: 8) {
-                    self.nameColumn
-                    self.windowLines
-                }
+                self.windowLines
             }
         }
         .padding(.horizontal, Self.horizontalPadding)
@@ -262,16 +265,28 @@ struct OverviewCompactAccountRow: View {
         .frame(width: self.width, alignment: .leading)
     }
 
-    private var nameColumn: some View {
+    private var header: some View {
         HStack(spacing: 8) {
-            self.leadingIcon
-            Text(self.name)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(self.nameColor)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 6) {
+                if self.namesProvider {
+                    OverviewProviderIcon(image: self.icon, isTemplate: self.iconIsTemplate)
+                        .scaleEffect(14.0 / 18)
+                        .frame(width: 14, height: 14)
+                }
+                Text(self.name)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(self.errorText == nil ? self.nameColor : .white)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 4)
+            if let updatedText {
+                Text(updatedText)
+                    .font(.system(size: 10).monospacedDigit())
+                    .foregroundStyle(OverviewPalette.caption)
+                    .fixedSize()
+            }
         }
-        .frame(width: Self.nameColumn - 8, alignment: .leading)
     }
 
     private var nameColor: Color {
@@ -282,48 +297,12 @@ struct OverviewCompactAccountRow: View {
     @ViewBuilder
     private var windowLines: some View {
         let lines = self.lines
-        if lines.isEmpty {
-            self.windowLine { Spacer(minLength: 0) }
-        } else {
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(lines.indices, id: \.self) { index in
-                    self.windowLine { self.reading(lines[index]) }
-                }
-            }
-            .opacity(self.isStale ? 0.5 : 1)
-        }
-    }
-
-    /// An error-only provider names itself in full on the first line and wraps the message below it,
-    /// so neither the name nor the message is truncated into the narrow name column. The name stays
-    /// white: the red message carries the error on its own.
-    private func errorLines(_ errorText: String) -> some View {
-        HStack(alignment: .center, spacing: 8) {
-            self.leadingIcon
-            VStack(alignment: .leading, spacing: 2) {
-                Text(self.name)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                Text(errorText)
-                    .font(.system(size: 10))
-                    .foregroundStyle(MenuHighlightStyle.error(self.isHighlighted))
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(lines.indices, id: \.self) { index in
+                self.windowLine { self.reading(lines[index]) }
             }
         }
-        .padding(.vertical, 4)
-    }
-
-    /// The provider icon, or an empty slot of the same size on account rows.
-    @ViewBuilder
-    private var leadingIcon: some View {
-        if self.namesProvider {
-            OverviewProviderIcon(image: self.icon, isTemplate: self.iconIsTemplate)
-        } else {
-            Color.clear.frame(width: 18, height: 18)
-        }
+        .opacity(self.isStale ? 0.5 : 1)
     }
 
     private func windowLine(@ViewBuilder content: () -> some View) -> some View {

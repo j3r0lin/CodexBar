@@ -134,10 +134,11 @@ struct OverviewRowAlignmentTests {
         Span(start: spans.map(\.start).min() ?? -1, end: spans.map(\.end).max() ?? -1)
     }
 
-    /// Scan past the shared name column so names and icons never count as bars.
+    /// Scan past the window label and percent columns to measure the full-width usage bars.
     private static var scanStart: Int {
         let contentInset = OverviewCompactAccountRow.blockInset + OverviewCompactAccountRow.horizontalPadding
-        return Int((contentInset + OverviewCompactAccountRow.nameColumn) * self.scale)
+        return Int((contentInset + OverviewCompactAccountRow.labelWidth
+                + OverviewCompactAccountRow.percentWidth + 16) * self.scale)
     }
 
     private static func differs(_ a: NSColor, _ b: NSColor) -> Bool {

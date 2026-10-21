@@ -493,13 +493,15 @@ extension StatusItemController {
                 isStale: row.isStale(
                     now: now,
                     threshold: OverviewUsageRow.staleThreshold(for: self.settings.refreshFrequency)),
+                updatedAt: row.updatedAt,
                 now: now)
             let item = self.makeMenuCardItem(
                 rowView,
                 id: identifier,
                 width: menuWidth,
                 heightCacheScope: "overviewCompactRow",
-                heightCacheFingerprint: "compact-single-\(max(1, rowView.lines.count))-\(row.errorText ?? "")",
+                heightCacheFingerprint: "compact-header-\(rowView.lines.count)-\(row.errorText ?? "")"
+                    + "-\(rowView.name)-\(rowView.updatedText ?? "")",
                 submenu: submenu,
                 showsSubmenuIndicator: false,
                 usesGPUSelection: true,

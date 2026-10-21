@@ -156,6 +156,10 @@ struct OverviewUsageRow {
     /// When the gateway last read this magpie account; nil on native rows.
     let readAt: Date?
 
+    var updatedAt: Date? {
+        self.isMagpie ? self.readAt : self.snapshot?.updatedAt
+    }
+
     var isMagpie: Bool {
         self.namedWindows != nil
     }

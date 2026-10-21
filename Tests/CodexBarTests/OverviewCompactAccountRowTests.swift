@@ -49,7 +49,42 @@ struct OverviewCompactAccountRowTests {
                 namesProvider: true,
                 now: Self.now))
         }
-        #expect(height("Some Very Long Provider Name") > height("Codex"))
+        #expect(height("Some Very Long Provider Name That Cannot Fit In One Header Line") > height("Codex"))
+    }
+
+    @Test
+    func `the header shows an update label only when a timestamp exists`() {
+        var row = self.row(short: nil, long: Self.window(40, minutes: 300))
+        #expect(row.updatedText == nil)
+        row.updatedAt = Self.now.addingTimeInterval(-180)
+        #expect(row.updatedText?.isEmpty == false)
+        row.updatedAt = nil
+        #expect(row.updatedText == nil)
+    }
+
+    @Test
+    func `update labels use the timestamp belonging to the row source`() {
+        let readAt = Self.now.addingTimeInterval(-180)
+        let snapshot = UsageSnapshot(primary: nil, secondary: nil, updatedAt: Self.now)
+        func row(magpie: Bool, snapshot: UsageSnapshot?, readAt: Date?) -> OverviewUsageRow {
+            OverviewUsageRow(
+                groupKey: "example",
+                providerName: "Example",
+                nativeProvider: nil,
+                accountID: nil,
+                accountName: nil,
+                namedWindows: magpie ? [] : nil,
+                snapshot: snapshot,
+                model: nil,
+                errorText: nil,
+                showsErrorFlag: false,
+                detailErrorText: nil,
+                readAt: readAt)
+        }
+        #expect(row(magpie: true, snapshot: nil, readAt: readAt).updatedAt == readAt)
+        #expect(row(magpie: false, snapshot: snapshot, readAt: nil).updatedAt == snapshot.updatedAt)
+        #expect(row(magpie: true, snapshot: nil, readAt: nil).updatedAt == nil)
+        #expect(row(magpie: false, snapshot: nil, readAt: nil).updatedAt == nil)
     }
 
     @Test
