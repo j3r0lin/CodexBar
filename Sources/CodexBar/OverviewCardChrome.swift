@@ -196,3 +196,30 @@ struct OverviewFooterView: View {
         .frame(width: self.width, alignment: .leading)
     }
 }
+
+/// A plain one-line row of the Overview panel (the share action, the empty state), drawn in the
+/// panel instead of as a native item so the menu material never shows through it.
+struct OverviewPanelTextRow: View {
+    let title: String
+    let width: CGFloat
+    var systemImageName: String?
+    var isDimmed = false
+
+    var body: some View {
+        HStack(spacing: 8) {
+            if let systemImageName {
+                Image(systemName: systemImageName)
+                    .frame(width: 16)
+            }
+            Text(self.title)
+                .lineLimit(1)
+                .truncationMode(.tail)
+            Spacer(minLength: 0)
+        }
+        .font(.system(size: NSFont.menuFont(ofSize: 0).pointSize))
+        .foregroundStyle(self.isDimmed ? OverviewPalette.caption : Color.primary)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 4)
+        .frame(width: self.width, alignment: .leading)
+    }
+}

@@ -510,7 +510,7 @@ extension StatusMenuTests {
         #expect(controller.overviewShareStatsPayload(now: now) == nil)
         let model = controller.overviewSpendDashboardModel(providers: [.codex], now: now)
         #expect(model.groups.isEmpty)
-        #expect(controller.makeOverviewShareStatsMenuItem(model: model) == nil)
+        #expect(controller.makeOverviewShareStatsMenuItem(model: model, width: 320) == nil)
     }
 
     @Test

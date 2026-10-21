@@ -145,16 +145,37 @@ struct OverviewSharePresentation {
 }
 
 extension StatusItemController {
-    func makeOverviewShareStatsMenuItem(model: SpendDashboardModel) -> NSMenuItem? {
+    func makeOverviewShareStatsMenuItem(model: SpendDashboardModel, width: CGFloat) -> NSMenuItem? {
         guard ShareStatsPayloadFactory.make(model: model, store: self.store) != nil else { return nil }
         let title = L("Share Usage Snapshot…")
-        let item = NSMenuItem(
-            title: title,
-            action: #selector(self.presentOverviewShareStats),
-            keyEquivalent: "")
+        let id = "overviewShareStats"
+        let item: NSMenuItem
+        if self.menuCardRenderingEnabledForController {
+            // A hosted row keeps the panel colour behind it; a native item would show menu material.
+            let actionTarget = MenuCardActionTarget()
+            item = self.makeMenuCardItem(
+                OverviewPanelTextRow(title: title, width: width, systemImageName: "square.and.arrow.up"),
+                id: id,
+                width: width,
+                heightCacheScope: id,
+                heightCacheFingerprint: "share",
+                usesPanelBase: true,
+                onClick: { [weak self, actionTarget] in
+                    actionTarget.item?.menu?.cancelTracking()
+                    self?.presentOverviewShareStats()
+                })
+            actionTarget.item = item
+        } else {
+            item = NSMenuItem()
+            item.title = title
+        }
+        // The hosted row handles pointer input; the native action stays for keyboard activation.
         item.target = self
-        item.representedObject = "overviewShareStats"
-        if let image = NSImage(systemSymbolName: "square.and.arrow.up", accessibilityDescription: title) {
+        item.action = #selector(self.presentOverviewShareStats)
+        item.representedObject = id
+        if !self.menuCardRenderingEnabledForController,
+           let image = NSImage(systemSymbolName: "square.and.arrow.up", accessibilityDescription: title)
+        {
             image.isTemplate = true
             image.size = NSSize(width: 16, height: 16)
             item.image = image

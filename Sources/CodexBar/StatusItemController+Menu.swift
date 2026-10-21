@@ -458,7 +458,7 @@ extension StatusItemController {
                 ].joined(separator: "|"),
                 usesPanelBase: true)
             menu.addItem(summaryItem)
-            if let shareItem = self.makeOverviewShareStatsMenuItem(model: spendModel) {
+            if let shareItem = self.makeOverviewShareStatsMenuItem(model: spendModel, width: menuWidth) {
                 menu.addItem(shareItem)
             }
             menu.addItem(self.makeOverviewPanelSpacer(id: "overviewSpendSpacer", width: menuWidth))
@@ -707,14 +707,22 @@ extension StatusItemController {
             spend: spend)
     }
 
-    private func addOverviewEmptyState(to menu: NSMenu) {
-        let item = NSMenuItem(
-            title: L("No providers enabled"),
-            action: nil,
-            keyEquivalent: "")
-        item.isEnabled = false
-        item.representedObject = "overviewEmptyState"
-        menu.addItem(item)
+    private func addOverviewEmptyState(to menu: NSMenu, width: CGFloat) {
+        let title = L("No providers enabled")
+        guard self.menuCardRenderingEnabledForController else {
+            let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+            item.isEnabled = false
+            item.representedObject = "overviewEmptyState"
+            menu.addItem(item)
+            return
+        }
+        menu.addItem(self.makeMenuCardItem(
+            OverviewPanelTextRow(title: title, width: width, isDimmed: true),
+            id: "overviewEmptyState",
+            width: width,
+            heightCacheScope: "overviewEmptyState",
+            heightCacheFingerprint: "empty",
+            usesPanelBase: true))
     }
 
     private func addMenuCards(to menu: NSMenu, context: MenuCardContext, captureMenu: NSMenu? = nil) -> Bool {
@@ -863,7 +871,7 @@ extension StatusItemController {
             {
                 menu.addItem(.separator())
             } else {
-                self.addOverviewEmptyState(to: menu)
+                self.addOverviewEmptyState(to: menu, width: context.menuWidth)
                 menu.addItem(.separator())
             }
         } else {
