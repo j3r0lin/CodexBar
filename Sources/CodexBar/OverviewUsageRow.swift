@@ -12,8 +12,8 @@ struct OverviewUsageRow {
         let title: String
         let used: Double
         let resetsAt: Date?
-        /// Window length when the gateway or the window's name fixes it; unknown windows have none
-        /// and therefore no pace (a month window is paced as `monthlyPaceDuration`).
+        /// Window length when the gateway fixes it. Without one, `pace` falls back to 30 days for a
+        /// month window and to the length an unknown window's name states.
         let duration: TimeInterval?
         /// magpie's readings of this window, oldest first; empty when it kept none.
         let history: [MagpieQuotaHistoryPoint]
@@ -33,9 +33,18 @@ struct OverviewUsageRow {
         /// Calendar months differ in length; paced as 30 days like the "30 days" windows beside it.
         static let monthlyPaceDuration: TimeInterval = 30 * 86400
 
+        /// A window the wire gave no length: a month is 30 days, an unknown window may state its own length.
+        private var fallbackPaceDuration: TimeInterval? {
+            switch self.window.semantics {
+            case .monthly: Self.monthlyPaceDuration
+            case .other: Self.statedDuration(self.window.name)
+            case .session, .weekly, .scopedWeekly: nil
+            }
+        }
+
         /// Linear pace from this window's own reading, never from another account's history.
         func pace(now: Date) -> UsagePace? {
-            let duration = self.duration ?? (self.window.semantics == .monthly ? Self.monthlyPaceDuration : nil)
+            let duration = self.duration ?? self.fallbackPaceDuration
             return OverviewUsageRow.linearPace(used: self.used, duration: duration, resetsAt: self.resetsAt, now: now)
         }
 
@@ -70,11 +79,22 @@ struct OverviewUsageRow {
 
         /// "30 days" -> "30d", "12 hours" -> "12h": a long wire name would be truncated in the label column.
         private static func compactDuration(_ name: String) -> String? {
+            guard let parsed = statedLength(name) else { return nil }
+            return "\(parsed.count)\(parsed.unit)"
+        }
+
+        /// The length a window's name states ("30 days", "12 hours"); nothing else is guessed from a name.
+        static func statedDuration(_ name: String) -> TimeInterval? {
+            guard let parsed = statedLength(name) else { return nil }
+            return TimeInterval(parsed.count) * (parsed.unit == "d" ? 86400 : 3600)
+        }
+
+        private static func statedLength(_ name: String) -> (count: Int, unit: Character)? {
             let parts = name.split(separator: " ")
             guard parts.count == 2, let count = Int(parts[0]) else { return nil }
             switch parts[1].lowercased() {
-            case "day", "days": return "\(count)d"
-            case "hour", "hours": return "\(count)h"
+            case "day", "days": return (count, "d")
+            case "hour", "hours": return (count, "h")
             default: return nil
             }
         }

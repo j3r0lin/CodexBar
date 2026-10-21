@@ -128,6 +128,29 @@ struct MagpiePaceTests {
     }
 
     @Test
+    func `a window whose name states its length is paced over that length`() throws {
+        let window = MagpieQuotaWindow(
+            name: "30 days",
+            usedPercent: 40,
+            resetsAt: Self.now.addingTimeInterval(10 * Self.day))
+        let named = OverviewUsageRow.NamedWindow(window: window)
+        let pace = try #require(named.pace(now: Self.now))
+        #expect(abs(pace.expectedUsedPercent - 100 * 20 / 30) < 0.001)
+        #expect(named.label == "30d")
+        let noReset = MagpieQuotaWindow(name: "30 days", usedPercent: 40, resetsAt: nil)
+        #expect(OverviewUsageRow.NamedWindow(window: noReset).pace(now: Self.now) == nil)
+    }
+
+    @Test
+    func `a window whose name states no length has no pace`() {
+        let window = MagpieQuotaWindow(
+            name: "Burst",
+            usedPercent: 40,
+            resetsAt: Self.now.addingTimeInterval(10 * Self.day))
+        #expect(OverviewUsageRow.NamedWindow(window: window).pace(now: Self.now) == nil)
+    }
+
+    @Test
     func `a month window without a reset time has no pace`() {
         let month = MagpieQuotaWindow(name: "Month", usedPercent: 60, resetsAt: nil)
         #expect(OverviewUsageRow.NamedWindow(window: month).pace(now: Self.now) == nil)
