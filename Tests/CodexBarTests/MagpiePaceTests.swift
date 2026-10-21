@@ -71,11 +71,9 @@ struct MagpiePaceTests {
     }
 
     @Test
-    func `model-scoped weekly windows get pace and monthly or unknown windows do not`() {
+    func `model-scoped weekly windows get pace and unknown windows do not`() {
         let scoped = OverviewUsageRow.NamedWindow(window: Self.weekly("7 days · Fable", used: 60))
         #expect(scoped.pace(now: Self.now) != nil)
-        let monthly = OverviewUsageRow.NamedWindow(window: Self.weekly("Month", used: 60, remaining: 10 * Self.day))
-        #expect(monthly.pace(now: Self.now) == nil)
         let unknown = OverviewUsageRow.NamedWindow(window: Self.weekly("Burst", used: 60))
         #expect(unknown.pace(now: Self.now) == nil)
     }
@@ -117,10 +115,22 @@ struct MagpiePaceTests {
     }
 
     @Test
-    func `detail blocks of a monthly window carry no pace`() throws {
-        let windows = [OverviewUsageRow.NamedWindow(window: Self.weekly("Month", used: 60, remaining: 10 * Self.day))]
-        let block = try #require(AccountUsageDetailView.blocks(of: windows, now: Self.now).first)
-        #expect(block.outlook == nil)
+    func `a month window is paced over 30 days from its reset time`() throws {
+        // 10 of 30 days left: 20 days have passed.
+        let month = OverviewUsageRow.NamedWindow(window: Self.weekly("Month", used: 60, remaining: 10 * Self.day))
+        let pace = try #require(month.pace(now: Self.now))
+        #expect(abs(pace.expectedUsedPercent - 100 * 20 / 30) < 0.001)
+        let line = try #require(Self.row(windows: [Self.weekly("Month", used: 60, remaining: 10 * Self.day)])
+            .compactLines(now: Self.now)?.first)
+        #expect(try abs(#require(line.pacePercent) - 100 * 20 / 30) < 0.001)
+        let block = try #require(AccountUsageDetailView.blocks(of: [month], now: Self.now).first)
+        #expect(block.outlook != nil)
+    }
+
+    @Test
+    func `a month window without a reset time has no pace`() {
+        let month = MagpieQuotaWindow(name: "Month", usedPercent: 60, resetsAt: nil)
+        #expect(OverviewUsageRow.NamedWindow(window: month).pace(now: Self.now) == nil)
     }
 
     /// Readings of the current week, one an hour up to now, falling `perHour` points from `startLeft`.

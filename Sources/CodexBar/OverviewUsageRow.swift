@@ -12,8 +12,8 @@ struct OverviewUsageRow {
         let title: String
         let used: Double
         let resetsAt: Date?
-        /// Window length when the gateway or the window's name fixes it; month and unknown windows
-        /// have none and therefore no pace.
+        /// Window length when the gateway or the window's name fixes it; unknown windows have none
+        /// and therefore no pace (a month window is paced as `monthlyPaceDuration`).
         let duration: TimeInterval?
         /// magpie's readings of this window, oldest first; empty when it kept none.
         let history: [MagpieQuotaHistoryPoint]
@@ -30,9 +30,13 @@ struct OverviewUsageRow {
             self.window = window
         }
 
+        /// Calendar months differ in length; paced as 30 days like the "30 days" windows beside it.
+        static let monthlyPaceDuration: TimeInterval = 30 * 86400
+
         /// Linear pace from this window's own reading, never from another account's history.
         func pace(now: Date) -> UsagePace? {
-            OverviewUsageRow.linearPace(used: self.used, duration: self.duration, resetsAt: self.resetsAt, now: now)
+            let duration = self.duration ?? (self.window.semantics == .monthly ? Self.monthlyPaceDuration : nil)
+            return OverviewUsageRow.linearPace(used: self.used, duration: duration, resetsAt: self.resetsAt, now: now)
         }
 
         /// The window's current cycle read from its history, nil without readings.
