@@ -223,16 +223,16 @@ struct OverviewUsageRow {
         return now.timeIntervalSince(readAt) > threshold
     }
 
-    /// The compact lines of a magpie row. The pace tick and tint go on the longest window that has a
-    /// pace, since that is the one a reader plans against.
+    /// The compact lines of a magpie row. Every window with a pace gets its tick; the percent tint goes
+    /// only on the longest of them, since that is the one a reader plans against.
     func compactLines(now: Date) -> [OverviewCompactAccountRow.Line]? {
         guard let namedWindows else { return nil }
         let paced = namedWindows.compactMap { window in window.pace(now: now).map { (window, $0) } }
         let longest = paced.max { ($0.0.duration ?? 0) < ($1.0.duration ?? 0) }
         return namedWindows.map { window in
             var line = OverviewCompactAccountRow.Line(label: window.label, used: window.used, resetsAt: window.resetsAt)
+            line.pacePercent = paced.first { $0.0 == window }?.1.expectedUsedPercent
             if let longest, longest.0 == window {
-                line.pacePercent = longest.1.expectedUsedPercent
                 line.paceTone = .init(pace: longest.1, fitted: window.trend(now: now)?.eta)
             }
             return line

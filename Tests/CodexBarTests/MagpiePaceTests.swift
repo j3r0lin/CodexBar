@@ -81,13 +81,15 @@ struct MagpiePaceTests {
     }
 
     @Test
-    func `pace tick sits on the longest window with pace only`() throws {
+    func `every window with a pace gets its own tick`() throws {
         let session = MagpieQuotaWindow(
             name: "5 hours",
             usedPercent: 40,
             resetsAt: Self.now.addingTimeInterval(2.5 * 3600))
-        let lines = try #require(Self.row(windows: [session, Self.weekly(used: 80)]).compactLines(now: Self.now))
-        #expect(lines.map { $0.pacePercent != nil } == [false, true])
+        let unknown = MagpieQuotaWindow(name: "Credits", usedPercent: 10, resetsAt: nil)
+        let lines = try #require(Self.row(windows: [session, Self.weekly(used: 80), unknown])
+            .compactLines(now: Self.now))
+        #expect(lines.map { $0.pacePercent != nil } == [true, true, false])
     }
 
     @Test
