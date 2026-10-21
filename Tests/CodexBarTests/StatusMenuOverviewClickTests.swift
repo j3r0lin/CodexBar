@@ -31,6 +31,36 @@ struct StatusMenuOverviewClickTests {
     }
 
     @Test
+    func `overview base stays below selection and follows its geometry`() throws {
+        let view = Self.makeRow(Text("Overview"), usesGPUSelection: true, selectionBlock: .single)
+        #expect(view.subviews.count == 3)
+        let base = try #require(view.subviews.first)
+        let selection = view.subviews[1]
+        for block in [OverviewBlockPosition.single, .top, .middle, .bottom] {
+            var payload = view.rowPayload
+            payload.selectionBlock = block
+            view.replant(payload, refreshMonitor: nil)
+            view.frame = NSRect(x: 0, y: 0, width: 320, height: 90)
+            Self.settleWindowlessLayout(view)
+            #expect(base.frame == MenuRowContainerView.selectionFrame(in: view.bounds, block: block))
+            #expect(base.frame == selection.frame)
+            #expect(base.layer?.maskedCorners == selection.layer?.maskedCorners)
+            #expect(base.layer?.cornerRadius == selection.layer?.cornerRadius)
+        }
+        view.setHighlighted(true)
+        #expect(selection.layer?.opacity == 1)
+        view.setHighlighted(false)
+        #expect(selection.layer?.opacity == 0)
+        #expect(base.layer?.opacity == 1)
+
+        var payload = view.rowPayload
+        payload.selectionBlock = nil
+        view.replant(payload, refreshMonitor: nil)
+        #expect(base.superview == nil)
+        #expect(view.subviews.count == 2)
+    }
+
+    @Test
     func `gpu tracking activates only for mouseUp inside row`() {
         let view = Self.makeRow(
             Text("Overview GPU row"),
@@ -172,6 +202,7 @@ struct StatusMenuOverviewClickTests {
         showsSubmenuIndicator: Bool = false,
         containsInteractiveControls: Bool = false,
         usesGPUSelection: Bool = false,
+        selectionBlock: OverviewBlockPosition? = nil,
         onClick: (() -> Void)? = nil) -> MenuRowContainerView
     {
         MenuRowContainerView(
@@ -183,6 +214,7 @@ struct StatusMenuOverviewClickTests {
                 allowsMenuHighlight: true,
                 containsInteractiveControls: containsInteractiveControls,
                 usesGPUSelection: usesGPUSelection,
+                selectionBlock: selectionBlock,
                 onClick: onClick),
             refreshMonitor: nil)
     }

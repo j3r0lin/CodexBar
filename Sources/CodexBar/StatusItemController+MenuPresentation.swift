@@ -152,6 +152,7 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     private let hosting: NSHostingView<MenuCardSectionContainerView<AnyView>>
     private var measuredSize: NSSize?
     private var selectionView: NSView?
+    private var blockBaseView: NSView?
     private(set) var allowsMenuHighlight: Bool
     private var onClick: (() -> Void)?
     private var containsInteractiveControls: Bool
@@ -269,7 +270,9 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     override func layout() {
         super.layout()
         self.hosting.frame = self.bounds
-        self.selectionView?.frame = Self.selectionFrame(in: self.bounds, block: self.rowPayload.selectionBlock)
+        let selectionFrame = Self.selectionFrame(in: self.bounds, block: self.rowPayload.selectionBlock)
+        self.selectionView?.frame = selectionFrame
+        self.blockBaseView?.frame = selectionFrame
         self.updateSelectionShape()
     }
 
@@ -434,6 +437,23 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     }
 
     private func configureSelectionMode(animated: Bool) {
+        if self.rowPayload.selectionBlock != nil {
+            if self.blockBaseView == nil {
+                // The base lives in AppKit, not in the SwiftUI card, so the selection layer between them
+                // still brightens the card on hover; the menu material behind would otherwise tint it.
+                let base = NSView()
+                base.wantsLayer = true
+                base.layer?.backgroundColor = NSColor(
+                    srgbRed: 0.14, green: 0.14, blue: 0.16, alpha: 0.9).cgColor
+                base.layer?.masksToBounds = true
+                base.autoresizingMask = [.width, .height]
+                self.addSubview(base, positioned: .below, relativeTo: self.selectionView ?? self.hosting)
+                self.blockBaseView = base
+            }
+        } else {
+            self.blockBaseView?.removeFromSuperview()
+            self.blockBaseView = nil
+        }
         if self.rowPayload.usesGPUSelection {
             _ = self.ensureSelectionView()
             self.updateSelectionShape()
@@ -500,16 +520,17 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     }
 
     private func updateSelectionShape() {
-        guard let layer = self.selectionView?.layer else { return }
-        if let block = self.rowPayload.selectionBlock {
-            layer.maskedCorners = Self.selectionMaskCorners(for: block)
-            layer.cornerRadius = block == .middle ? 0 : 10
-        } else {
-            layer.maskedCorners = [
-                .layerMinXMinYCorner, .layerMaxXMinYCorner,
-                .layerMinXMaxYCorner, .layerMaxXMaxYCorner,
-            ]
-            layer.cornerRadius = Self.selectionCornerRadius
+        for layer in [self.selectionView?.layer, self.blockBaseView?.layer].compactMap(\.self) {
+            if let block = self.rowPayload.selectionBlock {
+                layer.maskedCorners = Self.selectionMaskCorners(for: block)
+                layer.cornerRadius = block == .middle ? 0 : 10
+            } else {
+                layer.maskedCorners = [
+                    .layerMinXMinYCorner, .layerMaxXMinYCorner,
+                    .layerMinXMaxYCorner, .layerMaxXMaxYCorner,
+                ]
+                layer.cornerRadius = Self.selectionCornerRadius
+            }
         }
     }
 
