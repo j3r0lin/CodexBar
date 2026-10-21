@@ -44,6 +44,8 @@ extension ProviderUsageItemID {
         // visible rather than risk hiding the wrong window.
         guard window.pool == nil else { return nil }
         let metricID: String?
+        // Provider-specific by design: this table maps magpie window semantics to each provider's native
+        // usage-item IDs, so it lists providers one by one.
         switch (provider, window.semantics) {
         case (.claude, .session), (.codex, .session), (.opencodego, .session):
             metricID = "primary"
