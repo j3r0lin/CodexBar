@@ -56,20 +56,16 @@ struct AccountUsageDetailLocalizationTests {
         let now = try at(20, 9)
         let cases = try [
             (at(20, 14, 30), "14:30"),
-            (at(21, 9, 5), "Tomorrow 09:05"),
+            (at(21, 9, 5), "Wed 09:05"),
             (at(22, 14, 30), "Thu 14:30"),
             (at(25, 8), "Sun 08:00"),
             (at(26, 8), "Oct 26 08:00"),
             (at(19, 23), "Oct 19 23:00"),
         ]
-        let tomorrow = try at(21, 9, 5)
         CodexBarLocalizationOverride.$appLanguage.withValue("en") {
             for (date, expected) in cases {
                 #expect(AccountUsageDetailView.clockText(date, now: now, calendar: calendar) == expected)
             }
-        }
-        CodexBarLocalizationOverride.$appLanguage.withValue("zh-Hans") {
-            #expect(AccountUsageDetailView.clockText(tomorrow, now: now, calendar: calendar) == "明天 09:05")
         }
     }
 
@@ -80,7 +76,7 @@ struct AccountUsageDetailLocalizationTests {
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent("Sources/CodexBar/Resources")
-        let keys = ["Tomorrow %@", "Runs out %@ at this pace", "Lasts past the reset at this pace"]
+        let keys = ["Runs out %@ at this pace", "Lasts past the reset at this pace"]
         for language in AppLanguage.allCases where language != .system {
             let url = resources.appendingPathComponent("\(language.rawValue).lproj/Localizable.strings")
             let catalog = try #require(NSDictionary(contentsOf: url) as? [String: String])

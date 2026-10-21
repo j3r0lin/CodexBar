@@ -339,8 +339,8 @@ struct AccountUsageDetailView: View {
         L("Resets %@", self.clockText(date, now: now))
     }
 
-    /// A time on the 24-hour clock, as magpie's tray writes reset times: "14:30" today, "Tomorrow 09:00",
-    /// "Thu 14:30" later this week (Monday to Sunday), else "Oct 12 08:05". Earlier days get the date too,
+    /// A time on the 24-hour clock, as magpie's tray writes reset times: "14:30" today, "Thu 14:30" later
+    /// this week (Monday to Sunday), else "Oct 12 08:05". Earlier days get the date too,
     /// so an old "Updated" time never reads as today's.
     static func clockText(_ date: Date, now: Date, calendar: Calendar = .current) -> String {
         let locale = codexBarLocalizedResourceLocale()
@@ -354,11 +354,10 @@ struct AccountUsageDetailView: View {
             from: calendar.startOfDay(for: now),
             to: calendar.startOfDay(for: date)).day ?? 0
         if days == 0 { return time }
-        if days == 1 { return L("Tomorrow %@", time) }
         // Days left in this Monday-to-Sunday week; Calendar numbers Sunday 1 through Saturday 7.
         let daysLeftInWeek = 6 - (calendar.component(.weekday, from: now) + 5) % 7
         var style = Date.FormatStyle(locale: locale, calendar: calendar, timeZone: calendar.timeZone)
-        if days > 1, days <= daysLeftInWeek {
+        if days >= 1, days <= daysLeftInWeek {
             style = style.weekday(.abbreviated)
         } else {
             style = style.month(.abbreviated).day()

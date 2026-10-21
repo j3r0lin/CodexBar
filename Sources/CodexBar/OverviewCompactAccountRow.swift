@@ -221,8 +221,9 @@ struct OverviewCompactAccountRow: View {
     static let labelWidth: CGFloat = 32
     /// Fits "100%" at 13pt semibold with monospaced digits.
     static let percentWidth: CGFloat = 38
-    /// Fits the widest reset text, "23h 59m · Tmr 23:59" (102.5pt at 10pt with monospaced digits).
-    static let resetWidth: CGFloat = 108
+    /// Fits the widest reset text, a countdown with a weekday and time (about 100pt at 10pt with
+    /// monospaced digits).
+    static let resetWidth: CGFloat = 102
     /// Every window line keeps this height so lines pitch evenly within and across accounts.
     static let lineHeight: CGFloat = 22
 
@@ -431,8 +432,8 @@ struct OverviewCompactAccountRow: View {
         return "\(self.countdown(to: date, now: now)) · \(self.shortClock(date, now: now))"
     }
 
-    /// A short form of the detail page's clock: today "14:30", tomorrow "Tmr 09:00", later this week
-    /// "Thu 03:00", and beyond that "Oct 28".
+    /// A short form of the detail page's clock: today "14:30", within the next six days "Thu 03:00",
+    /// and beyond that "Oct 28". The countdown beside it settles which week a weekday falls in.
     static func shortClock(_ date: Date, now: Date, calendar: Calendar = .current) -> String {
         let clock = DateFormatter()
         clock.locale = Locale(identifier: "en_US_POSIX")
@@ -444,13 +445,11 @@ struct OverviewCompactAccountRow: View {
             from: calendar.startOfDay(for: now),
             to: calendar.startOfDay(for: date)).day ?? 0
         if days == 0 { return time }
-        if days == 1 { return "Tmr \(time)" }
-        let daysLeftInWeek = 6 - (calendar.component(.weekday, from: now) + 5) % 7
         let style = Date.FormatStyle(
             locale: Locale(identifier: "en_US_POSIX"),
             calendar: calendar,
             timeZone: calendar.timeZone)
-        if days > 1, days <= daysLeftInWeek {
+        if days >= 1, days < 7 {
             return "\(date.formatted(style.weekday(.abbreviated))) \(time)"
         }
         return date.formatted(style.month(.abbreviated).day())
