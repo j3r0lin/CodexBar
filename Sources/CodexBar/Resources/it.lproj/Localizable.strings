@@ -2700,3 +2700,5 @@
 "Tomorrow %@" = "Domani %@";
 "Runs out %@ at this pace" = "Si esaurisce %@ a questo ritmo";
 "Lasts past the reset at this pace" = "Dura oltre il ripristino a questo ritmo";
+"Show scheduled resets from codex-resets.com" = "Mostra i reset programmati da codex-resets.com";
+"Scheduled reset before %@" = "Reset programmato prima di %@";

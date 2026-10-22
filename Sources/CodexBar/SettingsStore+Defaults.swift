@@ -379,6 +379,11 @@ extension SettingsStore {
         }
     }
 
+    var codexScheduledResetVisible: Bool {
+        get { self.defaultsState.codexScheduledResetVisible }
+        set { self.setDefault(\.codexScheduledResetVisible, newValue, key: "codexScheduledResetVisible") }
+    }
+
     var menuBarMetricPreferencesRaw: [String: String] {
         get { self.defaultsState.menuBarMetricPreferencesRaw }
         set { self.setDefault(\.menuBarMetricPreferencesRaw, newValue, key: "menuBarMetricPreferences") }

@@ -106,6 +106,17 @@ struct CodexProviderImplementation: ProviderImplementation {
                 onAppDidBecomeActive: nil,
                 onAppearWhenEnabled: nil),
             ProviderSettingsToggleDescriptor(
+                id: "codex-scheduled-reset",
+                title: "Show scheduled resets from codex-resets.com",
+                subtitle: "",
+                binding: context.binding(\.codexScheduledResetVisible),
+                statusText: nil,
+                actions: [],
+                isVisible: nil,
+                onChange: nil,
+                onAppDidBecomeActive: nil,
+                onAppearWhenEnabled: nil),
+            ProviderSettingsToggleDescriptor(
                 id: "codex-openai-web-extras",
                 title: "OpenAI web extras",
                 subtitle: [

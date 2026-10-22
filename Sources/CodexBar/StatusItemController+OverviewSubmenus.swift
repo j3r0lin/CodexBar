@@ -11,14 +11,16 @@ extension StatusItemController {
         width: CGFloat) -> NSMenu
     {
         let submenu = OverviewDetailMenu(controller: self) { [weak self] submenu in
-            guard let self, !row.isMagpie, let provider = row.nativeProvider, let model = row.model
-            else { return }
-            let chartID = self.appendOverviewRowChart(
-                to: submenu,
-                provider: provider,
-                model: model,
-                width: width)
-            self.appendOverviewRowActions(to: submenu, provider: provider, width: width, inlineChartID: chartID)
+            guard let self else { return }
+            if !row.isMagpie, let provider = row.nativeProvider, let model = row.model {
+                let chartID = self.appendOverviewRowChart(
+                    to: submenu,
+                    provider: provider,
+                    model: model,
+                    width: width)
+                self.appendOverviewRowActions(to: submenu, provider: provider, width: width, inlineChartID: chartID)
+            }
+            self.appendScheduledResetSourceItem(to: submenu, row: row)
         }
         submenu.autoenablesItems = false
         submenu.minimumWidth = width
@@ -51,6 +53,32 @@ extension StatusItemController {
             submenu.addItem(self.makeRefreshClaudeAccountItem(accountID))
         }
         return submenu
+    }
+
+    /// Opens the announcement behind the row's scheduled-reset badge; built with the submenu's other
+    /// lazy content, so the reset shown is the one current when the submenu opens.
+    private func appendScheduledResetSourceItem(to submenu: NSMenu, row: OverviewUsageRow) {
+        // Provider-specific by design: codex-resets.com only tracks Codex, native or via magpie.
+        guard row.nativeProvider == .codex,
+              let reset = self.store.visibleCodexScheduledReset(now: Date()), let sourceURL = reset.sourceURL
+        else { return }
+        if !submenu.items.isEmpty { submenu.addItem(.separator()) }
+        submenu.addItem(self.makeScheduledResetSourceItem(reset.scheduledFor, sourceURL: sourceURL))
+    }
+
+    private func makeScheduledResetSourceItem(_ date: Date, sourceURL: URL) -> NSMenuItem {
+        let item = NSMenuItem(
+            title: L("Scheduled reset before %@", date.formatted(.dateTime.weekday(.abbreviated).hour().minute())),
+            action: #selector(self.openScheduledResetSource(_:)),
+            keyEquivalent: "")
+        item.target = self
+        item.representedObject = sourceURL
+        return item
+    }
+
+    @objc private func openScheduledResetSource(_ sender: NSMenuItem) {
+        guard let url = sender.representedObject as? URL, url.scheme?.lowercased() == "https" else { return }
+        NSWorkspace.shared.open(url)
     }
 
     /// Appends the row's cost, credits or storage chart inline and returns its chart identifier, or nil when

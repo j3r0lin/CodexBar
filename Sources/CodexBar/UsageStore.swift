@@ -21,6 +21,7 @@ extension UsageStore {
         _ = self.claudeSwapLastError
         _ = self.claudeSwapRevision
         _ = (self.magpieAccountSnapshots, self.magpieLastError, self.magpieRevision)
+        _ = self.codexScheduledReset
         _ = self.tokenSnapshotPublications
         _ = self.tokenErrors
         _ = self.tokenRefreshInFlight
@@ -190,6 +191,12 @@ final class UsageStore {
     @ObservationIgnored var magpieTransport: MagpieQuotasReader.Transport =
         MagpieQuotasReader.urlSessionTransport
     @ObservationIgnored var lastMagpieSourceConfiguration: (enabled: Bool, quotasURL: String)?
+    /// The latest scheduled Codex reset from codex-resets.com; kept across failed fetches, never persisted.
+    var codexScheduledReset: CodexScheduledReset?
+    @ObservationIgnored var codexScheduledResetLastAttemptAt: Date?
+    @ObservationIgnored var codexScheduledResetTask: Task<Void, Never>?
+    @ObservationIgnored var codexScheduledResetTransport: CodexScheduledResetReader.Transport =
+        CodexScheduledResetReader.urlSessionTransport
     var tokenSnapshotPublications: [ProviderInstanceID: TokenSnapshotPublication] = [:]
     var tokenSnapshotPublicationRevisions: [ProviderInstanceID: UInt64] = [:]
     var spendDashboardTokenPublications: [ProviderInstanceID: TokenSnapshotPublication] = [:]
@@ -807,6 +814,7 @@ final class UsageStore {
             self.scheduleMagpieAccountRefresh()
             await self.awaitMagpieRefresh()
         }
+        self.scheduleCodexScheduledResetRefresh()
         self.prepareRefreshState()
         let refreshPhase = Self.refreshPhase(hasCompletedInitialRefresh: self.hasCompletedInitialRefresh)
         let openAIWebRefreshPhase = Self.openAIWebRefreshPhase(
@@ -1008,6 +1016,7 @@ final class UsageStore {
         self.pendingForcedRefreshEnrichmentTask?.cancel()
         self.requiredRefreshTask?.cancel()
         self.creditsRefreshTask?.cancel()
+        self.codexScheduledResetTask?.cancel()
         self.openAIDashboardBackgroundRefreshTask?.cancel()
         self.openAIDashboardRefreshTask?.cancel()
         self.openAISubscriptionMetadataEnrichmentTask?.cancel()

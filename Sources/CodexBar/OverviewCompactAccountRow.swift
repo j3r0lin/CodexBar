@@ -218,6 +218,8 @@ struct OverviewCompactAccountRow: View {
     /// The reading is older than the refresh cadence allows; its numbers are drawn dimmed.
     var isStale = false
     var resetCredits: MagpieResetCredits?
+    /// A Codex reset announced for a future time; the caller passes it only for Codex rows.
+    var scheduledResetAt: Date?
     var updatedAt: Date?
     var now = Date()
     @Environment(\.menuItemHighlighted) private var isHighlighted
@@ -344,6 +346,10 @@ struct OverviewCompactAccountRow: View {
         return "\(resetCredits.count)\(expiry)"
     }
 
+    var scheduledResetText: String? {
+        self.scheduledResetAt.map { Self.countdown(to: $0, now: self.now) }
+    }
+
     private var header: some View {
         HStack(spacing: 8) {
             HStack(spacing: 6) {
@@ -363,6 +369,15 @@ struct OverviewCompactAccountRow: View {
                 HStack(spacing: 3) {
                     Image(systemName: "arrow.counterclockwise")
                     Text(resetCreditsText)
+                }
+                .font(.system(size: 10).monospacedDigit())
+                .foregroundStyle(OverviewPalette.caption)
+                .fixedSize()
+            }
+            if let scheduledResetText {
+                HStack(spacing: 3) {
+                    Image(systemName: "clock")
+                    Text(scheduledResetText)
                 }
                 .font(.system(size: 10).monospacedDigit())
                 .foregroundStyle(OverviewPalette.caption)

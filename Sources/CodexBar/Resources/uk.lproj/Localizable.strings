@@ -2695,3 +2695,5 @@
 "Tomorrow %@" = "Завтра %@";
 "Runs out %@ at this pace" = "За такого темпу закінчиться %@";
 "Lasts past the reset at this pace" = "За такого темпу вистачить до скидання";
+"Show scheduled resets from codex-resets.com" = "Показувати заплановані скидання з codex-resets.com";
+"Scheduled reset before %@" = "Скидання заплановано до %@";

@@ -483,6 +483,7 @@ extension StatusItemController {
                 heightCacheFingerprint: "compact-header-\(rowView.lines.count)-\(row.errorText ?? "")"
                     // The label's length, not its text, can wrap a long name; the text changes every minute.
                     + "-\(rowView.name)-\(rowView.updatedText?.count ?? 0)-\(rowView.resetCreditsText?.count ?? 0)"
+                    + "-\(rowView.scheduledResetText?.count ?? 0)"
                     + "-gap\(Int(bottomGap))",
                 submenu: submenu,
                 showsSubmenuIndicator: false,
@@ -533,6 +534,10 @@ extension StatusItemController {
                 now: now,
                 threshold: OverviewUsageRow.staleThreshold(for: self.settings.refreshFrequency)),
             resetCredits: row.resetCredits,
+            // Provider-specific by design: codex-resets.com only tracks Codex, native or via magpie.
+            scheduledResetAt: row.nativeProvider == .codex
+                ? self.store.visibleCodexScheduledReset(now: now)?.scheduledFor
+                : nil,
             updatedAt: row.updatedAt,
             now: now)
     }

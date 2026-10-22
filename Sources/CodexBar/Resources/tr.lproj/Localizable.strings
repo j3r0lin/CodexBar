@@ -2699,3 +2699,5 @@
 "Tomorrow %@" = "Yarın %@";
 "Runs out %@ at this pace" = "Bu hızla %@ biter";
 "Lasts past the reset at this pace" = "Bu hızla sıfırlamaya kadar yeter";
+"Show scheduled resets from codex-resets.com" = "codex-resets.com'daki planlı sıfırlamaları göster";
+"Scheduled reset before %@" = "%@ öncesinde planlı sıfırlama";

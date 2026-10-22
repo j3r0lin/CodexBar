@@ -2699,3 +2699,5 @@
 "Tomorrow %@" = "غدًا %@";
 "Runs out %@ at this pace" = "ينفد %@ بهذه الوتيرة";
 "Lasts past the reset at this pace" = "يكفي حتى إعادة التعيين بهذه الوتيرة";
+"Show scheduled resets from codex-resets.com" = "إظهار عمليات إعادة التعيين المجدولة من codex-resets.com";
+"Scheduled reset before %@" = "إعادة تعيين مجدولة قبل %@";

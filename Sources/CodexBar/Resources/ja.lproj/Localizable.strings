@@ -2695,3 +2695,5 @@
 "Tomorrow %@" = "明日 %@";
 "Runs out %@ at this pace" = "このペースだと %@ に使い切ります";
 "Lasts past the reset at this pace" = "このペースならリセットまで持ちます";
+"Show scheduled resets from codex-resets.com" = "codex-resets.com の予定されたリセットを表示";
+"Scheduled reset before %@" = "%@ までにリセット予定";

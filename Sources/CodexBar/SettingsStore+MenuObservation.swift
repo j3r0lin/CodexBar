@@ -41,6 +41,7 @@ extension SettingsStore {
         _ = self.menuBarShowsResetTimeWhenExhausted
         _ = self.kiroMenuBarDisplayMode
         _ = self.historicalTrackingEnabled
+        _ = self.codexScheduledResetVisible
         _ = self.multiAccountMenuLayout
         _ = self.accountWidgetsEnabled
         _ = self.menuBarMetricPreferencesRaw

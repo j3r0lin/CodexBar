@@ -274,4 +274,64 @@ extension StatusMenuTests {
         #expect(ids.filter { $0.hasPrefix("overviewRow-claude#") }.count == 2)
         #expect(!ids.contains { $0.hasPrefix("overviewHeading-") })
     }
+
+    @Test
+    func `a scheduled reset badge shows on Codex rows only`() throws {
+        self.disableMenuCardsForTesting()
+        let (settings, store) = self.makeOverviewFixture()
+        enableTestProviders([.claude, .codex], settings: settings)
+        let window = RateWindow(
+            usedPercent: 40,
+            windowMinutes: 300,
+            resetsAt: Date().addingTimeInterval(1800),
+            resetDescription: nil)
+        for provider in [UsageProvider.claude, .codex] {
+            store._setSnapshotForTesting(
+                UsageSnapshot(primary: window, secondary: nil, updatedAt: Date()),
+                provider: provider)
+        }
+        store.codexScheduledReset = CodexScheduledReset(
+            scheduledFor: Date().addingTimeInterval(3600),
+            sourceURL: nil)
+        let controller = self.makeOverviewController(settings: settings, store: store)
+        defer { controller.releaseStatusItemsForTesting() }
+
+        func badge(_ groupKey: String) throws -> String? {
+            let row = try #require(
+                controller.overviewUsageRows(visibleProviders: [.claude, .codex]).first { $0.groupKey == groupKey })
+            return controller.overviewRowView(for: row, width: 320, isGrouped: false, now: Date()).scheduledResetText
+        }
+        #expect(try badge("codex") != nil)
+        #expect(try badge("claude") == nil)
+
+        settings.magpieSourceEnabled = true
+        settings.magpieTakeoverWireIDs = ["codex", "claude"]
+        store.magpieAccountSnapshots = ["codex", "claude"].map { wireID in
+            MagpieAccountSnapshot(
+                id: ProviderAccountIdentity(source: "magpie", opaqueID: "\(wireID):account"),
+                provider: MagpieProviderMapping.reference(for: wireID),
+                displayLabel: "Account",
+                accountEmail: nil,
+                ordinal: 1,
+                windows: [MagpieQuotaWindow(name: "5 hours", usedPercent: 12, resetsAt: nil)],
+                readAt: Date(),
+                isActive: true,
+                error: nil)
+        }
+        #expect(try badge("codex") != nil)
+        #expect(try badge("claude") == nil)
+
+        store.codexScheduledReset = CodexScheduledReset(
+            scheduledFor: Date().addingTimeInterval(3600),
+            sourceURL: URL(string: "https://x.com/example/status/2"))
+        let codexRow = try #require(
+            controller.overviewUsageRows(visibleProviders: [.claude, .codex]).first { $0.groupKey == "codex" })
+        let submenu = controller.makeOverviewDetailSubmenu(row: codexRow, width: 320)
+        submenu.delegate?.menuNeedsUpdate?(submenu)
+        #expect(submenu.items.last?.representedObject as? URL == store.codexScheduledReset?.sourceURL)
+        #expect(submenu.items.last?.action != nil)
+
+        settings.codexScheduledResetVisible = false
+        #expect(try badge("codex") == nil)
+    }
 }

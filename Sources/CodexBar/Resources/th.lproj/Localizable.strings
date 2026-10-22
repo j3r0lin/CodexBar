@@ -2697,3 +2697,5 @@
 "Tomorrow %@" = "พรุ่งนี้ %@";
 "Runs out %@ at this pace" = "ด้วยอัตรานี้จะหมด %@";
 "Lasts past the reset at this pace" = "ด้วยอัตรานี้จะพอถึงการรีเซ็ต";
+"Show scheduled resets from codex-resets.com" = "แสดงการรีเซ็ตที่กำหนดเวลาไว้จาก codex-resets.com";
+"Scheduled reset before %@" = "กำหนดรีเซ็ตก่อน %@";

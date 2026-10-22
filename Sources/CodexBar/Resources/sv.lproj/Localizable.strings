@@ -2694,3 +2694,5 @@
 "Tomorrow %@" = "I morgon %@";
 "Runs out %@ at this pace" = "Tar slut %@ i den här takten";
 "Lasts past the reset at this pace" = "Räcker förbi återställningen i den här takten";
+"Show scheduled resets from codex-resets.com" = "Visa schemalagda återställningar från codex-resets.com";
+"Scheduled reset before %@" = "Schemalagd återställning före %@";

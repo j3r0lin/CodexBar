@@ -121,6 +121,7 @@ extension StatusItemController {
             "planHistoryRevision=\(self.store.planUtilizationHistoryRevision)",
             "claudeSwapRevision=\(self.store.claudeSwapRevision)",
             "magpieRevision=\(self.store.magpieRevision)",
+            "codexScheduledReset=\(Self.millisecondsSinceEpoch(self.store.codexScheduledReset?.scheduledFor))",
         ]
 
         for provider in self.store.enabledFirstPartyProvidersForDisplay() {

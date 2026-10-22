@@ -616,6 +616,7 @@ extension SettingsStore {
             kiroMenuBarDisplayModeRaw: userDefaults.string(forKey: "kiroMenuBarDisplayMode")
                 ?? KiroMenuBarDisplayMode.automatic.rawValue,
             historicalTrackingEnabled: userDefaults.object(forKey: "historicalTrackingEnabled") as? Bool ?? false,
+            codexScheduledResetVisible: userDefaults.object(forKey: "codexScheduledResetVisible") as? Bool ?? true,
             multiAccountMenuLayoutRaw: multiAccountMenuLayoutRaw,
             accountWidgetsEnabled: userDefaults.bool(forKey: "accountWidgetsEnabled"),
             menuBarMetricPreferencesRaw: resolvedPreferences,

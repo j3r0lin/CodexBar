@@ -44,6 +44,7 @@ struct SettingsDefaultsState {
     var menuBarShowsResetTimeWhenExhausted: Bool
     var kiroMenuBarDisplayModeRaw: String?
     var historicalTrackingEnabled: Bool
+    var codexScheduledResetVisible: Bool
     var multiAccountMenuLayoutRaw: String
     var accountWidgetsEnabled: Bool
     var menuBarMetricPreferencesRaw: [String: String]

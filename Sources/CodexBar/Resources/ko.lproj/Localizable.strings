@@ -2663,3 +2663,5 @@
 "Tomorrow %@" = "내일 %@";
 "Runs out %@ at this pace" = "이 속도라면 %@에 소진";
 "Lasts past the reset at this pace" = "이 속도라면 초기화까지 충분";
+"Show scheduled resets from codex-resets.com" = "codex-resets.com의 예정된 리셋 표시";
+"Scheduled reset before %@" = "%@ 이전에 리셋 예정";

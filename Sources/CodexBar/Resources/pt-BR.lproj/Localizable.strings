@@ -2695,3 +2695,5 @@
 "Tomorrow %@" = "Amanhã %@";
 "Runs out %@ at this pace" = "Acaba %@ neste ritmo";
 "Lasts past the reset at this pace" = "Dura além da redefinição neste ritmo";
+"Show scheduled resets from codex-resets.com" = "Mostrar redefinições agendadas do codex-resets.com";
+"Scheduled reset before %@" = "Redefinição agendada antes de %@";
