@@ -29,9 +29,11 @@ struct MagpieSessionsGateTests {
     @Test
     func `sessions scan skips providers magpie owns`() async {
         let pids = RequestedPIDs()
-        let source = CLIMagpieSource(transport: ClaudeMagpieFixture.transport(data: Data("""
-        {"data":[{"provider":"codex","windows":[{"name":"5 hours","used":1}]}]}
-        """.utf8)))
+        let source = CLIMagpieSource(
+            transport: ClaudeMagpieFixture.transport(data: Data("""
+            {"data":[{"provider":"codex","windows":[{"name":"5 hours","used":1}]}]}
+            """.utf8)),
+            ownedWireIDs: [])
         let sessions = await CodexBarCLI.scanNativeSessions(
             config: CodexBarConfig(providers: [], magpie: MagpieSourceConfig(enabled: true)),
             scanner: Self.scanner(recording: pids),

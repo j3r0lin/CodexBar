@@ -15,11 +15,13 @@ struct CLIMagpieTests {
                 magpie: MagpieSourceConfig(enabled: true)),
             verbose: false,
             baseEnvironment: [:],
-            magpieSource: CLIMagpieSource(transport: ClaudeMagpieFixture.transport(data: Data("""
-            {"data":[{"provider":"claude","windows":[]},{"provider":"codex","windows":[]},
-              {"provider":"grok-plugin","windows":[]},{"provider":"kimi-code","windows":[]},
-              {"provider":"opencode-go","windows":[]}]}
-            """.utf8))))
+            magpieSource: CLIMagpieSource(
+                transport: ClaudeMagpieFixture.transport(data: Data("""
+                {"data":[{"provider":"claude","windows":[]},{"provider":"codex","windows":[]},
+                  {"provider":"grok-plugin","windows":[]},{"provider":"kimi-code","windows":[]},
+                  {"provider":"opencode-go","windows":[]}]}
+                """.utf8)),
+                ownedWireIDs: []))
         let result = await CodexBarCLI.refreshCookie(
             descriptor: ProviderDescriptorRegistry.descriptor(for: provider),
             tokenContext: context,
@@ -30,12 +32,14 @@ struct CLIMagpieTests {
     @Test
     func `provider and account consumers share one discovery request`() async throws {
         let counter = MagpieRequestCounter()
-        let source = CLIMagpieSource { request in
-            await counter.record()
-            return (
-                ClaudeMagpieFixture.quotasData,
-                HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
-        }
+        let source = CLIMagpieSource(
+            transport: { request in
+                await counter.record()
+                return (
+                    ClaudeMagpieFixture.quotasData,
+                    HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+            },
+            ownedWireIDs: [])
         let configuration = MagpieSourceConfig(enabled: true)
         async let claude = source.route(for: .claude, configuration: configuration)
         async let codex = source.route(for: .codex, configuration: configuration)
@@ -229,10 +233,12 @@ struct CLIMagpieTests {
 
     @Test(arguments: ["codex", "claude"])
     func `serve cost leaves magpie owned and claude family providers out`(provider: String) async throws {
-        let source = CLIMagpieSource(transport: ClaudeMagpieFixture.transport(data: Data("""
-        {"data":[{"provider":"codex","windows":[{"name":"5 hours","used":1}]},
-          {"provider":"claude","windows":[{"name":"5 hours","used":1}]}]}
-        """.utf8)))
+        let source = CLIMagpieSource(
+            transport: ClaudeMagpieFixture.transport(data: Data("""
+            {"data":[{"provider":"codex","windows":[{"name":"5 hours","used":1}]},
+              {"provider":"claude","windows":[{"name":"5 hours","used":1}]}]}
+            """.utf8)),
+            ownedWireIDs: [])
         let context = ServeCostContext(
             period: .rolling(days: 30),
             now: Date(),
@@ -276,7 +282,9 @@ struct CLIMagpieTests {
                 magpie: MagpieSourceConfig(enabled: true)),
             verbose: false,
             baseEnvironment: [:],
-            magpieSource: CLIMagpieSource(transport: ClaudeMagpieFixture.transport(data: data)))
+            magpieSource: CLIMagpieSource(
+                transport: ClaudeMagpieFixture.transport(data: data),
+                ownedWireIDs: []))
     }
 
     private static func makeCommand() -> UsageCommandContext {
@@ -314,7 +322,8 @@ struct CLIMagpieTests {
         let source = CLIMagpieSource(
             transport: ClaudeMagpieFixture.transport(data: Data("""
             {"data":[{"provider":"\(wireID)","windows":[]}]}
-            """.utf8)))
+            """.utf8)),
+            ownedWireIDs: [])
         let route = await source.route(for: .grok, configuration: MagpieSourceConfig(enabled: true))
         #expect(!route.isNative, "\(wireID)")
     }
@@ -324,7 +333,8 @@ struct CLIMagpieTests {
         let source = CLIMagpieSource(
             transport: ClaudeMagpieFixture.transport(data: Data("""
             {"data":[{"provider":"\(wireID)","windows":[]}]}
-            """.utf8)))
+            """.utf8)),
+            ownedWireIDs: [])
         let route = await source.route(for: .kimi, configuration: MagpieSourceConfig(enabled: true))
         #expect(!route.isNative, "\(wireID)")
         let off = await source.route(for: .kimi, configuration: MagpieSourceConfig(enabled: false))
@@ -346,7 +356,8 @@ struct CLIMagpieTests {
             transport: ClaudeMagpieFixture.transport(data: Data("""
             {"data":[{"provider":"grok-plugin","user":"g@example.com","windows":[{"name":"7 days","used":1}]},
               {"provider":"grok","user":"g@example.com","windows":[{"name":"7 days","used":2}]}]}
-            """.utf8)))
+            """.utf8)),
+            ownedWireIDs: [])
         let context = try TokenAccountCLIContext(
             selection: TokenAccountCLISelection(label: nil, index: nil, allAccounts: true),
             config: CodexBarConfig(providers: [], magpie: MagpieSourceConfig(enabled: true)),
