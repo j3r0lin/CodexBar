@@ -115,7 +115,10 @@ extension View {
     /// Draws this item's part of its provider card. The card's own padding lives inside the
     /// background so consecutive items paint one continuous panel; a transparent gap below the
     /// last item keeps cards apart without separator lines.
-    func overviewBlock(_ position: OverviewBlockPosition) -> some View {
+    func overviewBlock(
+        _ position: OverviewBlockPosition,
+        bottomGap: CGFloat = OverviewCompactAccountRow.blockGap) -> some View
+    {
         let radius: CGFloat = 10
         return self
             .padding(.top, position.roundsTop ? 8 : 0)
@@ -130,7 +133,7 @@ extension View {
             .background(OverviewCardPieceBorder(position: position, radius: radius)
                 .stroke(Color.white.opacity(0.12), lineWidth: 1))
             .padding(.horizontal, OverviewCompactAccountRow.blockInset)
-            .padding(.bottom, position.roundsBottom ? OverviewCompactAccountRow.blockGap : 0)
+            .padding(.bottom, position.roundsBottom ? bottomGap : 0)
     }
 
     /// Accent-coloured, upper-case, slightly tracked label used in the detail card's titles.
@@ -199,6 +202,8 @@ struct OverviewCompactAccountRow: View {
     var icon: NSImage?
     var iconIsTemplate = true
     var block: OverviewBlockPosition = .single
+    /// The transparent gap below the card; the last card of the Overview keeps less, the footer follows it.
+    var bottomGap: CGFloat = OverviewCompactAccountRow.blockGap
     /// A provider that only has an error shows it in place of its usage.
     var errorText: String?
     /// The account keeps its readings alongside an error (last-known retention, unstable
@@ -260,6 +265,8 @@ struct OverviewCompactAccountRow: View {
     static let blockInset: CGFloat = 8
     /// The transparent gap between two cards.
     static let blockGap: CGFloat = 10
+    /// The gap between the Overview's last card and the footer.
+    static let lastBlockGap: CGFloat = 6
     static let horizontalPadding: CGFloat = 12
     /// Fits the scoped-weekly model labels ("Fable" is 27pt at 10pt medium) alongside "5h"/"7d"/"30d".
     static let labelWidth: CGFloat = 32
@@ -326,7 +333,7 @@ struct OverviewCompactAccountRow: View {
             }
         }
         .padding(.horizontal, Self.horizontalPadding)
-        .overviewBlock(self.block)
+        .overviewBlock(self.block, bottomGap: self.bottomGap)
         .frame(width: self.width, alignment: .leading)
     }
 

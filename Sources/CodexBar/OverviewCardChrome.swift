@@ -94,6 +94,7 @@ struct OverviewIconButton<Label: View>: View {
     let action: MenuDescriptor.MenuAction
     let help: String
     var weight: Weight = .primary
+    var size: CGFloat = 30
     @ViewBuilder var label: () -> Label
     @Environment(\.providerCardAction) private var cardAction
     @State private var hovering = false
@@ -111,7 +112,7 @@ struct OverviewIconButton<Label: View>: View {
         } label: {
             self.label()
                 .opacity(self.weight == .secondary && !self.hovering ? 0.75 : 1)
-                .frame(width: 30, height: 30)
+                .frame(width: self.size, height: self.size)
                 .background(
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
                         .fill(Color.white.opacity(self.fillOpacity)))
@@ -121,7 +122,7 @@ struct OverviewIconButton<Label: View>: View {
                 .contentShape(Rectangle())
                 // A menu window is never key, so hover comes from MouseLocationReader's `.activeAlways`
                 // tracking area, as on the menu charts. An overlay (not a background) keeps that area inside
-                // this button's 30pt frame instead of the expanded frame SwiftUI gives a background.
+                // this button's frame instead of the expanded frame SwiftUI gives a background.
                 .overlay {
                     if self.weight == .secondary {
                         MouseLocationReader(onMoved: { self.hovering = $0 != nil }, drawsHoverOverlay: true)
@@ -154,6 +155,8 @@ struct OverviewFooterView: View {
     let quitHelp: String
     let width: CGFloat
 
+    private static let buttonSize: CGFloat = 24
+
     var body: some View {
         HStack(spacing: 8) {
             Circle()
@@ -166,15 +169,15 @@ struct OverviewFooterView: View {
                 .foregroundStyle(OverviewPalette.caption)
                 .lineLimit(1)
             Spacer(minLength: 8)
-            OverviewIconButton(action: .about, help: self.aboutHelp, weight: .secondary) {
+            OverviewIconButton(action: .about, help: self.aboutHelp, weight: .secondary, size: Self.buttonSize) {
                 OverviewSymbol.image("info.circle")
             }
-            OverviewIconButton(action: .quit, help: self.quitHelp, weight: .secondary) {
+            OverviewIconButton(action: .quit, help: self.quitHelp, weight: .secondary, size: Self.buttonSize) {
                 OverviewSymbol.image("power")
             }
         }
         .padding(.horizontal, OverviewCompactAccountRow.horizontalPadding)
-        .padding(.vertical, 6)
+        .padding(.vertical, 2)
         .frame(width: self.width, alignment: .leading)
     }
 }

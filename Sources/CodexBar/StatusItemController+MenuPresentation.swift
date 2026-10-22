@@ -140,6 +140,8 @@ struct MenuCardRowPayload {
     /// When the row is part of an Overview block, this keeps the hover highlight on that row's
     /// piece of the block instead of the whole menu item.
     var selectionBlock: OverviewBlockPosition?
+    /// The transparent gap below the block, kept outside the hover highlight.
+    var selectionBottomGap: CGFloat = OverviewCompactAccountRow.blockGap
     /// Overview root rows fill their whole frame with the panel colour, so the panel reads as one surface.
     var usesPanelBase: Bool = false
     let onClick: (() -> Void)?
@@ -273,7 +275,10 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     override func layout() {
         super.layout()
         self.hosting.frame = self.bounds
-        let selectionFrame = Self.selectionFrame(in: self.bounds, block: self.rowPayload.selectionBlock)
+        let selectionFrame = Self.selectionFrame(
+            in: self.bounds,
+            block: self.rowPayload.selectionBlock,
+            bottomGap: self.rowPayload.selectionBottomGap)
         self.selectionView?.frame = selectionFrame
         self.blockBaseView?.frame = selectionFrame
         self.panelBaseView?.frame = self.bounds
@@ -282,12 +287,16 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
 
     /// Overview rows highlight exactly their piece of the provider block; other rows keep the
     /// standard inset selection frame.
-    static func selectionFrame(in bounds: NSRect, block: OverviewBlockPosition?) -> NSRect {
+    static func selectionFrame(
+        in bounds: NSRect,
+        block: OverviewBlockPosition?,
+        bottomGap: CGFloat = OverviewCompactAccountRow.blockGap) -> NSRect
+    {
         guard let block else {
             return bounds.insetBy(dx: self.selectionHorizontalInset, dy: self.selectionVerticalInset)
         }
         // The gap below a provider card stays outside the highlight.
-        let height = bounds.height - (block.roundsBottom ? OverviewCompactAccountRow.blockGap : 0)
+        let height = bounds.height - (block.roundsBottom ? bottomGap : 0)
         return NSRect(
             x: OverviewCompactAccountRow.blockInset,
             y: bounds.height - height,
@@ -492,7 +501,10 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
         // re-invalidates the hosted graph.
         self.highlightState.isHighlighted = false
         let selectionView = self.ensureSelectionView()
-        selectionView.frame = Self.selectionFrame(in: self.bounds, block: self.rowPayload.selectionBlock)
+        selectionView.frame = Self.selectionFrame(
+            in: self.bounds,
+            block: self.rowPayload.selectionBlock,
+            bottomGap: self.rowPayload.selectionBottomGap)
         let layer = selectionView.layer
         let targetOpacity: Float = self.isRowHighlighted ? 1 : 0
         if animated {

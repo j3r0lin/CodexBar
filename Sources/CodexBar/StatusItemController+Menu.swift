@@ -465,13 +465,16 @@ extension StatusItemController {
 
         // Every account is its own card; only a provider with several accounts names the account.
         let accountCounts = Dictionary(rows.map { ($0.groupKey, 1) }, uniquingKeysWith: +)
-        for row in rows {
+        for (index, row) in rows.enumerated() {
+            let isLast = index == rows.count - 1
+            let bottomGap = isLast ? OverviewCompactAccountRow.lastBlockGap : OverviewCompactAccountRow.blockGap
             let isGrouped = (accountCounts[row.groupKey] ?? 1) > 1
             let identifier = "\(Self.overviewRowIdentifierPrefix)\(row.groupKey)"
                 + (row.accountID.map { "#\($0.opaqueID)" } ?? "")
             let submenu = self.makeOverviewDetailSubmenu(row: row, width: menuWidth)
             let now = Date()
-            let rowView = self.overviewRowView(for: row, width: menuWidth, isGrouped: isGrouped, now: now)
+            var rowView = self.overviewRowView(for: row, width: menuWidth, isGrouped: isGrouped, now: now)
+            rowView.bottomGap = bottomGap
             let item = self.makeMenuCardItem(
                 rowView,
                 id: identifier,
@@ -479,12 +482,13 @@ extension StatusItemController {
                 heightCacheScope: "overviewCompactRow",
                 heightCacheFingerprint: "compact-header-\(rowView.lines.count)-\(row.errorText ?? "")"
                     // The label's length, not its text, can wrap a long name; the text changes every minute.
-                    + "-\(rowView.name)-\(rowView.updatedText?.count ?? 0)",
+                    + "-\(rowView.name)-\(rowView.updatedText?.count ?? 0)-gap\(Int(bottomGap))",
                 submenu: submenu,
                 showsSubmenuIndicator: false,
                 usesGPUSelection: true,
                 tightVerticalFit: true,
                 selectionBlock: .single,
+                selectionBottomGap: bottomGap,
                 usesPanelBase: true)
             menu.addItem(item)
         }
