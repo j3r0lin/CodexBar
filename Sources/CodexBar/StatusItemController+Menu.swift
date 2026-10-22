@@ -482,7 +482,8 @@ extension StatusItemController {
                 heightCacheScope: "overviewCompactRow",
                 heightCacheFingerprint: "compact-header-\(rowView.lines.count)-\(row.errorText ?? "")"
                     // The label's length, not its text, can wrap a long name; the text changes every minute.
-                    + "-\(rowView.name)-\(rowView.updatedText?.count ?? 0)-gap\(Int(bottomGap))",
+                    + "-\(rowView.name)-\(rowView.updatedText?.count ?? 0)-\(rowView.resetCreditsText?.count ?? 0)"
+                    + "-gap\(Int(bottomGap))",
                 submenu: submenu,
                 showsSubmenuIndicator: false,
                 usesGPUSelection: true,
@@ -531,6 +532,7 @@ extension StatusItemController {
             isStale: row.isStale(
                 now: now,
                 threshold: OverviewUsageRow.staleThreshold(for: self.settings.refreshFrequency)),
+            resetCredits: row.resetCredits,
             updatedAt: row.updatedAt,
             now: now)
     }

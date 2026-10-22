@@ -20,6 +20,16 @@ public enum MagpieQuotasReaderError: LocalizedError, Sendable {
     }
 }
 
+public struct MagpieResetCredits: Sendable, Equatable {
+    public let count: Int
+    public let nextExpiry: Date?
+
+    public init(count: Int, nextExpiry: Date?) {
+        self.count = count
+        self.nextExpiry = nextExpiry
+    }
+}
+
 /// One provider row from magpie's quota response, projected leniently so a malformed sibling
 /// row never discards the rest.
 public struct MagpieQuotaRow: Sendable, Equatable {
@@ -32,6 +42,7 @@ public struct MagpieQuotaRow: Sendable, Equatable {
     public let readAt: Date?
     public let windows: [MagpieQuotaWindow]
     public let error: String?
+    public let resetCredits: MagpieResetCredits?
 
     public init(
         provider: String,
@@ -41,7 +52,8 @@ public struct MagpieQuotaRow: Sendable, Equatable {
         isLast: Bool,
         readAt: Date?,
         windows: [MagpieQuotaWindow],
-        error: String? = nil)
+        error: String? = nil,
+        resetCredits: MagpieResetCredits? = nil)
     {
         self.provider = provider
         self.email = email
@@ -51,6 +63,7 @@ public struct MagpieQuotaRow: Sendable, Equatable {
         self.readAt = readAt
         self.windows = windows
         self.error = error
+        self.resetCredits = resetCredits
     }
 }
 
@@ -142,6 +155,25 @@ public enum MagpieQuotasReader {
         let readAt: String?
         let windows: [Lenient<Window>]?
         let error: String?
+        let resets: Lenient<Resets>?
+    }
+
+    private struct Resets: Decodable {
+        let count: Int?
+        let until: Lenient<String>?
+        let each: Lenient<[Lenient<Reset>]>?
+
+        var credits: MagpieResetCredits? {
+            guard let count, count > 0 else { return nil }
+            let expiry = self.each?.value.map { entries in
+                entries.compactMap { ISO8601DateParser.parse($0.value?.until?.value) }.min()
+            } ?? ISO8601DateParser.parse(self.until?.value)
+            return MagpieResetCredits(count: count, nextExpiry: expiry)
+        }
+    }
+
+    private struct Reset: Decodable {
+        let until: Lenient<String>?
     }
 
     private struct Window: Decodable {
@@ -173,7 +205,8 @@ public enum MagpieQuotasReader {
             isLast: row.last == true,
             readAt: ISO8601DateParser.parse(row.readAt),
             windows: windows,
-            error: row.error)
+            error: row.error,
+            resetCredits: row.resets?.value?.credits)
     }
 
     /// magpie formats `user` as "<email> · <organization>"; either side may be absent.

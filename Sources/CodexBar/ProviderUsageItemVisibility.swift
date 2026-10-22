@@ -74,6 +74,16 @@ extension ProviderUsageItemID {
         return metricID.map(Self.metric)
     }
 
+    /// The setting that hides a provider's limit reset credits; nil for a provider without one.
+    static func resetCredits(for provider: UsageProvider) -> Self? {
+        // Provider-specific by design: only Codex and Claude have a reset credits visibility setting.
+        switch provider {
+        case .codex: .codexResetCredits
+        case .claude: .claudeResetCredits
+        default: nil
+        }
+    }
+
     @MainActor
     func requiresOptionalUsage(for provider: UsageProvider) -> Bool {
         // Provider-specific by design: Codex extra limits and Claude Extra usage/Routines follow global gates.
@@ -270,14 +280,20 @@ extension UsageStore {
     func magpieUsageItemDescriptors(for provider: UsageProvider) -> [ProviderUsageItemDescriptor] {
         guard case .magpie = self.providerSourceRoute(for: provider) else { return [] }
         var seen = Set<ProviderUsageItemID>()
-        return self.magpieAccountSnapshots.filter { $0.provider.nativeProvider == provider }
-            .flatMap(\.limitedWindows).compactMap { window in
-                guard let id = ProviderUsageItemID.magpieWindow(window, for: provider),
-                      seen.insert(id).inserted else { return nil }
-                let title = PersonalInfoRedactor.redactEmails(
-                    in: window.name, isEnabled: self.settings.hidePersonalInfo) ?? window.name
-                return ProviderUsageItemDescriptor(id: id, title: title)
-            }
+        let accounts = self.magpieAccountSnapshots.filter { $0.provider.nativeProvider == provider }
+        var descriptors: [ProviderUsageItemDescriptor] = accounts.flatMap(\.limitedWindows).compactMap { window in
+            guard let id = ProviderUsageItemID.magpieWindow(window, for: provider),
+                  seen.insert(id).inserted else { return nil }
+            let title = PersonalInfoRedactor.redactEmails(
+                in: window.name, isEnabled: self.settings.hidePersonalInfo) ?? window.name
+            return ProviderUsageItemDescriptor(id: id, title: title)
+        }
+        if accounts.contains(where: { $0.resetCredits != nil }),
+           let resetItemID = ProviderUsageItemID.resetCredits(for: provider)
+        {
+            descriptors.append(ProviderUsageItemDescriptor(id: resetItemID, title: L("Limit Reset Credits")))
+        }
+        return descriptors
     }
 }
 

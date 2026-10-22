@@ -8,6 +8,38 @@ import Testing
 @MainActor
 struct ProviderUsageItemVisibilityTests {
     @Test
+    func `magpie reset credits follow visibility and appear in preferences`() throws {
+        let settings = Self.settings(
+            defaults: InMemoryUserDefaults(),
+            configStore: testConfigStore(suiteName: "magpie-resets-\(UUID().uuidString)"))
+        let store = UsageStore(
+            fetcher: UsageFetcher(environment: [:]),
+            browserDetection: BrowserDetection(cacheTTL: 0),
+            settings: settings,
+            startupBehavior: .testing,
+            environmentBase: [:])
+        store.magpieTransport = { _ in throw CancellationError() }
+        settings.magpieSourceEnabled = true
+        let credits = MagpieResetCredits(count: 2, nextExpiry: Date(timeIntervalSince1970: 1_800_000_000))
+        store.magpieAccountSnapshots = MagpieAccountProjection.snapshots(from: [MagpieQuotaRow(
+            provider: "codex",
+            email: "fixture@example.test",
+            organization: "",
+            alias: nil,
+            isLast: true,
+            readAt: nil,
+            windows: [],
+            resetCredits: credits)])
+        let account = try #require(store.magpieAccountSnapshots.first)
+        let visible = OverviewUsageRow.magpie(account: account, providerName: "Codex", accountName: "Fixture")
+        #expect(visible.resetCredits == credits)
+        let hidden = OverviewUsageRow.magpie(
+            account: account, providerName: "Codex", accountName: "Fixture", hiddenItemIDs: [.codexResetCredits])
+        #expect(hidden.resetCredits == nil)
+        #expect(store.magpieUsageItemDescriptors(for: .codex).contains { $0.id == .codexResetCredits })
+    }
+
+    @Test
     func `magpie rows hide the same quota items as their native provider`() throws {
         let cases: [(String, [(String, String)])] = [
             ("claude", [

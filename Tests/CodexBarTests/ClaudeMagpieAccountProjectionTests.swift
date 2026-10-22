@@ -8,6 +8,30 @@ struct MagpieAccountProjectionTests {
     }
 
     @Test
+    func `reset credits retain the earliest expiry and tolerate malformed metadata`() throws {
+        let rows = try MagpieQuotasReader.rows(from: Data("""
+        {"data":[
+          {"provider":"codex","resets":{"count":2,"until":"2026-11-09T12:00:00.000Z",
+            "each":[{"until":"2026-11-08T12:00:00.123Z"},{"until":"2026-11-06T12:00:00.456Z"}]}},
+          {"provider":"codex","resets":{"count":1,"until":"2026-11-09T12:00:00.000Z"}},
+          {"provider":"codex","resets":"broken","windows":[{"name":"5 hours","used":12}]},
+          {"provider":"claude"},
+          {"provider":"codex","resets":{"count":0}},
+          {"provider":"codex","resets":{"until":"2026-11-09T12:00:00.000Z"}}
+        ]}
+        """.utf8))
+        #expect(rows.count == 6)
+        #expect(rows[0].resetCredits?.count == 2)
+        #expect(rows[0].resetCredits?.nextExpiry == Date(timeIntervalSince1970: 1_793_966_400.456))
+        #expect(rows[1].resetCredits?.nextExpiry == Date(timeIntervalSince1970: 1_794_225_600))
+        #expect(rows[2].resetCredits == nil)
+        #expect(rows[2].windows.first?.usedPercent == 12)
+        #expect(rows[3...].allSatisfy { $0.resetCredits == nil })
+        let accounts = MagpieAccountProjection.snapshots(from: [rows[0]])
+        #expect(accounts.first?.resetCredits == rows[0].resetCredits)
+    }
+
+    @Test
     func `unlimited flags parse leniently and never project into native usage`() throws {
         let rows = try self.project("""
         {"data":[{"provider":"claude","windows":[

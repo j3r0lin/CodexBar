@@ -217,6 +217,7 @@ struct OverviewCompactAccountRow: View {
     var display = OverviewDisplayOptions()
     /// The reading is older than the refresh cadence allows; its numbers are drawn dimmed.
     var isStale = false
+    var resetCredits: MagpieResetCredits?
     var updatedAt: Date?
     var now = Date()
     @Environment(\.menuItemHighlighted) private var isHighlighted
@@ -337,6 +338,12 @@ struct OverviewCompactAccountRow: View {
         .frame(width: self.width, alignment: .leading)
     }
 
+    var resetCreditsText: String? {
+        guard let resetCredits else { return nil }
+        let expiry = resetCredits.nextExpiry.map { " · \(Self.countdown(to: $0, now: self.now))" } ?? ""
+        return "\(resetCredits.count)\(expiry)"
+    }
+
     private var header: some View {
         HStack(spacing: 8) {
             HStack(spacing: 6) {
@@ -351,6 +358,15 @@ struct OverviewCompactAccountRow: View {
                     .foregroundStyle(self.errorText == nil ? self.nameColor : .white)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
+            }
+            if let resetCreditsText {
+                HStack(spacing: 3) {
+                    Image(systemName: "arrow.counterclockwise")
+                    Text(resetCreditsText)
+                }
+                .font(.system(size: 10).monospacedDigit())
+                .foregroundStyle(OverviewPalette.caption)
+                .fixedSize()
             }
             Spacer(minLength: 4)
             if let updatedText {
