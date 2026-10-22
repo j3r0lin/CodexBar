@@ -2645,7 +2645,6 @@
 "account_detail_used" = "%@ terpakai";
 
 /* Overview card UI */
-"%lld providers" = "%lld penyedia";
 "Auto-refresh on" = "Segarkan otomatis aktif";
 "Auto-refresh off" = "Segarkan otomatis nonaktif";
 "resets in %@" = "diatur ulang dalam %@";

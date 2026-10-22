@@ -2692,7 +2692,6 @@
 "Waiting for magpie discovery" = "در انتظار شناسایی توسط magpie";
 
 "%lld accounts" = "%lld حساب";
-"%lld providers" = "%lld ارائه‌دهنده";
 "Auto-refresh off" = "تازه سازی خودکار خاموش است";
 "Auto-refresh on" = "تازه سازی خودکار روشن است";
 "Refresh Claude usage" = "تازه سازی مصرف Claude";

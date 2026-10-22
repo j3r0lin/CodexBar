@@ -2686,7 +2686,6 @@
 "Waiting for magpie discovery" = "Esperando la detección de magpie";
 
 "%lld accounts" = "%lld cuentas";
-"%lld providers" = "%lld proveedores";
 "Auto-refresh off" = "Actualización automática desactivada";
 "Auto-refresh on" = "Actualización automática activada";
 "Refresh Claude usage" = "Actualizar el uso de Claude";

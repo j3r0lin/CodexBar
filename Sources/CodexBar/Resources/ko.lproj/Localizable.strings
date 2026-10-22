@@ -2656,7 +2656,6 @@
 "Waiting for magpie discovery" = "magpie 검색 대기 중";
 
 "%lld accounts" = "계정 %lld개";
-"%lld providers" = "공급자 %lld개";
 "Auto-refresh off" = "자동 새로 고침 꺼짐";
 "Auto-refresh on" = "자동 새로 고침 켜짐";
 "Refresh Claude usage" = "Claude 사용량 새로 고침";

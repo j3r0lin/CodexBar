@@ -2689,7 +2689,6 @@
 "Waiting for magpie discovery" = "Đang chờ magpie phát hiện";
 
 "%lld accounts" = "%lld tài khoản";
-"%lld providers" = "%lld nhà cung cấp";
 "Auto-refresh off" = "Tắt tự động làm mới";
 "Auto-refresh on" = "Bật tự động làm mới";
 "Refresh Claude usage" = "Làm mới mức sử dụng Claude";

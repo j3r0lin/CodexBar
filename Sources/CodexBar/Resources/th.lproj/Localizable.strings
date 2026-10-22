@@ -2690,7 +2690,6 @@
 "Waiting for magpie discovery" = "กำลังรอการค้นพบจาก magpie";
 
 "%lld accounts" = "%lld บัญชี";
-"%lld providers" = "%lld ผู้ให้บริการ";
 "Auto-refresh off" = "ปิดการรีเฟรชอัตโนมัติ";
 "Auto-refresh on" = "เปิดการรีเฟรชอัตโนมัติ";
 "Refresh Claude usage" = "รีเฟรชการใช้งาน Claude";

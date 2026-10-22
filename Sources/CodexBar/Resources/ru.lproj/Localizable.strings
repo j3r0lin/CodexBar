@@ -2689,7 +2689,6 @@
 "Waiting for magpie discovery" = "Ожидание обнаружения magpie";
 
 "%lld accounts" = "%lld аккаунтов";
-"%lld providers" = "%lld провайдеров";
 "Auto-refresh off" = "Автообновление отключено";
 "Auto-refresh on" = "Автообновление включено";
 "Refresh Claude usage" = "Обновить использование Claude";

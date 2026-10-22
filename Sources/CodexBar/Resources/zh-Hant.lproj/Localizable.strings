@@ -2619,7 +2619,6 @@
 "account_detail_used" = "已用 %@";
 
 /* Overview card UI */
-"%lld providers" = "%lld 個供應商";
 "Auto-refresh on" = "自動重新整理已開啟";
 "Auto-refresh off" = "自動重新整理已關閉";
 "resets in %@" = "%@ 後重置";

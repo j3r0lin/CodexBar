@@ -2692,7 +2692,6 @@
 "Waiting for magpie discovery" = "في انتظار اكتشاف magpie";
 
 "%lld accounts" = "%lld حسابات";
-"%lld providers" = "%lld مزودين";
 "Auto-refresh off" = "التحديث التلقائي مغلق";
 "Auto-refresh on" = "التحديث التلقائي مفعّل";
 "Refresh Claude usage" = "تحديث استخدام Claude";

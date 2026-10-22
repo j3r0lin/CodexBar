@@ -2647,7 +2647,6 @@
 "account_detail_used" = "%@ usato";
 
 /* Overview card UI */
-"%lld providers" = "%lld provider";
 "Auto-refresh on" = "Aggiornamento automatico attivo";
 "Auto-refresh off" = "Aggiornamento automatico disattivato";
 "resets in %@" = "si reimposta tra %@";

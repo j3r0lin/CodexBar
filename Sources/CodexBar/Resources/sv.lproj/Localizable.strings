@@ -2687,7 +2687,6 @@
 "Waiting for magpie discovery" = "Väntar på identifiering via magpie";
 
 "%lld accounts" = "%lld konton";
-"%lld providers" = "%lld leverantörer";
 "Auto-refresh off" = "Automatisk uppdatering av";
 "Auto-refresh on" = "Automatisk uppdatering på";
 "Refresh Claude usage" = "Uppdatera Claude-användning";

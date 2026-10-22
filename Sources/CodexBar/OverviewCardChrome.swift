@@ -144,24 +144,6 @@ enum OverviewSymbol {
     }
 }
 
-struct OverviewProviderCountView: View {
-    let providerCount: Int
-    let width: CGFloat
-
-    var body: some View {
-        HStack {
-            Text(L("%lld providers", self.providerCount))
-                .font(.system(size: 12))
-                .foregroundStyle(OverviewPalette.caption)
-                .lineLimit(1)
-            Spacer(minLength: 8)
-        }
-        .padding(.horizontal, OverviewCompactAccountRow.horizontalPadding)
-        .padding(.vertical, 4)
-        .frame(width: self.width, alignment: .leading)
-    }
-}
-
 /// The bottom row of the Overview menu: whether auto-refresh runs on the left, About and Quit on the
 /// right as bare icons that only show the header's button square on hover. No line sits above it: the last card's
 /// border already closes

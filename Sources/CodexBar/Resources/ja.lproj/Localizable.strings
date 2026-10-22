@@ -2688,7 +2688,6 @@
 "Waiting for magpie discovery" = "magpie による検出を待機中";
 
 "%lld accounts" = "%lld 個のアカウント";
-"%lld providers" = "%lld 件のプロバイダ";
 "Auto-refresh off" = "自動更新オフ";
 "Auto-refresh on" = "自動更新オン";
 "Refresh Claude usage" = "Claude の使用状況を更新";

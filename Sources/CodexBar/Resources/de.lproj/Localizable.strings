@@ -2686,7 +2686,6 @@
 "Waiting for magpie discovery" = "Warten auf die Erkennung durch magpie";
 
 "%lld accounts" = "%lld Konten";
-"%lld providers" = "%lld Anbieter";
 "Auto-refresh off" = "Automatische Aktualisierung aus";
 "Auto-refresh on" = "Automatische Aktualisierung an";
 "Refresh Claude usage" = "Claude-Nutzung aktualisieren";

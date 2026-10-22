@@ -52,7 +52,7 @@ extension StatusMenuTests {
 
         let ids = menu.items.compactMap { $0.representedObject as? String }
         #expect(ids.contains("overviewHeader"))
-        #expect(ids.contains("overviewProviderCount"))
+        #expect(!ids.contains("overviewProviderCount"))
         #expect(ids.contains("overviewFooterStatus"))
         #expect(ids.first == "overviewHeader")
         #expect(ids.last == "overviewFooterStatus")

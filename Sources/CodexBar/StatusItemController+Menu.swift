@@ -422,7 +422,6 @@ extension StatusItemController {
         let rows = self.overviewUsageRows(visibleProviders: providerScopes.visible)
 
         self.addOverviewHeader(to: menu, width: menuWidth)
-        self.addOverviewProviderCount(to: menu, rows: rows, width: menuWidth)
         guard !rows.isEmpty else { return false }
 
         let t0 = CACurrentMediaTime()
@@ -579,17 +578,6 @@ extension StatusItemController {
             heightCacheScope: "overviewHeader",
             heightCacheFingerprint: "header",
             containsInteractiveControls: true,
-            usesPanelBase: true))
-    }
-
-    private func addOverviewProviderCount(to menu: NSMenu, rows: [OverviewUsageRow], width: CGFloat) {
-        let providerCount = Set(rows.map(\.groupKey)).count
-        menu.addItem(self.makeMenuCardItem(
-            OverviewProviderCountView(providerCount: providerCount, width: width),
-            id: "overviewProviderCount",
-            width: width,
-            heightCacheScope: "overviewProviderCount",
-            heightCacheFingerprint: "providers-\(providerCount)",
             usesPanelBase: true))
     }
 

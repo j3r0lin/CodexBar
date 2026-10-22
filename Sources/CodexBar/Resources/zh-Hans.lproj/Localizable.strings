@@ -2635,7 +2635,6 @@
 "account_detail_used" = "已用 %@";
 
 /* Overview card UI */
-"%lld providers" = "%lld 个提供商";
 "Auto-refresh on" = "自动刷新已开启";
 "Auto-refresh off" = "自动刷新已关闭";
 "resets in %@" = "%@ 后重置";
