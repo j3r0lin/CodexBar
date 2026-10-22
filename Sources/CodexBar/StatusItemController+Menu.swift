@@ -544,7 +544,13 @@ extension StatusItemController {
         menu.addItem(self.makeOverviewPanelSpacer(id: Self.overviewRootDividerID, width: width, recyclesView: false))
     }
 
-    private static let overviewRootDividerID = "overviewRootDivider"
+    static let overviewRootDividerID = "overviewRootDivider"
+
+    /// The menu already ends in a divider: a native separator or the Overview's panel-coloured spacer.
+    static func endsInDivider(_ menu: NSMenu) -> Bool {
+        guard let last = menu.items.last else { return false }
+        return last.isSeparatorItem || last.representedObject as? String == Self.overviewRootDividerID
+    }
 
     /// A native separator would draw menu material across the panel; this row keeps the panel colour.
     private func makeOverviewPanelSpacer(id: String, width: CGFloat, recyclesView: Bool = true) -> NSMenuItem {
@@ -604,9 +610,7 @@ extension StatusItemController {
         width: CGFloat)
     {
         guard switcherSelection == .overview else { return }
-        if let last = menu.items.last,
-           last.isSeparatorItem || last.representedObject as? String == Self.overviewRootDividerID
-        {
+        if Self.endsInDivider(menu) {
             menu.removeItem(at: menu.items.count - 1)
         }
         let autoRefresh = self.settings.refreshFrequency != .manual

@@ -42,7 +42,7 @@ extension StatusItemController {
             isEnabled: self.settings.isPluginEnabled,
             selectedPluginID: selectedPluginID)
         guard !plugins.isEmpty else { return }
-        if !menu.items.isEmpty, menu.items.last?.isSeparatorItem != true {
+        if !menu.items.isEmpty, !Self.endsInDivider(menu) {
             menu.addItem(.separator())
         }
         for (index, plugin) in plugins.enumerated() {

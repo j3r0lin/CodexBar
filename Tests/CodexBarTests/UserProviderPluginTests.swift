@@ -1157,6 +1157,13 @@ extension UserProviderPluginTests {
         let separatedIDs = menuAfterSeparator.items.dropFirst().map { $0.representedObject as? String }
         #expect(emptyIDs == separatedIDs)
 
+        let menuAfterOverviewSpacer = NSMenu()
+        let spacer = NSMenuItem()
+        spacer.representedObject = "overviewRootDivider"
+        menuAfterOverviewSpacer.addItem(spacer)
+        controller.addUserPluginMenuCards(to: menuAfterOverviewSpacer, width: 240, selectedPluginID: plugin.manifest.id)
+        #expect(menuAfterOverviewSpacer.items.dropFirst().map { $0.representedObject as? String } == emptyIDs)
+
         try settings.setProviderEnabled(
             provider: .codex,
             metadata: #require(ProviderRegistry.shared.metadata[.codex]),
