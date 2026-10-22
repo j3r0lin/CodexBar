@@ -178,6 +178,29 @@ extension StatusMenuTests {
     }
 
     @Test
+    func `detail card lists every reset credit of a magpie account`() throws {
+        let now = Date()
+        let credits = MagpieResetCredits(expirations: [
+            now.addingTimeInterval(86400),
+            now.addingTimeInterval(3 * 86400),
+            nil,
+        ])
+        let view = AccountUsageDetailView(
+            provider: .codex,
+            providerName: "Codex",
+            snapshot: nil,
+            namedWindows: [],
+            now: now,
+            resetCredits: credits)
+        #expect(view.resetCreditsPresentation?.items.count == 3)
+        let text = try self.renderedText(of: view, width: AccountUsageDetailView.defaultWidth)
+        #expect(text.contains("3"))
+        #expect(!text.contains("No data"))
+        let without = AccountUsageDetailView(provider: .codex, providerName: "Codex", snapshot: nil, now: now)
+        #expect(without.resetCreditsPresentation == nil)
+    }
+
+    @Test
     func `detail card shows codex credits next to the usage windows`() throws {
         let metadata = try #require(ProviderDefaults.metadata[.codex])
         let now = Date()

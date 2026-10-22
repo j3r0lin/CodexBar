@@ -21,12 +21,25 @@ public enum MagpieQuotasReaderError: LocalizedError, Sendable {
 }
 
 public struct MagpieResetCredits: Sendable, Equatable {
-    public let count: Int
-    public let nextExpiry: Date?
+    /// One entry per credit, earliest first; a credit with no known expiry is nil and sorts last.
+    public let expirations: [Date?]
 
-    public init(count: Int, nextExpiry: Date?) {
-        self.count = count
-        self.nextExpiry = nextExpiry
+    public var count: Int {
+        self.expirations.count
+    }
+
+    public var nextExpiry: Date? {
+        self.expirations.first.flatMap(\.self)
+    }
+
+    public init(expirations: [Date?]) {
+        self.expirations = expirations.sorted { lhs, rhs in
+            switch (lhs, rhs) {
+            case let (lhs?, rhs?): lhs < rhs
+            case (_?, nil): true
+            default: false
+            }
+        }
     }
 }
 
@@ -165,10 +178,14 @@ public enum MagpieQuotasReader {
 
         var credits: MagpieResetCredits? {
             guard let count, count > 0 else { return nil }
-            let expiry = self.each?.value.map { entries in
-                entries.compactMap { ISO8601DateParser.parse($0.value?.until?.value) }.min()
-            } ?? ISO8601DateParser.parse(self.until?.value)
-            return MagpieResetCredits(count: count, nextExpiry: expiry)
+            let listed = (self.each?.value ?? [])
+                .compactMap { ISO8601DateParser.parse($0.value?.until?.value) }
+                .sorted()
+                .prefix(count)
+            // `count` is authoritative: credits magpie did not itemise take the shared expiry, or none.
+            let shared = ISO8601DateParser.parse(self.until?.value)
+            return MagpieResetCredits(
+                expirations: listed.map(Optional.some) + Array(repeating: shared, count: count - listed.count))
         }
     }
 

@@ -57,7 +57,7 @@ struct LimitResetCreditsPresentation: Equatable {
         count == 1 ? L("1 available") : String(format: L("%d available"), count)
     }
 
-    fileprivate static func make(
+    static func make(
         expirations: [Date?],
         resetStyle: ResetTimeDisplayStyle,
         now: Date) -> LimitResetCreditsPresentation?

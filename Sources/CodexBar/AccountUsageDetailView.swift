@@ -30,6 +30,9 @@ struct AccountUsageDetailView: View {
     var hiddenItemIDs: Set<ProviderUsageItemID> = []
     /// The reading is older than the refresh cadence allows; its numbers are dimmed as on the row.
     var isStale = false
+    /// Magpie rows: the account's reset credits, one entry each with its expiry.
+    var resetCredits: MagpieResetCredits?
+    var resetStyle: ResetTimeDisplayStyle = .countdown
 
     struct Block: Equatable {
         var title: String
@@ -58,7 +61,9 @@ struct AccountUsageDetailView: View {
                         hiddenItemIDs: self.hiddenItemIDs,
                         infersPeriodFromReset: self.namedWindows == nil,
                         now: self.now)
-                if blocks.isEmpty, !self.hasSupplementalContent, self.errorText == nil {
+                if blocks.isEmpty, !self.hasSupplementalContent, self.resetCreditsPresentation == nil,
+                   self.errorText == nil
+                {
                     Text(L("No data"))
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
@@ -69,6 +74,9 @@ struct AccountUsageDetailView: View {
                     .opacity(self.isStale ? 0.5 : 1)
                 }
                 self.supplementalView
+                if let resetCreditsPresentation = self.resetCreditsPresentation {
+                    LimitResetCreditsContent(presentation: resetCreditsPresentation)
+                }
                 if let errorText {
                     self.errorView(errorText)
                 }
@@ -77,6 +85,12 @@ struct AccountUsageDetailView: View {
         .padding(.horizontal, 18)
         .padding(.vertical, 16)
         .frame(width: self.width, alignment: .leading)
+    }
+
+    var resetCreditsPresentation: LimitResetCreditsPresentation? {
+        self.resetCredits.flatMap {
+            LimitResetCreditsPresentation.make(expirations: $0.expirations, resetStyle: self.resetStyle, now: self.now)
+        }
     }
 
     private var updatedAt: Date? {

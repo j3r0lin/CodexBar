@@ -20,7 +20,7 @@ struct ProviderUsageItemVisibilityTests {
             environmentBase: [:])
         store.magpieTransport = { _ in throw CancellationError() }
         settings.magpieSourceEnabled = true
-        let credits = MagpieResetCredits(count: 2, nextExpiry: Date(timeIntervalSince1970: 1_800_000_000))
+        let credits = MagpieResetCredits(expirations: [Date(timeIntervalSince1970: 1_800_000_000), nil])
         store.magpieAccountSnapshots = MagpieAccountProjection.snapshots(from: [MagpieQuotaRow(
             provider: "codex",
             email: "fixture@example.test",

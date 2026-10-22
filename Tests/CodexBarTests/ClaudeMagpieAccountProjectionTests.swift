@@ -32,6 +32,23 @@ struct MagpieAccountProjectionTests {
     }
 
     @Test
+    func `reset credits keep every expiry in order and fill unlisted credits up to the count`() throws {
+        let rows = try MagpieQuotasReader.rows(from: Data("""
+        {"data":[
+          {"provider":"codex","resets":{"count":3,"until":"2026-11-09T12:00:00Z",
+            "each":[{"until":"2026-11-08T12:00:00Z"},{"until":"2026-11-06T12:00:00Z"}]}},
+          {"provider":"codex","resets":{"count":2,"each":[{"until":"2026-11-06T12:00:00Z"}]}},
+          {"provider":"codex","resets":{"count":1,
+            "each":[{"until":"2026-11-08T12:00:00Z"},{"until":"2026-11-06T12:00:00Z"}]}}
+        ]}
+        """.utf8))
+        let day: (Int) -> Date = { Date(timeIntervalSince1970: 1_793_836_800 + Double($0 - 5) * 86400 + 43200) }
+        #expect(rows[0].resetCredits?.expirations == [day(6), day(8), day(9)])
+        #expect(rows[1].resetCredits?.expirations == [day(6), nil])
+        #expect(rows[2].resetCredits?.expirations == [day(6)])
+    }
+
+    @Test
     func `unlimited flags parse leniently and never project into native usage`() throws {
         let rows = try self.project("""
         {"data":[{"provider":"claude","windows":[

@@ -42,7 +42,9 @@ extension StatusItemController {
                 hiddenItemIDs: row.nativeProvider.map { self.settings.hiddenUsageItemIDs(for: $0) } ?? [],
                 isStale: row.isStale(
                     now: now,
-                    threshold: OverviewUsageRow.staleThreshold(for: self.settings.refreshFrequency))),
+                    threshold: OverviewUsageRow.staleThreshold(for: self.settings.refreshFrequency)),
+                resetCredits: row.resetCredits,
+                resetStyle: self.settings.resetTimeDisplayStyle),
             id: "overviewDetail-\(row.providerName)" + (row.accountName.map { "-\($0)" } ?? ""),
             width: width,
             // The pool holds the parent menu's row views; a detail card built first would take one of them.
