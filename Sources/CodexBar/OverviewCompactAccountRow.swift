@@ -391,6 +391,7 @@ struct OverviewCompactAccountRow: View {
         let percentColor: Color
         /// Pace tick position, nil without a pace or with pace hidden.
         let pacePercent: Double?
+        let overrunColor: Color?
     }
 
     func reading(for line: Line) -> Reading {
@@ -403,6 +404,9 @@ struct OverviewCompactAccountRow: View {
             percentColor: Self.percentColor(line, severity: severity, showsPace: self.display.showsPace),
             pacePercent: self.display.showsPace
                 ? line.pacePercent.map { Self.displayedPercent($0, showsRemaining: self.display.showsRemaining) }
+                : nil,
+            overrunColor: self.display.showsPace && line.pacePercent.map { line.used > $0 } == true
+                ? (line.paceTone == .runsOut ? OverviewPalette.critical : OverviewPalette.warning)
                 : nil)
     }
 
@@ -425,7 +429,8 @@ struct OverviewCompactAccountRow: View {
                 color: reading.barColor,
                 trackColor: Self.trackColor,
                 height: 6,
-                pacePercent: reading.pacePercent)
+                pacePercent: reading.pacePercent,
+                overrunColor: reading.overrunColor)
             Text(Self.resetText(line, now: self.now))
                 .font(.system(size: 10).monospacedDigit())
                 .foregroundStyle(OverviewPalette.reset)
@@ -587,6 +592,15 @@ struct UsageBar: View {
     var pacePercent: Double?
     /// Used-percent positions of the user's quota-warning thresholds, drawn as thin ticks in the bar.
     var warningMarkerPercents: [Double] = []
+    var overrunColor: Color?
+
+    var overrunSegment: (start: Double, end: Double, color: Color)? {
+        guard let pacePercent, let overrunColor else { return nil }
+        let fillEnd = min(100, max(0, self.used))
+        let tick = min(100, max(0, pacePercent))
+        guard abs(fillEnd - tick) >= 1 else { return nil }
+        return (min(fillEnd, tick), max(fillEnd, tick), overrunColor)
+    }
 
     var body: some View {
         GeometryReader { proxy in
@@ -596,6 +610,12 @@ struct UsageBar: View {
                     Rectangle()
                         .fill(self.color)
                         .frame(width: Self.fillWidth(used: self.used, barWidth: proxy.size.width, height: self.height))
+                    if let segment = self.overrunSegment {
+                        Rectangle()
+                            .fill(segment.color)
+                            .frame(width: proxy.size.width * (segment.end - segment.start) / 100)
+                            .offset(x: proxy.size.width * segment.start / 100)
+                    }
                     if let pacePercent {
                         Rectangle()
                             .fill(Color.white)

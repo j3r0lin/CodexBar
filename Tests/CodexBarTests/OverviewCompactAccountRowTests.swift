@@ -205,6 +205,52 @@ struct OverviewCompactAccountRowTests {
         #expect(self.reading(self.line(used: 90, pace: 10), showsRemaining: true).pacePercent == 90)
     }
 
+    @Test
+    func `only usage ahead of visible pace draws an overrun segment`() {
+        #expect(self.overrun(self.line(used: 70, pace: 50))?.start == 50)
+        #expect(self.overrun(self.line(used: 70, pace: 50))?.end == 70)
+        #expect(self.overrun(self.line(used: 70, pace: 50))?.color == OverviewPalette.warning)
+        #expect(self.overrun(self.line(used: 50, pace: 50)) == nil)
+        #expect(self.overrun(self.line(used: 30, pace: 50)) == nil)
+        #expect(self.overrun(self.line(used: 70)) == nil)
+        #expect(self.overrun(self.line(used: 70, pace: 50), showsPace: false) == nil)
+    }
+
+    @Test
+    func `overrun follows the display direction and exhaustion tint`() {
+        let line = OverviewCompactAccountRow.Line(
+            label: "7d", used: 70, resetsAt: nil, pacePercent: 50, paceTone: .runsOut)
+        let segment = self.overrun(line, showsRemaining: true)
+        #expect(segment?.start == 30)
+        #expect(segment?.end == 50)
+        #expect(segment?.color == OverviewPalette.critical)
+        #expect(self.overrun(self.line(used: 30, pace: 50), showsRemaining: true) == nil)
+    }
+
+    @Test
+    func `overrun stays within the track and omits subpercent spans`() {
+        let segment = self.overrun(self.line(used: 110, pace: -10))
+        #expect(segment?.start == 0)
+        #expect(segment?.end == 100)
+        #expect(self.overrun(self.line(used: 50.5, pace: 50)) == nil)
+        #expect(self.overrun(self.line(used: 51, pace: 50))?.end == 51)
+    }
+
+    private func overrun(
+        _ line: OverviewCompactAccountRow.Line,
+        showsRemaining: Bool = false,
+        showsPace: Bool = true) -> (start: Double, end: Double, color: Color)?
+    {
+        let reading = self.reading(line, showsRemaining: showsRemaining, showsPace: showsPace)
+        return UsageBar(
+            used: reading.percent,
+            color: reading.barColor,
+            trackColor: OverviewCompactAccountRow.trackColor,
+            height: 6,
+            pacePercent: reading.pacePercent,
+            overrunColor: reading.overrunColor).overrunSegment
+    }
+
     private func reading(
         _ line: OverviewCompactAccountRow.Line,
         showsRemaining: Bool = false,
