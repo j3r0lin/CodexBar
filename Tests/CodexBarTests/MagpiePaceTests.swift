@@ -164,7 +164,8 @@ struct MagpiePaceTests {
         ])
         let lines = try #require(row.compactLines(now: Self.now))
         #expect(lines.map(\.used) == [10, 20, 30])
-        #expect(row.namedWindows?.count == 4)
+        let windows = try #require(row.namedWindows)
+        #expect(AccountUsageDetailView.blocks(of: windows, now: Self.now).map(\.used) == [10, 20, 30, 90])
     }
 
     @Test

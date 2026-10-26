@@ -209,8 +209,8 @@ struct OverviewCompactAccountRow: View {
     /// The account keeps its readings alongside an error (last-known retention, unstable
     /// identity); the name warns instead of the readings disappearing.
     var showsErrorFlag = false
-    /// Magpie rows pass every window the gateway reported, each under its own label, instead of
-    /// the short/long slots a native snapshot fills.
+    /// Magpie rows pass their windows as lines, each under its own label, instead of the short/long
+    /// slots a native snapshot fills.
     var namedLines: [Line]?
     /// Native rows let Grok infer a period from the reset time; magpie-sourced windows never do.
     var infersPeriodFromReset = true
