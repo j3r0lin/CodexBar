@@ -154,6 +154,20 @@ struct MagpiePaceTests {
     }
 
     @Test
+    func `a card shows the first three windows and the detail keeps all of them`() throws {
+        let reset = Self.now.addingTimeInterval(Self.day)
+        let row = Self.row(windows: [
+            MagpieQuotaWindow(name: "5 hours", usedPercent: 10, resetsAt: reset),
+            MagpieQuotaWindow(name: "12 hours", usedPercent: 20, resetsAt: reset),
+            MagpieQuotaWindow(name: "Burst", usedPercent: 30, resetsAt: reset),
+            Self.weekly("Month", used: 90, remaining: 10 * Self.day),
+        ])
+        let lines = try #require(row.compactLines(now: Self.now))
+        #expect(lines.map(\.used) == [10, 20, 30])
+        #expect(row.namedWindows?.count == 4)
+    }
+
+    @Test
     func `a window of a day or less uses session thresholds and unknown lengths use weekly`() throws {
         let reset = Self.now.addingTimeInterval(Self.day)
         let lines = try #require(Self.row(windows: [
