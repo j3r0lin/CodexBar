@@ -272,6 +272,15 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
         true
     }
 
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        guard self.rowPayload.usesPanelBase, let scrollView = self.enclosingScrollView else { return }
+        // NSMenu insets its first and last rows from the window edge; the row bases cannot reach that
+        // inset because every row view clips, so the menu's scroll view carries the panel colour.
+        scrollView.drawsBackground = true
+        scrollView.backgroundColor = OverviewPalette.panelBase
+    }
+
     override func layout() {
         super.layout()
         self.hosting.frame = self.bounds
