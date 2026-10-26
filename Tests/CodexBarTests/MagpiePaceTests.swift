@@ -169,6 +169,18 @@ struct MagpiePaceTests {
     }
 
     @Test
+    func `single-word period names get the same label and pace as their stated lengths`() throws {
+        let lines = try #require(Self.row(windows: [
+            MagpieQuotaWindow(name: "Daily", usedPercent: 10, resetsAt: Self.now.addingTimeInterval(3600)),
+            Self.weekly("Weekly", used: 20),
+            Self.weekly("Monthly", used: 30, remaining: 10 * Self.day),
+        ]).compactLines(now: Self.now))
+        #expect(lines.map(\.label) == ["1d", "7d", "30d"])
+        #expect(lines.allSatisfy { $0.pacePercent != nil })
+        #expect(lines.map(\.warningWindow) == [.session, .weekly, .weekly])
+    }
+
+    @Test
     func `a window of a day or less uses session thresholds and unknown lengths use weekly`() throws {
         let reset = Self.now.addingTimeInterval(Self.day)
         let lines = try #require(Self.row(windows: [

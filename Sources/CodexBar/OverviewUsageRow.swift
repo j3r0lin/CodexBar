@@ -91,13 +91,18 @@ struct OverviewUsageRow {
             return "\(parsed.count)\(parsed.unit)"
         }
 
-        /// The length a window's name states ("30 days", "12 hours"); nothing else is guessed from a name.
+        /// The length a window's name states ("30 days", "12 hours", "Daily"); nothing else is guessed from a name.
         static func statedDuration(_ name: String) -> TimeInterval? {
             guard let parsed = statedLength(name) else { return nil }
             return TimeInterval(parsed.count) * (parsed.unit == "d" ? 86400 : 3600)
         }
 
         private static func statedLength(_ name: String) -> (count: Int, unit: Character)? {
+            switch name.lowercased() {
+            case "daily": return (1, "d")
+            case "hourly": return (1, "h")
+            default: break
+            }
             let parts = name.split(separator: " ")
             guard parts.count == 2, let count = Int(parts[0]) else { return nil }
             switch parts[1].lowercased() {

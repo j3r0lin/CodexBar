@@ -24,6 +24,9 @@ public struct MagpieQuotaWindow: Sendable, Equatable {
     public static let weeklyWindowName = "7 days"
     public static let scopedWeeklyPrefix = "7 days · "
     public static let monthWindowName = "Month"
+    /// Single-word names some providers report instead of magpie's "7 days" and "Month".
+    static let weeklyAliases: Set<String> = ["weekly", "week"]
+    static let monthlyAliases: Set<String> = ["monthly", "month"]
     static let sessionWindowMinutes = 5 * 60
     static let weeklyWindowMinutes = 7 * 24 * 60
 
@@ -68,6 +71,8 @@ public struct MagpieQuotaWindow: Sendable, Equatable {
             TimeInterval(self.weeklyWindowMinutes * 60)
         case let name where name.hasPrefix(self.scopedWeeklyPrefix):
             TimeInterval(self.weeklyWindowMinutes * 60)
+        case let name where self.weeklyAliases.contains(name.lowercased()):
+            TimeInterval(self.weeklyWindowMinutes * 60)
         default:
             nil
         }
@@ -78,11 +83,11 @@ public struct MagpieQuotaWindow: Sendable, Equatable {
             return self.semantics(forDuration: duration, name: name)
         }
         if name == self.sessionWindowName { return .session }
-        if name == self.weeklyWindowName { return .weekly }
+        if name == self.weeklyWindowName || self.weeklyAliases.contains(name.lowercased()) { return .weekly }
         if name.hasPrefix(self.scopedWeeklyPrefix) {
             return .scopedWeekly(model: String(name.dropFirst(self.scopedWeeklyPrefix.count)))
         }
-        if name == self.monthWindowName { return .monthly }
+        if self.monthlyAliases.contains(name.lowercased()) { return .monthly }
         return .other
     }
 
