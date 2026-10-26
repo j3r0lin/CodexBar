@@ -181,6 +181,16 @@ struct MagpiePaceTests {
     }
 
     @Test
+    func `hourly and week names read as their lengths too`() throws {
+        let lines = try #require(Self.row(windows: [
+            MagpieQuotaWindow(name: "Hourly", usedPercent: 10, resetsAt: Self.now.addingTimeInterval(1800)),
+            Self.weekly("week", used: 20),
+        ]).compactLines(now: Self.now))
+        #expect(lines.map(\.label) == ["1h", "7d"])
+        #expect(lines.allSatisfy { $0.pacePercent != nil })
+    }
+
+    @Test
     func `a window of a day or less uses session thresholds and unknown lengths use weekly`() throws {
         let reset = Self.now.addingTimeInterval(Self.day)
         let lines = try #require(Self.row(windows: [
