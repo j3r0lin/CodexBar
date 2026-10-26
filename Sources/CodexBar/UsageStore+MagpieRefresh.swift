@@ -251,6 +251,9 @@ extension UsageStore {
                 let current = incoming.filter { retentionKey(of: $0) == key }
                 guard !previous.isEmpty else { continue }
                 if current.isEmpty {
+                    // magpie lists every configured provider, read or not, so a provider missing from a
+                    // non-empty response was removed there. Only a wholly empty response is a gap to bridge.
+                    guard incoming.isEmpty else { continue }
                     let label = previous.first.map {
                         $0.provider.nativeProvider?.rawValue ?? $0.provider.wireID
                     } ?? key

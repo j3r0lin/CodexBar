@@ -146,6 +146,18 @@ struct MagpieSourceTransitionTests {
     }
 
     @Test
+    func `provider missing from a non-empty response is dropped`() async {
+        let store = self.makeStore()
+        await store.refreshMagpieAccounts()
+        #expect(store.magpieAccountSnapshots.contains { $0.provider.wireID == "codex" })
+        store.magpieTransport = ClaudeMagpieFixture.transport(
+            data: Data(#"{"data":[{"provider":"tars","user":"remote","windows":[]}]}"#.utf8))
+        await store.refreshMagpieAccounts()
+        #expect(!store.magpieOverviewSnapshots.contains { $0.provider.wireID == "codex" })
+        #expect(store.magpieLastError == nil)
+    }
+
+    @Test
     func `firstEmptySuccessfulRefreshPublishesEmptyWithoutError`() async {
         let store = self.makeStore()
         store.magpieTransport = ClaudeMagpieFixture.transport(data: Data(#"{"data":[]}"#.utf8))
