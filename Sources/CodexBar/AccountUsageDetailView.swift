@@ -13,6 +13,8 @@ struct AccountUsageDetailView: View {
     let providerName: String
     /// Set on a magpie account row, which shows one account of the provider.
     var accountName: String?
+    /// Magpie rows: the account's plan, shown after the name.
+    var plan: String?
     let snapshot: UsageSnapshot?
     /// Magpie rows pass every window the gateway reported, each under its own name (Month,
     /// model-scoped weekly, unknown wire names included), instead of the snapshot's lanes.
@@ -109,6 +111,14 @@ struct AccountUsageDetailView: View {
                 .font(.system(size: 15, weight: .bold))
                 .lineLimit(1)
                 .truncationMode(.middle)
+            if let plan {
+                // Plans are short ("team", "GLM Coding Lite"); a long account name gives way instead.
+                Text(plan)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .fixedSize()
+            }
             Spacer(minLength: 8)
             if let updatedAt {
                 Text(L("Updated %@", Self.clockText(updatedAt, now: self.now)))

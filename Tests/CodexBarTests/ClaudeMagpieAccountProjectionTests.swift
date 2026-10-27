@@ -142,6 +142,17 @@ struct MagpieAccountProjectionTests {
     }
 
     @Test
+    func `each account keeps the plan magpie reports for it`() throws {
+        let rows = try self.project("""
+        {"data":[
+          {"provider":"claude","plan":"team","user":"a@example.com","windows":[{"name":"5 hours","used":1}]},
+          {"provider":"claude","plan":" ","user":"b@example.com","windows":[{"name":"5 hours","used":2}]},
+          {"provider":"claude","user":"c@example.com","windows":[{"name":"5 hours","used":3}]}]}
+        """)
+        #expect(rows.map(\.plan) == ["team", nil, nil])
+    }
+
+    @Test
     func `unknown providers are named by magpie's card title and stay apart from a remote namesake`() throws {
         let rows = try self.project("""
         {"data":[

@@ -49,6 +49,8 @@ public struct MagpieQuotaRow: Sendable, Equatable {
     public let provider: String
     /// magpie's own card title ("ZCode", "ZCode · office" for a remote magpie's card); nil when absent.
     public let name: String?
+    /// The account's plan as magpie names it ("team", "GLM Coding Lite"); nil when absent.
+    public let plan: String?
     /// Display-only source email parsed from `user`; empty when magpie reports no user.
     public let email: String
     public let organization: String
@@ -69,10 +71,12 @@ public struct MagpieQuotaRow: Sendable, Equatable {
         windows: [MagpieQuotaWindow],
         error: String? = nil,
         resetCredits: MagpieResetCredits? = nil,
-        name: String? = nil)
+        name: String? = nil,
+        plan: String? = nil)
     {
         self.provider = provider
         self.name = name
+        self.plan = plan
         self.email = email
         self.organization = organization
         self.alias = alias
@@ -167,6 +171,7 @@ public enum MagpieQuotasReader {
     private struct Row: Decodable {
         let provider: String
         let name: String?
+        let plan: String?
         let user: String?
         let alias: String?
         let last: Bool?
@@ -210,6 +215,7 @@ public enum MagpieQuotasReader {
         let (email, organization) = self.splitUser(row.user)
         let alias = row.alias?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let name = row.name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let plan = row.plan?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let windows = (row.windows ?? []).compactMap(\.value).compactMap { window -> MagpieQuotaWindow? in
             // Negative usage is malformed; values above 100 are reported as-is and the UI clamps.
             guard let used = window.used, used.isFinite, used >= 0, let name = window.name else { return nil }
@@ -230,7 +236,8 @@ public enum MagpieQuotasReader {
             windows: windows,
             error: row.error,
             resetCredits: row.resets?.value?.credits,
-            name: name.isEmpty ? nil : name)
+            name: name.isEmpty ? nil : name,
+            plan: plan.isEmpty ? nil : plan)
     }
 
     /// magpie formats `user` as "<email> · <organization>"; either side may be absent.

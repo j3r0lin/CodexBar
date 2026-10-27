@@ -196,6 +196,8 @@ struct OverviewUsageRow {
     /// When the gateway last read this magpie account; nil on native rows.
     let readAt: Date?
     var resetCredits: MagpieResetCredits?
+    /// Magpie rows: the account's plan, shown beside the name in the detail header.
+    var plan: String?
 
     /// When this row's usage was last read: the gateway read on magpie rows, the snapshot on native ones.
     var updatedAt: Date? {
@@ -259,7 +261,8 @@ struct OverviewUsageRow {
             showsErrorFlag: account.error != nil,
             detailErrorText: account.error,
             readAt: account.readAt,
-            resetCredits: hidesResetCredits ? nil : account.resetCredits)
+            resetCredits: hidesResetCredits ? nil : account.resetCredits,
+            plan: account.plan)
     }
 
     /// A reading older than three refresh intervals, and at least 30 minutes, no longer reflects the

@@ -32,6 +32,7 @@ public struct MagpieAccountSnapshot: Identifiable, Sendable, Equatable {
     public let usesLastKnownUsage: Bool
     public let error: String?
     public let resetCredits: MagpieResetCredits?
+    public let plan: String?
 
     public init(
         id: ProviderAccountIdentity,
@@ -44,7 +45,8 @@ public struct MagpieAccountSnapshot: Identifiable, Sendable, Equatable {
         isActive: Bool,
         usesLastKnownUsage: Bool = false,
         error: String?,
-        resetCredits: MagpieResetCredits? = nil)
+        resetCredits: MagpieResetCredits? = nil,
+        plan: String? = nil)
     {
         self.id = id
         self.provider = provider
@@ -57,6 +59,7 @@ public struct MagpieAccountSnapshot: Identifiable, Sendable, Equatable {
         self.usesLastKnownUsage = usesLastKnownUsage
         self.error = error
         self.resetCredits = resetCredits
+        self.plan = plan
     }
 
     /// The same account, with its usage marked as a last-known measurement and an explanatory error.
@@ -72,7 +75,8 @@ public struct MagpieAccountSnapshot: Identifiable, Sendable, Equatable {
             isActive: self.isActive,
             usesLastKnownUsage: !self.windows.isEmpty,
             error: error,
-            resetCredits: self.resetCredits)
+            resetCredits: self.resetCredits,
+            plan: self.plan)
     }
 }
 
@@ -188,7 +192,8 @@ public enum MagpieAccountProjection {
                 readAt: row.readAt,
                 isActive: !ambiguousIdentity && index == activeIndex,
                 error: identityError ?? row.error,
-                resetCredits: row.resetCredits)
+                resetCredits: row.resetCredits,
+                plan: row.plan)
         }
         return projected.filter(\.isActive) + projected.filter { !$0.isActive }
     }

@@ -31,6 +31,7 @@ extension StatusItemController {
                 provider: row.nativeProvider,
                 providerName: row.providerName,
                 accountName: row.accountName,
+                plan: row.plan,
                 snapshot: row.snapshot,
                 namedWindows: row.namedWindows,
                 errorText: row.isMagpie ? row.detailErrorText : nil,
