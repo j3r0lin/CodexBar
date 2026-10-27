@@ -47,8 +47,10 @@ public enum MagpieProviderMapping {
         self.wireIDs(for: provider).first
     }
 
-    public static func reference(for wireID: String) -> MagpieProviderReference {
-        if let native = self.nativeProviders[wireID] {
+    /// `name` is magpie's own card title; an unknown provider shows it in place of its wire ID.
+    public static func reference(for wireID: String, name: String? = nil) -> MagpieProviderReference {
+        let remoteID = self.remoteProviderID(of: wireID)
+        if let native = self.nativeProviders[wireID] ?? remoteID.flatMap({ self.nativeProviders[$0] }) {
             return MagpieProviderReference(
                 wireID: wireID,
                 nativeProvider: native,
@@ -59,7 +61,16 @@ public enum MagpieProviderMapping {
             wireID: wireID,
             nativeProvider: nil,
             instanceID: self.instanceID(forUnknownWireID: wireID),
-            displayName: wireID)
+            displayName: name ?? wireID)
+    }
+
+    /// A remote magpie's cards come through as `<remote>/<its wire ID>`. magpie provider IDs never
+    /// contain `/` (they prefix model IDs as `provider/model`), and a remote's own remote cards are
+    /// not passed on, so the part after the first `/` is the remote's wire ID.
+    static func remoteProviderID(of wireID: String) -> String? {
+        guard let slash = wireID.firstIndex(of: "/") else { return nil }
+        let id = wireID[wireID.index(after: slash)...]
+        return id.isEmpty ? nil : String(id)
     }
 
     /// Unknown providers get a `magpie-`-prefixed instance ID. If a user plugin already owns the

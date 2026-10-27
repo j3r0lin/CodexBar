@@ -143,6 +143,20 @@ struct MagpieQuotaHistoryTests {
     }
 
     @Test
+    func `a remote magpie's history lands on its account in the native card`() throws {
+        let rows = try MagpieQuotasReader.rows(from: Data("""
+        {"data":[{"provider":"office/codex","user":"remote@example.com","from":"office",
+          "windows":[{"name":"5 hours","used":10}]}]}
+        """.utf8))
+        let account = try #require(MagpieAccountProjection.snapshots(from: rows).first)
+        let history = try MagpieQuotasReader.history(from: Data("""
+        {"data":[{"provider":"office/codex","user":"remote@example.com","lines":[
+          {"name":"5 hours","points":[{"at":"2027-01-15T08:00:00Z","left":90}]}]}]}
+        """.utf8))
+        #expect(history.points(for: account.id, window: "5 hours").map(\.left) == [90])
+    }
+
+    @Test
     func `an oversized history body is refused`() async {
         let transport: MagpieQuotasReader.Transport = { request in
             (

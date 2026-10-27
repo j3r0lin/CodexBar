@@ -110,7 +110,9 @@ public enum MagpieAccountProjection {
         var groupOrder: [String] = []
         var groups: [String: (reference: MagpieProviderReference, rows: [MagpieQuotaRow])] = [:]
         for wireID in wireOrder {
-            let reference = MagpieProviderMapping.reference(for: wireID)
+            let reference = MagpieProviderMapping.reference(
+                for: wireID,
+                name: rowsByWire[wireID]?.lazy.compactMap(\.name).first)
             guard let native = reference.nativeProvider else {
                 // Prefixed keys: an unknown wire ID that spells a mapped provider's raw value
                 // ("opencodego" vs opencode-go's .opencodego) must never collide with the native group.

@@ -115,6 +115,35 @@ struct MagpieAccountProjectionTests {
     }
 
     @Test
+    func `a remote magpie's native provider joins the local provider's card`() throws {
+        let rows = try self.project("""
+        {"data":[
+          {"provider":"codex","name":"Codex","user":"local@example.com","windows":[{"name":"5 hours","used":4}]},
+          {"provider":"office/codex","name":"Codex · office","user":"remote@example.com","from":"office",
+            "windows":[{"name":"5 hours","used":7}]}]}
+        """)
+        let codex = rows.filter { $0.provider.nativeProvider == .codex }
+        #expect(codex.count == 2)
+        #expect(Set(codex.map(\.provider.wireID)) == ["codex"])
+        #expect(Set(codex.compactMap(\.accountEmail)) == ["local@example.com", "remote@example.com"])
+        #expect(codex.allSatisfy { $0.provider.displayName == "Codex" })
+    }
+
+    @Test
+    func `unknown providers are named by magpie's card title and stay apart from a remote namesake`() throws {
+        let rows = try self.project("""
+        {"data":[
+          {"provider":"zen","name":"OpenCode Zen","user":"API key","windows":[{"name":"Daily","used":1}]},
+          {"provider":"office/zen","name":"OpenCode Zen · office","user":"API key","from":"office",
+            "windows":[{"name":"Daily","used":2}]},
+          {"provider":"untitled","windows":[{"name":"Daily","used":3}]}]}
+        """)
+        #expect(rows.map(\.provider.displayName) == ["OpenCode Zen", "OpenCode Zen · office", "untitled"])
+        #expect(Set(rows.map(\.provider.instanceID)).count == 3)
+        #expect(rows.allSatisfy { $0.provider.nativeProvider == nil })
+    }
+
+    @Test
     func `both grok wire ids without user fields merge into one normal card`() throws {
         let rows = try self.project("""
         {"data":[{"provider":"grok-plugin","windows":[{"name":"7 days","used":1}]},
