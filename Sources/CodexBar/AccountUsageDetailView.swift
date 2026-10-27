@@ -112,11 +112,13 @@ struct AccountUsageDetailView: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
             if let plan {
-                // Plans are short ("team", "GLM Coding Lite"); a long account name gives way instead.
+                // Plans are short ("team", "GLM Coding Lite"), so a long account name gives way to them;
+                // the cap keeps an unusually long plan from taking the name's room in turn.
                 Text(plan)
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .frame(maxWidth: self.width * 0.3, alignment: .leading)
                     .fixedSize()
             }
             Spacer(minLength: 8)
