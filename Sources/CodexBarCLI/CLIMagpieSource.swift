@@ -24,7 +24,7 @@ actor CLIMagpieSource {
         var discoverySucceeded = false
         do {
             let rows = try await self.rows(quotasURL: configuration?.quotasURL)
-            self.ownedWireIDs.formUnion(rows.map(\.provider))
+            self.ownedWireIDs.formUnion(rows.map { MagpieProviderMapping.ownedWireID(for: $0.provider) })
             discoverySucceeded = true
         } catch {}
         return ProviderSourceRoute.resolve(
@@ -41,7 +41,7 @@ actor CLIMagpieSource {
         self.task = task
         do {
             let rows = try await task.value
-            self.ownedWireIDs.formUnion(rows.map(\.provider))
+            self.ownedWireIDs.formUnion(rows.map { MagpieProviderMapping.ownedWireID(for: $0.provider) })
             return rows
         } catch {
             throw error
@@ -110,12 +110,13 @@ extension CodexBarCLI {
         var output = UsageCommandOutput()
         do {
             let rows = try await tokenContext.magpieSource.rows(quotasURL: tokenContext.config.magpie?.quotasURL)
+            let listsProvider = rows.contains { wireIDs.contains(MagpieProviderMapping.ownedWireID(for: $0.provider)) }
             var previouslyOwned = false
             for wireID in wireIDs where await tokenContext.magpieSource.owns(wireID) {
                 previouslyOwned = true
                 break
             }
-            guard rows.contains(where: { wireIDs.contains($0.provider) }) || previouslyOwned || switchSuspended
+            guard listsProvider || previouslyOwned || switchSuspended
             else { return nil }
             let accounts = MagpieUsageProjection.providerAccountSnapshots(
                 for: provider, in: MagpieAccountProjection.snapshots(from: rows))
@@ -161,7 +162,7 @@ extension CodexBarCLI {
                 }
             }
             if !emitted, switchSuspended {
-                if rows.contains(where: { wireIDs.contains($0.provider) }) {
+                if listsProvider {
                     // Rows with empty windows are an empty result; only an upstream error is
                     // reported, matching the app. Nothing here may touch native reads.
                     for account in accounts {

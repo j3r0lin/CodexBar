@@ -130,6 +130,18 @@ struct MagpieAccountProjectionTests {
     }
 
     @Test
+    func `a remote magpie's native provider is owned under the provider's own wire id`() {
+        let owned = Set(["office/codex", "office/zcode"].map(MagpieProviderMapping.ownedWireID(for:)))
+        let route = ProviderSourceRoute.resolve(
+            provider: .codex,
+            enabled: true,
+            ownedWireIDs: owned,
+            discoverySucceeded: true)
+        #expect(!route.isNative)
+        #expect(owned.contains("office/zcode"))
+    }
+
+    @Test
     func `unknown providers are named by magpie's card title and stay apart from a remote namesake`() throws {
         let rows = try self.project("""
         {"data":[

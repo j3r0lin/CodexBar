@@ -4,8 +4,8 @@ import Foundation
 ///
 /// Known wire IDs map onto their native provider so menus and widgets can reuse the native
 /// presentation; a mapped provider is magpie-owned while the switch is on and never touches
-/// local credentials. Unknown wire IDs keep their raw ID as the display name, get a
-/// `magpie-`-prefixed instance ID, and never register a fake native descriptor.
+/// local credentials. Unknown wire IDs take magpie's card title (else the raw ID) as the display
+/// name, get a `magpie-`-prefixed instance ID, and never register a fake native descriptor.
 public struct MagpieProviderReference: Hashable, Sendable {
     public let wireID: String
     public let nativeProvider: UsageProvider?
@@ -62,6 +62,12 @@ public enum MagpieProviderMapping {
             nativeProvider: nil,
             instanceID: self.instanceID(forUnknownWireID: wireID),
             displayName: name ?? wireID)
+    }
+
+    /// The wire ID a row's provider is owned under: the native provider's canonical ID when it maps
+    /// to one (a remote magpie's `office/codex` is owned as `codex`), the raw ID otherwise.
+    public static func ownedWireID(for wireID: String) -> String {
+        self.reference(for: wireID).nativeProvider.flatMap(self.wireID(for:)) ?? wireID
     }
 
     /// A remote magpie's cards come through as `<remote>/<its wire ID>`. magpie provider IDs never

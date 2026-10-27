@@ -255,7 +255,7 @@ extension UsageStore {
                     // non-empty response was removed there. Only a wholly empty response is a gap to bridge.
                     guard incoming.isEmpty else { continue }
                     let label = previous.first.map {
-                        $0.provider.nativeProvider?.rawValue ?? $0.provider.wireID
+                        $0.provider.nativeProvider?.rawValue ?? $0.provider.displayName
                     } ?? key
                     let message = "magpie returned no usable quota rows for \(label)."
                     snapshots.append(contentsOf: previous.map { $0.retainedAsLastKnown(error: message) })
@@ -277,7 +277,7 @@ extension UsageStore {
             // The takeover set only grows while the switch is on: a provider that disappears from
             // a later response stays magpie-owned instead of resuming native reads.
             var takeover = self.settings.magpieTakeoverWireIDs
-            takeover.formUnion(rows.map(\.provider))
+            takeover.formUnion(rows.map { MagpieProviderMapping.ownedWireID(for: $0.provider) })
             if takeover != self.settings.magpieTakeoverWireIDs {
                 self.settings.magpieTakeoverWireIDs = takeover
             }
