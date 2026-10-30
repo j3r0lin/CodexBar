@@ -2700,3 +2700,5 @@
 "Show scheduled resets from codex-resets.com" = "แสดงการรีเซ็ตที่กำหนดเวลาไว้จาก codex-resets.com";
 "Scheduled reset before %@" = "กำหนดรีเซ็ตก่อน %@";
 "Refresh this account" = "รีเฟรชบัญชีนี้";
+"Updated %@ · Auto-refresh" = "อัพเดท %@ · รีเฟรชอัตโนมัติ";
+"Auto-refresh on · every %@" = "เปิดการรีเฟรชอัตโนมัติ · ทุก %@";

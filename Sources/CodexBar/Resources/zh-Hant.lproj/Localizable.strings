@@ -2678,3 +2678,5 @@
 "Show scheduled resets from codex-resets.com" = "顯示 codex-resets.com 上的排程重置";
 "Scheduled reset before %@" = "預計 %@ 前重置";
 "Refresh this account" = "重新整理此帳號";
+"Updated %@ · Auto-refresh" = "%@ 已更新 · 自動重新整理";
+"Auto-refresh on · every %@" = "自動重新整理已開啟 · 每 %@";

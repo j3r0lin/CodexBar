@@ -2701,3 +2701,5 @@
 "Show scheduled resets from codex-resets.com" = "Mostra els reinicis programats de codex-resets.com";
 "Scheduled reset before %@" = "Reinici programat abans de %@";
 "Refresh this account" = "Actualitza aquest compte";
+"Updated %@ · Auto-refresh" = "Actualitzat %@ · Actualització automàtica";
+"Auto-refresh on · every %@" = "Actualització automàtica activada · cada %@";

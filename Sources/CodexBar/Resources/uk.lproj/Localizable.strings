@@ -2698,3 +2698,5 @@
 "Show scheduled resets from codex-resets.com" = "Показувати заплановані скидання з codex-resets.com";
 "Scheduled reset before %@" = "Скидання заплановано до %@";
 "Refresh this account" = "Оновити цей обліковий запис";
+"Updated %@ · Auto-refresh" = "Оновлено %@ · Автооновлення";
+"Auto-refresh on · every %@" = "Автооновлення увімкнено · кожні %@";

@@ -2702,3 +2702,5 @@
 "Show scheduled resets from codex-resets.com" = "codex-resets.com'daki planlı sıfırlamaları göster";
 "Scheduled reset before %@" = "%@ öncesinde planlı sıfırlama";
 "Refresh this account" = "Bu hesabı yenile";
+"Updated %@ · Auto-refresh" = "Güncellendi: %@ · Otomatik yenileme";
+"Auto-refresh on · every %@" = "Otomatik yenileme açık · her %@";

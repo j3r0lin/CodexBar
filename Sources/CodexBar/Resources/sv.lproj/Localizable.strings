@@ -2697,3 +2697,5 @@
 "Show scheduled resets from codex-resets.com" = "Visa schemalagda återställningar från codex-resets.com";
 "Scheduled reset before %@" = "Schemalagd återställning före %@";
 "Refresh this account" = "Uppdatera det här kontot";
+"Updated %@ · Auto-refresh" = "Uppdaterad %@ · Automatisk uppdatering";
+"Auto-refresh on · every %@" = "Automatisk uppdatering på · var %@";

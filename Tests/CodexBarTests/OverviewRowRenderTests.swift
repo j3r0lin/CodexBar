@@ -212,6 +212,7 @@ struct OverviewRowRenderTests {
                 .padding(.bottom, 2)
             OverviewFooterView(
                 autoRefreshOn: true,
+                statusText: "Auto-refresh on · every 5 min",
                 aboutHelp: "About CodexBar (v1.2.3)",
                 quitHelp: "Quit",
                 width: width)
@@ -220,6 +221,7 @@ struct OverviewRowRenderTests {
             context
             OverviewFooterView(
                 autoRefreshOn: true,
+                statusText: "Auto-refresh on · every 5 min",
                 aboutHelp: "About CodexBar (v1.2.3)",
                 quitHelp: "Quit",
                 width: width)
@@ -420,6 +422,7 @@ struct OverviewRowRenderTests {
             "d-footer",
             OverviewFooterView(
                 autoRefreshOn: true,
+                statusText: "Auto-refresh on · every 5 min",
                 aboutHelp: "About CodexBar",
                 quitHelp: "Quit",
                 width: width)

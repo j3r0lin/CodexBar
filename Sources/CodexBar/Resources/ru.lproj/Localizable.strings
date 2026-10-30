@@ -2699,3 +2699,5 @@
 "Show scheduled resets from codex-resets.com" = "Показывать запланированные сбросы с codex-resets.com";
 "Scheduled reset before %@" = "Сброс запланирован до %@";
 "Refresh this account" = "Обновить этот аккаунт";
+"Updated %@ · Auto-refresh" = "Обновлено %@ · Автообновление";
+"Auto-refresh on · every %@" = "Автообновление включено · каждые %@";

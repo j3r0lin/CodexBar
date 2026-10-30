@@ -2698,3 +2698,5 @@
 "Show scheduled resets from codex-resets.com" = "codex-resets.com の予定されたリセットを表示";
 "Scheduled reset before %@" = "%@ までにリセット予定";
 "Refresh this account" = "このアカウントを更新";
+"Updated %@ · Auto-refresh" = "%@ に更新 · 自動更新";
+"Auto-refresh on · every %@" = "自動更新オン · %@ごと";

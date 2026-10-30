@@ -2698,3 +2698,5 @@
 "Show scheduled resets from codex-resets.com" = "Mostrar redefinições agendadas do codex-resets.com";
 "Scheduled reset before %@" = "Redefinição agendada antes de %@";
 "Refresh this account" = "Atualizar esta conta";
+"Updated %@ · Auto-refresh" = "Atualizado %@ · Atualização automática";
+"Auto-refresh on · every %@" = "Atualização automática ativada · a cada %@";

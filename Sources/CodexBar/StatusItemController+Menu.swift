@@ -598,8 +598,9 @@ extension StatusItemController {
 
     /// The card header: app icon, title, last-update subtitle, and the refresh/settings buttons.
     private func addOverviewHeader(to menu: NSMenu, width: CGFloat) {
-        let updatedText = self.overviewLastSyncDate().map { L("Updated %@", $0.relativeDescription()) }
-            ?? L("No usage fetched yet")
+        let updatedText = self.overviewLastSyncDate().map {
+            OverviewChromeText.updatedSubtitle(at: $0, autoRefreshOn: self.settings.refreshFrequency != .manual)
+        } ?? L("No usage fetched yet")
         menu.addItem(self.makeMenuCardItem(
             OverviewCardHeaderView(
                 title: "CodexBar",
@@ -634,17 +635,19 @@ extension StatusItemController {
             menu.removeItem(at: menu.items.count - 1)
         }
         let autoRefresh = self.settings.refreshFrequency != .manual
+        let statusText = OverviewChromeText.autoRefreshStatus(self.settings.refreshFrequency)
         let version = AppVersion.shortVersion
         menu.addItem(self.makeMenuCardItem(
             OverviewFooterView(
                 autoRefreshOn: autoRefresh,
+                statusText: statusText,
                 aboutHelp: L("About CodexBar") + (version.isEmpty ? "" : " (v\(version))"),
                 quitHelp: L("Quit"),
                 width: width),
             id: "overviewFooterStatus",
             width: width,
             heightCacheScope: "overviewFooterStatus",
-            heightCacheFingerprint: "footer-\(autoRefresh)",
+            heightCacheFingerprint: "footer-\(autoRefresh)-\(statusText)",
             containsInteractiveControls: true,
             usesPanelBase: true))
     }

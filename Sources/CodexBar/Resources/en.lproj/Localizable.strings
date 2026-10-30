@@ -2704,3 +2704,5 @@
 "Show scheduled resets from codex-resets.com" = "Show scheduled resets from codex-resets.com";
 "Scheduled reset before %@" = "Scheduled reset before %@";
 "Refresh this account" = "Refresh this account";
+"Updated %@ · Auto-refresh" = "Updated %@ · Auto-refresh";
+"Auto-refresh on · every %@" = "Auto-refresh on · every %@";

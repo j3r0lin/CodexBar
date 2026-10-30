@@ -5,7 +5,7 @@ import SwiftUI
 /// repaints a SwiftUI hosting view, so the SwiftUI hover state cannot become visible on its own.
 @MainActor
 enum MenuHoverOverlay {
-    static func update(around view: NSView, hovering: Bool) {
+    static func update(around view: NSView, hovering: Bool, style: Style = .footer) {
         guard let container = sequence(first: view, next: { $0.superview })
             .first(where: { $0 is MenuRowContainerView })
         else { return }
@@ -14,6 +14,7 @@ enum MenuHoverOverlay {
         if hovering {
             let overlay = existing.first ?? HoverView()
             overlay.frame = frame
+            overlay.apply(style)
             if overlay.superview !== container {
                 container.addSubview(overlay, positioned: .below, relativeTo: nil)
             }
@@ -22,12 +23,23 @@ enum MenuHoverOverlay {
         }
     }
 
+    struct Style: Equatable {
+        var opacity: CGFloat
+        var cornerRadius: CGFloat
+
+        static let footer = Style(opacity: 0.10, cornerRadius: 8)
+    }
+
     final class HoverView: NSView {
         override init(frame frameRect: NSRect) {
             super.init(frame: frameRect)
             self.wantsLayer = true
-            self.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.10).cgColor
-            self.layer?.cornerRadius = 8
+            self.apply(.footer)
+        }
+
+        func apply(_ style: Style) {
+            self.layer?.backgroundColor = NSColor.white.withAlphaComponent(style.opacity).cgColor
+            self.layer?.cornerRadius = style.cornerRadius
         }
 
         @available(*, unavailable)
@@ -42,22 +54,26 @@ enum MenuHoverOverlay {
 struct MouseLocationReader: NSViewRepresentable {
     let onMoved: (CGPoint?) -> Void
     var drawsHoverOverlay = false
+    var hoverStyle = MenuHoverOverlay.Style.footer
 
     func makeNSView(context: Context) -> TrackingView {
         let view = TrackingView()
         view.onMoved = self.onMoved
         view.drawsHoverOverlay = self.drawsHoverOverlay
+        view.hoverStyle = self.hoverStyle
         return view
     }
 
     func updateNSView(_ nsView: TrackingView, context: Context) {
         nsView.onMoved = self.onMoved
         nsView.drawsHoverOverlay = self.drawsHoverOverlay
+        nsView.hoverStyle = self.hoverStyle
     }
 
     final class TrackingView: NSView {
         var onMoved: ((CGPoint?) -> Void)?
         var drawsHoverOverlay = false
+        var hoverStyle = MenuHoverOverlay.Style.footer
         private var trackingArea: NSTrackingArea?
 
         override var isFlipped: Bool {
@@ -102,7 +118,7 @@ struct MouseLocationReader: NSViewRepresentable {
         private func report(_ location: CGPoint?) {
             self.onMoved?(location)
             if self.drawsHoverOverlay {
-                MenuHoverOverlay.update(around: self, hovering: location != nil)
+                MenuHoverOverlay.update(around: self, hovering: location != nil, style: self.hoverStyle)
             }
         }
 

@@ -2691,3 +2691,5 @@
 "Show scheduled resets from codex-resets.com" = "显示 codex-resets.com 上的排期重置";
 "Scheduled reset before %@" = "预计 %@ 前重置";
 "Refresh this account" = "刷新此账号";
+"Updated %@ · Auto-refresh" = "更新于 %@ · 自动刷新";
+"Auto-refresh on · every %@" = "自动刷新已开启 · 每 %@";

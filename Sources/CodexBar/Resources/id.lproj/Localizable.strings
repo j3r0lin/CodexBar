@@ -2701,3 +2701,5 @@
 "Show scheduled resets from codex-resets.com" = "Tampilkan reset terjadwal dari codex-resets.com";
 "Scheduled reset before %@" = "Reset terjadwal sebelum %@";
 "Refresh this account" = "Segarkan akun ini";
+"Updated %@ · Auto-refresh" = "Diperbarui %@ · Segarkan otomatis";
+"Auto-refresh on · every %@" = "Segarkan otomatis aktif · setiap %@";

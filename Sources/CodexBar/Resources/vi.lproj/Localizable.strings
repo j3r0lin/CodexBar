@@ -2699,3 +2699,5 @@
 "Show scheduled resets from codex-resets.com" = "Hiển thị lượt đặt lại đã lên lịch từ codex-resets.com";
 "Scheduled reset before %@" = "Đặt lại đã lên lịch trước %@";
 "Refresh this account" = "Làm mới tài khoản này";
+"Updated %@ · Auto-refresh" = "Đã cập nhật %@ · Tự động làm mới";
+"Auto-refresh on · every %@" = "Bật tự động làm mới · mỗi %@";

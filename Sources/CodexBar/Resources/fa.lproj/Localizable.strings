@@ -2702,3 +2702,5 @@
 "Show scheduled resets from codex-resets.com" = "نمایش بازنشانی‌های زمان‌بندی‌شده از codex-resets.com";
 "Scheduled reset before %@" = "بازنشانی زمان‌بندی‌شده تا قبل از %@";
 "Refresh this account" = "تازه‌سازی این حساب";
+"Updated %@ · Auto-refresh" = "به روزرسانی %@ · تازه سازی خودکار";
+"Auto-refresh on · every %@" = "تازه سازی خودکار روشن است · هر %@";
