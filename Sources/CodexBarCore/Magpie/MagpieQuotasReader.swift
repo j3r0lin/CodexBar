@@ -122,7 +122,18 @@ public enum MagpieQuotasReader {
         guard let url = self.quotasURL(from: configured) else {
             throw MagpieQuotasReaderError.invalidURL
         }
-        var request = URLRequest(url: url, timeoutInterval: self.defaultTimeout)
+        let data = try await self.get(url, limit: self.maxResponseBytes, transport: transport)
+        return try self.rows(from: data)
+    }
+
+    /// The GET every magpie read shares: no credentials, JSON accept, and a size cap the caller picks.
+    static func get(
+        _ url: URL,
+        limit: Int,
+        transport: Transport,
+        timeout: TimeInterval = Self.defaultTimeout) async throws -> Data
+    {
+        var request = URLRequest(url: url, timeoutInterval: timeout)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         let (data, response) = try await transport(request)
@@ -130,10 +141,10 @@ public enum MagpieQuotasReader {
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
             throw MagpieQuotasReaderError.httpStatus(http.statusCode)
         }
-        guard data.count <= self.maxResponseBytes else {
-            throw MagpieQuotasReaderError.responseTooLarge(byteCount: data.count, limit: self.maxResponseBytes)
+        guard data.count <= limit else {
+            throw MagpieQuotasReaderError.responseTooLarge(byteCount: data.count, limit: limit)
         }
-        return try self.rows(from: data)
+        return data
     }
 
     public static func rows(from data: Data) throws -> [MagpieQuotaRow] {
@@ -160,15 +171,6 @@ public enum MagpieQuotasReader {
 
     private struct Response: Decodable {
         let data: [Lenient<Row>]
-    }
-
-    /// One malformed row must not discard its siblings.
-    private struct Lenient<Value: Decodable>: Decodable {
-        let value: Value?
-
-        init(from decoder: any Decoder) throws {
-            self.value = try? Value(from: decoder)
-        }
     }
 
     private struct Row: Decodable {
@@ -278,17 +280,7 @@ public enum MagpieQuotasReader {
         guard let url = self.historyURL(from: configured) else {
             throw MagpieQuotasReaderError.invalidURL
         }
-        var request = URLRequest(url: url, timeoutInterval: self.defaultTimeout)
-        request.httpMethod = "GET"
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        let (data, response) = try await transport(request)
-        try Task.checkCancellation()
-        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-            throw MagpieQuotasReaderError.httpStatus(http.statusCode)
-        }
-        guard data.count <= self.maxHistoryResponseBytes else {
-            throw MagpieQuotasReaderError.responseTooLarge(byteCount: data.count, limit: self.maxHistoryResponseBytes)
-        }
+        let data = try await self.get(url, limit: self.maxHistoryResponseBytes, transport: transport)
         return try self.history(from: data)
     }
 
@@ -349,5 +341,14 @@ public enum MagpieQuotasReader {
         let left: Double?
         let start: String?
         let resetsAt: String?
+    }
+}
+
+/// One malformed entry must not discard its siblings, in any of magpie's list responses.
+struct Lenient<Value: Decodable>: Decodable {
+    let value: Value?
+
+    init(from decoder: any Decoder) throws {
+        self.value = try? Value(from: decoder)
     }
 }

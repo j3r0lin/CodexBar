@@ -17,9 +17,9 @@ struct MagpieUsageReaderTests {
      ]}
     """
 
-    private static var calendar: Calendar {
+    private static func calendar(_ identifier: String = "Asia/Shanghai") -> Calendar {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Asia/Shanghai")!
+        calendar.timeZone = TimeZone(identifier: identifier)!
         return calendar
     }
 
@@ -33,7 +33,7 @@ struct MagpieUsageReaderTests {
         let model = OverviewUsageCardModel(
             summary: summary,
             now: Self.date("2026-10-30T12:02:00+08:00"),
-            calendar: Self.calendar)
+            calendar: Self.calendar())
 
         #expect(model.titleText == "Usage & Spend · 30d")
         #expect(model.totalSpendText == "$5,193.25")
@@ -43,12 +43,25 @@ struct MagpieUsageReaderTests {
     }
 
     @Test
+    func `today follows the gateway's calendar date when the Mac is in another zone`() throws {
+        // The gateway names Oct 30 at its +08:00 midnight; a Mac in New York reading the same instant
+        // is still on Oct 29, but its own calendar day is Oct 30 and the card must say so.
+        let summary = try MagpieUsageReader.usage(from: Data(Self.usageJSON.utf8))
+        let model = OverviewUsageCardModel(
+            summary: summary,
+            now: Self.date("2026-10-30T12:02:00-04:00"),
+            calendar: Self.calendar("America/New_York"))
+
+        #expect(model.todaySpendText == "$85.10")
+    }
+
+    @Test
     func `a day the series omits costs nothing today`() throws {
         let summary = try MagpieUsageReader.usage(from: Data(Self.usageJSON.utf8))
         let model = OverviewUsageCardModel(
             summary: summary,
             now: Self.date("2026-10-31T09:00:00+08:00"),
-            calendar: Self.calendar)
+            calendar: Self.calendar())
 
         #expect(model.todaySpendText == "$0.00")
         #expect(model.totalSpendText == "$5,193.25")
@@ -90,17 +103,18 @@ struct MagpieUsageReaderTests {
     }
 
     @Test
-    func `a usage body CodexBar cannot read names its own failure`() {
-        #expect(throws: (any Error).self) {
-            try MagpieUsageReader.usage(from: Data(#"{"period":30}"#.utf8))
-        }
+    func `a body that decodes but carries no usage fields is rejected`() throws {
+        // The quota shape decodes cleanly here; showing it as a zeroed usage window would hide the
+        // wrong endpoint behind a plausible card.
+        let body = Data("""
+        {"data":[{"provider":"claude","windows":[{"name":"5 hours","used":1}]}]}
+        """.utf8)
+        var caught = false
         do {
-            _ = try MagpieUsageReader.usage(from: Data(#"{"period":30}"#.utf8))
-            Issue.record("expected a malformed usage response")
-        } catch let error as MagpieQuotasReaderError {
-            #expect(error.errorDescription == "magpie returned a usage response CodexBar cannot read.")
-        } catch {
-            Issue.record("unexpected error \(error)")
+            _ = try MagpieUsageReader.usage(from: body)
+        } catch MagpieQuotasReaderError.malformedUsageResponse {
+            caught = true
         }
+        #expect(caught)
     }
 }

@@ -225,14 +225,15 @@ extension UsageStore {
         // failure never fails the quota refresh; rows fall back to linear pace without it.
         let transport = self.magpieTransport
         async let history = try? MagpieQuotasReader.readHistory(quotasURL: quotasURL, transport: transport)
+        // The usage totals ride along with the quota read too, so a slow usage endpoint holds up the
+        // menu no longer than a slow history read does.
+        async let usage = try? MagpieUsageReader.readUsage(quotasURL: quotasURL, transport: transport)
         do {
             let rows = try await MagpieQuotasReader.readRows(
                 quotasURL: quotasURL,
                 transport: transport)
-            // The usage totals are best-effort and run after the required rows, so a failed or slow usage
-            // read never fails or delays the quota refresh; the card keeps its last totals.
-            let fetchedUsage = try? await MagpieUsageReader.readUsage(quotasURL: quotasURL, transport: transport)
             let fetchedHistory = await history
+            let fetchedUsage = await usage
             guard self.isCurrentMagpieRefresh(quotasURL: quotasURL, epoch: epoch) else { return }
             if let fetchedHistory {
                 self.magpieQuotaHistory = fetchedHistory

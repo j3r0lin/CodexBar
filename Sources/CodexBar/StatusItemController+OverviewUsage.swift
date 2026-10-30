@@ -4,7 +4,7 @@ import SwiftUI
 
 /// The Overview's usage card: the gateway's 30-day spend as the headline, with today's spend, tokens,
 /// and calls as three right-aligned facts.
-struct OverviewUsageCardModel: Equatable {
+struct OverviewUsageCardModel {
     let titleText: String
     let totalSpendText: String
     let todaySpendText: String
@@ -15,21 +15,22 @@ struct OverviewUsageCardModel: Equatable {
         self.titleText = "\(L("Usage & Spend")) · \(spendDashboardDayRangeText(summary.periodDays))"
         self.totalSpendText = UsageFormatter.currencyString(summary.totalCost, currencyCode: "USD")
         self.todaySpendText = UsageFormatter.currencyString(
-            summary.cost(onSameDayAs: now, calendar: calendar),
+            summary.cost(onDayOf: now, calendar: calendar),
             currencyCode: "USD")
         self.tokenText = ShareStatsFormatting.compactCount(summary.tokenCount)
         self.callText = ShareStatsFormatting.compactCount(summary.calls)
     }
 
-    /// Every value that can change the card's height.
+    /// Every value that can change the card's height, hashed by the shared helper so the cache is
+    /// keyed on shape rather than on the text itself.
     var heightFingerprint: String {
-        [
-            self.titleText,
-            self.totalSpendText,
-            self.todaySpendText,
-            self.tokenText,
-            self.callText,
-        ].joined(separator: "|")
+        MenuCardHeightFingerprint.join([
+            MenuCardHeightFingerprint.field("title", self.titleText),
+            MenuCardHeightFingerprint.field("total", self.totalSpendText),
+            MenuCardHeightFingerprint.field("today", self.todaySpendText),
+            MenuCardHeightFingerprint.field("tokens", self.tokenText),
+            MenuCardHeightFingerprint.field("calls", self.callText),
+        ])
     }
 
     var accessibilityText: String {
@@ -80,7 +81,7 @@ struct OverviewUsageCardView: View {
                     endPoint: .bottomTrailing)))
         .overlay(
             RoundedRectangle(cornerRadius: 11, style: .continuous)
-                .stroke(Color.white.opacity(0.07), lineWidth: 0.5))
+                .strokeBorder(Color.white.opacity(0.07), lineWidth: 0.5))
         .padding(.horizontal, 10)
         .padding(.bottom, 8)
         .frame(width: self.width, alignment: .leading)

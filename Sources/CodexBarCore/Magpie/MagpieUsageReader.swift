@@ -1,12 +1,14 @@
 import Foundation
 
-/// One day of magpie's usage series, at the local midnight magpie reports for it.
+/// One day of magpie's usage series, keyed by the calendar date magpie wrote for it rather than an
+/// instant: magpie stamps each day at the gateway's own midnight, which need not be the Mac's.
 public struct MagpieUsageDay: Sendable, Equatable {
-    public let day: Date
+    /// The `YYYY-MM-DD` prefix of the series entry's `time`, which carries the gateway's offset.
+    public let dayKey: String
     public let cost: Double
 
-    public init(day: Date, cost: Double) {
-        self.day = day
+    public init(dayKey: String, cost: Double) {
+        self.dayKey = dayKey
         self.cost = cost
     }
 }
@@ -41,9 +43,13 @@ public struct MagpieUsageSummary: Sendable, Equatable {
         self.inputTokens + self.outputTokens
     }
 
-    /// The series entry that falls on `date`'s day in `calendar`; a day the series omits costs nothing.
-    public func cost(onSameDayAs date: Date, calendar: Calendar) -> Double {
-        self.days.first { calendar.isDate($0.day, inSameDayAs: date) }?.cost ?? 0
+    /// The series cost for `date`'s calendar day, compared as dates and not instants: a gateway in
+    /// another zone still means "today" by the day it named, so the card and magpie agree.
+    public func cost(onDayOf date: Date, calendar: Calendar) -> Double {
+        let components = calendar.dateComponents([.year, .month, .day], from: date)
+        guard let year = components.year, let month = components.month, let day = components.day else { return 0 }
+        let key = String(format: "%04d-%02d-%02d", year, month, day)
+        return self.days.first { $0.dayKey == key }?.cost ?? 0
     }
 }
 
@@ -53,8 +59,10 @@ public struct MagpieUsageSummary: Sendable, Equatable {
 public enum MagpieUsageReader {
     public typealias Transport = MagpieQuotasReader.Transport
 
-    public static let defaultPeriodDays = 30
-    public static let maxResponseBytes = 1_048_576
+    static let defaultPeriodDays = 30
+    /// The usage body carries a per-day series and magpie's session list; it is as large as the history
+    /// read's and gets the same cap, which the quotas endpoint's 1 MiB would reject today.
+    static let maxResponseBytes = MagpieQuotasReader.maxHistoryResponseBytes
 
     /// The usage endpoint is the sibling of the configured quotas endpoint, so both come from one
     /// gateway address.
@@ -79,17 +87,10 @@ public enum MagpieUsageReader {
         guard let url = self.usageURL(fromQuotasURL: configured) else {
             throw MagpieQuotasReaderError.invalidURL
         }
-        var request = URLRequest(url: url, timeoutInterval: MagpieQuotasReader.defaultTimeout)
-        request.httpMethod = "GET"
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        let (data, response) = try await transport(request)
-        try Task.checkCancellation()
-        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-            throw MagpieQuotasReaderError.httpStatus(http.statusCode)
-        }
-        guard data.count <= self.maxResponseBytes else {
-            throw MagpieQuotasReaderError.responseTooLarge(byteCount: data.count, limit: self.maxResponseBytes)
-        }
+        let data = try await MagpieQuotasReader.get(
+            url,
+            limit: self.maxResponseBytes,
+            transport: transport)
         return try self.usage(from: data)
     }
 
@@ -106,12 +107,14 @@ public enum MagpieUsageReader {
             throw MagpieQuotasReaderError.malformedUsageResponse
         }
         let days = (response.series ?? []).compactMap(\.value).compactMap { point in
-            guard let day = ISO8601DateParser.parse(point.time) else { return nil as MagpieUsageDay? }
+            guard let time = point.time, let dayKey = Self.dayKey(time) else {
+                return nil as MagpieUsageDay?
+            }
             // magpie sends a day's cost as an integer when nothing was spent and a decimal otherwise;
             // both decode as Double. A non-finite cost would poison every total, so the day is dropped.
             let cost = point.cost ?? 0
             guard cost.isFinite else { return nil }
-            return MagpieUsageDay(day: day, cost: cost)
+            return MagpieUsageDay(dayKey: dayKey, cost: cost)
         }
         return MagpieUsageSummary(
             periodDays: Self.periodDays(response.period),
@@ -131,6 +134,20 @@ public enum MagpieUsageReader {
         return days
     }
 
+    /// The date part of an ISO 8601 timestamp, read as written in its own offset. Parsing it as a
+    /// `Date` would collapse gateway midnight and Mac midnight into one instant comparison.
+    static func dayKey(_ time: String) -> String? {
+        guard time.count >= 10 else { return nil }
+        let key = String(time.prefix(10))
+        let parts = key.split(separator: "-", omittingEmptySubsequences: false)
+        guard parts.count == 3,
+              parts[0].count == 4, Int(parts[0]) != nil,
+              parts[1].count == 2, Int(parts[1]) != nil,
+              parts[2].count == 2, Int(parts[2]) != nil
+        else { return nil }
+        return key
+    }
+
     // MARK: - Wire format
 
     private struct Response: Decodable {
@@ -140,15 +157,6 @@ public enum MagpieUsageReader {
         let input: Int?
         let output: Int?
         let series: [Lenient<SeriesPoint>]?
-    }
-
-    /// One malformed day must not discard the rest of the series.
-    private struct Lenient<Value: Decodable>: Decodable {
-        let value: Value?
-
-        init(from decoder: any Decoder) throws {
-            self.value = try? Value(from: decoder)
-        }
     }
 
     private struct SeriesPoint: Decodable {

@@ -71,7 +71,7 @@ extension [ProviderDetailSection] {
     }
 }
 
-private enum MenuCardHeightFingerprint {
+enum MenuCardHeightFingerprint {
     private static let hashSalt = UUID()
 
     static func join(_ values: [String]) -> String {
