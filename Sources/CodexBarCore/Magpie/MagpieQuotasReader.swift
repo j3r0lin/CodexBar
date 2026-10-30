@@ -5,6 +5,7 @@ public enum MagpieQuotasReaderError: LocalizedError, Sendable {
     case httpStatus(Int)
     case responseTooLarge(byteCount: Int, limit: Int)
     case malformedResponse
+    case malformedUsageResponse
 
     public var errorDescription: String? {
         switch self {
@@ -16,6 +17,8 @@ public enum MagpieQuotasReaderError: LocalizedError, Sendable {
             "magpie returned \(byteCount) bytes; refusing to parse more than \(limit)."
         case .malformedResponse:
             "magpie returned a quota response CodexBar cannot read."
+        case .malformedUsageResponse:
+            "magpie returned a usage response CodexBar cannot read."
         }
     }
 }

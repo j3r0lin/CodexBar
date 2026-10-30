@@ -164,6 +164,7 @@ extension UsageStore {
         }
         self.magpieAccountSnapshots = []
         self.magpieQuotaHistory = nil
+        self.magpieUsage = nil
         self.magpieLastRefreshAt = nil
         self.magpieLastError = nil
         self.magpieDiscoveryCompleted = false
@@ -228,10 +229,16 @@ extension UsageStore {
             let rows = try await MagpieQuotasReader.readRows(
                 quotasURL: quotasURL,
                 transport: transport)
+            // The usage totals are best-effort and run after the required rows, so a failed or slow usage
+            // read never fails or delays the quota refresh; the card keeps its last totals.
+            let fetchedUsage = try? await MagpieUsageReader.readUsage(quotasURL: quotasURL, transport: transport)
             let fetchedHistory = await history
             guard self.isCurrentMagpieRefresh(quotasURL: quotasURL, epoch: epoch) else { return }
             if let fetchedHistory {
                 self.magpieQuotaHistory = fetchedHistory
+            }
+            if let fetchedUsage {
+                self.magpieUsage = fetchedUsage
             }
             let incoming = MagpieAccountProjection.snapshots(from: rows)
             var snapshots = incoming

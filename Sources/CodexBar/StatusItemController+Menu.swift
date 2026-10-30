@@ -430,33 +430,49 @@ extension StatusItemController {
         let spendProviders = providerScopes.spend
         let spendModel = self.overviewSpendDashboardModel(providers: spendProviders)
         let spendProviderCount = self.overviewSpendSubscriptionCount(providers: spendProviders)
+        // The magpie gateway totals cover every provider it owns, so they replace the native summary
+        // card rather than sitting beside it: the native card would only report the leftovers.
+        let usageModel = self.settings.magpieSourceEnabled
+            ? self.store.magpieUsage.map { OverviewUsageCardModel(summary: $0) }
+            : nil
+        if let usageModel {
+            menu.addItem(self.makeMenuCardItem(
+                OverviewUsageCardView(model: usageModel, width: menuWidth),
+                id: "overviewUsageCard",
+                width: menuWidth,
+                heightCacheScope: "overviewUsageCard",
+                heightCacheFingerprint: usageModel.heightFingerprint,
+                usesPanelBase: true))
+        }
         if spendProviderCount > 0 {
             let knownCounts = self.overviewSpendKnownSubscriptionCounts(
                 providers: spendProviders,
                 model: spendModel)
-            let spendSummary = OverviewSpendSummary(
-                model: spendModel,
-                providerCount: spendProviderCount,
-                knownCostProviderCount: knownCounts.cost,
-                knownTokenProviderCount: knownCounts.tokens)
-            let summaryItem = self.makeMenuCardItem(
-                OverviewSpendSummaryCardView(
-                    summary: spendSummary,
-                    days: spendModel.requestedDays,
-                    width: menuWidth),
-                id: "overviewSpendSummary",
-                width: menuWidth,
-                heightCacheScope: "overviewSpendSummary",
-                heightCacheFingerprint: [
-                    spendSummary.primarySpendText,
-                    spendSummary.providerCoverageText,
-                    spendSummary.tokenText ?? "",
-                    spendSummary.historyCoverageText,
-                    spendSummary.pricingCoverageText,
-                    spendSummary.provenanceText,
-                ].joined(separator: "|"),
-                usesPanelBase: true)
-            menu.addItem(summaryItem)
+            if usageModel == nil {
+                let spendSummary = OverviewSpendSummary(
+                    model: spendModel,
+                    providerCount: spendProviderCount,
+                    knownCostProviderCount: knownCounts.cost,
+                    knownTokenProviderCount: knownCounts.tokens)
+                let summaryItem = self.makeMenuCardItem(
+                    OverviewSpendSummaryCardView(
+                        summary: spendSummary,
+                        days: spendModel.requestedDays,
+                        width: menuWidth),
+                    id: "overviewSpendSummary",
+                    width: menuWidth,
+                    heightCacheScope: "overviewSpendSummary",
+                    heightCacheFingerprint: [
+                        spendSummary.primarySpendText,
+                        spendSummary.providerCoverageText,
+                        spendSummary.tokenText ?? "",
+                        spendSummary.historyCoverageText,
+                        spendSummary.pricingCoverageText,
+                        spendSummary.provenanceText,
+                    ].joined(separator: "|"),
+                    usesPanelBase: true)
+                menu.addItem(summaryItem)
+            }
             if let shareItem = self.makeOverviewShareStatsMenuItem(model: spendModel, width: menuWidth) {
                 menu.addItem(shareItem)
             }

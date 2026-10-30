@@ -20,7 +20,7 @@ extension UsageStore {
         _ = self.claudeSwapAccountSnapshots
         _ = self.claudeSwapLastError
         _ = self.claudeSwapRevision
-        _ = (self.magpieAccountSnapshots, self.magpieLastError, self.magpieRevision)
+        _ = (self.magpieAccountSnapshots, self.magpieLastError, self.magpieRevision, self.magpieUsage)
         _ = self.codexScheduledReset
         _ = self.tokenSnapshotPublications
         _ = self.tokenErrors
@@ -181,6 +181,9 @@ final class UsageStore {
     /// Window readings behind the Overview curves and fitted pace. Lands with the quota refresh that
     /// fetched it (and its `magpieRevision` bump); a failed history fetch keeps the previous one.
     @ObservationIgnored var magpieQuotaHistory: MagpieQuotaHistory?
+    /// Gateway totals behind the Overview's usage card. Lands with the quota refresh that fetched it;
+    /// a failed usage fetch keeps the previous totals so the card never blanks mid-session.
+    var magpieUsage: MagpieUsageSummary?
     /// False until the first magpie discovery attempt finishes; known-mapped providers pause native
     /// reads while false so enabling the switch never races a credential read.
     var magpieDiscoveryCompleted = false
