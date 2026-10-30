@@ -45,8 +45,13 @@ public struct MagpieUsageSummary: Sendable, Equatable {
 
     /// The series cost for `date`'s calendar day, compared as dates and not instants: a gateway in
     /// another zone still means "today" by the day it named, so the card and magpie agree.
+    ///
+    /// The day is read from a Gregorian calendar carrying the caller's zone: magpie writes Gregorian
+    /// dates, and a user's Japanese or Buddhist calendar would number the same day differently.
     public func cost(onDayOf date: Date, calendar: Calendar) -> Double {
-        let components = calendar.dateComponents([.year, .month, .day], from: date)
+        var gregorian = Calendar(identifier: .gregorian)
+        gregorian.timeZone = calendar.timeZone
+        let components = gregorian.dateComponents([.year, .month, .day], from: date)
         guard let year = components.year, let month = components.month, let day = components.day else { return 0 }
         let key = String(format: "%04d-%02d-%02d", year, month, day)
         return self.days.first { $0.dayKey == key }?.cost ?? 0

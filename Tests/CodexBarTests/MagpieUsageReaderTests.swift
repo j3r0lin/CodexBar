@@ -56,6 +56,20 @@ struct MagpieUsageReaderTests {
     }
 
     @Test
+    func `a Japanese calendar still reads today as the gateway's Gregorian date`() throws {
+        // The same day numbered in a Japanese calendar is year 8 of Reiwa; magpie names it 2026-10-30.
+        let summary = try MagpieUsageReader.usage(from: Data(Self.usageJSON.utf8))
+        var japanese = Calendar(identifier: .japanese)
+        japanese.timeZone = try #require(TimeZone(identifier: "Asia/Shanghai"))
+        let model = OverviewUsageCardModel(
+            summary: summary,
+            now: Self.date("2026-10-30T12:02:00+08:00"),
+            calendar: japanese)
+
+        #expect(model.todaySpendText == "$85.10")
+    }
+
+    @Test
     func `a day the series omits costs nothing today`() throws {
         let summary = try MagpieUsageReader.usage(from: Data(Self.usageJSON.utf8))
         let model = OverviewUsageCardModel(
