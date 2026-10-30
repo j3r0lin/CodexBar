@@ -273,6 +273,58 @@ extension StatusMenuTests {
     }
 
     @Test
+    func `a magpie row's refresh item fetches the quotas again`() async throws {
+        self.disableMenuCardsForTesting()
+        let settings = self.makeSettings()
+        settings.statusChecksEnabled = false
+        settings.refreshFrequency = .manual
+        settings.mergeIcons = true
+        settings.selectedMenuProvider = .claude
+        settings.mergedMenuLastSelectedWasOverview = true
+        enableTestProviders([.claude, .codex], settings: settings)
+
+        let store = UsageStore(
+            fetcher: UsageFetcher(),
+            browserDetection: BrowserDetection(cacheTTL: 0),
+            settings: settings)
+        let quotasGets = LockedCounter()
+        let reply = ClaudeMagpieFixture.transport()
+        store.magpieTransport = { request in
+            if request.url?.path.hasSuffix("/quotas") == true { quotasGets.increment() }
+            return try await reply(request)
+        }
+        settings.magpieSourceEnabled = true
+        await store.refreshMagpieAccounts()
+        let rowID = try #require(store.magpieAccountSnapshots.first { $0.provider.wireID == "claude" }?.id)
+
+        let controller = StatusItemController(
+            store: store,
+            settings: settings,
+            account: UsageFetcher().loadAccountInfo(),
+            updater: DisabledUpdaterController(),
+            preferencesSelection: PreferencesSelection(),
+            statusBar: self.makeStatusBarForTesting())
+        defer { controller.releaseStatusItemsForTesting() }
+        let menu = controller.makeMenu()
+        controller.menuWillOpen(menu)
+        let row = try #require(menu.items.first {
+            ($0.representedObject as? String) == "overviewRow-claude#\(rowID.opaqueID)"
+        })
+        let submenu = try #require(row.submenu)
+        submenu.delegate?.menuNeedsUpdate?(submenu)
+        let refresh = try #require(submenu.items.last)
+        #expect(refresh.title == L("Refresh this account"))
+
+        let before = quotasGets.value
+        let action = try #require(refresh.action)
+        _ = controller.perform(action, with: refresh)
+        for _ in 0..<100 where quotasGets.value == before {
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        #expect(quotasGets.value > before)
+    }
+
+    @Test
     func `unlimited magpie accounts disappear from Overview and mixed accounts keep limited windows`() throws {
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
@@ -610,5 +662,17 @@ extension StatusMenuTests {
             try? await Task.sleep(for: .milliseconds(10))
         }
         #expect(!controller.menuNeedsRefresh(menu))
+    }
+}
+
+private final class LockedCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var count = 0
+    var value: Int {
+        self.lock.withLock { self.count }
+    }
+
+    func increment() {
+        self.lock.withLock { self.count += 1 }
     }
 }

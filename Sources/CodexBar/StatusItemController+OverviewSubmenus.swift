@@ -85,11 +85,14 @@ extension StatusItemController {
         submenu.addItem(refresh)
     }
 
-    /// Which providers a row's refresh item reloads: one provider, or every magpie account when the row
-    /// has no provider of its own to scope to.
+    /// What a row's refresh item reloads: the magpie gateway for a magpie row, else the row's own provider.
     private final class OverviewAccountRefreshTarget {
+        let isMagpie: Bool
         let provider: ProviderInstanceID?
-        init(provider: ProviderInstanceID?) { self.provider = provider }
+        init(isMagpie: Bool, provider: ProviderInstanceID?) {
+            self.isMagpie = isMagpie
+            self.provider = provider
+        }
     }
 
     /// A row that is neither magpie nor native has nothing to refresh, so it gets no item.
@@ -100,12 +103,21 @@ extension StatusItemController {
             action: #selector(self.refreshOverviewAccount(_:)),
             keyEquivalent: "")
         item.target = self
-        item.representedObject = OverviewAccountRefreshTarget(provider: row.nativeProvider?.instanceID)
+        item.representedObject = OverviewAccountRefreshTarget(
+            isMagpie: row.isMagpie,
+            provider: row.nativeProvider?.instanceID)
         return item
     }
 
     @objc private func refreshOverviewAccount(_ sender: NSMenuItem) {
         guard let target = sender.representedObject as? OverviewAccountRefreshTarget else { return }
+        if target.isMagpie {
+            // `startManualRefresh` for a magpie-routed provider only awaits an in-flight fetch and never
+            // schedules one, so the row's data would not change. `refreshMagpieAccounts` starts a fetch
+            // and shares one that is already running.
+            Task { @MainActor [store] in await store.refreshMagpieAccounts() }
+            return
+        }
         self.startManualRefresh(
             for: target.provider,
             originatingMenuID: nil,
