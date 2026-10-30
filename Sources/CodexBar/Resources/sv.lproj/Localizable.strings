@@ -2690,7 +2690,6 @@
 "%lld accounts" = "%lld konton";
 "Auto-refresh off" = "Automatisk uppdatering av";
 "Auto-refresh on" = "Automatisk uppdatering på";
-"Refresh Claude usage" = "Uppdatera Claude-användning";
 "resets in %@" = "återställs om %@";
 "Tomorrow %@" = "I morgon %@";
 "Runs out %@ at this pace" = "Tar slut %@ i den här takten";

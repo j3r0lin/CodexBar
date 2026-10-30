@@ -2640,7 +2640,6 @@
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Dotyczy wybranego konta tokena „%@”. Każde konto zachowuje własne limity.";
 "Applies to the OpenAI API key, not to token accounts." = "Dotyczy klucza API OpenAI, a nie kont tokenów.";
 "%lld accounts" = "%lld kont";
-"Refresh Claude usage" = "Odśwież użycie Claude";
 "No providers enabled" = "Brak włączonych dostawców";
 "5-hour limit" = "Limit 5-godzinny";
 "Weekly limit" = "Limit tygodniowy";

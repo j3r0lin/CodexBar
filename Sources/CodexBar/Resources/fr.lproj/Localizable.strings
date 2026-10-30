@@ -2690,7 +2690,6 @@
 "%lld accounts" = "%lld comptes";
 "Auto-refresh off" = "Actualisation automatique désactivée";
 "Auto-refresh on" = "Actualisation automatique activée";
-"Refresh Claude usage" = "Actualiser l’utilisation de Claude";
 "resets in %@" = "réinitialisé dans %@";
 "Tomorrow %@" = "Demain %@";
 "Runs out %@ at this pace" = "Épuisé %@ à ce rythme";

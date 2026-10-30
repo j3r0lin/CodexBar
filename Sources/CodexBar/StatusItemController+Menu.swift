@@ -539,7 +539,7 @@ extension StatusItemController {
             provider: row.nativeProvider,
             icon: icon.image,
             iconIsTemplate: icon.isTemplate,
-            providerTag: Self.providerTag(for: row, displayedName: name),
+            providerTag: Self.providerTag(providerName: row.providerName, displayedName: name),
             plan: row.plan,
             errorText: row.errorText,
             showsErrorFlag: row.showsErrorFlag,
@@ -558,17 +558,13 @@ extension StatusItemController {
             now: now)
     }
 
-    /// The provider's id in grey beside an account name, unless the name already says it ("Codex" for
-    /// codex, "OpenCode Go" for opencode-go).
-    static func providerTag(for row: OverviewUsageRow, displayedName: String) -> String? {
-        func normalized(_ text: String) -> String {
-            text.lowercased().filter { $0.isLetter || $0.isNumber }
-        }
-        return normalized(displayedName) == normalized(row.groupKey) ? nil : row.groupKey
+    /// The provider's name in grey beside an account name, unless the account is already named after it.
+    static func providerTag(providerName: String, displayedName: String) -> String? {
+        providerName.caseInsensitiveCompare(displayedName) == .orderedSame ? nil : providerName
     }
 
-    /// Ends the Overview's card list: the panel-coloured spacer, or a native separator when cards are not
-    /// rendered. The footer removes it again when nothing follows.
+    /// Ends the Overview's account list: the panel-coloured spacer, or a native separator when the rows are
+    /// not rendered. The footer removes it again when nothing follows.
     private func addOverviewRootDivider(to menu: NSMenu, width: CGFloat) {
         guard self.menuCardRenderingEnabledForController else {
             menu.addItem(.separator())

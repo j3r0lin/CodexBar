@@ -141,8 +141,8 @@ extension StatusItemController {
     }
 
     private func menuCardHeight(for view: NSView, width: CGFloat) -> CGFloat {
-        // Tight-fit rows (Overview account rows) draw a continuous background across items, so the
-        // standard air would read as a seam inside the block.
+        // Tight-fit rows (Overview account rows) fill their frame, so the standard air would show as a gap
+        // between them.
         let tight = (view as? MenuRowContainerView)?.rowPayload.tightVerticalFit ?? false
         let verticalPadding: CGFloat = tight ? 0 : 7 // 6pt of air plus 1pt of descender safety
 

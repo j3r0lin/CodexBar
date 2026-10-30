@@ -2659,7 +2659,6 @@
 "%lld accounts" = "계정 %lld개";
 "Auto-refresh off" = "자동 새로 고침 꺼짐";
 "Auto-refresh on" = "자동 새로 고침 켜짐";
-"Refresh Claude usage" = "Claude 사용량 새로 고침";
 "resets in %@" = "%@ 후 재설정";
 "Tomorrow %@" = "내일 %@";
 "Runs out %@ at this pace" = "이 속도라면 %@에 소진";

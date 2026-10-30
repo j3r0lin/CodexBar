@@ -2695,7 +2695,6 @@
 "%lld accounts" = "%lld حسابات";
 "Auto-refresh off" = "التحديث التلقائي مغلق";
 "Auto-refresh on" = "التحديث التلقائي مفعّل";
-"Refresh Claude usage" = "تحديث استخدام Claude";
 "resets in %@" = "إعادة التعيين في %@";
 "Tomorrow %@" = "غدًا %@";
 "Runs out %@ at this pace" = "ينفد %@ بهذه الوتيرة";

@@ -19,26 +19,6 @@ struct OverviewCompactAccountRowTests {
     }
 
     @Test
-    func `a pace tick does not change the row height`() {
-        let reset = Self.now.addingTimeInterval(3 * 86400)
-        func height(pacePercent: Double?, tone: OverviewCompactAccountRow.PaceTone) -> CGFloat {
-            self.height(OverviewCompactAccountRow(
-                name: "Claude",
-                shortWindow: nil,
-                longWindow: nil,
-                width: Self.width,
-                namedLines: [
-                    .init(label: "5h", used: 40, resetsAt: reset),
-                    .init(label: "7d", used: 60, resetsAt: reset, pacePercent: pacePercent, paceTone: tone),
-                ],
-                now: Self.now))
-        }
-        let plain = height(pacePercent: nil, tone: .neutral)
-        let paced = height(pacePercent: 50, tone: .runsOut)
-        #expect(paced == plain)
-    }
-
-    @Test
     func `a long name wraps to a second line and grows a single-window row`() {
         func height(_ name: String) -> CGFloat {
             self.height(OverviewCompactAccountRow(
@@ -197,8 +177,7 @@ struct OverviewCompactAccountRowTests {
     func `the percent is white until it reaches a warning threshold`() {
         let thresholds = (session: [50, 20], weekly: [50, 20])
         // Pace never tints the number; only the thresholds do.
-        let ahead = OverviewCompactAccountRow.Line(
-            label: "5h", used: 30, resetsAt: nil, pacePercent: 10, paceTone: .runsOut)
+        let ahead = OverviewCompactAccountRow.Line(label: "5h", used: 30, resetsAt: nil, pacePercent: 10)
         #expect(self.reading(ahead, thresholds: thresholds).percentColor == OverviewPalette.text)
         #expect(self.reading(self.line(used: 0), thresholds: thresholds).percentColor == OverviewPalette.text)
         #expect(self.reading(self.line(used: 50), thresholds: thresholds).percentColor == OverviewPalette.warning)
@@ -208,27 +187,11 @@ struct OverviewCompactAccountRowTests {
     }
 
     @Test
-    func `the provider id shows beside a name only when the name does not already say it`() {
-        func tag(_ name: String, groupKey: String) -> String? {
-            StatusItemController.providerTag(
-                for: OverviewUsageRow(
-                    groupKey: groupKey,
-                    providerName: name,
-                    nativeProvider: nil,
-                    accountID: nil,
-                    accountName: nil,
-                    namedWindows: [],
-                    snapshot: nil,
-                    model: nil,
-                    errorText: nil,
-                    showsErrorFlag: false,
-                    detailErrorText: nil,
-                    readAt: nil),
-                displayedName: name)
-        }
-        #expect(tag("claude-1", groupKey: "claude") == "claude")
-        #expect(tag("Codex", groupKey: "codex") == nil)
-        #expect(tag("OpenCode Go", groupKey: "opencode-go") == nil)
+    func `the provider name shows beside an account name unless it is the name`() {
+        #expect(StatusItemController.providerTag(providerName: "Claude", displayedName: "claude-1") == "Claude")
+        #expect(StatusItemController.providerTag(providerName: "Droid", displayedName: "work") == "Droid")
+        #expect(StatusItemController.providerTag(providerName: "Codex", displayedName: "codex") == nil)
+        #expect(StatusItemController.providerTag(providerName: "OpenCode Go", displayedName: "OpenCode Go") == nil)
     }
 
     @Test
@@ -263,6 +226,31 @@ struct OverviewCompactAccountRowTests {
         #expect(segment?.end == 100)
         #expect(self.overrun(self.line(used: 50.5, pace: 50)) == nil)
         #expect(self.overrun(self.line(used: 51, pace: 50))?.end == 51)
+    }
+
+    @Test
+    func `a remaining display hatches the gap on the track, not the fill`() {
+        // 70% used with the tick at 50%: the fill is the 30% left, so the 30...50 gap lies outside it.
+        let remaining = self.bar(self.line(used: 70, pace: 50), showsRemaining: true)
+        #expect(remaining.overrunSegment?.start == 30)
+        #expect(remaining.overrunSegment?.end == 50)
+        #expect(!remaining.overrunIsInsideFill)
+        // Used display: the usage past the tick lies on the fill.
+        let used = self.bar(self.line(used: 70, pace: 50), showsRemaining: false)
+        #expect(used.overrunSegment?.start == 50)
+        #expect(used.overrunSegment?.end == 70)
+        #expect(used.overrunIsInsideFill)
+    }
+
+    private func bar(_ line: OverviewCompactAccountRow.Line, showsRemaining: Bool) -> UsageBar {
+        let reading = self.reading(line, showsRemaining: showsRemaining)
+        return UsageBar(
+            used: reading.percent,
+            color: reading.barColor,
+            trackColor: OverviewCompactAccountRow.trackColor,
+            height: OverviewCompactAccountRow.barHeight,
+            pacePercent: reading.pacePercent,
+            overruns: reading.overruns)
     }
 
     private func overrun(

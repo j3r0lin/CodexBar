@@ -8,8 +8,6 @@ import SwiftUI
 enum OverviewPalette {
     /// Fills the whole Overview panel behind its rows: opaque, so the menu material never tints it.
     static let panelBase = NSColor(srgbRed: 0.10, green: 0.10, blue: 0.11, alpha: 1)
-    /// The surface of a card on the panel, a step lighter.
-    static let cardBase = NSColor(srgbRed: 0.137, green: 0.137, blue: 0.149, alpha: 1)
 
     /// Readings that are not a warning.
     static let text = Color.white.opacity(0.92)
@@ -49,8 +47,10 @@ enum OverviewPalette {
 
     /// The number beside a bar: white until the reading reaches a warning threshold.
     static func percentColor(usedPercent used: Double, warningThresholds: [Int]? = nil) -> Color {
-        let color = self.color(usedPercent: used, warningThresholds: warningThresholds)
-        return color == self.accent ? self.text : color
+        let bounds = self.bounds(forWarningThresholds: warningThresholds)
+        if used >= bounds.critical { return self.critical }
+        if used >= bounds.warning { return self.warning }
+        return self.text
     }
 }
 
@@ -98,7 +98,7 @@ struct OverviewDisplayOptions: Equatable {
     /// The user's remaining-quota warning thresholds, highest first, per window kind; nil keeps 70/90.
     var sessionWarningThresholds: [Int]?
     var weeklyWarningThresholds: [Int]?
-    /// Draws the pace tick and tints the percent by its pace; off hides both.
+    /// Draws the pace tick and the hatching of usage ahead of it; off hides both.
     var showsPace = true
 
     func warningThresholds(for window: QuotaWarningWindow) -> [Int]? {
@@ -109,7 +109,7 @@ struct OverviewDisplayOptions: Equatable {
     }
 }
 
-/// One Overview card per account: a compact header above full-width usage lines, short window first.
+/// One Overview row per account: a compact header above full-width usage lines, short window first.
 struct OverviewCompactAccountRow: View {
     let name: String
     let shortWindow: RateWindow?
@@ -146,31 +146,6 @@ struct OverviewCompactAccountRow: View {
     var now = Date()
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
-    enum PaceTone: Equatable {
-        case neutral
-        case deficit
-        case runsOut
-
-        /// A fitted run-out from magpie's readings decides whether the window runs out; the linear pace
-        /// decides it only without one. Either way the deficit tint marks usage ahead of the even burn
-        /// that still lasts to the reset.
-        init(pace: UsagePace, fitted: MagpieQuotaTrend.Eta? = nil) {
-            let runsOut = switch fitted {
-            case .runsOut: true
-            case .lastsPastReset: false
-            case nil: !pace.willLastToReset && pace.etaSeconds != nil
-            }
-            if runsOut {
-                self = .runsOut
-                return
-            }
-            switch pace.stage {
-            case .slightlyAhead, .ahead, .farAhead: self = .deficit
-            case .onTrack, .slightlyBehind, .behind, .farBehind: self = .neutral
-            }
-        }
-    }
-
     struct Line: Equatable {
         let label: String
         let used: Double
@@ -181,9 +156,6 @@ struct OverviewCompactAccountRow: View {
         /// Where the linear pace says usage should be by now, drawn as a tick on the bar; nil when the
         /// window has no pace.
         var pacePercent: Double?
-        /// The pace verdict of the window; the row no longer draws it, the bar's hatching and the thresholds
-        /// carry the warning.
-        var paceTone: PaceTone = .neutral
     }
 
     /// Every line puts the same element in the same column, so each part is sized here and the bar
@@ -377,7 +349,7 @@ struct OverviewCompactAccountRow: View {
         let thresholds = self.display.warningThresholds(for: line.warningWindow)
         return Reading(
             percent: Self.displayedPercent(line.used, showsRemaining: self.display.showsRemaining),
-            barColor: Self.severityColor(line.used, warningThresholds: thresholds),
+            barColor: OverviewPalette.color(usedPercent: line.used, warningThresholds: thresholds),
             percentColor: OverviewPalette.percentColor(usedPercent: line.used, warningThresholds: thresholds),
             pacePercent: self.display.showsPace
                 ? line.pacePercent.map { Self.displayedPercent($0, showsRemaining: self.display.showsRemaining) }
@@ -387,7 +359,7 @@ struct OverviewCompactAccountRow: View {
 
     private func readingView(_ line: Line) -> some View {
         let reading = self.reading(for: line)
-        return HStack(spacing: 8) {
+        return HStack(spacing: Self.columnSpacing) {
             Text(line.label)
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(OverviewPalette.caption)
@@ -420,14 +392,11 @@ struct OverviewCompactAccountRow: View {
     }
 
     static let barHeight: CGFloat = 4
+    /// The gap between a line's label, bar, percent and reset columns.
+    static let columnSpacing: CGFloat = 8
 
     /// Menus are pinned dark, so the empty part of a bar is drawn light enough to read there.
     static let trackColor = Color.white.opacity(0.10)
-
-    /// The bar's fill colour. A highlighted row keeps it: the selection is painted behind the row.
-    static func severityColor(_ used: Double, warningThresholds: [Int]? = nil) -> Color {
-        OverviewPalette.color(usedPercent: used, warningThresholds: warningThresholds)
-    }
 
     /// Explicit durations determine the slots. Untyped readings use only provider-owned semantics;
     /// an unknown reading occupies the long slot first and keeps a duration-free label. A window whose
@@ -568,6 +537,12 @@ struct UsageBar: View {
         return (min(fillEnd, tick), max(fillEnd, tick))
     }
 
+    /// The fill reaches the pace tick, so the hatched stretch lies on the fill; when the fill ends short of the
+    /// tick (a remaining display) it lies on the track.
+    var overrunIsInsideFill: Bool {
+        self.used >= (self.pacePercent ?? 0)
+    }
+
     private static let tickOverhang: CGFloat = 2
 
     var body: some View {
@@ -579,10 +554,13 @@ struct UsageBar: View {
                         .fill(self.color)
                         .frame(width: Self.fillWidth(used: self.used, barWidth: proxy.size.width, height: self.height))
                     if let segment = self.overrunSegment {
+                        // Inside the fill the stripes darken it; past the fill's end (remaining display) the
+                        // gap is stripes of the tone on the bare track, so it does not read as fill.
                         Rectangle()
-                            .fill(self.color)
+                            .fill(self.overrunIsInsideFill ? self.color : Color.clear)
                             .frame(width: proxy.size.width * (segment.end - segment.start) / 100)
-                            .overlay(Self.hatching)
+                            .overlay(Self.hatching(
+                                stripe: self.overrunIsInsideFill ? .black.opacity(0.35) : self.color.opacity(0.45)))
                             .offset(x: proxy.size.width * segment.start / 100)
                     }
                 }
@@ -604,8 +582,7 @@ struct UsageBar: View {
         .frame(height: self.height + 2 * Self.tickOverhang)
     }
 
-    /// Dark diagonal stripes laid over the fill colour.
-    private static var hatching: some View {
+    private static func hatching(stripe: Color) -> some View {
         Canvas { context, size in
             var path = Path()
             var x = -size.height
@@ -614,7 +591,7 @@ struct UsageBar: View {
                 path.addLine(to: CGPoint(x: x + size.height, y: 0))
                 x += 4
             }
-            context.stroke(path, with: .color(.black.opacity(0.35)), lineWidth: 2)
+            context.stroke(path, with: .color(stripe), lineWidth: 2)
         }
     }
 

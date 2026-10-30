@@ -278,7 +278,7 @@ struct OverviewUsageRow {
         }
     }
 
-    /// A provider reporting one window per model would otherwise fill the Overview with one card.
+    /// A provider reporting one window per model would otherwise fill the Overview with one row per model.
     static let compactLineLimit = 3
 
     func isStale(now: Date, threshold: TimeInterval?) -> Bool {
@@ -287,14 +287,12 @@ struct OverviewUsageRow {
     }
 
     /// The compact lines of a magpie row, at most `compactLineLimit` of them; the detail card lists every
-    /// window. Every shown window with a pace gets its tick; the percent tint goes only on the longest of
-    /// them, since that is the one a reader plans against. With pace hidden no window gets either.
+    /// window. Every shown window with a pace gets its tick; with pace hidden none does.
     func compactLines(now: Date, showsPace: Bool = true) -> [OverviewCompactAccountRow.Line]? {
         guard let namedWindows = self.namedWindows?.prefix(Self.compactLineLimit) else { return nil }
         let paced = showsPace
             ? namedWindows.compactMap { window in window.pace(now: now).map { (window, $0) } }
             : []
-        let longest = paced.max { ($0.0.paceDuration ?? 0) < ($1.0.paceDuration ?? 0) }
         return namedWindows.map { window in
             var line = OverviewCompactAccountRow.Line(
                 label: window.label,
@@ -302,9 +300,6 @@ struct OverviewUsageRow {
                 resetsAt: window.resetsAt,
                 warningWindow: Self.warningWindow(for: window))
             line.pacePercent = paced.first { $0.0 == window }?.1.expectedUsedPercent
-            if let longest, longest.0 == window {
-                line.paceTone = .init(pace: longest.1, fitted: window.trend(now: now)?.eta)
-            }
             return line
         }
     }

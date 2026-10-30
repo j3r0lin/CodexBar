@@ -134,8 +134,8 @@ struct MenuCardRowPayload {
     let allowsMenuHighlight: Bool
     let containsInteractiveControls: Bool
     let usesGPUSelection: Bool
-    /// Rows that draw a continuous background across neighbouring items (Overview account rows)
-    /// opt out of the standard vertical air so the panels meet without a seam.
+    /// Rows that fill their whole frame (Overview account rows and the panel spacer) opt out of the
+    /// standard vertical air so neighbouring rows meet without a gap.
     var tightVerticalFit: Bool = false
     /// Overview account rows highlight their whole frame, edge to edge, instead of the inset rounded
     /// selection other rows use.
@@ -171,6 +171,8 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     private static let selectionVerticalInset: CGFloat = 2
     private static let selectionCornerRadius: CGFloat = 6
     private static let selectionFadeDuration: CFTimeInterval = 0.06
+    /// How much white a hovered Overview row is lifted by.
+    static let wholeRowSelectionAlpha: CGFloat = 0.06
 
     override var intrinsicContentSize: NSSize {
         let width = self.frame.width > 0 ? self.frame.width : NSView.noIntrinsicMetric
@@ -482,7 +484,8 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
         if self.rowPayload.selectsWholeRow {
             selectionView = NSView()
             selectionView.wantsLayer = true
-            selectionView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.06).cgColor
+            selectionView.layer?.backgroundColor = NSColor.white
+                .withAlphaComponent(Self.wholeRowSelectionAlpha).cgColor
         } else {
             let material = NSVisualEffectView()
             material.material = .selection

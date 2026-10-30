@@ -2691,7 +2691,6 @@
 "%lld accounts" = "%lld акаунтів";
 "Auto-refresh off" = "Автооновлення вимкнено";
 "Auto-refresh on" = "Автооновлення увімкнено";
-"Refresh Claude usage" = "Оновити використання Claude";
 "resets in %@" = "скидання через %@";
 "Tomorrow %@" = "Завтра %@";
 "Runs out %@ at this pace" = "За такого темпу закінчиться %@";

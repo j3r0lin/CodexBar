@@ -84,16 +84,14 @@ struct OverviewRowRenderTests {
         func line(
             _ label: String,
             _ used: Double,
-            pace: Double? = nil,
-            tone: OverviewCompactAccountRow.PaceTone = .neutral)
+            pace: Double? = nil)
             -> OverviewCompactAccountRow.Line
         {
             .init(
                 label: label,
                 used: used,
                 resetsAt: now.addingTimeInterval(3 * 86400),
-                pacePercent: pace,
-                paceTone: tone)
+                pacePercent: pace)
         }
         func row(_ name: String, _ lines: [OverviewCompactAccountRow.Line], provider: Bool = true)
             -> OverviewCompactAccountRow
@@ -120,7 +118,7 @@ struct OverviewRowRenderTests {
         }
         try write("pace-bars", VStack(alignment: .leading, spacing: 8) {
             row("Claude", [line("5h", 40), line("7d", 40, pace: 50)])
-            row("Codex", [line("5h", 40), line("7d", 60, pace: 50, tone: .runsOut)])
+            row("Codex", [line("5h", 40), line("7d", 60, pace: 50)])
         })
         try write("long-names", VStack(alignment: .leading, spacing: 8) {
             row("Some Very Long Provider Name", [line("5h", 40), line("7d", 40, pace: 50)])
@@ -257,15 +255,13 @@ struct OverviewRowRenderTests {
             _ label: String,
             _ used: Double,
             resetIn: TimeInterval,
-            pace: Double? = nil,
-            tone: OverviewCompactAccountRow.PaceTone = .neutral) -> OverviewCompactAccountRow.Line
+            pace: Double? = nil) -> OverviewCompactAccountRow.Line
         {
             .init(
                 label: label,
                 used: used,
                 resetsAt: now.addingTimeInterval(resetIn),
-                pacePercent: pace,
-                paceTone: tone)
+                pacePercent: pace)
         }
         func row(
             _ name: String,
@@ -283,7 +279,7 @@ struct OverviewRowRenderTests {
         }
         /// The highlight MenuRowContainerView paints behind a hovered Overview row.
         func highlighted(_ view: some View) -> some View {
-            view.background(Color.white.opacity(0.06))
+            view.background(Color.white.opacity(MenuRowContainerView.wholeRowSelectionAlpha))
         }
 
         let account1 = [
@@ -293,12 +289,12 @@ struct OverviewRowRenderTests {
         ]
         let account2 = [
             line("5h", 64, resetIn: 25 * 60),
-            line("7d", 62, resetIn: 2.4 * day, pace: 66, tone: .runsOut),
+            line("7d", 62, resetIn: 2.4 * day, pace: 66),
             line("Fable", 0, resetIn: 2.4 * day),
         ]
         let account3 = [
             line("5h", 27, resetIn: 2 * hour + 12 * 60),
-            line("7d", 34, resetIn: 3.5 * day, pace: 50, tone: .neutral),
+            line("7d", 34, resetIn: 3.5 * day, pace: 50),
             line("Fable", 0, resetIn: 3.5 * day),
         ]
         let kimi = [

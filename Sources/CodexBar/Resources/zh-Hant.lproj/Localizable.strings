@@ -2672,7 +2672,6 @@
 "Waiting for magpie discovery" = "等待 magpie 偵測提供者";
 
 "%lld accounts" = "%lld 個帳戶";
-"Refresh Claude usage" = "重新整理 Claude 用量";
 "Tomorrow %@" = "明天 %@";
 "Runs out %@ at this pace" = "依此速度將於 %@ 用完";
 "Lasts past the reset at this pace" = "依此速度可撐到重置";

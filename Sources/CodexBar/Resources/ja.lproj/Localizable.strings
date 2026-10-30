@@ -2691,7 +2691,6 @@
 "%lld accounts" = "%lld 個のアカウント";
 "Auto-refresh off" = "自動更新オフ";
 "Auto-refresh on" = "自動更新オン";
-"Refresh Claude usage" = "Claude の使用状況を更新";
 "resets in %@" = "%@ 後にリセット";
 "Tomorrow %@" = "明日 %@";
 "Runs out %@ at this pace" = "このペースだと %@ に使い切ります";

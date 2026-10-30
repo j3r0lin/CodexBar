@@ -208,7 +208,7 @@ extension StatusMenuTests {
     func `magpie overview row offers refresh for that account`() throws {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
-        settings.statusChecksEnabled = false
+        settings.statusChecksEnabled = true
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
         settings.selectedMenuProvider = .claude
@@ -259,16 +259,17 @@ extension StatusMenuTests {
         submenu.delegate?.menuNeedsUpdate?(submenu)
         let refresh = try #require(submenu.items.last)
         #expect(refresh.title == L("Refresh this account"))
-        #expect(refresh.keyEquivalent == "r")
+        // The menu-wide refresh owns ⌘R, so the row's item shows no shortcut it would not honour.
+        #expect(refresh.keyEquivalent.isEmpty)
         #expect(refresh.target as? StatusItemController === controller)
 
-        // Provider-level Claude history and actions are not this account's, so only the account's own links
-        // (dashboard, status page) come before the refresh item.
-        // The link items carry a trailing arrow in their attributed title, so match by prefix.
+        // Provider-level Claude history and actions are not this account's: after the usage card come only
+        // the provider's dashboard and status page, then the refresh item.
         let titles = submenu.items.dropFirst().filter { !$0.isSeparatorItem }.map(\.title)
-        #expect(titles.last == L("Refresh this account"))
-        let allowed = [L("Usage Dashboard"), L("Status Page"), L("Refresh this account")]
-        #expect(titles.allSatisfy { title in allowed.contains { title.hasPrefix($0) } })
+        #expect(titles == [L("Usage Dashboard"), L("Status Page"), L("Refresh this account")])
+        // Claude's status page keeps its live-components submenu.
+        let status = try #require(submenu.items.first { $0.title == L("Status Page") })
+        #expect(status.submenu != nil)
     }
 
     @Test
@@ -401,9 +402,14 @@ extension StatusMenuTests {
         for detailRow in rows {
             let submenu = controller.makeOverviewDetailSubmenu(row: detailRow, width: 340)
             submenu.delegate?.menuNeedsUpdate?(submenu)
-            // The detail card, then only the row's own links and refresh.
+            // The detail card, then the refresh item; a row with no provider URL of its own has no link items.
             #expect((submenu.items.first?.representedObject as? String)?.hasPrefix("overviewDetail-") == true)
-            #expect(submenu.items.last?.title == L("Refresh this account"))
+            let titles = submenu.items.dropFirst().filter { !$0.isSeparatorItem }.map(\.title)
+            if detailRow.nativeProvider == nil {
+                #expect(titles == [L("Refresh this account")])
+            } else {
+                #expect(titles.last == L("Refresh this account"))
+            }
         }
     }
 

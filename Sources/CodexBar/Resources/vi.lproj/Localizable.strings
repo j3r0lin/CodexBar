@@ -2692,7 +2692,6 @@
 "%lld accounts" = "%lld tài khoản";
 "Auto-refresh off" = "Tắt tự động làm mới";
 "Auto-refresh on" = "Bật tự động làm mới";
-"Refresh Claude usage" = "Làm mới mức sử dụng Claude";
 "resets in %@" = "đặt lại sau %@";
 "Tomorrow %@" = "Ngày mai %@";
 "Runs out %@ at this pace" = "Với tốc độ này sẽ hết lúc %@";

@@ -2693,7 +2693,6 @@
 "%lld accounts" = "%lld บัญชี";
 "Auto-refresh off" = "ปิดการรีเฟรชอัตโนมัติ";
 "Auto-refresh on" = "เปิดการรีเฟรชอัตโนมัติ";
-"Refresh Claude usage" = "รีเฟรชการใช้งาน Claude";
 "resets in %@" = "รีเซ็ตใน %@";
 "Tomorrow %@" = "พรุ่งนี้ %@";
 "Runs out %@ at this pace" = "ด้วยอัตรานี้จะหมด %@";

@@ -2695,7 +2695,6 @@
 "%lld accounts" = "%lld حساب";
 "Auto-refresh off" = "تازه سازی خودکار خاموش است";
 "Auto-refresh on" = "تازه سازی خودکار روشن است";
-"Refresh Claude usage" = "تازه سازی مصرف Claude";
 "resets in %@" = "بازنشانی در %@";
 "Tomorrow %@" = "فردا %@";
 "Runs out %@ at this pace" = "با این روند %@ تمام می‌شود";

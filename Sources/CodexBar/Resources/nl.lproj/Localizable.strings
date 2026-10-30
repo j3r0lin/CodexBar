@@ -2688,7 +2688,6 @@
 "%lld accounts" = "%lld accounts";
 "Auto-refresh off" = "Automatisch vernieuwen uit";
 "Auto-refresh on" = "Automatisch vernieuwen aan";
-"Refresh Claude usage" = "Claude-gebruik vernieuwen";
 "resets in %@" = "resetten over %@";
 "Tomorrow %@" = "Morgen %@";
 "Runs out %@ at this pace" = "Op dit tempo op %@";

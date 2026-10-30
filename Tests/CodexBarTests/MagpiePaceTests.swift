@@ -45,7 +45,6 @@ struct MagpiePaceTests {
     func `half the week used at half the week elapsed is on pace`() throws {
         let line = try #require(Self.weeklyLine(of: Self.row(windows: [Self.weekly(used: 50)])))
         #expect(try abs(#require(line.pacePercent) - 50) < 0.001)
-        #expect(line.paceTone == .neutral)
     }
 
     @Test
@@ -55,8 +54,6 @@ struct MagpiePaceTests {
         #expect(pace.deltaPercent > 0)
         let eta = try #require(pace.etaSeconds)
         #expect(eta < 3.5 * Self.day)
-        let line = try #require(Self.weeklyLine(of: Self.row(windows: [Self.weekly(used: 80)])))
-        #expect(line.paceTone == .runsOut)
     }
 
     @Test
@@ -66,7 +63,6 @@ struct MagpiePaceTests {
         #expect(pace.deltaPercent < 0)
         #expect(pace.willLastToReset)
         let line = try #require(Self.weeklyLine(of: Self.row(windows: [Self.weekly(used: 20)])))
-        #expect(line.paceTone == .neutral)
         #expect(line.pacePercent != nil)
     }
 
@@ -95,7 +91,6 @@ struct MagpiePaceTests {
         let heavy = try #require(Self.weeklyLine(of: Self.row("claude:a", windows: [Self.weekly(used: 80)])))
         let light = try #require(Self.weeklyLine(of: Self.row("claude:b", windows: [Self.weekly(used: 20)])))
         #expect(heavy.pacePercent == light.pacePercent)
-        #expect(heavy.paceTone != light.paceTone)
     }
 
     @Test
@@ -139,18 +134,6 @@ struct MagpiePaceTests {
         #expect(named.label == "30d")
         let noReset = MagpieQuotaWindow(name: "30 days", usedPercent: 40, resetsAt: nil)
         #expect(OverviewUsageRow.NamedWindow(window: noReset).pace(now: Self.now) == nil)
-    }
-
-    @Test
-    func `the pace tint goes on the longest window by its resolved length`() throws {
-        let lines = try #require(Self.row(windows: [
-            Self.weekly(used: 80),
-            Self.weekly("Month", used: 90, remaining: 10 * Self.day),
-        ]).compactLines(now: Self.now))
-        let week = try #require(lines.first { $0.label == "7d" })
-        let month = try #require(lines.first { $0.label == "30d" })
-        #expect(month.paceTone != .neutral)
-        #expect(week.paceTone == .neutral)
     }
 
     @Test
@@ -251,33 +234,6 @@ struct MagpiePaceTests {
             detailErrorText: nil,
             readAt: nil)
         return row.compactLines(now: self.now)?.first
-    }
-
-    @Test
-    func `a steep recent burn runs out before reset although the linear pace lasts`() throws {
-        // 20% used at mid-week lasts on the linear pace, but the last six hours burned 3 points an hour.
-        let line = try #require(Self.weeklyLine(
-            window: Self.weekly(used: 20),
-            history: Self.readings(hours: 6, startLeft: 100, perHour: 3)))
-        #expect(line.paceTone == .runsOut)
-        #expect(try abs(#require(line.pacePercent) - 50) < 0.001)
-    }
-
-    @Test
-    func `a slow recent burn lasts although usage is ahead of the even burn`() throws {
-        // 80% used at mid-week runs out on the linear pace; the readings barely move.
-        let line = try #require(Self.weeklyLine(
-            window: Self.weekly(used: 80),
-            history: Self.readings(hours: 6, startLeft: 20.6, perHour: 0.1)))
-        #expect(line.paceTone == .deficit)
-    }
-
-    @Test
-    func `too few readings fall back to the linear pace`() throws {
-        let line = try #require(Self.weeklyLine(
-            window: Self.weekly(used: 20),
-            history: Array(Self.readings(hours: 6, startLeft: 100, perHour: 3).suffix(2))))
-        #expect(line.paceTone == .neutral)
     }
 
     @Test

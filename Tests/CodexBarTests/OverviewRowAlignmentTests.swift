@@ -67,7 +67,8 @@ struct OverviewRowAlignmentTests {
         }
         // The percent and reset columns trail the bar, so the bar runs up to the percent column.
         let barEnd = Self.width - OverviewCompactAccountRow.contentInset - OverviewCompactAccountRow.resetWidth
-            - 8 - OverviewCompactAccountRow.percentWidth - 8
+            - OverviewCompactAccountRow.columnSpacing - OverviewCompactAccountRow.percentWidth
+            - OverviewCompactAccountRow.columnSpacing
         #expect(abs(first.end - Int(barEnd * Self.scale)) <= 2, "bar ends at \(first.end): \(report)")
     }
 
@@ -138,7 +139,8 @@ struct OverviewRowAlignmentTests {
 
     /// Scan past the window label column to measure the usage bars.
     private static var scanStart: Int {
-        Int((OverviewCompactAccountRow.contentInset + OverviewCompactAccountRow.labelWidth + 8) * self.scale)
+        let labelEnd = OverviewCompactAccountRow.contentInset + OverviewCompactAccountRow.labelWidth
+        return Int((labelEnd + OverviewCompactAccountRow.columnSpacing) * self.scale)
     }
 
     private static func differs(_ a: NSColor, _ b: NSColor) -> Bool {

@@ -410,7 +410,7 @@ extension StatusMenuTests {
             })
             return try #require((item.view as? MenuRowContainerView)?.rowPayload.selectsWholeRow)
         }
-        #expect(wholeRowSelections.allSatisfy(\.self))
+        #expect(wholeRowSelections == Array(repeating: true, count: accounts.count))
         #expect(!menu.items.contains { ($0.representedObject as? String)?.hasPrefix("overviewHeading-") == true })
     }
 }
