@@ -596,10 +596,12 @@ extension StatusItemController {
             recyclesView: recyclesView)
     }
 
-    /// The card header: app icon, title, last-update subtitle, and the refresh/settings buttons.
+    /// The card header: app glyph, title, last-update subtitle, and the refresh/settings buttons.
     private func addOverviewHeader(to menu: NSMenu, width: CGFloat) {
         let updatedText = self.overviewLastSyncDate().map {
-            OverviewChromeText.updatedSubtitle(at: $0, autoRefreshOn: self.settings.refreshFrequency != .manual)
+            OverviewChromeText.updatedSubtitle(
+                at: $0,
+                autoRefreshOn: OverviewChromeText.isAutoRefreshing(self.settings.refreshFrequency))
         } ?? L("No usage fetched yet")
         menu.addItem(self.makeMenuCardItem(
             OverviewCardHeaderView(
@@ -634,20 +636,19 @@ extension StatusItemController {
         if Self.endsInDivider(menu) {
             menu.removeItem(at: menu.items.count - 1)
         }
-        let autoRefresh = self.settings.refreshFrequency != .manual
-        let statusText = OverviewChromeText.autoRefreshStatus(self.settings.refreshFrequency)
+        let frequency = self.settings.refreshFrequency
+        let statusText = OverviewChromeText.autoRefreshStatus(frequency)
         let version = AppVersion.shortVersion
         menu.addItem(self.makeMenuCardItem(
             OverviewFooterView(
-                autoRefreshOn: autoRefresh,
-                statusText: statusText,
+                frequency: frequency,
                 aboutHelp: L("About CodexBar") + (version.isEmpty ? "" : " (v\(version))"),
                 quitHelp: L("Quit"),
                 width: width),
             id: "overviewFooterStatus",
             width: width,
             heightCacheScope: "overviewFooterStatus",
-            heightCacheFingerprint: "footer-\(autoRefresh)-\(statusText)",
+            heightCacheFingerprint: "footer-\(frequency.rawValue)-\(statusText)",
             containsInteractiveControls: true,
             usesPanelBase: true))
     }

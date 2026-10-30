@@ -38,21 +38,32 @@ struct OverviewAppGlyph: View {
 /// The header subtitle and footer status of the Overview, kept out of the views so they can be checked
 /// without rendering.
 enum OverviewChromeText {
-    /// "Updated 12:02 · Auto-refresh": the clock follows the user's 12/24-hour setting, and a reading
-    /// from an earlier day carries its date so it never reads as today's.
+    static func isAutoRefreshing(_ frequency: RefreshFrequency) -> Bool {
+        frequency != .manual
+    }
+
+    /// "Updated 12:02 · Auto-refresh": words and date order follow the app language, while the 12/24-hour
+    /// choice follows the system setting (`clockLocale`). A reading from an earlier day carries its date so
+    /// it never reads as today's.
     static func updatedSubtitle(
         at date: Date,
         autoRefreshOn: Bool,
         now: Date = Date(),
-        locale: Locale = .autoupdatingCurrent,
+        locale: Locale = codexBarLocalizedResourceLocale(),
+        clockLocale: Locale = .autoupdatingCurrent,
         calendar: Calendar = .current) -> String
     {
+        let clockPattern = DateFormatter.dateFormat(fromTemplate: "jmm", options: 0, locale: clockLocale) ?? "HH:mm"
+        var pattern = clockPattern
+        if !calendar.isDate(date, inSameDayAs: now) {
+            let day = DateFormatter.dateFormat(fromTemplate: "Md", options: 0, locale: locale) ?? "M/d"
+            pattern = "\(day) \(clockPattern)"
+        }
         let formatter = DateFormatter()
         formatter.locale = locale
         formatter.calendar = calendar
         formatter.timeZone = calendar.timeZone
-        formatter.timeStyle = .short
-        formatter.dateStyle = calendar.isDate(date, inSameDayAs: now) ? .none : .short
+        formatter.dateFormat = pattern
         let time = formatter.string(from: date)
         return autoRefreshOn ? L("Updated %@ · Auto-refresh", time) : L("Updated %@", time)
     }
@@ -60,7 +71,7 @@ enum OverviewChromeText {
     /// "Auto-refresh on · every 5 min". Adaptive modes have no fixed interval to name, so they keep the
     /// plain "Auto-refresh on".
     static func autoRefreshStatus(_ frequency: RefreshFrequency) -> String {
-        if frequency == .manual { return L("Auto-refresh off") }
+        if !self.isAutoRefreshing(frequency) { return L("Auto-refresh off") }
         guard frequency.seconds != nil else { return L("Auto-refresh on") }
         return L("Auto-refresh on · every %@", frequency.label)
     }
@@ -199,8 +210,7 @@ enum OverviewSymbol {
 /// border already closes
 /// the content, the same way the header meets the first card.
 struct OverviewFooterView: View {
-    let autoRefreshOn: Bool
-    let statusText: String
+    let frequency: RefreshFrequency
     let aboutHelp: String
     let quitHelp: String
     let width: CGFloat
@@ -210,11 +220,11 @@ struct OverviewFooterView: View {
     var body: some View {
         HStack(spacing: 8) {
             Circle()
-                .fill(self.autoRefreshOn
+                .fill(OverviewChromeText.isAutoRefreshing(self.frequency)
                     ? Color(red: 0.24, green: 0.84, blue: 0.44)
                     : OverviewPalette.neutral)
                 .frame(width: 7, height: 7)
-            Text(self.statusText)
+            Text(OverviewChromeText.autoRefreshStatus(self.frequency))
                 .font(.system(size: 11))
                 .foregroundStyle(OverviewPalette.caption)
                 .lineLimit(1)

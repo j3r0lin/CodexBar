@@ -1,8 +1,9 @@
 import AppKit
 import SwiftUI
 
-/// Draws the footer's hover square in AppKit. NSMenu tracking neither drains the main queue nor
-/// repaints a SwiftUI hosting view, so the SwiftUI hover state cannot become visible on its own.
+/// Draws the hover square of the Overview's icon buttons in AppKit. NSMenu tracking neither drains the main
+/// queue nor repaints a SwiftUI hosting view, so the SwiftUI hover state cannot become visible on its own;
+/// `refreshHostedContent` pushes it through.
 @MainActor
 enum MenuHoverOverlay {
     static func update(around view: NSView, hovering: Bool, style: Style = .footer) {
@@ -21,6 +22,16 @@ enum MenuHoverOverlay {
         } else {
             existing.forEach { $0.removeFromSuperview() }
         }
+    }
+
+    /// Lays out and redraws the hosting view around `view`, so SwiftUI state set by the tracking callback
+    /// (the icon tint) shows while the menu is still tracking.
+    static func refreshHostedContent(around view: NSView) {
+        guard let container = sequence(first: view, next: { $0.superview })
+            .first(where: { $0 is MenuRowContainerView })
+        else { return }
+        container.layoutSubtreeIfNeeded()
+        container.displayIfNeeded()
     }
 
     struct Style: Equatable {
@@ -119,6 +130,7 @@ struct MouseLocationReader: NSViewRepresentable {
             self.onMoved?(location)
             if self.drawsHoverOverlay {
                 MenuHoverOverlay.update(around: self, hovering: location != nil, style: self.hoverStyle)
+                MenuHoverOverlay.refreshHostedContent(around: self)
             }
         }
 

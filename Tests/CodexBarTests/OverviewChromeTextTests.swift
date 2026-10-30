@@ -10,39 +10,40 @@ struct OverviewChromeTextTests {
         return calendar
     }
 
-    private static let noon = Date(timeIntervalSince1970: 1_790_000_000)
+    /// 2026-09-21 14:13:20 UTC.
+    private static let updatedAt = Date(timeIntervalSince1970: 1_790_000_000)
 
     private func subtitle(
         _ date: Date,
         autoRefresh: Bool,
         now: Date? = nil,
-        locale: String = "en_GB") -> String
+        clock: String = "en_GB") -> String
     {
         OverviewChromeText.updatedSubtitle(
             at: date,
             autoRefreshOn: autoRefresh,
             now: now ?? date,
-            locale: Locale(identifier: locale),
+            clockLocale: Locale(identifier: clock),
             calendar: Self.calendar)
     }
 
     @Test
     func `subtitle names the update time and auto-refresh`() {
         CodexBarLocalizationOverride.$appLanguage.withValue("en") {
-            let text = self.subtitle(Self.noon, autoRefresh: true)
+            let text = self.subtitle(Self.updatedAt, autoRefresh: true)
             #expect(text == "Updated 14:13 · Auto-refresh")
-            #expect(self.subtitle(Self.noon, autoRefresh: false) == "Updated 14:13")
+            #expect(self.subtitle(Self.updatedAt, autoRefresh: false) == "Updated 14:13")
         }
         CodexBarLocalizationOverride.$appLanguage.withValue("zh-Hans") {
-            #expect(self.subtitle(Self.noon, autoRefresh: true) == "更新于 14:13 · 自动刷新")
-            #expect(self.subtitle(Self.noon, autoRefresh: false) == "更新于 14:13")
+            #expect(self.subtitle(Self.updatedAt, autoRefresh: true) == "更新于 14:13 · 自动刷新")
+            #expect(self.subtitle(Self.updatedAt, autoRefresh: false) == "更新于 14:13")
         }
     }
 
     @Test
     func `subtitle follows the 12-hour clock setting`() {
         CodexBarLocalizationOverride.$appLanguage.withValue("en") {
-            let text = self.subtitle(Self.noon, autoRefresh: true, locale: "en_US")
+            let text = self.subtitle(Self.updatedAt, autoRefresh: true, clock: "en_US")
             #expect(text.contains("2:13"))
             #expect(text.contains("PM"))
             #expect(text.hasSuffix(" · Auto-refresh"))
@@ -50,12 +51,22 @@ struct OverviewChromeTextTests {
     }
 
     @Test
+    func `the clock keeps the system 12-hour setting under another app language`() {
+        CodexBarLocalizationOverride.$appLanguage.withValue("zh-Hans") {
+            let text = self.subtitle(Self.updatedAt, autoRefresh: true, clock: "en_US")
+            #expect(text.hasPrefix("更新于 "))
+            #expect(text.hasSuffix(" · 自动刷新"))
+            #expect(text.contains("2:13"))
+            #expect(!text.contains("PM"))
+        }
+    }
+
+    @Test
     func `an update from an earlier day carries its date`() {
         CodexBarLocalizationOverride.$appLanguage.withValue("en") {
-            let text = self.subtitle(Self.noon, autoRefresh: false, now: Self.noon.addingTimeInterval(86400 * 2))
-            #expect(text.hasPrefix("Updated "))
-            #expect(text.count > "Updated 14:13".count)
-            #expect(text.contains("14:13"))
+            let twoDaysLater = Self.updatedAt.addingTimeInterval(86400 * 2)
+            let text = self.subtitle(Self.updatedAt, autoRefresh: false, now: twoDaysLater)
+            #expect(text == "Updated 9/21 14:13")
         }
     }
 

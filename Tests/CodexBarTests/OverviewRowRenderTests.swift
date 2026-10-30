@@ -211,8 +211,7 @@ struct OverviewRowRenderTests {
                 .padding(.horizontal, 8)
                 .padding(.bottom, 2)
             OverviewFooterView(
-                autoRefreshOn: true,
-                statusText: "Auto-refresh on · every 5 min",
+                frequency: .fiveMinutes,
                 aboutHelp: "About CodexBar (v1.2.3)",
                 quitHelp: "Quit",
                 width: width)
@@ -220,8 +219,7 @@ struct OverviewRowRenderTests {
         try write("after-no-separator", VStack(alignment: .leading, spacing: 0) {
             context
             OverviewFooterView(
-                autoRefreshOn: true,
-                statusText: "Auto-refresh on · every 5 min",
+                frequency: .fiveMinutes,
                 aboutHelp: "About CodexBar (v1.2.3)",
                 quitHelp: "Quit",
                 width: width)
@@ -421,8 +419,7 @@ struct OverviewRowRenderTests {
         try write(
             "d-footer",
             OverviewFooterView(
-                autoRefreshOn: true,
-                statusText: "Auto-refresh on · every 5 min",
+                frequency: .fiveMinutes,
                 aboutHelp: "About CodexBar",
                 quitHelp: "Quit",
                 width: width)
