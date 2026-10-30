@@ -19,7 +19,7 @@ struct OverviewCompactAccountRowTests {
     }
 
     @Test
-    func `a pace tick and tint do not change the row height`() {
+    func `a pace tick does not change the row height`() {
         let reset = Self.now.addingTimeInterval(3 * 86400)
         func height(pacePercent: Double?, tone: OverviewCompactAccountRow.PaceTone) -> CGFloat {
             self.height(OverviewCompactAccountRow(
@@ -182,21 +182,53 @@ struct OverviewCompactAccountRowTests {
     }
 
     @Test
-    func `hiding pace drops the tick and the pace tint`() {
-        let line = OverviewCompactAccountRow.Line(
-            label: "7d",
-            used: 40,
-            resetsAt: nil,
-            pacePercent: 70,
-            paceTone: .deficit)
+    func `hiding pace drops the tick and the hatching`() {
+        let line = OverviewCompactAccountRow.Line(label: "7d", used: 80, resetsAt: nil, pacePercent: 70)
         let withPace = self.reading(line)
         #expect(withPace.pacePercent == 70)
-        #expect(withPace.percentColor == OverviewPalette.warning)
+        #expect(withPace.overruns)
 
         let withoutPace = self.reading(line, showsPace: false)
         #expect(withoutPace.pacePercent == nil)
-        #expect(withoutPace.percentColor == withoutPace.barColor)
-        #expect(withoutPace.percentColor == OverviewPalette.accent)
+        #expect(!withoutPace.overruns)
+    }
+
+    @Test
+    func `the percent is white until it reaches a warning threshold`() {
+        let thresholds = (session: [50, 20], weekly: [50, 20])
+        // Pace never tints the number; only the thresholds do.
+        let ahead = OverviewCompactAccountRow.Line(
+            label: "5h", used: 30, resetsAt: nil, pacePercent: 10, paceTone: .runsOut)
+        #expect(self.reading(ahead, thresholds: thresholds).percentColor == OverviewPalette.text)
+        #expect(self.reading(self.line(used: 0), thresholds: thresholds).percentColor == OverviewPalette.text)
+        #expect(self.reading(self.line(used: 50), thresholds: thresholds).percentColor == OverviewPalette.warning)
+        #expect(self.reading(self.line(used: 80), thresholds: thresholds).percentColor == OverviewPalette.critical)
+        // The bar stays on the accent colour in the normal range.
+        #expect(self.reading(self.line(used: 30), thresholds: thresholds).barColor == OverviewPalette.accent)
+    }
+
+    @Test
+    func `the provider id shows beside a name only when the name does not already say it`() {
+        func tag(_ name: String, groupKey: String) -> String? {
+            StatusItemController.providerTag(
+                for: OverviewUsageRow(
+                    groupKey: groupKey,
+                    providerName: name,
+                    nativeProvider: nil,
+                    accountID: nil,
+                    accountName: nil,
+                    namedWindows: [],
+                    snapshot: nil,
+                    model: nil,
+                    errorText: nil,
+                    showsErrorFlag: false,
+                    detailErrorText: nil,
+                    readAt: nil),
+                displayedName: name)
+        }
+        #expect(tag("claude-1", groupKey: "claude") == "claude")
+        #expect(tag("Codex", groupKey: "codex") == nil)
+        #expect(tag("OpenCode Go", groupKey: "opencode-go") == nil)
     }
 
     @Test
@@ -209,7 +241,6 @@ struct OverviewCompactAccountRowTests {
     func `only usage ahead of visible pace draws an overrun segment`() {
         #expect(self.overrun(self.line(used: 70, pace: 50))?.start == 50)
         #expect(self.overrun(self.line(used: 70, pace: 50))?.end == 70)
-        #expect(self.overrun(self.line(used: 70, pace: 50))?.color == OverviewPalette.warning)
         #expect(self.overrun(self.line(used: 50, pace: 50)) == nil)
         #expect(self.overrun(self.line(used: 30, pace: 50)) == nil)
         #expect(self.overrun(self.line(used: 70)) == nil)
@@ -217,13 +248,11 @@ struct OverviewCompactAccountRowTests {
     }
 
     @Test
-    func `overrun follows the display direction and exhaustion tint`() {
-        let line = OverviewCompactAccountRow.Line(
-            label: "7d", used: 70, resetsAt: nil, pacePercent: 50, paceTone: .runsOut)
+    func `overrun follows the display direction`() {
+        let line = OverviewCompactAccountRow.Line(label: "7d", used: 70, resetsAt: nil, pacePercent: 50)
         let segment = self.overrun(line, showsRemaining: true)
         #expect(segment?.start == 30)
         #expect(segment?.end == 50)
-        #expect(segment?.color == OverviewPalette.critical)
         #expect(self.overrun(self.line(used: 30, pace: 50), showsRemaining: true) == nil)
     }
 
@@ -239,16 +268,16 @@ struct OverviewCompactAccountRowTests {
     private func overrun(
         _ line: OverviewCompactAccountRow.Line,
         showsRemaining: Bool = false,
-        showsPace: Bool = true) -> (start: Double, end: Double, color: Color)?
+        showsPace: Bool = true) -> (start: Double, end: Double)?
     {
         let reading = self.reading(line, showsRemaining: showsRemaining, showsPace: showsPace)
         return UsageBar(
             used: reading.percent,
             color: reading.barColor,
             trackColor: OverviewCompactAccountRow.trackColor,
-            height: 6,
+            height: OverviewCompactAccountRow.barHeight,
             pacePercent: reading.pacePercent,
-            overrunColor: reading.overrunColor).overrunSegment
+            overruns: reading.overruns).overrunSegment
     }
 
     private func reading(

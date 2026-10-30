@@ -232,7 +232,7 @@ struct AccountUsageDetailView: View {
     }
 
     private func blockView(_ block: Block) -> some View {
-        let color = OverviewPalette.color(
+        let color = OverviewPalette.percentColor(
             usedPercent: block.used,
             warningThresholds: self.display.warningThresholds(for: block.warningWindow))
         let percent = OverviewCompactAccountRow.displayedPercent(

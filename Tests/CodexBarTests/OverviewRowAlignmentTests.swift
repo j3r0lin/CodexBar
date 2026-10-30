@@ -65,9 +65,9 @@ struct OverviewRowAlignmentTests {
                 extent == first,
                 "\(Self.scenarios[index].name) bar extent \(extent) != \(first): \(report)")
         }
-        // Nothing trails the reset column, so the bar runs up to it.
-        let barEnd = Self.width - OverviewCompactAccountRow.blockInset - OverviewCompactAccountRow.horizontalPadding
-            - OverviewCompactAccountRow.resetWidth - 8
+        // The percent and reset columns trail the bar, so the bar runs up to the percent column.
+        let barEnd = Self.width - OverviewCompactAccountRow.contentInset - OverviewCompactAccountRow.resetWidth
+            - 8 - OverviewCompactAccountRow.percentWidth - 8
         #expect(abs(first.end - Int(barEnd * Self.scale)) <= 2, "bar ends at \(first.end): \(report)")
     }
 
@@ -136,11 +136,9 @@ struct OverviewRowAlignmentTests {
         Span(start: spans.map(\.start).min() ?? -1, end: spans.map(\.end).max() ?? -1)
     }
 
-    /// Scan past the window label and percent columns to measure the full-width usage bars.
+    /// Scan past the window label column to measure the usage bars.
     private static var scanStart: Int {
-        let contentInset = OverviewCompactAccountRow.blockInset + OverviewCompactAccountRow.horizontalPadding
-        return Int((contentInset + OverviewCompactAccountRow.labelWidth
-                + OverviewCompactAccountRow.percentWidth + 16) * self.scale)
+        Int((OverviewCompactAccountRow.contentInset + OverviewCompactAccountRow.labelWidth + 8) * self.scale)
     }
 
     private static func differs(_ a: NSColor, _ b: NSColor) -> Bool {
@@ -169,22 +167,20 @@ struct OverviewRowAlignmentTests {
         return spans
     }
 
-    /// Card background sample column: right of the card border and its corner arcs, left of any content.
+    /// Background sample column: left of any content.
     private static var referenceX: Int {
-        Int((OverviewCompactAccountRow.blockInset + 6) * self.scale)
+        Int((OverviewCompactAccountRow.contentInset - 6) * self.scale)
     }
 
-    /// Rows clear of the card's top and bottom border lines and corner arcs; the image also holds the
-    /// transparent gap below the card.
+    /// Rows clear of the row's vertical padding and the divider hairline at its bottom.
     private static func interiorRows(of image: NSBitmapImageRep) -> Range<Int> {
-        let margin = Int(8 * self.scale)
-        let bottom = image.pixelsHigh - Int(OverviewCompactAccountRow.blockGap * self.scale) - margin
-        return margin..<max(margin, bottom)
+        let margin = Int(OverviewCompactAccountRow.verticalPadding * self.scale)
+        return margin..<max(margin, image.pixelsHigh - margin)
     }
 
     /// Leftmost inked pixel of the name area: the icon on a provider row, the first glyph on an account row.
     private static func nameInkStart(in image: NSBitmapImageRep) -> Int {
-        let from = Int((OverviewCompactAccountRow.blockInset + 8) * self.scale)
+        let from = Int((OverviewCompactAccountRow.contentInset - 4) * self.scale)
         for x in from..<self.scanStart {
             for y in self.interiorRows(of: image) {
                 guard let color = image.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB),

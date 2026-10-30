@@ -2698,3 +2698,4 @@
 "Lasts past the reset at this pace" = "このペースならリセットまで持ちます";
 "Show scheduled resets from codex-resets.com" = "codex-resets.com の予定されたリセットを表示";
 "Scheduled reset before %@" = "%@ までにリセット予定";
+"Refresh this account" = "このアカウントを更新";

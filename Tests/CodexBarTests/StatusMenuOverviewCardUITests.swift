@@ -328,8 +328,9 @@ extension StatusMenuTests {
             controller.overviewUsageRows(visibleProviders: [.claude, .codex]).first { $0.groupKey == "codex" })
         let submenu = controller.makeOverviewDetailSubmenu(row: codexRow, width: 320)
         submenu.delegate?.menuNeedsUpdate?(submenu)
-        #expect(submenu.items.last?.representedObject as? URL == store.codexScheduledReset?.sourceURL)
-        #expect(submenu.items.last?.action != nil)
+        let sourceItem = submenu.items.first { $0.representedObject is URL }
+        #expect(sourceItem?.representedObject as? URL == store.codexScheduledReset?.sourceURL)
+        #expect(sourceItem?.action != nil)
 
         settings.codexScheduledResetVisible = false
         #expect(try badge("codex") == nil)

@@ -81,18 +81,15 @@ struct OverviewRowLayoutProofTests {
             self.row(
                 name: "a",
                 short: self.window(46, minutes: 18),
-                long: self.window(95, minutes: 9 * 60 + 58),
-                block: .single)
+                long: self.window(95, minutes: 9 * 60 + 58))
             self.row(
                 name: "b",
                 short: self.window(0, minutes: nil),
-                long: self.window(84, minutes: 1440 + 9 * 60),
-                block: .single)
+                long: self.window(84, minutes: 1440 + 9 * 60))
             self.row(
                 name: "c",
                 short: self.window(0, minutes: nil),
-                long: self.window(100, minutes: 2 * 60 + 58),
-                block: .single)
+                long: self.window(100, minutes: 2 * 60 + 58))
             self.row(
                 name: "Kimi Code",
                 short: self.window(8, minutes: 4 * 1440 + 2 * 60),
@@ -118,7 +115,6 @@ struct OverviewRowLayoutProofTests {
         name: String,
         short: RateWindow?,
         long: RateWindow?,
-        block: OverviewBlockPosition = .single,
         namesProvider: Bool = true) -> some View
     {
         OverviewCompactAccountRow(
@@ -127,7 +123,6 @@ struct OverviewRowLayoutProofTests {
             longWindow: long,
             width: self.width,
             namesProvider: namesProvider,
-            block: block,
             now: self.now)
     }
 

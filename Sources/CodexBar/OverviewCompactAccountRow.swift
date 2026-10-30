@@ -2,20 +2,24 @@ import AppKit
 import CodexBarCore
 import SwiftUI
 
-/// Overview colours: one accent for normal readings, orange from the user's first quota-warning
-/// threshold and red from the second, for both the bar and its number. Without configured thresholds
-/// they fall back to 70% and 90%. A 0% reading stays neutral white so an unused window reads as empty,
-/// not healthy.
+/// Overview colours: the bar is the accent for normal readings, orange from the user's first quota-warning
+/// threshold and red from the second; its number stays in the primary text colour until it reaches one of
+/// them. Without configured thresholds they fall back to 70% and 90%.
 enum OverviewPalette {
-    /// Fills the whole Overview panel behind its cards: opaque, so the menu material never tints it.
+    /// Fills the whole Overview panel behind its rows: opaque, so the menu material never tints it.
     static let panelBase = NSColor(srgbRed: 0.10, green: 0.10, blue: 0.11, alpha: 1)
-    /// The card surface, a step lighter than the panel and slightly translucent.
-    static let cardBase = NSColor(srgbRed: 0.14, green: 0.14, blue: 0.16, alpha: 0.9)
+    /// The surface of a card on the panel, a step lighter.
+    static let cardBase = NSColor(srgbRed: 0.137, green: 0.137, blue: 0.149, alpha: 1)
+
+    /// Readings that are not a warning.
+    static let text = Color.white.opacity(0.92)
 
     static let accent = Color(red: 0x4F / 255, green: 0xD1 / 255, blue: 0xE8 / 255)
     static let warning = Color(red: 1, green: 0xB3 / 255, blue: 0x40 / 255)
     static let critical = Color(red: 1, green: 0x5A / 255, blue: 0x4F / 255)
     static let caption = Color.white.opacity(0.60)
+    /// Secondary names beside a title.
+    static let faint = Color.white.opacity(0.38)
     /// Reset countdowns read one step brighter than the window labels.
     static let reset = Color.white.opacity(0.60)
     /// Names and idle readings.
@@ -42,100 +46,15 @@ enum OverviewPalette {
         if used >= bounds.warning { return self.warning }
         return self.accent
     }
-}
 
-/// Where a menu item sits in its provider's card: every card is one bordered rounded panel, drawn
-/// piecewise by the items it spans because each item is its own view.
-enum OverviewBlockPosition {
-    case single
-    case top
-    case middle
-    case bottom
-
-    var roundsTop: Bool {
-        self == .single || self == .top
-    }
-
-    var roundsBottom: Bool {
-        self == .single || self == .bottom
-    }
-}
-
-/// The outline of one item's slice of its provider card: the top piece draws the top edge and both
-/// sides, a middle piece draws only the sides, the bottom piece closes the card. Tangent arcs keep
-/// the corner direction unambiguous.
-struct OverviewCardPieceBorder: Shape {
-    let position: OverviewBlockPosition
-    var radius: CGFloat = 10
-
-    func path(in rect: CGRect) -> Path {
-        let rect = rect.insetBy(dx: 0.5, dy: 0.5)
-        let r = self.radius
-        var path = Path()
-        switch self.position {
-        case .single:
-            path.addRoundedRect(in: rect, cornerSize: CGSize(width: r, height: r))
-        case .top:
-            path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
-            path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + r))
-            path.addArc(
-                tangent1End: CGPoint(x: rect.minX, y: rect.minY),
-                tangent2End: CGPoint(x: rect.minX + r, y: rect.minY),
-                radius: r)
-            path.addLine(to: CGPoint(x: rect.maxX - r, y: rect.minY))
-            path.addArc(
-                tangent1End: CGPoint(x: rect.maxX, y: rect.minY),
-                tangent2End: CGPoint(x: rect.maxX, y: rect.minY + r),
-                radius: r)
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        case .middle:
-            path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-            path.move(to: CGPoint(x: rect.maxX, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        case .bottom:
-            path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY - r))
-            path.addArc(
-                tangent1End: CGPoint(x: rect.minX, y: rect.maxY),
-                tangent2End: CGPoint(x: rect.minX + r, y: rect.maxY),
-                radius: r)
-            path.addLine(to: CGPoint(x: rect.maxX - r, y: rect.maxY))
-            path.addArc(
-                tangent1End: CGPoint(x: rect.maxX, y: rect.maxY),
-                tangent2End: CGPoint(x: rect.maxX, y: rect.maxY - r),
-                radius: r)
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-        }
-        return path
+    /// The number beside a bar: white until the reading reaches a warning threshold.
+    static func percentColor(usedPercent used: Double, warningThresholds: [Int]? = nil) -> Color {
+        let color = self.color(usedPercent: used, warningThresholds: warningThresholds)
+        return color == self.accent ? self.text : color
     }
 }
 
 extension View {
-    /// Draws this item's part of its provider card. The card's own padding lives inside the
-    /// background so consecutive items paint one continuous panel; a transparent gap below the
-    /// last item keeps cards apart without separator lines.
-    func overviewBlock(
-        _ position: OverviewBlockPosition,
-        bottomGap: CGFloat = OverviewCompactAccountRow.blockGap) -> some View
-    {
-        let radius: CGFloat = 10
-        return self
-            .padding(.top, position.roundsTop ? 8 : 0)
-            .padding(.bottom, position.roundsBottom ? 6 : 0)
-            .background(
-                UnevenRoundedRectangle(
-                    topLeadingRadius: position.roundsTop ? radius : 0,
-                    bottomLeadingRadius: position.roundsBottom ? radius : 0,
-                    bottomTrailingRadius: position.roundsBottom ? radius : 0,
-                    topTrailingRadius: position.roundsTop ? radius : 0)
-                    .fill(Color.white.opacity(0.06)))
-            .background(OverviewCardPieceBorder(position: position, radius: radius)
-                .stroke(Color.white.opacity(0.12), lineWidth: 1))
-            .padding(.horizontal, OverviewCompactAccountRow.blockInset)
-            .padding(.bottom, position.roundsBottom ? bottomGap : 0)
-    }
-
     /// Accent-coloured, upper-case, slightly tracked label used in the detail card's titles.
     func overviewSectionTitleStyle() -> some View {
         self
@@ -201,9 +120,12 @@ struct OverviewCompactAccountRow: View {
     var provider: UsageProvider?
     var icon: NSImage?
     var iconIsTemplate = true
-    var block: OverviewBlockPosition = .single
-    /// The transparent gap below the card; the last card of the Overview keeps less, the footer follows it.
-    var bottomGap: CGFloat = OverviewCompactAccountRow.blockGap
+    /// The provider's id, shown in grey beside a name that does not already say it.
+    var providerTag: String?
+    /// Magpie rows: the account's plan, drawn as a small tag after the name.
+    var plan: String?
+    /// A hairline under the row separates it from the next account; the last row has none.
+    var showsDivider = true
     /// A provider that only has an error shows it in place of its usage.
     var errorText: String?
     /// The account keeps its readings alongside an error (last-known retention, unstable
@@ -259,18 +181,18 @@ struct OverviewCompactAccountRow: View {
         /// Where the linear pace says usage should be by now, drawn as a tick on the bar; nil when the
         /// window has no pace.
         var pacePercent: Double?
-        /// Tints the percent when the pace is a deficit or runs out before reset.
+        /// The pace verdict of the window; the row no longer draws it, the bar's hatching and the thresholds
+        /// carry the warning.
         var paceTone: PaceTone = .neutral
     }
 
     /// Every line puts the same element in the same column, so each part is sized here and the bar
     /// takes whatever the line has left.
-    static let blockInset: CGFloat = 8
-    /// The transparent gap between two cards.
-    static let blockGap: CGFloat = 10
-    /// The gap between the Overview's last card and the footer.
-    static let lastBlockGap: CGFloat = 6
     static let horizontalPadding: CGFloat = 12
+    /// Row content starts here, in line with the usage card above the list.
+    static let contentInset: CGFloat = 20
+    /// Air above and below an account's lines inside its row.
+    static let verticalPadding: CGFloat = 8
     /// Fits the scoped-weekly model labels ("Fable" is 27pt at 10pt medium) alongside "5h"/"7d"/"30d".
     static let labelWidth: CGFloat = 32
     /// Fits "100%" at 13pt semibold with monospaced digits.
@@ -335,10 +257,20 @@ struct OverviewCompactAccountRow: View {
                 self.windowLines
             }
         }
-        .padding(.horizontal, Self.horizontalPadding)
-        .overviewBlock(self.block, bottomGap: self.bottomGap)
+        .padding(.horizontal, Self.contentInset)
+        .padding(.vertical, Self.verticalPadding)
         .frame(width: self.width, alignment: .leading)
+        .overlay(alignment: .bottom) {
+            if self.showsDivider {
+                Rectangle()
+                    .fill(Self.dividerColor)
+                    .frame(height: 0.5)
+                    .padding(.horizontal, Self.contentInset)
+            }
+        }
     }
+
+    static let dividerColor = Color.white.opacity(0.08)
 
     var resetCreditsText: String? {
         guard let resetCredits else { return nil }
@@ -364,6 +296,21 @@ struct OverviewCompactAccountRow: View {
                     .foregroundStyle(self.errorText == nil ? self.nameColor : .white)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
+                if let providerTag {
+                    Text(providerTag)
+                        .font(.system(size: 11))
+                        .foregroundStyle(OverviewPalette.faint)
+                        .lineLimit(1)
+                }
+                if let plan {
+                    Text(plan)
+                        .font(.system(size: 10))
+                        .foregroundStyle(OverviewPalette.caption)
+                        .lineLimit(1)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1)
+                        .background(RoundedRectangle(cornerRadius: 4).fill(Color.white.opacity(0.07)))
+                }
             }
             if let resetCreditsText {
                 HStack(spacing: 3) {
@@ -422,23 +369,20 @@ struct OverviewCompactAccountRow: View {
         let percentColor: Color
         /// Pace tick position, nil without a pace or with pace hidden.
         let pacePercent: Double?
-        let overrunColor: Color?
+        /// Usage is ahead of the pace tick, so the stretch between the two is hatched.
+        let overruns: Bool
     }
 
     func reading(for line: Line) -> Reading {
-        let severity = Self.severityColor(
-            line.used,
-            warningThresholds: self.display.warningThresholds(for: line.warningWindow))
+        let thresholds = self.display.warningThresholds(for: line.warningWindow)
         return Reading(
             percent: Self.displayedPercent(line.used, showsRemaining: self.display.showsRemaining),
-            barColor: severity,
-            percentColor: Self.percentColor(line, severity: severity, showsPace: self.display.showsPace),
+            barColor: Self.severityColor(line.used, warningThresholds: thresholds),
+            percentColor: OverviewPalette.percentColor(usedPercent: line.used, warningThresholds: thresholds),
             pacePercent: self.display.showsPace
                 ? line.pacePercent.map { Self.displayedPercent($0, showsRemaining: self.display.showsRemaining) }
                 : nil,
-            overrunColor: self.display.showsPace && line.pacePercent.map { line.used > $0 } == true
-                ? (line.paceTone == .runsOut ? OverviewPalette.critical : OverviewPalette.warning)
-                : nil)
+            overruns: self.display.showsPace && line.pacePercent.map { line.used > $0 } == true)
     }
 
     private func readingView(_ line: Line) -> some View {
@@ -449,19 +393,19 @@ struct OverviewCompactAccountRow: View {
                 .foregroundStyle(OverviewPalette.caption)
                 .lineLimit(1)
                 .frame(width: Self.labelWidth, alignment: .leading)
+            UsageBar(
+                used: reading.percent,
+                color: reading.barColor,
+                trackColor: Self.trackColor,
+                height: Self.barHeight,
+                pacePercent: reading.pacePercent,
+                overruns: reading.overruns)
             Text("\(Int(reading.percent.rounded()))%")
                 .font(.system(size: 13, weight: .semibold).monospacedDigit())
                 .foregroundStyle(reading.percentColor)
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
                 .frame(width: Self.percentWidth, alignment: .trailing)
-            UsageBar(
-                used: reading.percent,
-                color: reading.barColor,
-                trackColor: Self.trackColor,
-                height: 6,
-                pacePercent: reading.pacePercent,
-                overrunColor: reading.overrunColor)
             Text(Self.resetText(line, now: self.now))
                 .font(.system(size: 10).monospacedDigit())
                 .foregroundStyle(OverviewPalette.reset)
@@ -475,20 +419,12 @@ struct OverviewCompactAccountRow: View {
         showsRemaining ? 100 - used : used
     }
 
-    static func percentColor(_ line: Line, severity: Color, showsPace: Bool = true) -> Color {
-        guard showsPace else { return line.used > 0 ? severity : OverviewPalette.neutral }
-        return switch line.paceTone {
-        case .runsOut: OverviewPalette.critical
-        case .deficit: OverviewPalette.warning
-        case .neutral: line.used > 0 ? severity : OverviewPalette.neutral
-        }
-    }
+    static let barHeight: CGFloat = 4
 
     /// Menus are pinned dark, so the empty part of a bar is drawn light enough to read there.
-    static let trackColor = Color.white.opacity(0.14)
+    static let trackColor = Color.white.opacity(0.10)
 
-    /// The bar and its number share one colour, and a highlighted row keeps it: the selection is painted
-    /// behind the row, so the reading survives the highlight.
+    /// The bar's fill colour. A highlighted row keeps it: the selection is painted behind the row.
     static func severityColor(_ used: Double, warningThresholds: [Int]? = nil) -> Color {
         OverviewPalette.color(usedPercent: used, warningThresholds: warningThresholds)
     }
@@ -610,7 +546,7 @@ struct OverviewCompactAccountRow: View {
     }
 }
 
-/// A capsule track with its fill drawn as a rectangle clipped to the track, so a small reading keeps
+/// A rounded track with its fill drawn as a rectangle clipped to the track, so a small reading keeps
 /// the track's rounded left end instead of collapsing into a sliver. Any reading above 0% is at least
 /// as wide as the bar is tall, so it shows as a coloured dot; 0% shows no fill.
 struct UsageBar: View {
@@ -618,20 +554,21 @@ struct UsageBar: View {
     let color: Color
     let trackColor: Color
     let height: CGFloat
-    /// Where the linear pace says usage should be by now; drawn as a tick inside the bar so the bar keeps its
-    /// thickness.
+    /// Where the linear pace says usage should be by now; drawn as a white tick that stands out of the bar.
     var pacePercent: Double?
-    /// Used-percent positions of the user's quota-warning thresholds, drawn as thin ticks in the bar.
-    var warningMarkerPercents: [Double] = []
-    var overrunColor: Color?
+    /// Hatches the stretch between the fill's end and the pace tick, the usage that is ahead of the pace.
+    var overruns = false
 
-    var overrunSegment: (start: Double, end: Double, color: Color)? {
-        guard let pacePercent, let overrunColor else { return nil }
+    /// The stretch between the fill's end and the pace tick, in percent of the bar; nil when they coincide.
+    var overrunSegment: (start: Double, end: Double)? {
+        guard self.overruns, let pacePercent else { return nil }
         let fillEnd = min(100, max(0, self.used))
         let tick = min(100, max(0, pacePercent))
         guard abs(fillEnd - tick) >= 1 else { return nil }
-        return (min(fillEnd, tick), max(fillEnd, tick), overrunColor)
+        return (min(fillEnd, tick), max(fillEnd, tick))
     }
+
+    private static let tickOverhang: CGFloat = 2
 
     var body: some View {
         GeometryReader { proxy in
@@ -643,29 +580,42 @@ struct UsageBar: View {
                         .frame(width: Self.fillWidth(used: self.used, barWidth: proxy.size.width, height: self.height))
                     if let segment = self.overrunSegment {
                         Rectangle()
-                            .fill(segment.color)
+                            .fill(self.color)
                             .frame(width: proxy.size.width * (segment.end - segment.start) / 100)
+                            .overlay(Self.hatching)
                             .offset(x: proxy.size.width * segment.start / 100)
-                    }
-                    if let pacePercent {
-                        Rectangle()
-                            .fill(Color.white)
-                            .frame(width: 2)
-                            .offset(x: proxy.size.width * min(100, max(0, pacePercent)) / 100 - 1)
-                    }
-                    ForEach(self.warningMarkerPercents, id: \.self) { percent in
-                        Rectangle()
-                            .fill(Color.black.opacity(0.55))
-                            .frame(width: 1.5)
-                            .offset(x: proxy.size.width * min(100, max(0, percent)) / 100 - 0.75)
                     }
                 }
                 .frame(height: self.height)
-                .clipShape(Capsule())
+                .clipShape(RoundedRectangle(cornerRadius: self.height / 2))
+                if let pacePercent {
+                    RoundedRectangle(cornerRadius: 1)
+                        .fill(Color.white)
+                        .frame(width: 2, height: self.height + 2 * Self.tickOverhang)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 1.5)
+                                .stroke(Color(nsColor: OverviewPalette.panelBase).opacity(0.9), lineWidth: 1)
+                                .padding(-1))
+                        .offset(x: proxy.size.width * min(100, max(0, pacePercent)) / 100 - 1)
+                }
             }
             .frame(height: proxy.size.height)
         }
-        .frame(height: self.height)
+        .frame(height: self.height + 2 * Self.tickOverhang)
+    }
+
+    /// Dark diagonal stripes laid over the fill colour.
+    private static var hatching: some View {
+        Canvas { context, size in
+            var path = Path()
+            var x = -size.height
+            while x < size.width {
+                path.move(to: CGPoint(x: x, y: size.height))
+                path.addLine(to: CGPoint(x: x + size.height, y: 0))
+                x += 4
+            }
+            context.stroke(path, with: .color(.black.opacity(0.35)), lineWidth: 2)
+        }
     }
 
     static func fillWidth(used: Double, barWidth: CGFloat, height: CGFloat) -> CGFloat {

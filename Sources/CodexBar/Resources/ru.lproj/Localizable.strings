@@ -2699,3 +2699,4 @@
 "Lasts past the reset at this pace" = "При таком темпе хватит до сброса";
 "Show scheduled resets from codex-resets.com" = "Показывать запланированные сбросы с codex-resets.com";
 "Scheduled reset before %@" = "Сброс запланирован до %@";
+"Refresh this account" = "Обновить этот аккаунт";

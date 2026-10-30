@@ -2,10 +2,10 @@ import AppKit
 import CodexBarCore
 
 extension StatusItemController {
-    /// Hover submenu of an Overview row: the shared usage detail, a Claude refresh item on magpie rows,
-    /// then the provider's cost or credits chart and its own actions. The chart and actions are built on
-    /// first open so unopened rows stay cheap. Magpie rows never build them: a magpie account holds no
-    /// native cost or provider actions of its own.
+    /// Hover submenu of an Overview row: the shared usage detail, then the provider's cost or credits chart
+    /// and its own actions, and last the dashboard, status page and refresh items every row has. The chart
+    /// and actions are built on first open so unopened rows stay cheap. Magpie rows never build the chart
+    /// or provider actions: a magpie account holds no native cost or provider actions of its own.
     func makeOverviewDetailSubmenu(
         row: OverviewUsageRow,
         width: CGFloat) -> NSMenu
@@ -21,6 +21,7 @@ extension StatusItemController {
                 self.appendOverviewRowActions(to: submenu, provider: provider, width: width, inlineChartID: chartID)
             }
             self.appendScheduledResetSourceItem(to: submenu, row: row)
+            self.appendOverviewAccountLinks(to: submenu, row: row, width: width)
         }
         submenu.autoenablesItems = false
         submenu.minimumWidth = width
@@ -48,14 +49,87 @@ extension StatusItemController {
                 resetStyle: self.settings.resetTimeDisplayStyle),
             id: "overviewDetail-\(row.providerName)" + (row.accountName.map { "-\($0)" } ?? ""),
             width: width,
+            // The panel colour reaches the submenu's edge only through a row that fills its frame with it.
+            usesPanelBase: true,
             // The pool holds the parent menu's row views; a detail card built first would take one of them.
             recyclesView: false))
-        // Provider-specific by design: Claude retains its existing per-account refresh action.
-        if row.isMagpie, row.nativeProvider == .claude, let accountID = row.accountID {
-            submenu.addItem(.separator())
-            submenu.addItem(self.makeRefreshClaudeAccountItem(accountID))
-        }
         return submenu
+    }
+
+    /// The usage dashboard and status page links of the row's provider, when it has them, and the refresh
+    /// item. The provider's own contextual actions leave out the first two so they are not listed twice.
+    private func appendOverviewAccountLinks(to submenu: NSMenu, row: OverviewUsageRow, width: CGFloat) {
+        var items: [NSMenuItem] = []
+        if let provider = row.nativeProvider {
+            if self.dashboardURL(for: provider) != nil {
+                items.append(self.makeOverviewLinkItem(
+                    title: L("Usage Dashboard"),
+                    action: #selector(self.openDashboardFromMenuItem(_:)),
+                    provider: provider,
+                    width: width))
+            }
+            let metadata = self.store.metadata(for: provider)
+            if metadata.statusPageURL != nil || metadata.statusLinkURL != nil {
+                items.append(self.makeOverviewLinkItem(
+                    title: L("Status Page"),
+                    action: #selector(self.openStatusPageFromMenuItem(_:)),
+                    provider: provider,
+                    width: width))
+            }
+        }
+        items.append(self.makeRefreshOverviewAccountItem(row))
+        if !submenu.items.isEmpty { submenu.addItem(.separator()) }
+        items.forEach(submenu.addItem)
+    }
+
+    /// A link item with its arrow at the trailing edge, where a menu shows a shortcut.
+    private func makeOverviewLinkItem(
+        title: String,
+        action: Selector,
+        provider: UsageProvider,
+        width: CGFloat) -> NSMenuItem
+    {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+        item.target = self
+        item.representedObject = provider.rawValue
+        let style = NSMutableParagraphStyle()
+        style.tabStops = [NSTextTab(textAlignment: .right, location: width - 28)]
+        item.attributedTitle = NSAttributedString(
+            string: "\(title)\t↗",
+            attributes: [.font: NSFont.menuFont(ofSize: 0), .paragraphStyle: style])
+        return item
+    }
+
+    /// What a row's refresh item reloads: magpie serves every account from one quotas call, so a magpie row
+    /// refreshes all of them; a native row refreshes its provider.
+    private enum OverviewAccountRefresh {
+        case magpie
+        case provider(UsageProvider)
+    }
+
+    private func makeRefreshOverviewAccountItem(_ row: OverviewUsageRow) -> NSMenuItem {
+        let item = NSMenuItem(
+            title: L("Refresh this account"),
+            action: #selector(self.refreshOverviewAccount(_:)),
+            keyEquivalent: "r")
+        item.keyEquivalentModifierMask = [.command]
+        item.target = self
+        if row.isMagpie {
+            item.representedObject = OverviewAccountRefresh.magpie
+        } else if let provider = row.nativeProvider {
+            item.representedObject = OverviewAccountRefresh.provider(provider)
+        }
+        return item
+    }
+
+    @objc private func refreshOverviewAccount(_ sender: NSMenuItem) {
+        guard let refresh = sender.representedObject as? OverviewAccountRefresh else { return }
+        Task { @MainActor [weak self] in
+            switch refresh {
+            case .magpie: await self?.store.refreshMagpieAccounts()
+            case let .provider(provider): await self?.store.refreshProvider(provider)
+            }
+        }
     }
 
     /// Opens the announcement behind the row's scheduled-reset badge; built with the submenu's other
@@ -162,7 +236,17 @@ extension StatusItemController {
 
         let sections = self.makeMenuDescriptor(provider: provider, includeContextualActions: true)
             .sections
-            .filter { $0.isContextual && $0.entries.contains(where: \.isActionable) }
+            .filter(\.isContextual)
+            .map { section -> MenuDescriptor.Section in
+                var section = section
+                section.entries.removeAll { entry in
+                    if case .action(_, .dashboard) = entry { return true }
+                    if case .action(_, .statusPage) = entry { return true }
+                    return false
+                }
+                return section
+            }
+            .filter { $0.entries.contains(where: \.isActionable) }
         guard !sections.isEmpty else { return }
         submenu.addItem(.separator())
         self.addActionableSections(sections, to: submenu, width: width, provider: provider, captureMenu: submenu)

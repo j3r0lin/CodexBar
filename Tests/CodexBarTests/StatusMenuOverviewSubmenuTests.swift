@@ -255,17 +255,20 @@ extension StatusMenuTests {
         let row = try #require(menu.items.first {
             ($0.representedObject as? String) == "overviewRow-claude#\(accountID.opaqueID)"
         })
-        let refresh = try #require(row.submenu?.items.first {
-            $0.action == #selector(StatusItemController.refreshClaudeAccount(_:))
-        })
-        #expect(refresh.title == L("Refresh Claude usage"))
-        #expect(refresh.representedObject as? String == accountID.opaqueID)
-        #expect(refresh.target as? StatusItemController === controller)
-
-        // Provider-level Claude history and actions are not this account's, so the refresh item ends the submenu.
         let submenu = try #require(row.submenu)
         submenu.delegate?.menuNeedsUpdate?(submenu)
-        #expect(submenu.items.last === refresh)
+        let refresh = try #require(submenu.items.last)
+        #expect(refresh.title == L("Refresh this account"))
+        #expect(refresh.keyEquivalent == "r")
+        #expect(refresh.target as? StatusItemController === controller)
+
+        // Provider-level Claude history and actions are not this account's, so only the account's own links
+        // (dashboard, status page) come before the refresh item.
+        // The link items carry a trailing arrow in their attributed title, so match by prefix.
+        let titles = submenu.items.dropFirst().filter { !$0.isSeparatorItem }.map(\.title)
+        #expect(titles.last == L("Refresh this account"))
+        let allowed = [L("Usage Dashboard"), L("Status Page"), L("Refresh this account")]
+        #expect(titles.allSatisfy { title in allowed.contains { title.hasPrefix($0) } })
     }
 
     @Test
@@ -398,7 +401,9 @@ extension StatusMenuTests {
         for detailRow in rows {
             let submenu = controller.makeOverviewDetailSubmenu(row: detailRow, width: 340)
             submenu.delegate?.menuNeedsUpdate?(submenu)
-            #expect(submenu.items.count == 1)
+            // The detail card, then only the row's own links and refresh.
+            #expect((submenu.items.first?.representedObject as? String)?.hasPrefix("overviewDetail-") == true)
+            #expect(submenu.items.last?.title == L("Refresh this account"))
         }
     }
 
@@ -542,7 +547,7 @@ extension StatusMenuTests {
         detail.delegate?.menuNeedsUpdate?(detail)
         #expect((detail.items.first?.representedObject as? String)?.hasPrefix("overviewDetail-") == true)
         #expect(detail.items.contains { $0.view is TokenAccountSwitcherView })
-        #expect(detail.items.last?.action == controller.selector(for: .statusPage).0)
+        #expect(detail.items.contains { $0.action == controller.selector(for: .statusPage).0 })
         #expect(detail.items.contains { $0.action == controller.selector(for: .dashboard).0 })
         // App-wide rows stay in the main menu.
         #expect(!detail.items.contains { $0.view is MenuFooterBarView })

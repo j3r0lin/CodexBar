@@ -404,13 +404,13 @@ extension StatusMenuTests {
 
         let menu = controller.makeMenu()
         controller.menuWillOpen(menu)
-        let blocks = try accounts.map { account in
+        let wholeRowSelections = try accounts.map { account in
             let item = try #require(menu.items.first {
                 ($0.representedObject as? String) == "overviewRow-claude#\(account.id.opaqueID)"
             })
-            return try #require((item.view as? MenuRowContainerView)?.rowPayload.selectionBlock)
+            return try #require((item.view as? MenuRowContainerView)?.rowPayload.selectsWholeRow)
         }
-        #expect(blocks.allSatisfy { $0 == .single })
+        #expect(wholeRowSelections.allSatisfy(\.self))
         #expect(!menu.items.contains { ($0.representedObject as? String)?.hasPrefix("overviewHeading-") == true })
     }
 }

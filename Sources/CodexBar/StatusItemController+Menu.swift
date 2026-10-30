@@ -479,18 +479,17 @@ extension StatusItemController {
             menu.addItem(self.makeOverviewPanelSpacer(id: "overviewSpendSpacer", width: menuWidth))
         }
 
-        // Every account is its own card; only a provider with several accounts names the account.
+        // Accounts sit in one flat list; only a provider with several accounts names the account.
         let accountCounts = Dictionary(rows.map { ($0.groupKey, 1) }, uniquingKeysWith: +)
         for (index, row) in rows.enumerated() {
             let isLast = index == rows.count - 1
-            let bottomGap = isLast ? OverviewCompactAccountRow.lastBlockGap : OverviewCompactAccountRow.blockGap
             let isGrouped = (accountCounts[row.groupKey] ?? 1) > 1
             let identifier = "\(Self.overviewRowIdentifierPrefix)\(row.groupKey)"
                 + (row.accountID.map { "#\($0.opaqueID)" } ?? "")
             let submenu = self.makeOverviewDetailSubmenu(row: row, width: menuWidth)
             let now = Date()
             var rowView = self.overviewRowView(for: row, width: menuWidth, isGrouped: isGrouped, now: now)
-            rowView.bottomGap = bottomGap
+            rowView.showsDivider = !isLast
             let item = self.makeMenuCardItem(
                 rowView,
                 id: identifier,
@@ -500,13 +499,12 @@ extension StatusItemController {
                     // The label's length, not its text, can wrap a long name; the text changes every minute.
                     + "-\(rowView.name)-\(rowView.updatedText?.count ?? 0)-\(rowView.resetCreditsText?.count ?? 0)"
                     + "-\(rowView.scheduledResetText?.count ?? 0)"
-                    + "-gap\(Int(bottomGap))",
+                    + "-\(rowView.providerTag ?? "")-\(rowView.plan ?? "")",
                 submenu: submenu,
                 showsSubmenuIndicator: false,
                 usesGPUSelection: true,
                 tightVerticalFit: true,
-                selectionBlock: .single,
-                selectionBottomGap: bottomGap,
+                selectsWholeRow: true,
                 usesPanelBase: true)
             menu.addItem(item)
         }
@@ -531,8 +529,9 @@ extension StatusItemController {
                 hiddenItemIDs: hiddenItemIDs)
             : (short: nil, long: nil)
         let icon = self.overviewProviderIcon(for: row)
+        let name = isGrouped ? row.accountName ?? row.providerName : row.providerName
         return OverviewCompactAccountRow(
-            name: isGrouped ? row.accountName ?? row.providerName : row.providerName,
+            name: name,
             shortWindow: slots.short,
             longWindow: slots.long,
             width: width,
@@ -540,7 +539,8 @@ extension StatusItemController {
             provider: row.nativeProvider,
             icon: icon.image,
             iconIsTemplate: icon.isTemplate,
-            block: .single,
+            providerTag: Self.providerTag(for: row, displayedName: name),
+            plan: row.plan,
             errorText: row.errorText,
             showsErrorFlag: row.showsErrorFlag,
             namedLines: namedLines,
@@ -556,6 +556,15 @@ extension StatusItemController {
                 : nil,
             updatedAt: row.updatedAt,
             now: now)
+    }
+
+    /// The provider's id in grey beside an account name, unless the name already says it ("Codex" for
+    /// codex, "OpenCode Go" for opencode-go).
+    static func providerTag(for row: OverviewUsageRow, displayedName: String) -> String? {
+        func normalized(_ text: String) -> String {
+            text.lowercased().filter { $0.isLetter || $0.isNumber }
+        }
+        return normalized(displayedName) == normalized(row.groupKey) ? nil : row.groupKey
     }
 
     /// Ends the Overview's card list: the panel-coloured spacer, or a native separator when cards are not

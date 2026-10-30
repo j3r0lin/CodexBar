@@ -151,7 +151,6 @@ struct OverviewRowRenderTests {
                 longWindow: window(10080, 10),
                 width: width,
                 namesProvider: true,
-                block: .single,
                 now: now)
             OverviewCompactAccountRow(
                 name: "claude-1",
@@ -159,7 +158,6 @@ struct OverviewRowRenderTests {
                 longWindow: window(10080, 98),
                 width: width,
                 namesProvider: true,
-                block: .single,
                 now: now)
         }
         func write(_ name: String, _ content: some View) throws {
@@ -212,7 +210,7 @@ struct OverviewRowRenderTests {
             Rectangle()
                 .fill(Color.white.opacity(0.08))
                 .frame(height: 1)
-                .padding(.horizontal, OverviewCompactAccountRow.blockInset)
+                .padding(.horizontal, 8)
                 .padding(.bottom, 2)
             OverviewFooterView(
                 autoRefreshOn: true,
@@ -272,8 +270,7 @@ struct OverviewRowRenderTests {
         func row(
             _ name: String,
             _ lines: [OverviewCompactAccountRow.Line],
-            provider: Bool = true,
-            block: OverviewBlockPosition = .single) -> OverviewCompactAccountRow
+            provider: Bool = true) -> OverviewCompactAccountRow
         {
             OverviewCompactAccountRow(
                 name: name,
@@ -281,23 +278,12 @@ struct OverviewRowRenderTests {
                 longWindow: nil,
                 width: width,
                 namesProvider: provider,
-                block: block,
                 namedLines: lines,
                 now: now)
         }
-        /// The highlight MenuRowContainerView paints behind a hovered Overview row, for the selection block.
-        func highlighted(_ view: some View, block: OverviewBlockPosition) -> some View {
-            let radius: CGFloat = block == .middle ? 0 : 10
-            return view.background(alignment: .top) {
-                UnevenRoundedRectangle(
-                    topLeadingRadius: block.roundsTop ? radius : 0,
-                    bottomLeadingRadius: block.roundsBottom ? radius : 0,
-                    bottomTrailingRadius: block.roundsBottom ? radius : 0,
-                    topTrailingRadius: block.roundsTop ? radius : 0)
-                    .fill(Color.white.opacity(0.10))
-                    .padding(.horizontal, OverviewCompactAccountRow.blockInset)
-                    .padding(.bottom, block.roundsBottom ? OverviewCompactAccountRow.blockGap : 0)
-            }
+        /// The highlight MenuRowContainerView paints behind a hovered Overview row.
+        func highlighted(_ view: some View) -> some View {
+            view.background(Color.white.opacity(0.06))
         }
 
         let account1 = [
@@ -322,9 +308,9 @@ struct OverviewRowRenderTests {
         ]
         let list = VStack(alignment: .leading, spacing: 0) {
             row("Codex", [line("5h", 12, resetIn: 3 * hour), line("7d", 41, resetIn: 4 * day, pace: 45)])
-            highlighted(row("account-1", account1, provider: true, block: .single), block: .single)
-            row("account-2", account2, provider: true, block: .single)
-            row("account-3", account3, provider: true, block: .single)
+            highlighted(row("account-1", account1, provider: true))
+            row("account-2", account2, provider: true)
+            row("account-3", account3, provider: true)
             row("Kimi Code", kimi)
             row("Grok", [line("7d", 1, resetIn: 6 * day + 22 * hour, pace: 2)])
         }

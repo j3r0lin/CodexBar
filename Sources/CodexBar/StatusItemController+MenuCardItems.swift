@@ -41,8 +41,7 @@ extension StatusItemController {
         containsInteractiveControls: Bool = false,
         usesGPUSelection: Bool = false,
         tightVerticalFit: Bool = false,
-        selectionBlock: OverviewBlockPosition? = nil,
-        selectionBottomGap: CGFloat = OverviewCompactAccountRow.blockGap,
+        selectsWholeRow: Bool = false,
         usesPanelBase: Bool = false,
         recyclesView: Bool = true,
         onClick: (() -> Void)? = nil) -> NSMenuItem
@@ -84,8 +83,7 @@ extension StatusItemController {
             containsInteractiveControls: containsInteractiveControls,
             usesGPUSelection: usesGPUSelection,
             tightVerticalFit: tightVerticalFit,
-            selectionBlock: selectionBlock,
-            selectionBottomGap: selectionBottomGap,
+            selectsWholeRow: selectsWholeRow,
             usesPanelBase: usesPanelBase,
             onClick: onClick)
         let hosting: ErasedMenuCardHostingView
@@ -143,7 +141,7 @@ extension StatusItemController {
     }
 
     private func menuCardHeight(for view: NSView, width: CGFloat) -> CGFloat {
-        // Tight-fit rows (Overview provider blocks) draw a continuous background across items, so the
+        // Tight-fit rows (Overview account rows) draw a continuous background across items, so the
         // standard air would read as a seam inside the block.
         let tight = (view as? MenuRowContainerView)?.rowPayload.tightVerticalFit ?? false
         let verticalPadding: CGFloat = tight ? 0 : 7 // 6pt of air plus 1pt of descender safety

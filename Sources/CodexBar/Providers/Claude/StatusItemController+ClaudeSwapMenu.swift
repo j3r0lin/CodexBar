@@ -239,24 +239,4 @@ extension StatusItemController {
         }
         return accounts.first(where: \.isActive) ?? accounts.first
     }
-
-    /// magpie serves every account from one quotas call, so the item refreshes all Claude accounts.
-    func makeRefreshClaudeAccountItem(_ id: ProviderAccountIdentity) -> NSMenuItem {
-        let item = NSMenuItem(
-            title: L("Refresh Claude usage"),
-            action: #selector(self.refreshClaudeAccount(_:)),
-            keyEquivalent: "")
-        item.target = self
-        item.representedObject = id.opaqueID
-        return item
-    }
-
-    @objc func refreshClaudeAccount(_ sender: NSMenuItem) {
-        guard let opaqueID = sender.representedObject as? String,
-              self.store.claudeAccountSource.accounts.contains(where: { $0.id.opaqueID == opaqueID })
-        else { return }
-        Task { @MainActor [weak self] in
-            await self?.store.refreshMagpieAccounts()
-        }
-    }
 }
