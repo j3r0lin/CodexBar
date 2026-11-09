@@ -32,6 +32,19 @@ struct MagpieAccountProjectionTests {
     }
 
     @Test
+    func `a remote magpie that holds this key is not shown, other failed rows are`() throws {
+        let rows = try MagpieQuotasReader.rows(from: Data("""
+        {"data":[
+          {"provider":"dell","name":"Remote magpie","error":"remote magpie tells this key none of its quotas, as it holds the key to a budget, models or accounts; on that computer, turn on Quotas for the key under Gateway keys"},
+          {"provider":"dell/~keys","name":"Remote magpie","windows":[{"name":"Limit","used":0,"unlimited":true}]},
+          {"provider":"office","name":"Remote magpie","error":"couldn't reach the remote magpie: dial tcp: timeout"}
+        ]}
+        """.utf8))
+        #expect(rows.map(\.provider) == ["dell/~keys", "office"])
+        #expect(rows[1].error?.hasPrefix("couldn't reach") == true)
+    }
+
+    @Test
     func `reset credits keep every expiry in order and fill unlisted credits up to the count`() throws {
         let rows = try MagpieQuotasReader.rows(from: Data("""
         {"data":[
