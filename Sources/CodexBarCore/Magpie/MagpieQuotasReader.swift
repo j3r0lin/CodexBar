@@ -162,9 +162,9 @@ public enum MagpieQuotasReader {
     /// A remote magpie that holds this Mac's gateway key to a budget, models or accounts tells it
     /// none of its quotas on purpose, so that row is a permission, not a failed read, and is
     /// hidden. magpie sends no error code on the row, so its wording (errRemoteHeld) is matched.
-    static let remoteHeldErrorPrefix = "remote magpie tells this key none of its quotas"
+    private static let remoteHeldErrorPrefix = "remote magpie tells this key none of its quotas"
 
-    static func isHeldByRemote(_ error: String?) -> Bool {
+    private static func isHeldByRemote(_ error: String?) -> Bool {
         error?.hasPrefix(self.remoteHeldErrorPrefix) == true
     }
 
