@@ -157,9 +157,10 @@ struct GeneralPane: View {
                         L("magpie quotas URL"),
                         text: self.$settings.magpieQuotasURL,
                         prompt: Text(MagpieQuotasReader.defaultQuotasURL))
-                    Text(self.store.magpieTakeoverWireIDs.sorted().map {
-                        MagpieProviderMapping.reference(for: $0).displayName
-                    }.joined(separator: ", "))
+                    // A provider owned under two wire IDs (claude and claude-plugin) is named once.
+                    Text(Set(self.store.magpieTakeoverWireIDs.map(MagpieProviderMapping.ownedWireID(for:)))
+                        .sorted().map { MagpieProviderMapping.reference(for: $0).displayName }
+                        .joined(separator: ", "))
                         .font(.caption)
                     if let error = self.store.magpieLastError {
                         Text(error).foregroundStyle(.secondary)

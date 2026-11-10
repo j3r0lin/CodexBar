@@ -203,6 +203,12 @@ struct MagpieAccountProjectionTests {
         #expect(rows.compactMap(\.accountEmail) == ["a@example.com", "p1@example.com", "p2@example.com"])
     }
 
+    @Test
+    func `claude stays the canonical wire id when claude-plugin also maps to claude`() {
+        #expect(MagpieProviderMapping.wireID(for: .claude) == "claude")
+        #expect(MagpieProviderMapping.ownedWireID(for: "claude-plugin") == "claude")
+    }
+
     @Test(arguments: ["kimi-code", "opencode-go"])
     func `a sole anonymous provider has stable normal quota identity`(wireID: String) throws {
         let json = "{\"data\":[{\"provider\":\"\(wireID)\",\"windows\":[{\"name\":\"7 days\",\"used\":8}]}]}"
