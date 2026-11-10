@@ -25,6 +25,9 @@ public enum MagpieProviderMapping {
     /// Provider-specific by design: these verified gateway wire IDs name the matching native providers.
     public static let nativeProviders: [String: UsageProvider] = [
         "claude": .claude,
+        // magpie renames a plugin whose ID is a built-in's to "<id>-plugin", so a plugin that
+        // serves Claude accounts (e.g. through a proxy) reports its cards as "claude-plugin".
+        "claude-plugin": .claude,
         "codex": .codex,
         // magpie renamed the Grok wire ID from "grok-plugin" to "grok"; both own the provider,
         // so a takeover persisted under either spelling keeps Grok off local credentials.

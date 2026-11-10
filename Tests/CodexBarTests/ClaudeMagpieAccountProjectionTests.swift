@@ -191,6 +191,18 @@ struct MagpieAccountProjectionTests {
         #expect(grok.first?.windows.map(\.usedPercent) == [2])
     }
 
+    @Test
+    func `claude plugin accounts join the built-in claude accounts as separate cards`() throws {
+        let rows = try self.project("""
+        {"data":[{"provider":"claude","user":"a@example.com","windows":[{"name":"5 hours","used":1}]},
+          {"provider":"claude-plugin","name":"CPA","user":"p1@example.com","windows":[{"name":"5 hours","used":2}]},
+          {"provider":"claude-plugin","name":"CPA","user":"p2@example.com","windows":[{"name":"5 hours","used":3}]}]}
+        """)
+        #expect(rows.count == 3)
+        #expect(rows.allSatisfy { $0.provider.nativeProvider == .claude && $0.error == nil })
+        #expect(rows.compactMap(\.accountEmail) == ["a@example.com", "p1@example.com", "p2@example.com"])
+    }
+
     @Test(arguments: ["kimi-code", "opencode-go"])
     func `a sole anonymous provider has stable normal quota identity`(wireID: String) throws {
         let json = "{\"data\":[{\"provider\":\"\(wireID)\",\"windows\":[{\"name\":\"7 days\",\"used\":8}]}]}"
