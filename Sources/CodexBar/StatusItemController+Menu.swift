@@ -521,23 +521,31 @@ extension StatusItemController {
                 tightVerticalFit: true,
                 selectsWholeRow: true,
                 usesPanelBase: true,
-                onReorder: { [weak self] identifiers in
-                    self?.applyOverviewRowOrder(identifiers)
+                onReorder: { [weak self, weak menu] identifiers in
+                    self?.applyOverviewRowOrder(identifiers, in: menu)
                 })
             menu.addItem(item)
         }
         return true
     }
 
-    /// Stores the order a drag left behind and rebuilds the open menu, so every row's divider moves
-    /// with it: the row above the list's new end gains one and the new last row loses it.
-    private func applyOverviewRowOrder(_ visibleIdentifiers: [String]) {
+    /// Stores the order a drag left behind and rebuilds the menu it was dropped in, so every row's
+    /// divider moves with it: the row above the list's new end gains one and the new last row loses
+    /// it. The rebuild is scheduled on the run loop mode the menu tracks in because a main-actor
+    /// task starves there, which would leave the dividers stale until the next open.
+    private func applyOverviewRowOrder(_ visibleIdentifiers: [String], in menu: NSMenu?) {
         let saved = self.settings.overviewRowOrderIDs
         let merged = OverviewRowOrder.merged(saved: saved, visible: visibleIdentifiers)
         // A drag that ends where it started leaves both the order and the dividers as they were.
         guard merged != saved else { return }
         self.settings.overviewRowOrderIDs = merged
-        self.invalidateMenus(refreshOpenMenus: true)
+        self.invalidateMenus(refreshOpenMenus: false)
+        guard let menu, self.openMenus[ObjectIdentifier(menu)] != nil else { return }
+        // Same provider argument `menuWillOpen` passes to `populateMenu`: Overview ignores it while
+        // selected, and a tab switch before the rebuild still renders the provider that was chosen.
+        self.scheduleTrackingMenuRebuildIfStillVisible(
+            menu,
+            provider: self.menuProvider(for: menu))
     }
 
     /// One Overview card, carrying the user's display choices: hidden windows, used or remaining
