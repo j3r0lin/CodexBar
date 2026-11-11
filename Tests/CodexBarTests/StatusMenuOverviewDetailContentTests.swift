@@ -282,7 +282,7 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `overview row height follows a row going from usage to error and back`() throws {
+    func `overview row height stays fixed as a row goes from usage to error and back`() throws {
         let previous = StatusItemController.menuCardRenderingEnabled
         defer { StatusItemController.menuCardRenderingEnabled = previous }
         let (controller, store, _) = self.makeOverviewController(providers: [.zai, .claude], rendersCards: true)
@@ -308,11 +308,12 @@ extension StatusMenuTests {
         store._setErrorForTesting(nil, provider: .zai)
         store._setSnapshotForTesting(usage, provider: .zai)
         let normal = try rowHeight()
+        #expect(normal == OverviewCompactAccountRow.rowHeight)
 
+        // The error takes the cells' place within the same fixed row height, however long it is.
         store._setSnapshotForTesting(nil, provider: .zai)
         store._setErrorForTesting(longError, provider: .zai)
-        let failed = try rowHeight()
-        #expect(failed > normal)
+        #expect(try rowHeight() == normal)
 
         store._setErrorForTesting(nil, provider: .zai)
         store._setSnapshotForTesting(usage, provider: .zai)

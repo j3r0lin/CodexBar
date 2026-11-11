@@ -481,6 +481,16 @@ extension StatusItemController {
 
         // Accounts sit in one flat list; only a provider with several accounts names the account.
         let accountCounts = Dictionary(rows.map { ($0.groupKey, 1) }, uniquingKeysWith: +)
+        if !rows.isEmpty {
+            menu.addItem(self.makeMenuCardItem(
+                OverviewColumnHeadView(width: menuWidth),
+                id: "overviewColumnHead",
+                width: menuWidth,
+                heightCacheScope: "overviewColumnHead",
+                heightCacheFingerprint: "column-head",
+                tightVerticalFit: true,
+                usesPanelBase: true))
+        }
         for (index, row) in rows.enumerated() {
             let isLast = index == rows.count - 1
             let isGrouped = (accountCounts[row.groupKey] ?? 1) > 1
@@ -495,11 +505,9 @@ extension StatusItemController {
                 id: identifier,
                 width: menuWidth,
                 heightCacheScope: "overviewCompactRow",
-                heightCacheFingerprint: "compact-header-\(rowView.lines.count)-\(row.errorText ?? "")"
-                    // The label's length, not its text, can wrap a long name; the text changes every minute.
-                    + "-\(rowView.name)-\(rowView.updatedText?.count ?? 0)-\(rowView.resetCreditsText?.count ?? 0)"
-                    + "-\(rowView.scheduledResetText?.count ?? 0)"
-                    + "-\(rowView.providerTag ?? "")-\(rowView.plan ?? "")",
+                // Every row is one fixed height whether it has readings or an error: the name and the
+                // error each stay within the row's content area.
+                heightCacheFingerprint: "table-row",
                 submenu: submenu,
                 showsSubmenuIndicator: false,
                 usesGPUSelection: true,

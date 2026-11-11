@@ -298,9 +298,20 @@ struct OverviewUsageRow {
                 label: window.label,
                 used: window.used,
                 resetsAt: window.resetsAt,
+                column: Self.column(for: window),
                 warningWindow: Self.warningWindow(for: window))
             line.pacePercent = paced.first { $0.0 == window }?.1.expectedUsedPercent
             return line
+        }
+    }
+
+    /// Semantics decide the column unless the window is of another kind, where only its length can.
+    static func column(for window: NamedWindow) -> OverviewColumn {
+        switch window.window.semantics {
+        case .session: .session
+        case .weekly: .weekly
+        case .scopedWeekly, .monthly: .other
+        case .other: OverviewColumn.preferred(forDuration: window.paceDuration)
         }
     }
 

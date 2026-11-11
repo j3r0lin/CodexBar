@@ -74,6 +74,127 @@ struct OverviewRowRenderTests {
         try png.write(to: URL(fileURLWithPath: dir).appendingPathComponent("overview-rows.png"))
     }
 
+    /// Writes the column head and the 13 accounts of the design's table board when
+    /// CODEXBAR_OVERVIEW_TABLE_RENDER_DIR is set, for comparing the layout with the design by eye.
+    @Test
+    func `render overview table`() throws {
+        guard let dir = ProcessInfo.processInfo.environment["CODEXBAR_OVERVIEW_TABLE_RENDER_DIR"] else { return }
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let width: CGFloat = 400
+        struct Win {
+            let label: String
+            let used: Double
+            let pace: Double?
+            let countdown: String
+            let column: OverviewColumn
+        }
+        struct Account {
+            let name: String
+            var tag: String?
+            var plan: String?
+            var credits = 0
+            var staleAge: TimeInterval?
+            let wins: [Win]
+        }
+        func seconds(_ countdown: String) -> TimeInterval? {
+            var total: TimeInterval = 0
+            for part in countdown.split(separator: " ") {
+                guard let value = Double(part.dropLast()) else { return nil }
+                switch part.last {
+                case "d": total += value * 86400
+                case "h": total += value * 3600
+                case "m": total += value * 60
+                default: return nil
+                }
+            }
+            return total
+        }
+        func win(_ label: String, _ used: Double, _ pace: Double?, _ countdown: String, _ column: Int) -> Win {
+            Win(
+                label: label,
+                used: used,
+                pace: pace,
+                countdown: countdown,
+                column: OverviewColumn(rawValue: column) ?? .other)
+        }
+        let cpa = { (name: String, wins: [Win]) in Account(name: name, tag: "CPA", plan: "team", wins: wins) }
+        let accounts = [
+            cpa("personal", [
+                win("5h", 9, 41, "3h 6m", 0), win("7d", 58, 72, "2d 4h", 1), win("Fable", 7, 72, "2d 4h", 2),
+            ]),
+            cpa("shared1", [
+                win("5h", 4, 40, "3h 6m", 0), win("7d", 64, 70, "1d 21h", 1), win("Fable", 2, 70, "1d 21h", 2),
+            ]),
+            cpa("shared2", [
+                win("5h", 5, 33, "3h 16m", 0), win("7d", 47, 52, "3d 4h", 1), win("Fable", 1, 52, "3d 4h", 2),
+            ]),
+            Account(name: "Claude", wins: [
+                win("5h", 18, 36, "3h 5m", 0), win("7d", 61, 74, "2d 1h", 1), win("Fable", 3, 74, "2d 1h", 2),
+            ]),
+            Account(name: "Codex", plan: "plus", credits: 2, wins: [
+                win("5h", 2, 34, "3h 15m", 0), win("7d", 66, 49, "3d 8h", 1),
+            ]),
+            Account(name: "Grok", wins: [win("7d", 12, 8, "6d 14h", 1)]),
+            Account(name: "OpenCode Go", wins: [
+                win("5h", 0, nil, "—", 0), win("7d", 0, nil, "—", 1), win("30d", 70, 83, "4d 14h", 2),
+            ]),
+            Account(name: "Kimi Code", wins: [
+                win("5h", 3, 78, "1h 0m", 0), win("7d", 2, 18, "5d 21h", 1), win("30d", 96, 95, "21h 30m", 2),
+            ]),
+            cpa("shared3", [
+                win("5h", 41, 52, "2h 24m", 0), win("7d", 77, 64, "2d 12h", 1), win("Fable", 12, 64, "2d 12h", 2),
+            ]),
+            Account(name: "Gemini", plan: "pro", wins: [win("24h", 34, 60, "9h 40m", 0)]),
+            Account(name: "Cursor", plan: "pro", wins: [win("30d", 44, 40, "18d 3h", 2)]),
+            Account(name: "Copilot", staleAge: 2 * 3600, wins: [win("30d", 63, 40, "20d 2h", 2)]),
+            Account(name: "Z.ai", plan: "lite", wins: [
+                win("5h", 88, 70, "1h 20m", 0), win("7d", 35, 50, "4d 2h", 1),
+            ]),
+        ]
+        let thresholds = [50, 10]
+        let view = VStack(alignment: .leading, spacing: 0) {
+            OverviewColumnHeadView(width: width)
+            ForEach(accounts.indices, id: \.self) { index in
+                let account = accounts[index]
+                OverviewCompactAccountRow(
+                    name: account.name,
+                    shortWindow: nil,
+                    longWindow: nil,
+                    width: width,
+                    namesProvider: true,
+                    providerTag: account.tag,
+                    plan: account.plan,
+                    showsDivider: index < accounts.count - 1,
+                    namedLines: account.wins.map { win in
+                        OverviewCompactAccountRow.Line(
+                            label: win.label,
+                            used: win.used,
+                            resetsAt: seconds(win.countdown).map { now.addingTimeInterval($0) },
+                            column: win.column,
+                            pacePercent: win.pace)
+                    },
+                    display: OverviewDisplayOptions(
+                        sessionWarningThresholds: thresholds,
+                        weeklyWarningThresholds: thresholds),
+                    isStale: account.staleAge != nil,
+                    resetCredits: account.credits > 0
+                        ? MagpieResetCredits(expirations: Array(repeating: nil, count: account.credits))
+                        : nil,
+                    updatedAt: account.staleAge.map { now.addingTimeInterval(-$0) },
+                    now: now)
+            }
+        }
+        .padding(.vertical, 4)
+        .frame(width: width)
+        .background(Color(nsColor: OverviewPalette.panelBase))
+        .environment(\.colorScheme, .dark)
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = 2
+        let bitmap = try NSBitmapImageRep(cgImage: #require(renderer.cgImage))
+        let png = try #require(bitmap.representation(using: .png, properties: [:]))
+        try png.write(to: URL(fileURLWithPath: dir).appendingPathComponent("overview-table.png"))
+    }
+
     /// Writes the paced 7d bar and the long-name layouts when CODEXBAR_ROW_RENDER_DIR is set, for
     /// comparing the bar thickness and the name wrapping by eye.
     @Test
@@ -91,6 +212,7 @@ struct OverviewRowRenderTests {
                 label: label,
                 used: used,
                 resetsAt: now.addingTimeInterval(3 * 86400),
+                column: label == "5h" ? .session : label == "7d" ? .weekly : .other,
                 pacePercent: pace)
         }
         func row(_ name: String, _ lines: [OverviewCompactAccountRow.Line], provider: Bool = true)
@@ -261,6 +383,7 @@ struct OverviewRowRenderTests {
                 label: label,
                 used: used,
                 resetsAt: now.addingTimeInterval(resetIn),
+                column: label == "5h" ? .session : label == "7d" ? .weekly : .other,
                 pacePercent: pace)
         }
         func row(

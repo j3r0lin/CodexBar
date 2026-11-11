@@ -4,8 +4,8 @@ import SwiftUI
 import Testing
 @testable import CodexBar
 
-/// The Overview rows share one column grid: a lone provider card and an account row inside a group draw
-/// their bars over the same x range, so the list reads as columns.
+/// The Overview rows share one column grid: every row draws a window's bar in the same x range for its
+/// column, so the list reads as columns.
 @MainActor
 struct OverviewRowAlignmentTests {
     private static let width = StatusItemController.overviewMenuMinimumWidth
@@ -15,76 +15,37 @@ struct OverviewRowAlignmentTests {
     private struct Scenario {
         let name: String
         let provider: Bool
-        let labels: [String]
+        /// The windows' labels with the column each prefers.
+        let windows: [(label: String, column: OverviewColumn)]
     }
 
     private static let scenarios = [
-        Scenario(name: "Codex", provider: true, labels: ["5h", "7d"]),
-        Scenario(name: "OpenCode Go", provider: true, labels: ["5h", "7d"]),
-        Scenario(name: "claude-1", provider: false, labels: ["5h", "7d", "Fable"]),
-        Scenario(name: "Kimi Code", provider: true, labels: ["5h", "7d", "30d"]),
-        Scenario(name: "Grok", provider: true, labels: ["7d"]),
+        Scenario(name: "Codex", provider: true, windows: [("5h", .session), ("7d", .weekly)]),
+        Scenario(name: "claude-1", provider: false, windows: [("5h", .session), ("7d", .weekly), ("Fable", .other)]),
+        Scenario(name: "Kimi Code", provider: true, windows: [("5h", .session), ("7d", .weekly), ("30d", .other)]),
+        Scenario(name: "Grok", provider: true, windows: [("7d", .weekly)]),
+        Scenario(name: "Cursor", provider: true, windows: [("30d", .other)]),
     ]
 
-    @Test
-    func `bars start and end at the same x on lone provider rows and account rows`() throws {
-        var report: [String] = []
-        var spans: [Set<Span>] = []
-        for scenario in Self.scenarios {
-            let image = try Self.render(Self.row(scenario))
-            let found = Self.barSpans(in: image)
-            spans.append(found)
-            let sorted = found.sorted { $0.start < $1.start }
-            report.append(
-                "\(scenario.name): name ink x=\(Self.nameInkStart(in: image)) "
-                    + "bar extent=\(Self.extent(found)) spans=\(sorted)")
-        }
-        if let dir = ProcessInfo.processInfo.environment["CODEXBAR_ROW_ALIGN_DIR"] {
-            try report.joined(separator: "\n").write(
-                toFile: URL(fileURLWithPath: dir).appendingPathComponent("measurements.txt").path,
-                atomically: true,
-                encoding: .utf8)
-            let composite = VStack(alignment: .leading, spacing: 0) {
-                ForEach(Self.scenarios.indices, id: \.self) { Self.row(Self.scenarios[$0]) }
-            }
-            .padding(.vertical, 6)
-            .background(Color(red: 0.14, green: 0.14, blue: 0.16))
-            .environment(\.colorScheme, .dark)
-            let renderer = ImageRenderer(content: composite)
-            renderer.scale = Self.scale
-            let bitmap = try NSBitmapImageRep(cgImage: #require(renderer.cgImage))
-            try #require(bitmap.representation(using: .png, properties: [:]))
-                .write(to: URL(fileURLWithPath: dir).appendingPathComponent("composite.png"))
-        }
-        // Capsule ends antialias differently on each pixel row, so compare the outermost extent of the bars.
-        let extents = spans.map(Self.extent)
-        let first = try #require(extents.first)
-        #expect(first.start >= 0, "no bar found in the first row")
-        for (index, extent) in extents.enumerated() {
-            #expect(
-                extent == first,
-                "\(Self.scenarios[index].name) bar extent \(extent) != \(first): \(report)")
-        }
-        // The percent and reset columns trail the bar, so the bar runs up to the percent column.
-        let barEnd = Self.width - OverviewCompactAccountRow.contentInset - OverviewCompactAccountRow.resetWidth
-            - OverviewCompactAccountRow.columnSpacing - OverviewCompactAccountRow.percentWidth
-            - OverviewCompactAccountRow.columnSpacing
-        #expect(abs(first.end - Int(barEnd * Self.scale)) <= 2, "bar ends at \(first.end): \(report)")
-    }
+    /// At the 400pt menu width the name column takes 104pt after the 20pt inset, and the cells split the
+    /// remaining 226pt after three 10pt gaps.
+    private static let cellStarts: [CGFloat] = [134, 219.3333, 304.6667]
+    private static let cellWidth: CGFloat = 75.3333
 
     @Test
-    func `the reset column fits every countdown and absolute time a row shows`() {
-        let font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .regular)
-        let widest = stride(from: 0, through: 31 * 1440, by: 7).map { minutes in
-            let line = OverviewCompactAccountRow.Line(
-                label: "30d",
-                used: 40,
-                resetsAt: Self.now.addingTimeInterval(TimeInterval(minutes * 60) + 30))
-            let text = OverviewCompactAccountRow.resetText(line, now: Self.now)
-            return (text as NSString).size(withAttributes: [.font: font]).width
-        }.max() ?? 0
-        #expect(widest <= OverviewCompactAccountRow.resetWidth)
-        #expect(OverviewCompactAccountRow.resetWidth - widest < 8)
+    func `a window's bar ends on its column's right edge and a tagless bar starts on its left edge`() throws {
+        #expect(Self.width == 400)
+        for scenario in Self.scenarios {
+            let spans = try Self.barSpans(in: Self.render(Self.row(scenario)))
+            for window in scenario.windows {
+                let start = Int(Self.cellStarts[window.column.rawValue] * Self.scale)
+                let end = Int((Self.cellStarts[window.column.rawValue] + Self.cellWidth) * Self.scale)
+                let named = window.label != window.column.head
+                #expect(
+                    spans.contains { abs($0.end - end) <= 2 && (named || abs($0.start - start) <= 2) },
+                    "\(scenario.name) \(window.label): no bar \(start)...\(end) in \(spans)")
+            }
+        }
     }
 
     @Test
@@ -99,14 +60,19 @@ struct OverviewRowAlignmentTests {
 
     // MARK: - Rendering and measuring
 
-    private static func row(_ scenario: Scenario) -> some View {
-        let lines = scenario.labels.map { label in
+    private static func lines(_ scenario: Scenario) -> [OverviewCompactAccountRow.Line] {
+        scenario.windows.map { window in
             OverviewCompactAccountRow.Line(
-                label: label,
+                label: window.label,
                 used: 40,
-                resetsAt: self.now.addingTimeInterval(label == "30d" ? 26 * 86400 + 13 * 3600 : 3 * 86400),
-                pacePercent: label == "7d" ? 50 : nil)
+                resetsAt: self.now.addingTimeInterval(window.label == "30d" ? 26 * 86400 + 13 * 3600 : 3 * 86400),
+                column: window.column,
+                pacePercent: window.label == "7d" ? 50 : nil)
         }
+    }
+
+    private static func row(_ scenario: Scenario) -> some View {
+        let lines = self.lines(scenario)
         return OverviewCompactAccountRow(
             name: scenario.name,
             shortWindow: nil,
@@ -133,14 +99,10 @@ struct OverviewRowAlignmentTests {
         }
     }
 
-    private static func extent(_ spans: Set<Span>) -> Span {
-        Span(start: spans.map(\.start).min() ?? -1, end: spans.map(\.end).max() ?? -1)
-    }
-
-    /// Scan past the window label column to measure the usage bars.
+    /// Scan past the name column to measure the usage bars.
     private static var scanStart: Int {
-        let labelEnd = OverviewCompactAccountRow.contentInset + OverviewCompactAccountRow.labelWidth
-        return Int((labelEnd + OverviewCompactAccountRow.columnSpacing) * self.scale)
+        let nameEnd = OverviewCompactAccountRow.contentInset + OverviewCompactAccountRow.nameWidth
+        return Int((nameEnd + OverviewCompactAccountRow.columnSpacing) * self.scale)
     }
 
     private static func differs(_ a: NSColor, _ b: NSColor) -> Bool {
@@ -178,19 +140,5 @@ struct OverviewRowAlignmentTests {
     private static func interiorRows(of image: NSBitmapImageRep) -> Range<Int> {
         let margin = Int(OverviewCompactAccountRow.verticalPadding * self.scale)
         return margin..<max(margin, image.pixelsHigh - margin)
-    }
-
-    /// Leftmost inked pixel of the name area: the icon on a provider row, the first glyph on an account row.
-    private static func nameInkStart(in image: NSBitmapImageRep) -> Int {
-        let from = Int((OverviewCompactAccountRow.contentInset - 4) * self.scale)
-        for x in from..<self.scanStart {
-            for y in self.interiorRows(of: image) {
-                guard let color = image.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB),
-                      let reference = image.colorAt(x: self.referenceX, y: y)?.usingColorSpace(.deviceRGB)
-                else { continue }
-                if self.differs(color, reference) { return x }
-            }
-        }
-        return -1
     }
 }

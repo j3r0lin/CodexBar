@@ -150,6 +150,8 @@ struct OverviewCompactAccountRow: View {
         let label: String
         let used: Double
         let resetsAt: Date?
+        /// The column the window takes when no earlier window has it.
+        let column: OverviewColumn
         /// Which warning thresholds colour this line; a window of unknown length follows the weekly
         /// lane, since it is never the five-hour session.
         var warningWindow: QuotaWarningWindow = .weekly
@@ -158,22 +160,36 @@ struct OverviewCompactAccountRow: View {
         var pacePercent: Double?
     }
 
-    /// Every line puts the same element in the same column, so each part is sized here and the bar
-    /// takes whatever the line has left.
-    static let horizontalPadding: CGFloat = 12
+    /// A window in its cell, with whether the cell must name it because the column head does not.
+    struct Placement: Equatable {
+        let line: Line
+        let showsLabel: Bool
+    }
+
+    /// Puts each window, in its given order, in its preferred column; a taken column sends it to the
+    /// first free one on the right, then on the left. Rows hold at most three windows, so all fit.
+    static func placements(of lines: [Line]) -> [Placement?] {
+        var cells = [Placement?](repeating: nil, count: OverviewColumn.allCases.count)
+        for line in lines {
+            let preferred = line.column.rawValue
+            let order = Array(preferred..<cells.count) + Array((0..<preferred).reversed())
+            guard let index = order.first(where: { cells[$0] == nil }) else { continue }
+            cells[index] = Placement(line: line, showsLabel: line.label != OverviewColumn(rawValue: index)?.head)
+        }
+        return cells
+    }
+
     /// Row content starts here, in line with the usage card above the list.
     static let contentInset: CGFloat = 20
-    /// Air above and below an account's lines inside its row.
-    static let verticalPadding: CGFloat = 8
-    /// Fits the scoped-weekly model labels ("Fable" is 27pt at 10pt medium) alongside "5h"/"7d"/"30d".
-    static let labelWidth: CGFloat = 32
-    /// Fits "100%" at 13pt semibold with monospaced digits.
-    static let percentWidth: CGFloat = 38
-    /// Fits the widest reset text, a countdown with a weekday and time (about 100pt at 10pt with
-    /// monospaced digits).
-    static let resetWidth: CGFloat = 102
-    /// Every window line keeps this height so lines pitch evenly within and across accounts.
-    static let lineHeight: CGFloat = 22
+    static let horizontalPadding: CGFloat = 12
+    /// Air above and below an account's content inside its row.
+    static let verticalPadding: CGFloat = 5
+    /// The account name column; the three window cells share what is left of the row.
+    static let nameWidth: CGFloat = 104
+    /// The gap between the name column and the cells, and between the cells.
+    static let columnSpacing: CGFloat = 10
+    static let contentHeight: CGFloat = 31
+    static let rowHeight: CGFloat = contentHeight + 2 * verticalPadding
 
     /// The windows that have a reading, short first. A window the provider did not report gets no line.
     var lines: [Line] {
@@ -181,6 +197,10 @@ struct OverviewCompactAccountRow: View {
         if let namedLines { return namedLines }
         return [self.shortWindow, self.longWindow].compactMap { window in
             guard let window, let used = Self.used(window) else { return nil }
+            let minutes = Self.nativeMinutes(
+                window,
+                provider: self.provider,
+                infersPeriodFromReset: self.infersPeriodFromReset)
             return Line(
                 label: Self.windowLabel(
                     window,
@@ -188,6 +208,7 @@ struct OverviewCompactAccountRow: View {
                     infersPeriodFromReset: self.infersPeriodFromReset),
                 used: used,
                 resetsAt: window.resetsAt,
+                column: OverviewColumn.preferred(forDuration: minutes.map { TimeInterval($0 * 60) }),
                 warningWindow: Self.warningWindow(
                     window,
                     provider: self.provider,
@@ -216,22 +237,20 @@ struct OverviewCompactAccountRow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            self.header
+        HStack(spacing: Self.columnSpacing) {
+            self.nameColumn
             if let errorText {
                 Text(errorText)
                     .font(.system(size: 10))
                     .foregroundStyle(MenuHighlightStyle.error(self.isHighlighted))
                     .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                self.windowLines
+                self.cells
             }
         }
         .padding(.horizontal, Self.contentInset)
-        .padding(.vertical, Self.verticalPadding)
-        .frame(width: self.width, alignment: .leading)
+        .frame(width: self.width, height: Self.rowHeight, alignment: .leading)
         .overlay(alignment: .bottom) {
             if self.showsDivider {
                 Rectangle()
@@ -244,19 +263,18 @@ struct OverviewCompactAccountRow: View {
 
     static let dividerColor = Color.white.opacity(0.08)
 
+    /// Only the count: the next expiry is on the detail page.
     var resetCreditsText: String? {
-        guard let resetCredits else { return nil }
-        let expiry = resetCredits.nextExpiry.map { " · \(Self.countdown(to: $0, now: self.now))" } ?? ""
-        return "\(resetCredits.count)\(expiry)"
+        self.resetCredits.map { "\($0.count)" }
     }
 
     var scheduledResetText: String? {
         self.scheduledResetAt.map { Self.countdown(to: $0, now: self.now) }
     }
 
-    private var header: some View {
-        HStack(spacing: 8) {
-            HStack(spacing: 6) {
+    private var nameColumn: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            HStack(spacing: 5) {
                 if self.namesProvider {
                     OverviewProviderIcon(image: self.icon, isTemplate: self.iconIsTemplate)
                         .scaleEffect(14.0 / 18)
@@ -266,50 +284,64 @@ struct OverviewCompactAccountRow: View {
                 Text(self.name)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(self.errorText == nil ? self.nameColor : .white)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+            .frame(height: 16)
+            self.detailLine
+                .frame(height: 14)
+        }
+        .frame(width: Self.nameWidth, height: Self.contentHeight, alignment: .leading)
+    }
+
+    /// The tags under the name; a stale reading says how old it is instead, since the numbers beside it
+    /// are dimmed for the same reason.
+    @ViewBuilder
+    private var detailLine: some View {
+        if self.isStale, let updatedText {
+            Text(updatedText)
+                .font(.system(size: 10).monospacedDigit())
+                .foregroundStyle(OverviewPalette.warning)
+                .lineLimit(1)
+                .fixedSize()
+                .frame(width: Self.nameWidth, alignment: .leading)
+                .clipped()
+        } else {
+            HStack(spacing: 4) {
                 if let providerTag {
                     Text(providerTag)
                         .font(.system(size: 11))
                         .foregroundStyle(OverviewPalette.faint)
-                        .lineLimit(1)
                 }
                 if let plan {
                     Text(plan)
-                        .font(.system(size: 10))
+                        .font(.system(size: 9.5))
                         .foregroundStyle(OverviewPalette.caption)
-                        .lineLimit(1)
                         .padding(.horizontal, 5)
-                        .padding(.vertical, 1)
-                        .background(RoundedRectangle(cornerRadius: 4).fill(Color.white.opacity(0.07)))
+                        .frame(height: 13)
+                        .background(RoundedRectangle(cornerRadius: 4).fill(Color.white.opacity(0.08)))
+                }
+                if let resetCreditsText {
+                    self.captionBadge("arrow.counterclockwise", resetCreditsText)
+                }
+                if let scheduledResetText {
+                    self.captionBadge("clock", scheduledResetText)
                 }
             }
-            if let resetCreditsText {
-                HStack(spacing: 3) {
-                    Image(systemName: "arrow.counterclockwise")
-                    Text(resetCreditsText)
-                }
-                .font(.system(size: 10).monospacedDigit())
-                .foregroundStyle(OverviewPalette.caption)
-                .fixedSize()
-            }
-            if let scheduledResetText {
-                HStack(spacing: 3) {
-                    Image(systemName: "clock")
-                    Text(scheduledResetText)
-                }
-                .font(.system(size: 10).monospacedDigit())
-                .foregroundStyle(OverviewPalette.caption)
-                .fixedSize()
-            }
-            Spacer(minLength: 4)
-            if let updatedText {
-                Text(updatedText)
-                    .font(.system(size: 10).monospacedDigit())
-                    .foregroundStyle(OverviewPalette.caption)
-                    .fixedSize()
-            }
+            .lineLimit(1)
+            .fixedSize()
+            .frame(width: Self.nameWidth, alignment: .leading)
+            .clipped()
         }
+    }
+
+    private func captionBadge(_ symbol: String, _ text: String) -> some View {
+        HStack(spacing: 3) {
+            Image(systemName: symbol)
+            Text(text)
+        }
+        .font(.system(size: 10).monospacedDigit())
+        .foregroundStyle(OverviewPalette.caption)
     }
 
     private var nameColor: Color {
@@ -317,20 +349,67 @@ struct OverviewCompactAccountRow: View {
         return self.namesProvider ? .white : Color.white.opacity(0.85)
     }
 
-    @ViewBuilder
-    private var windowLines: some View {
-        let lines = self.lines
-        VStack(alignment: .leading, spacing: 0) {
-            ForEach(lines.indices, id: \.self) { index in
-                self.windowLine { self.readingView(lines[index]) }
+    private var cellWidth: CGFloat {
+        (self.width - 2 * Self.contentInset - Self.nameWidth - 3 * Self.columnSpacing) / 3
+    }
+
+    private var cells: some View {
+        let placements = Self.placements(of: self.lines)
+        return HStack(spacing: Self.columnSpacing) {
+            ForEach(placements.indices, id: \.self) { index in
+                Group {
+                    if let placement = placements[index] {
+                        self.cell(placement)
+                    } else {
+                        Text("—")
+                            .font(.system(size: 11))
+                            .foregroundStyle(OverviewPalette.faint)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .frame(width: self.cellWidth)
             }
         }
         .opacity(self.isStale ? 0.5 : 1)
     }
 
-    private func windowLine(@ViewBuilder content: () -> some View) -> some View {
-        content()
-            .frame(height: Self.lineHeight)
+    private func cell(_ placement: Placement) -> some View {
+        let line = placement.line
+        let reading = self.reading(for: line)
+        return VStack(spacing: 4) {
+            HStack(alignment: .lastTextBaseline, spacing: 0) {
+                Text("\(Int(reading.percent.rounded()))%")
+                    .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                    .foregroundStyle(reading.percentColor)
+                    .lineLimit(1)
+                    .fixedSize()
+                Spacer(minLength: 4)
+                Text(line.resetsAt.map { Self.countdown(to: $0, now: self.now) } ?? "—")
+                    .font(.system(size: 10).monospacedDigit())
+                    .foregroundStyle(OverviewPalette.faint)
+                    .lineLimit(1)
+                    // "97%" beside "21h 30m" leaves under a point to spare at the narrowest menu width.
+                    .minimumScaleFactor(0.85)
+            }
+            .frame(height: 15)
+            HStack(spacing: 4) {
+                if placement.showsLabel {
+                    Text(line.label)
+                        .font(.system(size: 8.5))
+                        .foregroundStyle(OverviewPalette.faint)
+                        .lineLimit(1)
+                        .fixedSize()
+                }
+                UsageBar(
+                    used: reading.percent,
+                    color: reading.barColor,
+                    trackColor: Self.trackColor,
+                    height: Self.barHeight,
+                    pacePercent: reading.pacePercent,
+                    overruns: reading.overruns)
+            }
+            .frame(height: 7)
+        }
     }
 
     /// What one line draws. Severity and pace read the used percentage, so `showsRemaining` moves
@@ -357,43 +436,11 @@ struct OverviewCompactAccountRow: View {
             overruns: self.display.showsPace && line.pacePercent.map { line.used > $0 } == true)
     }
 
-    private func readingView(_ line: Line) -> some View {
-        let reading = self.reading(for: line)
-        return HStack(spacing: Self.columnSpacing) {
-            Text(line.label)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(OverviewPalette.caption)
-                .lineLimit(1)
-                .frame(width: Self.labelWidth, alignment: .leading)
-            UsageBar(
-                used: reading.percent,
-                color: reading.barColor,
-                trackColor: Self.trackColor,
-                height: Self.barHeight,
-                pacePercent: reading.pacePercent,
-                overruns: reading.overruns)
-            Text("\(Int(reading.percent.rounded()))%")
-                .font(.system(size: 13, weight: .semibold).monospacedDigit())
-                .foregroundStyle(reading.percentColor)
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
-                .frame(width: Self.percentWidth, alignment: .trailing)
-            Text(Self.resetText(line, now: self.now))
-                .font(.system(size: 10).monospacedDigit())
-                .foregroundStyle(OverviewPalette.reset)
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
-                .frame(width: Self.resetWidth, alignment: .leading)
-        }
-    }
-
     static func displayedPercent(_ used: Double, showsRemaining: Bool) -> Double {
         showsRemaining ? 100 - used : used
     }
 
-    static let barHeight: CGFloat = 4
-    /// The gap between a line's label, bar, percent and reset columns.
-    static let columnSpacing: CGFloat = 8
+    static let barHeight: CGFloat = 3
 
     /// Menus are pinned dark, so the empty part of a bar is drawn light enough to read there.
     static let trackColor = Color.white.opacity(0.10)
@@ -478,40 +525,64 @@ struct OverviewCompactAccountRow: View {
         return min(100, max(0, window.usedPercent))
     }
 
-    static func resetText(_ line: Line, now: Date) -> String {
-        guard let date = line.resetsAt else { return "—" }
-        return "\(self.countdown(to: date, now: now)) · \(self.shortClock(date, now: now))"
-    }
-
-    /// A short form of the detail page's clock: today "14:30", within the next six days "Thu 03:00",
-    /// and beyond that "Oct 28". The countdown beside it settles which week a weekday falls in.
-    static func shortClock(_ date: Date, now: Date, calendar: Calendar = .current) -> String {
-        let clock = DateFormatter()
-        clock.locale = Locale(identifier: "en_US_POSIX")
-        clock.timeZone = calendar.timeZone
-        clock.dateFormat = "HH:mm"
-        let time = clock.string(from: date)
-        let days = calendar.dateComponents(
-            [.day],
-            from: calendar.startOfDay(for: now),
-            to: calendar.startOfDay(for: date)).day ?? 0
-        if days == 0 { return time }
-        let style = Date.FormatStyle(
-            locale: Locale(identifier: "en_US_POSIX"),
-            calendar: calendar,
-            timeZone: calendar.timeZone)
-        if days >= 1, days < 7 {
-            return "\(date.formatted(style.weekday(.abbreviated))) \(time)"
-        }
-        return date.formatted(style.month(.abbreviated).day())
-    }
-
+    /// The second unit is zero-padded so countdowns stacked in a column line up digit for digit.
     static func countdown(to date: Date, now: Date) -> String {
         let minutes = max(0, Int(date.timeIntervalSince(now) / 60))
         let days = minutes / 1440, hours = (minutes % 1440) / 60, mins = minutes % 60
-        if days > 0 { return "\(days)d \(hours)h" }
-        if hours > 0 { return "\(hours)h \(mins)m" }
+        if days > 0 { return "\(days)d \(String(format: "%02d", hours))h" }
+        if hours > 0 { return "\(hours)h \(String(format: "%02d", mins))m" }
         return "\(mins)m"
+    }
+}
+
+/// The three window columns of the Overview table, left to right.
+enum OverviewColumn: Int, CaseIterable {
+    case session, weekly, other
+
+    /// What a window in this column is called when it is named after the column.
+    var head: String {
+        switch self {
+        case .session: "5h"
+        case .weekly: "7d"
+        case .other: "30d"
+        }
+    }
+
+    /// The column head's text; the last column also takes every window that is not a day or a week long.
+    var title: String {
+        switch self {
+        case .session, .weekly: self.head
+        case .other: "\(self.head) · \(L("Other"))"
+        }
+    }
+
+    /// A known length of a day or less belongs to the first column and exactly seven days to the
+    /// second; every other window, one of unknown length included, to the third.
+    static func preferred(forDuration seconds: TimeInterval?) -> OverviewColumn {
+        guard let seconds else { return .other }
+        if seconds <= 86400 { return .session }
+        return seconds == 7 * 86400 ? .weekly : .other
+    }
+}
+
+/// The heads over the three window cells, on the same grid as the account rows under them.
+struct OverviewColumnHeadView: View {
+    let width: CGFloat
+
+    var body: some View {
+        HStack(spacing: OverviewCompactAccountRow.columnSpacing) {
+            Color.clear.frame(width: OverviewCompactAccountRow.nameWidth, height: 1)
+            ForEach(OverviewColumn.allCases, id: \.self) { column in
+                Text(column.title)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(OverviewPalette.faint)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(.horizontal, OverviewCompactAccountRow.contentInset)
+        .padding(.vertical, 4)
+        .frame(width: self.width, height: 22, alignment: .leading)
     }
 }
 

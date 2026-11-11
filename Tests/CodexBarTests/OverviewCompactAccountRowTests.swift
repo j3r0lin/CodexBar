@@ -15,21 +15,27 @@ struct OverviewCompactAccountRowTests {
         let missingShort = self.row(short: nil, long: Self.window(90, minutes: 6960))
         #expect(both.lines.map(\.used) == [96, 15])
         #expect(missingShort.lines.map(\.used) == [90])
-        #expect(self.height(both) > self.height(missingShort) + 10)
+        #expect(both.lines.map(\.column) == [.session, .other])
+        #expect(missingShort.lines.map(\.column) == [.other])
     }
 
     @Test
-    func `a long name wraps to a second line and grows a single-window row`() {
-        func height(_ name: String) -> CGFloat {
+    func `every row is one height however many windows or how long a name it has`() {
+        func height(_ name: String, long: RateWindow?, error: String? = nil) -> CGFloat {
             self.height(OverviewCompactAccountRow(
                 name: name,
-                shortWindow: nil,
-                longWindow: Self.window(40, minutes: 300),
+                shortWindow: Self.window(40, minutes: 300),
+                longWindow: long,
                 width: Self.width,
                 namesProvider: true,
+                errorText: error,
                 now: Self.now))
         }
-        #expect(height("Some Very Long Provider Name That Cannot Fit In One Header Line") > height("Codex"))
+        let expected = OverviewCompactAccountRow.rowHeight
+        #expect(height("Codex", long: Self.window(15, minutes: 10080)) == expected)
+        #expect(height("Codex", long: nil) == expected)
+        #expect(height("Some Very Long Provider Name That Cannot Fit In One Header Line", long: nil) == expected)
+        #expect(height("Codex", long: nil, error: String(repeating: "a long error ", count: 20)) == expected)
     }
 
     @Test
@@ -68,23 +74,121 @@ struct OverviewCompactAccountRowTests {
     }
 
     @Test
-    func `a reset shows both a countdown and an absolute time only when one exists`() {
-        let resetAt = Self.now.addingTimeInterval(4 * 3600 + 22 * 60)
-        let withReset = OverviewCompactAccountRow.Line(label: "5h", used: 40, resetsAt: resetAt)
-        let shown = OverviewCompactAccountRow.resetText(withReset, now: Self.now)
-        let countdown = OverviewCompactAccountRow.countdown(to: resetAt, now: Self.now)
-        let absolute = OverviewCompactAccountRow.shortClock(resetAt, now: Self.now)
-        #expect(shown.contains(countdown))
-        #expect(shown.contains(absolute))
-        let withoutReset = OverviewCompactAccountRow.Line(label: "5h", used: 0, resetsAt: nil)
-        let absent = OverviewCompactAccountRow.resetText(withoutReset, now: Self.now)
-        #expect(absent.allSatisfy { !$0.isNumber })
+    func `reset credits show only their count`() {
+        var row = self.row(short: nil, long: Self.window(40, minutes: 300))
+        #expect(row.resetCreditsText == nil)
+        row.resetCredits = MagpieResetCredits(expirations: [Self.now.addingTimeInterval(20 * 86400), nil])
+        #expect(row.resetCreditsText == "2")
+    }
+
+    // MARK: - Column assignment
+
+    private struct Cell: Equatable {
+        let label: String
+        let showsLabel: Bool
+    }
+
+    private func cells(_ placements: [OverviewCompactAccountRow.Placement?]) -> [Cell?] {
+        placements.map { $0.map { Cell(label: $0.line.label, showsLabel: $0.showsLabel) } }
+    }
+
+    private func magpieCells(_ windows: [MagpieQuotaWindow]) -> [Cell?] {
+        let row = OverviewUsageRow.magpie(
+            account: MagpieAccountSnapshot(
+                id: ProviderAccountIdentity(source: "magpie", opaqueID: "claude:a"),
+                provider: MagpieProviderMapping.reference(for: "claude"),
+                displayLabel: "claude:a",
+                accountEmail: nil,
+                ordinal: 1,
+                windows: windows,
+                readAt: nil,
+                isActive: true,
+                error: nil),
+            providerName: "Claude",
+            accountName: "claude:a")
+        return self.cells(OverviewCompactAccountRow.placements(of: row.compactLines(now: Self.now) ?? []))
+    }
+
+    private func magpieWindow(_ name: String) -> MagpieQuotaWindow {
+        MagpieQuotaWindow(name: name, usedPercent: 10, resetsAt: Self.now.addingTimeInterval(3600))
+    }
+
+    @Test
+    func `magpie 5h, 7d and a model window take the three columns and only the model is named`() {
+        let cells = self.magpieCells(["5 hours", "7 days", "7 days · Fable"].map(self.magpieWindow))
+        #expect(cells == [
+            Cell(label: "5h", showsLabel: false),
+            Cell(label: "7d", showsLabel: false),
+            Cell(label: "Fable", showsLabel: true),
+        ])
+    }
+
+    @Test
+    func `magpie 5h, 7d and 30d are all named by the column head`() {
+        let cells = self.magpieCells(["5 hours", "7 days", "30 days"].map(self.magpieWindow))
+        #expect(cells == [
+            Cell(label: "5h", showsLabel: false),
+            Cell(label: "7d", showsLabel: false),
+            Cell(label: "30d", showsLabel: false),
+        ])
+    }
+
+    @Test
+    func `a lone magpie 7d window sits in the second column`() {
+        #expect(self.magpieCells([self.magpieWindow("7 days")]) == [nil, Cell(label: "7d", showsLabel: false), nil])
+    }
+
+    @Test
+    func `a lone magpie 24h window sits in the first column under its own name`() {
+        #expect(self.magpieCells([self.magpieWindow("24 hours")]) == [Cell(label: "24h", showsLabel: true), nil, nil])
+    }
+
+    @Test
+    func `a lone magpie monthly window sits in the third column`() {
+        #expect(self.magpieCells([self.magpieWindow("Month")]) == [nil, nil, Cell(label: "30d", showsLabel: false)])
+    }
+
+    @Test
+    func `a taken magpie column sends the window to the next free one, looking right before left`() {
+        // 7d, Fable and 30d without a 5h: 30d finds the third column taken and falls back to the first.
+        let cells = self.magpieCells(["7 days", "7 days · Fable", "30 days"].map(self.magpieWindow))
+        #expect(cells == [
+            Cell(label: "30d", showsLabel: true),
+            Cell(label: "7d", showsLabel: false),
+            Cell(label: "Fable", showsLabel: true),
+        ])
+    }
+
+    @Test
+    func `native 300 and 10080 minute windows take the first two columns`() {
+        let row = self.row(
+            short: Self.window(10, minutes: 300),
+            long: Self.window(20, minutes: 10080))
+        #expect(self.cells(OverviewCompactAccountRow.placements(of: row.lines)) == [
+            Cell(label: "5h", showsLabel: false), Cell(label: "7d", showsLabel: false), nil,
+        ])
+    }
+
+    @Test
+    func `a window's length picks its preferred column`() {
+        #expect(OverviewColumn.preferred(forDuration: 86400) == .session)
+        #expect(OverviewColumn.preferred(forDuration: 7 * 86400) == .weekly)
+        #expect(OverviewColumn.preferred(forDuration: 30 * 86400) == .other)
+        #expect(OverviewColumn.preferred(forDuration: nil) == .other)
     }
 
     @Test
     func `a reset time is written with a space between its units`() {
         #expect(self.countdown(minutes: 140) == "2h 20m")
         #expect(self.countdown(minutes: 9900) == "6d 21h")
+    }
+
+    @Test
+    func `a reset time pads its second unit so a column of them lines up`() {
+        #expect(self.countdown(minutes: 124) == "2h 04m")
+        #expect(self.countdown(minutes: 60) == "1h 00m")
+        #expect(self.countdown(minutes: 8880) == "6d 04h")
+        #expect(self.countdown(minutes: 1440) == "1d 00h")
         #expect(self.countdown(minutes: 18) == "18m")
         #expect(self.countdown(minutes: 52) == "52m")
     }
@@ -124,6 +228,7 @@ struct OverviewCompactAccountRowTests {
             label: "7d",
             used: 60,
             resetsAt: nil,
+            column: .weekly,
             warningWindow: .weekly)
         let thresholds = (session: [50, 20], weekly: [50, 20])
         let usedReading = self.reading(line, showsRemaining: false, thresholds: thresholds)
@@ -163,7 +268,12 @@ struct OverviewCompactAccountRowTests {
 
     @Test
     func `hiding pace drops the tick and the hatching`() {
-        let line = OverviewCompactAccountRow.Line(label: "7d", used: 80, resetsAt: nil, pacePercent: 70)
+        let line = OverviewCompactAccountRow.Line(
+            label: "7d",
+            used: 80,
+            resetsAt: nil,
+            column: .weekly,
+            pacePercent: 70)
         let withPace = self.reading(line)
         #expect(withPace.pacePercent == 70)
         #expect(withPace.overruns)
@@ -177,7 +287,12 @@ struct OverviewCompactAccountRowTests {
     func `the percent is white until it reaches a warning threshold`() {
         let thresholds = (session: [50, 20], weekly: [50, 20])
         // Pace never tints the number; only the thresholds do.
-        let ahead = OverviewCompactAccountRow.Line(label: "5h", used: 30, resetsAt: nil, pacePercent: 10)
+        let ahead = OverviewCompactAccountRow.Line(
+            label: "5h",
+            used: 30,
+            resetsAt: nil,
+            column: .session,
+            pacePercent: 10)
         #expect(self.reading(ahead, thresholds: thresholds).percentColor == OverviewPalette.text)
         #expect(self.reading(self.line(used: 0), thresholds: thresholds).percentColor == OverviewPalette.text)
         #expect(self.reading(self.line(used: 50), thresholds: thresholds).percentColor == OverviewPalette.warning)
@@ -212,7 +327,12 @@ struct OverviewCompactAccountRowTests {
 
     @Test
     func `overrun follows the display direction`() {
-        let line = OverviewCompactAccountRow.Line(label: "7d", used: 70, resetsAt: nil, pacePercent: 50)
+        let line = OverviewCompactAccountRow.Line(
+            label: "7d",
+            used: 70,
+            resetsAt: nil,
+            column: .weekly,
+            pacePercent: 50)
         let segment = self.overrun(line, showsRemaining: true)
         #expect(segment?.start == 30)
         #expect(segment?.end == 50)
@@ -298,6 +418,7 @@ struct OverviewCompactAccountRowTests {
             label: "5h",
             used: used,
             resetsAt: nil,
+            column: .session,
             warningWindow: window,
             pacePercent: pace)
     }
