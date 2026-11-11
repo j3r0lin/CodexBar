@@ -59,6 +59,7 @@ extension SettingsStore {
         _ = self.openCodexUsageLogsEnabled
         _ = self.hideNativeCodexCostWhenOpenCodexPresent
         _ = self.spendDashboardHiddenSourceIDs
+        _ = self.overviewRowOrderIDs
         _ = self.costComparisonPeriodsEnabled
         _ = self.costSummaryDisplayStyle
         _ = self.appLanguage

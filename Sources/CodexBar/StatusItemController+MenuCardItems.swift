@@ -44,7 +44,8 @@ extension StatusItemController {
         selectsWholeRow: Bool = false,
         usesPanelBase: Bool = false,
         recyclesView: Bool = true,
-        onClick: (() -> Void)? = nil) -> NSMenuItem
+        onClick: (() -> Void)? = nil,
+        onReorder: (([String]) -> Void)? = nil) -> NSMenuItem
     {
         let allowsMenuHighlight = submenu != nil || onClick != nil
         if !self.menuCardRenderingEnabledForController {
@@ -85,7 +86,8 @@ extension StatusItemController {
             tightVerticalFit: tightVerticalFit,
             selectsWholeRow: selectsWholeRow,
             usesPanelBase: usesPanelBase,
-            onClick: onClick)
+            onClick: onClick,
+            onReorder: onReorder)
         let hosting: ErasedMenuCardHostingView
         if recyclesView,
            let recycled = self.takeRecyclableMenuCardView(

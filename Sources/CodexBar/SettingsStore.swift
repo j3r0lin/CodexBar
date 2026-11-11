@@ -642,6 +642,7 @@ extension SettingsStore {
             hideNativeCodexCostWhenOpenCodexPresent: userDefaults.object(
                 forKey: "hideNativeCodexCostWhenOpenCodexPresent") as? Bool ?? false,
             spendDashboardHiddenSourceIDs: userDefaults.stringArray(forKey: "spendDashboardHiddenSourceIDs") ?? [],
+            overviewRowOrderIDs: userDefaults.stringArray(forKey: "overviewRowOrderIDs") ?? [],
             costComparisonPeriodsEnabled: userDefaults.object(
                 forKey: "costComparisonPeriodsEnabled") as? Bool ?? false,
             costSummaryDisplayStyleRaw: costSummaryDisplayStyleRaw,

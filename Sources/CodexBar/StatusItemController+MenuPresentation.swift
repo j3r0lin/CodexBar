@@ -143,6 +143,9 @@ struct MenuCardRowPayload {
     /// Overview root rows fill their whole frame with the panel colour, so the panel reads as one surface.
     var usesPanelBase: Bool = false
     let onClick: (() -> Void)?
+    /// Overview account rows only: reports every row identifier in its new order when the user
+    /// drags this row to another place in the open menu.
+    var onReorder: (([String]) -> Void)?
 }
 
 /// One stable AppKit class for every menu-card row. Keeping the outer view attached while payloads
@@ -157,6 +160,7 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     private var panelBaseView: NSView?
     private(set) var allowsMenuHighlight: Bool
     private var onClick: (() -> Void)?
+    private var onReorder: (([String]) -> Void)?
     private var containsInteractiveControls: Bool
     private var isRowHighlighted = false
     private var isPressed = false
@@ -173,6 +177,10 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     private static let selectionFadeDuration: CFTimeInterval = 0.06
     /// How much white a hovered Overview row is lifted by.
     static let wholeRowSelectionAlpha: CGFloat = 0.06
+    /// A press that moves this far vertically becomes a row drag; below it the press stays a click.
+    private static let reorderDragThreshold: CGFloat = 4
+    /// One drag event may cross several rows; swap until the row catches up with a fast cursor.
+    private static let reorderMaxSwapsPerEvent = 20
 
     override var intrinsicContentSize: NSSize {
         let width = self.frame.width > 0 ? self.frame.width : NSView.noIntrinsicMetric
@@ -212,6 +220,7 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
         self.allowsMenuHighlight = payload.allowsMenuHighlight
         self.containsInteractiveControls = payload.containsInteractiveControls
         self.onClick = payload.onClick
+        self.onReorder = payload.onReorder
         self.hosting = NSHostingView(rootView: Self.makeRootView(
             payload: payload,
             highlightState: highlightState,
@@ -238,6 +247,7 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
         self.allowsMenuHighlight = payload.allowsMenuHighlight
         self.containsInteractiveControls = payload.containsInteractiveControls
         self.onClick = payload.onClick
+        self.onReorder = payload.onReorder
         self.isPressed = false
         self.isForwardingHostedControlPress = false
         self.highlightState.isHighlighted = !payload.usesGPUSelection && self.isRowHighlighted
@@ -319,7 +329,102 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
         return self.convert(event.locationInWindow, from: nil)
     }
 
+    /// Dragging an Overview row vertically swaps it with the neighbour it passes, and the release
+    /// reports the menu's row order. Without a drag the release is handed back to the menu, so a
+    /// plain click still opens the row's detail submenu. The submenu is detached for the drag:
+    /// asking it to stop tracking would close the whole menu chain.
+    private func trackRowReorder(with event: NSEvent) -> Bool {
+        guard let window = self.window, let item = self.enclosingMenuItem, let menu = item.menu
+        else { return false }
+        let startY = event.locationInWindow.y
+        var isDragging = false
+        var pendingUp: NSEvent?
+        var detachedSubmenu: NSMenu?
+        window.trackEvents(
+            matching: [.leftMouseDragged, .leftMouseUp],
+            timeout: NSEvent.foreverDuration,
+            mode: .eventTracking)
+        { [weak self] trackedEvent, stop in
+            guard let self, let trackedEvent else {
+                stop.pointee = true
+                return
+            }
+            if trackedEvent.type == .leftMouseUp {
+                if !isDragging { pendingUp = trackedEvent }
+                stop.pointee = true
+                return
+            }
+            if !isDragging {
+                guard abs(trackedEvent.locationInWindow.y - startY) > Self.reorderDragThreshold
+                else { return }
+                isDragging = true
+                detachedSubmenu = item.submenu
+                item.submenu = nil
+            }
+            var swaps = 0
+            while swaps < Self.reorderMaxSwapsPerEvent,
+                  self.moveRowPastCrossedNeighbour(item, in: menu, windowY: trackedEvent.locationInWindow.y)
+            {
+                swaps += 1
+            }
+        }
+        if let pendingUp {
+            // No drag happened: let the menu see the release as the click it was.
+            window.postEvent(pendingUp, atStart: true)
+        }
+        if let detachedSubmenu { item.submenu = detachedSubmenu }
+        if isDragging {
+            let identifiers = menu.items
+                .compactMap { $0.representedObject as? String }
+                .filter { $0.hasPrefix(StatusItemController.overviewRowIdentifierPrefix) }
+            self.onReorder?(identifiers)
+        }
+        return true
+    }
+
+    /// One swap with the neighbour whose midpoint the pointer crossed, so the row follows the cursor
+    /// at any speed; returns whether the row moved.
+    @discardableResult
+    private func moveRowPastCrossedNeighbour(
+        _ item: NSMenuItem,
+        in menu: NSMenu,
+        windowY y: CGFloat) -> Bool
+    {
+        func isOverviewRow(_ candidate: NSMenuItem) -> Bool {
+            (candidate.representedObject as? String)?
+                .hasPrefix(StatusItemController.overviewRowIdentifierPrefix) == true
+        }
+        func midpointY(_ candidate: NSMenuItem) -> CGFloat? {
+            guard let view = candidate.view, view.window != nil else { return nil }
+            return view.convert(NSPoint(x: 0, y: view.bounds.midY), to: nil).y
+        }
+        let index = menu.index(of: item)
+        guard index >= 0 else { return false }
+        if index > 0 {
+            let above = menu.items[index - 1]
+            if isOverviewRow(above), let midpoint = midpointY(above), y > midpoint {
+                menu.removeItem(above)
+                menu.insertItem(above, at: index)
+                return true
+            }
+        }
+        if index + 1 < menu.numberOfItems {
+            let below = menu.items[index + 1]
+            if isOverviewRow(below), let midpoint = midpointY(below), y < midpoint {
+                menu.removeItem(below)
+                menu.insertItem(below, at: index)
+                return true
+            }
+        }
+        return false
+    }
+
     override func mouseDown(with event: NSEvent) {
+        if event.type == .leftMouseDown, self.onClick == nil, self.onReorder != nil,
+           self.trackRowReorder(with: event)
+        {
+            return
+        }
         guard event.type == .leftMouseDown, self.onClick != nil else {
             super.mouseDown(with: event)
             return

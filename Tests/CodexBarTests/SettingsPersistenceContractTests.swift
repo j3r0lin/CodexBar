@@ -6,6 +6,22 @@ import Testing
 @MainActor
 struct SettingsPersistenceContractTests {
     @Test
+    func `overview row order persists without losing its positions`() {
+        let defaults = InMemoryUserDefaults()
+        let settings = testSettingsStore(suiteName: #function, userDefaults: defaults)
+        #expect(settings.overviewRowOrderIDs.isEmpty)
+        settings.overviewRowOrderIDs = [
+            "overviewRow-claude#second",
+            "overviewRow-codex",
+            "overviewRow-claude#second",
+            "",
+        ]
+        #expect(settings.overviewRowOrderIDs == ["overviewRow-claude#second", "overviewRow-codex"])
+        let reloaded = testSettingsStore(suiteName: #function, userDefaults: defaults)
+        #expect(reloaded.overviewRowOrderIDs == ["overviewRow-claude#second", "overviewRow-codex"])
+    }
+
+    @Test
     func `older clients sorting changes remain authoritative on restart`() {
         let defaults = InMemoryUserDefaults()
         defaults.set("custom", forKey: "providerListSortMode")

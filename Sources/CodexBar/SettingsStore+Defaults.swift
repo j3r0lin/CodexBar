@@ -610,6 +610,17 @@ extension SettingsStore {
         }
     }
 
+    /// The Overview account rows in the order the user dragged them. Unlike the hidden-source set,
+    /// the order itself is the value, so duplicates and empty entries are dropped without sorting.
+    var overviewRowOrderIDs: [String] {
+        get { self.defaultsState.overviewRowOrderIDs }
+        set {
+            var seen = Set<String>()
+            let normalized = newValue.filter { !$0.isEmpty && seen.insert($0).inserted }
+            self.setDefault(\.overviewRowOrderIDs, normalized, key: "overviewRowOrderIDs")
+        }
+    }
+
     func pinCostUsageBucketTimeZoneIfNeeded() {
         guard self.costUsageBucketTimeZoneIdentifier.isEmpty else { return }
         self.costUsageBucketTimeZoneIdentifier = CostUsageBucketTimeZone.pinIdentifier()

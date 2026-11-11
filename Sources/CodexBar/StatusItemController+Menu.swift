@@ -481,6 +481,14 @@ extension StatusItemController {
 
         // Accounts sit in one flat list; only a provider with several accounts names the account.
         let accountCounts = Dictionary(rows.map { ($0.groupKey, 1) }, uniquingKeysWith: +)
+        func rowIdentifier(_ row: OverviewUsageRow) -> String {
+            "\(Self.overviewRowIdentifierPrefix)\(row.groupKey)"
+                + (row.accountID.map { "#\($0.opaqueID)" } ?? "")
+        }
+        let orderedRows = OverviewRowOrder.ordered(
+            rows,
+            id: rowIdentifier,
+            saved: self.settings.overviewRowOrderIDs)
         if !rows.isEmpty {
             menu.addItem(self.makeMenuCardItem(
                 OverviewColumnHeadView(width: menuWidth),
@@ -491,11 +499,10 @@ extension StatusItemController {
                 tightVerticalFit: true,
                 usesPanelBase: true))
         }
-        for (index, row) in rows.enumerated() {
-            let isLast = index == rows.count - 1
+        for (index, row) in orderedRows.enumerated() {
+            let isLast = index == orderedRows.count - 1
             let isGrouped = (accountCounts[row.groupKey] ?? 1) > 1
-            let identifier = "\(Self.overviewRowIdentifierPrefix)\(row.groupKey)"
-                + (row.accountID.map { "#\($0.opaqueID)" } ?? "")
+            let identifier = rowIdentifier(row)
             let submenu = self.makeOverviewDetailSubmenu(row: row, width: menuWidth)
             let now = Date()
             var rowView = self.overviewRowView(for: row, width: menuWidth, isGrouped: isGrouped, now: now)
@@ -513,10 +520,24 @@ extension StatusItemController {
                 usesGPUSelection: true,
                 tightVerticalFit: true,
                 selectsWholeRow: true,
-                usesPanelBase: true)
+                usesPanelBase: true,
+                onReorder: { [weak self] identifiers in
+                    self?.applyOverviewRowOrder(identifiers)
+                })
             menu.addItem(item)
         }
         return true
+    }
+
+    /// Stores the order a drag left behind and rebuilds the open menu, so every row's divider moves
+    /// with it: the row above the list's new end gains one and the new last row loses it.
+    private func applyOverviewRowOrder(_ visibleIdentifiers: [String]) {
+        let saved = self.settings.overviewRowOrderIDs
+        let merged = OverviewRowOrder.merged(saved: saved, visible: visibleIdentifiers)
+        // A drag that ends where it started leaves both the order and the dividers as they were.
+        guard merged != saved else { return }
+        self.settings.overviewRowOrderIDs = merged
+        self.invalidateMenus(refreshOpenMenus: true)
     }
 
     /// One Overview card, carrying the user's display choices: hidden windows, used or remaining

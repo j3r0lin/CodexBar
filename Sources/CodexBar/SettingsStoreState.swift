@@ -65,6 +65,7 @@ struct SettingsDefaultsState {
     var openCodexUsageLogsEnabled: Bool
     var hideNativeCodexCostWhenOpenCodexPresent: Bool
     var spendDashboardHiddenSourceIDs: [String]
+    var overviewRowOrderIDs: [String]
     var costComparisonPeriodsEnabled: Bool
     var costSummaryDisplayStyleRaw: String
     var hidePersonalInfo: Bool
