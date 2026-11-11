@@ -1,7 +1,7 @@
 import Foundation
 
 /// The order of the Overview's account rows, as the user dragged them. Row identifiers name a row
-/// across launches, so an account that is hidden for a while returns to its place.
+/// across launches, and a row hidden for a while keeps the place it held in the saved order.
 enum OverviewRowOrder {
     /// `rows` sorted by the saved order. Rows the saved order does not mention (a new account, a
     /// renamed wire ID) keep their incoming relative order and follow every row it does mention.
@@ -16,11 +16,19 @@ enum OverviewRowOrder {
             .map(\.element)
     }
 
-    /// The order to persist after a drop: the rows on screen now in their new order, then the
-    /// identifiers the saved order still has but this menu did not show, keeping their old relative
-    /// order. Hiding an account therefore does not move it to the end for good.
+    /// The order to persist after a drop: every saved slot whose row is on screen now takes the
+    /// next row of the new visible order, a slot whose row this menu did not show keeps its
+    /// identifier, and visible rows the saved order never saw follow at the end. A hidden account
+    /// therefore comes back where it was instead of falling to the bottom.
     static func merged(saved: [String], visible: [String]) -> [String] {
-        var seen = Set<String>()
-        return (visible + saved).filter { !$0.isEmpty && seen.insert($0).inserted }
+        let visibleIDs = Set(visible)
+        var nextVisible = 0
+        var merged = saved.map { identifier -> String in
+            guard visibleIDs.contains(identifier), nextVisible < visible.count else { return identifier }
+            defer { nextVisible += 1 }
+            return visible[nextVisible]
+        }
+        merged.append(contentsOf: visible[nextVisible...])
+        return merged
     }
 }

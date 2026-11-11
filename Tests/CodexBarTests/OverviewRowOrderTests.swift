@@ -23,14 +23,16 @@ struct OverviewRowOrderTests {
     }
 
     @Test
-    func `rows dropped in the menu keep hidden rows behind them in their old order`() {
-        let saved = ["b", "a", "d", "c"]
-        let visible = ["c", "b"]
-        #expect(OverviewRowOrder.merged(saved: saved, visible: visible) == ["c", "b", "a", "d"])
+    func `a hidden row keeps its saved slot while visible rows move around it`() {
+        let saved = ["a", "b", "c"]
+        let visible = ["c", "a"]
+        #expect(OverviewRowOrder.merged(saved: saved, visible: visible) == ["c", "b", "a"])
     }
 
     @Test
-    func `merging keeps the first occurrence and drops empty identifiers`() {
-        #expect(OverviewRowOrder.merged(saved: ["a", "", "b"], visible: ["b", "a", "b"]) == ["b", "a"])
+    func `visible rows fill their saved slots in the order they were dragged`() {
+        let saved = ["b", "a", "d", "c"]
+        let visible = ["c", "b"]
+        #expect(OverviewRowOrder.merged(saved: saved, visible: visible) == ["c", "a", "d", "b"])
     }
 }

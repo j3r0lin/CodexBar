@@ -373,7 +373,9 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
             window.postEvent(pendingUp, atStart: true)
         }
         if let detachedSubmenu { item.submenu = detachedSubmenu }
-        if isDragging {
+        // A rebuild during the drag can remove the dragged item; the menu's order then belongs to
+        // the rebuild, not to this drag, and reporting it would overwrite the saved order.
+        if isDragging, menu.index(of: item) >= 0 {
             let identifiers = menu.items
                 .compactMap { $0.representedObject as? String }
                 .filter { $0.hasPrefix(StatusItemController.overviewRowIdentifierPrefix) }
