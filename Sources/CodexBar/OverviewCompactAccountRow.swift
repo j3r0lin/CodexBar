@@ -147,7 +147,7 @@ struct OverviewCompactAccountRow: View {
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
     struct Line: Equatable {
-        let label: String
+        var label: String
         let used: Double
         let resetsAt: Date?
         /// The column the window takes when no earlier window has it.
@@ -398,8 +398,10 @@ struct OverviewCompactAccountRow: View {
                         .font(.system(size: 8.5))
                         .foregroundStyle(OverviewPalette.faint)
                         .lineLimit(1)
-                        .fixedSize()
+                        .truncationMode(.tail)
+                        .layoutPriority(1)
                 }
+                // A long window label truncates before it squeezes the bar out of sight.
                 UsageBar(
                     used: reading.percent,
                     color: reading.barColor,
@@ -407,6 +409,7 @@ struct OverviewCompactAccountRow: View {
                     height: Self.barHeight,
                     pacePercent: reading.pacePercent,
                     overruns: reading.overruns)
+                    .frame(minWidth: 32)
             }
             .frame(height: 7)
         }

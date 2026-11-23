@@ -81,14 +81,24 @@ struct OverviewUsageRow {
             case .weekly: "7d"
             case .monthly: "30d"
             case let .scopedWeekly(model): model
-            case .other: self.compactDuration(window.name) ?? window.name
+            case .other: self.compactName(window.name)
             }
         }
 
-        /// "30 days" -> "30d", "12 hours" -> "12h": a long wire name would be truncated in the label column.
-        private static func compactDuration(_ name: String) -> String? {
-            guard let parsed = statedLength(name) else { return nil }
-            return "\(parsed.count)\(parsed.unit)"
+        /// "30 days" -> "30d", "Gemini · 7 days" -> "Gemini 7d": a long wire name would crowd out the bar.
+        private static func compactName(_ name: String) -> String {
+            guard let parsed = statedLength(name) else { return name }
+            let length = "\(parsed.count)\(parsed.unit)"
+            let pool = self.pool(of: name)
+            return pool.map { "\($0) \(length)" } ?? length
+        }
+
+        private static let poolSeparator = " · "
+
+        /// The pool a pooled window name leads with ("Gemini" in "Gemini · 7 days"), nil for a bare name.
+        private static func pool(of name: String) -> String? {
+            let parts = name.components(separatedBy: Self.poolSeparator)
+            return parts.count > 1 ? parts.dropLast().joined(separator: Self.poolSeparator) : nil
         }
 
         /// The length a window's name states ("30 days", "12 hours", "Daily"); nothing else is guessed from a name.
@@ -97,7 +107,9 @@ struct OverviewUsageRow {
             return TimeInterval(parsed.count) * (parsed.unit == "d" ? 86400 : 3600)
         }
 
+        /// A pooled name ("Gemini · 7 days") states its length after the pool.
         private static func statedLength(_ name: String) -> (count: Int, unit: Character)? {
+            let name = name.components(separatedBy: Self.poolSeparator).last ?? name
             switch name.lowercased() {
             case "daily": return (1, "d")
             case "hourly": return (1, "h")
@@ -293,7 +305,7 @@ struct OverviewUsageRow {
         let paced = showsPace
             ? namedWindows.compactMap { window in window.pace(now: now).map { (window, $0) } }
             : []
-        return namedWindows.map { window in
+        let lines = namedWindows.map { window in
             var line = OverviewCompactAccountRow.Line(
                 label: window.label,
                 used: window.used,
@@ -302,6 +314,16 @@ struct OverviewUsageRow {
                 warningWindow: Self.warningWindow(for: window))
             line.pacePercent = paced.first { $0.0 == window }?.1.expectedUsedPercent
             return line
+        }
+        // A pooled window in its own column needs only its pool named: the column head gives the length.
+        let inOwnColumn = OverviewCompactAccountRow.placements(of: lines).enumerated().compactMap { index, cell in
+            cell.flatMap { $0.line.column.rawValue == index ? $0.line : nil }
+        }
+        return zip(namedWindows, lines).map { window, line in
+            guard let pool = window.window.pool, !pool.isEmpty, inOwnColumn.contains(line) else { return line }
+            var pooled = line
+            pooled.label = pool
+            return pooled
         }
     }
 

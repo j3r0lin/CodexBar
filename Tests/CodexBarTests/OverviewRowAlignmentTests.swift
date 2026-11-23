@@ -25,6 +25,11 @@ struct OverviewRowAlignmentTests {
         Scenario(name: "Kimi Code", provider: true, windows: [("5h", .session), ("7d", .weekly), ("30d", .other)]),
         Scenario(name: "Grok", provider: true, windows: [("7d", .weekly)]),
         Scenario(name: "Cursor", provider: true, windows: [("30d", .other)]),
+        // Pooled windows name their pool, a label long enough to crowd the bar.
+        Scenario(
+            name: "Antigravity",
+            provider: true,
+            windows: [("Claude & GPT", .session), ("Gemini 4 Argon", .weekly), ("Gemini 7d", .other)]),
     ]
 
     /// At the 400pt menu width the name column takes 104pt after the 20pt inset, and the cells split the
@@ -56,6 +61,45 @@ struct OverviewRowAlignmentTests {
         #expect(label("30 days") == "30d")
         #expect(label("12 hours") == "12h")
         #expect(label("Credits") == "Credits")
+    }
+
+    @Test
+    func `a pooled window name keeps its pool and takes the column its length states`() {
+        let window = OverviewUsageRow.NamedWindow(
+            window: MagpieQuotaWindow(name: "Gemini · 7 days", usedPercent: 1, resetsAt: nil, pool: "Gemini"))
+        #expect(window.label == "Gemini 7d")
+        #expect(OverviewUsageRow.column(for: window) == .weekly)
+        let session = OverviewUsageRow.NamedWindow(
+            window: MagpieQuotaWindow(name: "Claude & GPT · 5 hours", usedPercent: 1, resetsAt: nil))
+        #expect(session.label == "Claude & GPT 5h")
+        #expect(OverviewUsageRow.column(for: session) == .session)
+    }
+
+    @Test
+    func `a pooled window names only its pool in its own column and adds its length elsewhere`() throws {
+        func window(_ pool: String, _ length: String) -> MagpieQuotaWindow {
+            MagpieQuotaWindow(name: "\(pool) · \(length)", usedPercent: 1, resetsAt: nil, pool: pool)
+        }
+        let row = OverviewUsageRow.magpie(
+            account: MagpieAccountSnapshot(
+                id: ProviderAccountIdentity(source: "magpie", opaqueID: "agy-cli:a"),
+                provider: MagpieProviderMapping.reference(for: "agy-cli"),
+                displayLabel: "a",
+                accountEmail: nil,
+                ordinal: 1,
+                windows: [
+                    window("Gemini", "7 days"),
+                    window("Claude & GPT", "7 days"),
+                    window("Claude & GPT", "5 hours"),
+                ],
+                readAt: nil,
+                isActive: true,
+                error: nil),
+            providerName: "Antigravity",
+            accountName: "a")
+        let lines = try #require(row.compactLines(now: Self.now))
+        let cells = OverviewCompactAccountRow.placements(of: lines).map { $0?.line.label }
+        #expect(cells == ["Claude & GPT", "Gemini", "Claude & GPT 7d"])
     }
 
     // MARK: - Rendering and measuring
