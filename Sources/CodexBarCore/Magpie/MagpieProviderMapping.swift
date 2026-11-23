@@ -24,6 +24,8 @@ public enum MagpieProviderMapping {
     /// Wire IDs whose rows CodexBar presents through the native provider's identity.
     /// Provider-specific by design: these verified gateway wire IDs name the matching native providers.
     public static let nativeProviders: [String: UsageProvider] = [
+        // magpie's local agy CLI plugin, which reads the same Antigravity quotas.
+        "agy-cli": .antigravity,
         "claude": .claude,
         // magpie renames a plugin whose ID is a built-in's to "<id>-plugin", so a plugin that
         // serves Claude accounts (e.g. through a proxy) reports its cards as "claude-plugin".

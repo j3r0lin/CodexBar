@@ -97,6 +97,17 @@ struct MagpieAccountProjectionTests {
     }
 
     @Test
+    func `magpie's agy CLI accounts are Antigravity's`() throws {
+        let rows = try self.project("""
+        {"data":[{"provider":"agy-cli","name":"Antigravity (local agy CLI)","user":"one@example.com",
+          "windows":[{"name":"Gemini · 7 days","used":3,"pool":"Gemini"}]}]}
+        """)
+        let account = try #require(rows.first)
+        #expect(account.provider.nativeProvider == .antigravity)
+        #expect(account.provider.displayName == "Antigravity")
+    }
+
+    @Test
     func `identity survives alias and order changes and includes organization and provider`() throws {
         let original = try self.project("""
         {"data":[{"provider":"claude","user":"ONE@example.com · Org A","alias":"first"},
