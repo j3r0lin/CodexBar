@@ -267,7 +267,7 @@ struct OverviewCompactAccountRowTests {
     }
 
     @Test
-    func `hiding pace drops the tick and the hatching`() {
+    func `hiding pace drops the pace mark and the brightened stretch`() {
         let line = OverviewCompactAccountRow.Line(
             label: "7d",
             used: 80,
@@ -310,7 +310,7 @@ struct OverviewCompactAccountRowTests {
     }
 
     @Test
-    func `a remaining display mirrors the pace tick onto the leftover side of the bar`() {
+    func `a remaining display mirrors the pace mark onto the leftover side of the bar`() {
         #expect(self.reading(self.line(used: 40, pace: 70), showsRemaining: true).pacePercent == 30)
         #expect(self.reading(self.line(used: 90, pace: 10), showsRemaining: true).pacePercent == 90)
     }
@@ -349,7 +349,7 @@ struct OverviewCompactAccountRowTests {
     }
 
     @Test
-    func `a remaining display hatches the gap on the track, not the fill`() {
+    func `a remaining display marks the gap on the track, not the fill`() {
         // 70% used with the tick at 50%: the fill is the 30% left, so the 30...50 gap lies outside it.
         let remaining = self.bar(self.line(used: 70, pace: 50), showsRemaining: true)
         #expect(remaining.overrunSegment?.start == 30)

@@ -98,7 +98,7 @@ struct OverviewDisplayOptions: Equatable {
     /// The user's remaining-quota warning thresholds, highest first, per window kind; nil keeps 70/90.
     var sessionWarningThresholds: [Int]?
     var weeklyWarningThresholds: [Int]?
-    /// Draws the pace tick and the hatching of usage ahead of it; off hides both.
+    /// Draws the pace mark and the brightened usage ahead of it; off hides both.
     var showsPace = true
 
     func warningThresholds(for window: QuotaWarningWindow) -> [Int]? {
@@ -155,7 +155,7 @@ struct OverviewCompactAccountRow: View {
         /// Which warning thresholds colour this line; a window of unknown length follows the weekly
         /// lane, since it is never the five-hour session.
         var warningWindow: QuotaWarningWindow = .weekly
-        /// Where the linear pace says usage should be by now, drawn as a tick on the bar; nil when the
+        /// Where the linear pace says usage should be by now, drawn as a line across the bar; nil when the
         /// window has no pace.
         var pacePercent: Double?
     }
@@ -418,9 +418,9 @@ struct OverviewCompactAccountRow: View {
         let percent: Double
         let barColor: Color
         let percentColor: Color
-        /// Pace tick position, nil without a pace or with pace hidden.
+        /// Pace mark position, nil without a pace or with pace hidden.
         let pacePercent: Double?
-        /// Usage is ahead of the pace tick, so the stretch between the two is hatched.
+        /// Usage is ahead of the pace mark, so the stretch between the two is brightened.
         let overruns: Bool
     }
 
@@ -594,76 +594,73 @@ struct UsageBar: View {
     let color: Color
     let trackColor: Color
     let height: CGFloat
-    /// Where the linear pace says usage should be by now; drawn as a white tick that stands out of the bar.
+    /// Where the linear pace says usage should be by now; drawn as a thin white line across the bar.
     var pacePercent: Double?
-    /// Hatches the stretch between the fill's end and the pace tick, the usage that is ahead of the pace.
+    /// Brightens the stretch between the fill's end and the pace line, the usage that is ahead of the pace.
     var overruns = false
 
-    /// The stretch between the fill's end and the pace tick, in percent of the bar; nil when they coincide.
+    /// The stretch between the fill's end and the pace line, in percent of the bar; nil when they coincide.
     var overrunSegment: (start: Double, end: Double)? {
         guard self.overruns, let pacePercent else { return nil }
-        let fillEnd = min(100, max(0, self.used))
-        let tick = min(100, max(0, pacePercent))
-        guard abs(fillEnd - tick) >= 1 else { return nil }
-        return (min(fillEnd, tick), max(fillEnd, tick))
+        return Self.span(from: self.used, to: pacePercent)
     }
 
-    /// The fill reaches the pace tick, so the hatched stretch lies on the fill; when the fill ends short of the
-    /// tick (a remaining display) it lies on the track.
+    /// The fill reaches the pace line, so the brightened stretch lies on the fill; when the fill ends short of
+    /// the line (a remaining display) it lies on the track.
     var overrunIsInsideFill: Bool {
         self.used >= (self.pacePercent ?? 0)
     }
 
-    private static let tickOverhang: CGFloat = 2
+    private static func span(from fill: Double, to mark: Double) -> (start: Double, end: Double)? {
+        let fillEnd = min(100, max(0, fill))
+        let mark = min(100, max(0, mark))
+        guard abs(fillEnd - mark) >= 1 else { return nil }
+        return (min(fillEnd, mark), max(fillEnd, mark))
+    }
+
+    private static let lineWidth: CGFloat = 1.5
 
     var body: some View {
         GeometryReader { proxy in
+            let width = proxy.size.width
             ZStack(alignment: .leading) {
-                ZStack(alignment: .leading) {
-                    Rectangle().fill(self.trackColor)
-                    Rectangle()
-                        .fill(self.color)
-                        .frame(width: Self.fillWidth(used: self.used, barWidth: proxy.size.width, height: self.height))
-                    if let segment = self.overrunSegment {
-                        // Inside the fill the stripes darken it; past the fill's end (remaining display) the
-                        // gap is stripes of the tone on the bare track, so it does not read as fill.
-                        Rectangle()
-                            .fill(self.overrunIsInsideFill ? self.color : Color.clear)
-                            .frame(width: proxy.size.width * (segment.end - segment.start) / 100)
-                            .overlay(Self.hatching(
-                                stripe: self.overrunIsInsideFill ? .black.opacity(0.35) : self.color.opacity(0.45)))
-                            .offset(x: proxy.size.width * segment.start / 100)
-                    }
+                Rectangle().fill(self.trackColor)
+                Rectangle()
+                    .fill(self.color)
+                    .frame(width: Self.fillWidth(used: self.used, barWidth: width, height: self.height))
+                if let segment = self.overrunSegment {
+                    // On the fill the stretch is lightened; past the fill's end (remaining display) it is a
+                    // faint wash of the tone on the bare track, so it does not read as fill.
+                    Self.stretch(
+                        segment,
+                        self.overrunIsInsideFill ? Color.white.opacity(0.45) : self.color.opacity(0.35),
+                        barWidth: width)
                 }
-                .frame(height: self.height)
-                .clipShape(RoundedRectangle(cornerRadius: self.height / 2))
                 if let pacePercent {
-                    RoundedRectangle(cornerRadius: 1)
-                        .fill(Color.white)
-                        .frame(width: 2, height: self.height + 2 * Self.tickOverhang)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 1.5)
-                                .stroke(Color(nsColor: OverviewPalette.panelBase).opacity(0.9), lineWidth: 1)
-                                .padding(-1))
-                        .offset(x: proxy.size.width * min(100, max(0, pacePercent)) / 100 - 1)
+                    Self.line(at: pacePercent, Color.white.opacity(0.9), barWidth: width)
                 }
             }
-            .frame(height: proxy.size.height)
+            .clipShape(RoundedRectangle(cornerRadius: self.height / 2))
         }
-        .frame(height: self.height + 2 * Self.tickOverhang)
+        .frame(height: self.height)
     }
 
-    private static func hatching(stripe: Color) -> some View {
-        Canvas { context, size in
-            var path = Path()
-            var x = -size.height
-            while x < size.width {
-                path.move(to: CGPoint(x: x, y: size.height))
-                path.addLine(to: CGPoint(x: x + size.height, y: 0))
-                x += 4
-            }
-            context.stroke(path, with: .color(stripe), lineWidth: 2)
-        }
+    private static func stretch(
+        _ segment: (start: Double, end: Double),
+        _ color: Color,
+        barWidth: CGFloat) -> some View
+    {
+        Rectangle()
+            .fill(color)
+            .frame(width: barWidth * (segment.end - segment.start) / 100)
+            .offset(x: barWidth * segment.start / 100)
+    }
+
+    private static func line(at percent: Double, _ color: Color, barWidth: CGFloat) -> some View {
+        Rectangle()
+            .fill(color)
+            .frame(width: self.lineWidth)
+            .offset(x: barWidth * min(100, max(0, percent)) / 100 - self.lineWidth / 2)
     }
 
     static func fillWidth(used: Double, barWidth: CGFloat, height: CGFloat) -> CGFloat {
