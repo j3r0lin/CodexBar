@@ -362,6 +362,29 @@ struct OverviewCompactAccountRowTests {
         #expect(used.overrunIsInsideFill)
     }
 
+    @Test
+    func `the stretch to today's allowance is what is left today, or what went past it`() {
+        var short = self.line(used: 30, pace: 50)
+        short.dailyAllowance = 40
+        let used = self.bar(short, showsRemaining: false)
+        #expect(used.allowanceSegment?.start == 30)
+        #expect(used.allowanceSegment?.end == 40)
+        #expect(!used.exceedsAllowance)
+        // Remaining display: 70% left, the allowance line at the 60% that today must leave.
+        let remaining = self.bar(short, showsRemaining: true)
+        #expect(remaining.allowanceSegment?.start == 60)
+        #expect(remaining.allowanceSegment?.end == 70)
+        #expect(!remaining.exceedsAllowance)
+
+        var over = self.line(used: 50, pace: 50)
+        over.dailyAllowance = 40
+        let past = self.bar(over, showsRemaining: false)
+        #expect(past.allowanceSegment?.start == 40)
+        #expect(past.allowanceSegment?.end == 50)
+        #expect(past.exceedsAllowance)
+        #expect(self.bar(self.line(used: 50, pace: 50), showsRemaining: false).allowanceSegment == nil)
+    }
+
     private func bar(_ line: OverviewCompactAccountRow.Line, showsRemaining: Bool) -> UsageBar {
         let reading = self.reading(line, showsRemaining: showsRemaining)
         return UsageBar(
@@ -370,7 +393,9 @@ struct OverviewCompactAccountRowTests {
             trackColor: OverviewCompactAccountRow.trackColor,
             height: OverviewCompactAccountRow.barHeight,
             pacePercent: reading.pacePercent,
-            overruns: reading.overruns)
+            overruns: reading.overruns,
+            allowancePercent: reading.allowancePercent,
+            exceedsAllowance: reading.exceedsAllowance)
     }
 
     private func overrun(

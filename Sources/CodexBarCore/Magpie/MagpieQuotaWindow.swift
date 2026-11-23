@@ -40,6 +40,9 @@ public struct MagpieQuotaWindow: Sendable, Equatable {
     public let semantics: Semantics
     /// The shared pool a window belongs to, when magpie reports one.
     public let pool: String?
+    /// How far into the window the account may go today, in percent, as the local pace-cap hook sets it.
+    /// magpie's response does not carry it; nil when nothing shares the window out by day.
+    public var dailyAllowance: Double?
 
     /// The name magpie's quota history keeps this window's readings under.
     public var historyName: String {

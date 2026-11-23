@@ -193,6 +193,8 @@ final class UsageStore {
     @ObservationIgnored var magpieRefreshInFlight = false
     @ObservationIgnored var magpieTransport: MagpieQuotasReader.Transport =
         MagpieQuotasReader.urlSessionTransport
+    /// pace-cap's daily allowances, joined onto magpie's windows after each read; nil reads none.
+    @ObservationIgnored var paceCapLimitsURL: URL? = PaceCapLimits.defaultURL
     @ObservationIgnored var lastMagpieSourceConfiguration: (enabled: Bool, quotasURL: String)?
     /// The latest scheduled Codex reset from codex-resets.com; kept across failed fetches, never persisted.
     var codexScheduledReset: CodexScheduledReset?

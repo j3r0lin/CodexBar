@@ -313,6 +313,7 @@ struct OverviewUsageRow {
                 column: Self.column(for: window),
                 warningWindow: Self.warningWindow(for: window))
             line.pacePercent = paced.first { $0.0 == window }?.1.expectedUsedPercent
+            line.dailyAllowance = window.window.dailyAllowance
             return line
         }
         // A pooled window in its own column needs only its pool named: the column head gives the length.

@@ -158,6 +158,8 @@ struct OverviewCompactAccountRow: View {
         /// Where the linear pace says usage should be by now, drawn as a line across the bar; nil when the
         /// window has no pace.
         var pacePercent: Double?
+        /// How far into the window pace-cap lets the account go today; nil without a daily allowance.
+        var dailyAllowance: Double?
     }
 
     /// A window in its cell, with whether the cell must name it because the column head does not.
@@ -408,7 +410,9 @@ struct OverviewCompactAccountRow: View {
                     trackColor: Self.trackColor,
                     height: Self.barHeight,
                     pacePercent: reading.pacePercent,
-                    overruns: reading.overruns)
+                    overruns: reading.overruns,
+                    allowancePercent: reading.allowancePercent,
+                    exceedsAllowance: reading.exceedsAllowance)
                     .frame(minWidth: 32)
             }
             .frame(height: 7)
@@ -425,6 +429,10 @@ struct OverviewCompactAccountRow: View {
         let pacePercent: Double?
         /// Usage is ahead of the pace mark, so the stretch between the two is brightened.
         let overruns: Bool
+        /// Where today's allowance sits on the bar; nil without one.
+        var allowancePercent: Double?
+        /// Usage is past today's allowance, rather than short of it.
+        var exceedsAllowance = false
     }
 
     func reading(for line: Line) -> Reading {
@@ -436,7 +444,11 @@ struct OverviewCompactAccountRow: View {
             pacePercent: self.display.showsPace
                 ? line.pacePercent.map { Self.displayedPercent($0, showsRemaining: self.display.showsRemaining) }
                 : nil,
-            overruns: self.display.showsPace && line.pacePercent.map { line.used > $0 } == true)
+            overruns: self.display.showsPace && line.pacePercent.map { line.used > $0 } == true,
+            allowancePercent: line.dailyAllowance.map {
+                Self.displayedPercent($0, showsRemaining: self.display.showsRemaining)
+            },
+            exceedsAllowance: line.dailyAllowance.map { line.used > $0 } == true)
     }
 
     static func displayedPercent(_ used: Double, showsRemaining: Bool) -> Double {
@@ -601,6 +613,11 @@ struct UsageBar: View {
     var pacePercent: Double?
     /// Brightens the stretch between the fill's end and the pace line, the usage that is ahead of the pace.
     var overruns = false
+    /// Today's allowance; drawn as a thin amber line across the bar.
+    var allowancePercent: Double?
+    /// Usage is past the allowance. The stretch between the fill's end and the allowance line is then solid
+    /// amber, the usage over today's share; short of it, a faint amber wash, what today still allows.
+    var exceedsAllowance = false
 
     /// The stretch between the fill's end and the pace line, in percent of the bar; nil when they coincide.
     var overrunSegment: (start: Double, end: Double)? {
@@ -612,6 +629,11 @@ struct UsageBar: View {
     /// the line (a remaining display) it lies on the track.
     var overrunIsInsideFill: Bool {
         self.used >= (self.pacePercent ?? 0)
+    }
+
+    /// The stretch between the fill's end and the allowance line, in percent of the bar; nil when they coincide.
+    var allowanceSegment: (start: Double, end: Double)? {
+        self.allowancePercent.flatMap { Self.span(from: self.used, to: $0) }
     }
 
     private static func span(from fill: Double, to mark: Double) -> (start: Double, end: Double)? {
@@ -638,6 +660,15 @@ struct UsageBar: View {
                         segment,
                         self.overrunIsInsideFill ? Color.white.opacity(0.45) : self.color.opacity(0.35),
                         barWidth: width)
+                }
+                if let segment = self.allowanceSegment {
+                    Self.stretch(
+                        segment,
+                        self.exceedsAllowance ? OverviewPalette.warning : OverviewPalette.warning.opacity(0.32),
+                        barWidth: width)
+                }
+                if let allowancePercent {
+                    Self.line(at: allowancePercent, OverviewPalette.warning, barWidth: width)
                 }
                 if let pacePercent {
                     Self.line(at: pacePercent, Color.white.opacity(0.9), barWidth: width)

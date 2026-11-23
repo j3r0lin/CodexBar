@@ -229,9 +229,10 @@ extension UsageStore {
         // menu no longer than a slow history read does.
         async let usage = try? MagpieUsageReader.readUsage(quotasURL: quotasURL, transport: transport)
         do {
-            let rows = try await MagpieQuotasReader.readRows(
+            let read = try await MagpieQuotasReader.readRows(
                 quotasURL: quotasURL,
                 transport: transport)
+            let rows = self.paceCapLimitsURL.flatMap(PaceCapLimits.read(from:))?.applied(to: read) ?? read
             let fetchedHistory = await history
             let fetchedUsage = await usage
             guard self.isCurrentMagpieRefresh(quotasURL: quotasURL, epoch: epoch) else { return }
