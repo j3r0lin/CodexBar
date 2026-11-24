@@ -2704,3 +2704,4 @@
 "Refresh this account" = "Bu hesabı yenile";
 "Updated %@ · Auto-refresh" = "Güncellendi: %@ · Otomatik yenileme";
 "Auto-refresh on · every %@" = "Otomatik yenileme açık · her %@";
+"%@ cached" = "%@ önbellekten";

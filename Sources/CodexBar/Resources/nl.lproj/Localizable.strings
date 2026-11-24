@@ -2697,3 +2697,4 @@
 "Refresh this account" = "Dit account vernieuwen";
 "Updated %@ · Auto-refresh" = "Bijgewerkt %@ · Automatisch vernieuwen";
 "Auto-refresh on · every %@" = "Automatisch vernieuwen aan · elke %@";
+"%@ cached" = "%@ uit cache";

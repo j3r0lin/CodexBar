@@ -2704,3 +2704,4 @@
 "Refresh this account" = "تحديث هذا الحساب";
 "Updated %@ · Auto-refresh" = "تحديث %@ · تحديث تلقائي";
 "Auto-refresh on · every %@" = "التحديث التلقائي مفعّل · كل %@";
+"%@ cached" = "%@ مخزنة مؤقتًا";

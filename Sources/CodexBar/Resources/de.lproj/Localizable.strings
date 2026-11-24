@@ -2698,3 +2698,4 @@
 "Refresh this account" = "Dieses Konto aktualisieren";
 "Updated %@ · Auto-refresh" = "Aktualisiert %@ · Automatisch";
 "Auto-refresh on · every %@" = "Automatische Aktualisierung an · alle %@";
+"%@ cached" = "%@ aus Cache";

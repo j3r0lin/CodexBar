@@ -2699,3 +2699,4 @@
 "Refresh this account" = "Uppdatera det här kontot";
 "Updated %@ · Auto-refresh" = "Uppdaterad %@ · Automatisk uppdatering";
 "Auto-refresh on · every %@" = "Automatisk uppdatering på · var %@";
+"%@ cached" = "%@ från cache";

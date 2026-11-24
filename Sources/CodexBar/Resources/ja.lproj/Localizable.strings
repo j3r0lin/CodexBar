@@ -2700,3 +2700,4 @@
 "Refresh this account" = "このアカウントを更新";
 "Updated %@ · Auto-refresh" = "%@ に更新 · 自動更新";
 "Auto-refresh on · every %@" = "自動更新オン · %@ごと";
+"%@ cached" = "キャッシュ %@";

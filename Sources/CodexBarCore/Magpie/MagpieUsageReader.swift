@@ -1,60 +1,79 @@
 import Foundation
 
+/// Spend and token counts for one stretch of magpie's usage: the whole window, or one day of it.
+public struct MagpieUsageTotals: Sendable, Equatable {
+    public let cost: Double
+    public let inputTokens: Int
+    public let outputTokens: Int
+    public let cacheReadTokens: Int
+    public let cacheWriteTokens: Int
+
+    public static let zero = MagpieUsageTotals(
+        cost: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0)
+
+    public init(cost: Double, inputTokens: Int, outputTokens: Int, cacheReadTokens: Int, cacheWriteTokens: Int) {
+        self.cost = cost
+        self.inputTokens = inputTokens
+        self.outputTokens = outputTokens
+        self.cacheReadTokens = cacheReadTokens
+        self.cacheWriteTokens = cacheWriteTokens
+    }
+
+    /// Every token the gateway moved. magpie's `input` excludes cached prompt tokens, so leaving the
+    /// cache counts out would report a few percent of the real volume.
+    public var tokenCount: Int {
+        self.inputTokens + self.outputTokens + self.cacheReadTokens + self.cacheWriteTokens
+    }
+
+    /// The share of prompt tokens served from cache, or nil when no prompt tokens were sent.
+    public var cacheHitRate: Double? {
+        let prompt = self.inputTokens + self.cacheReadTokens + self.cacheWriteTokens
+        guard prompt > 0 else { return nil }
+        return Double(self.cacheReadTokens) / Double(prompt)
+    }
+}
+
 /// One day of magpie's usage series, keyed by the calendar date magpie wrote for it rather than an
 /// instant: magpie stamps each day at the gateway's own midnight, which need not be the Mac's.
 public struct MagpieUsageDay: Sendable, Equatable {
     /// The `YYYY-MM-DD` prefix of the series entry's `time`, which carries the gateway's offset.
     public let dayKey: String
-    public let cost: Double
+    public let totals: MagpieUsageTotals
 
-    public init(dayKey: String, cost: Double) {
+    public init(dayKey: String, totals: MagpieUsageTotals) {
         self.dayKey = dayKey
-        self.cost = cost
+        self.totals = totals
     }
 }
 
 /// magpie's spend and token totals for the usage window its gateway reports (30 days by default).
 public struct MagpieUsageSummary: Sendable, Equatable {
     public let periodDays: Int
-    public let totalCost: Double
-    public let calls: Int
-    public let inputTokens: Int
-    public let outputTokens: Int
+    public let total: MagpieUsageTotals
     /// The daily series, in the order magpie returned it; a day with no traffic may still be listed.
     public let days: [MagpieUsageDay]
 
-    public init(
-        periodDays: Int,
-        totalCost: Double,
-        calls: Int,
-        inputTokens: Int,
-        outputTokens: Int,
-        days: [MagpieUsageDay])
-    {
+    public init(periodDays: Int, total: MagpieUsageTotals, days: [MagpieUsageDay]) {
         self.periodDays = periodDays
-        self.totalCost = totalCost
-        self.calls = calls
-        self.inputTokens = inputTokens
-        self.outputTokens = outputTokens
+        self.total = total
         self.days = days
     }
 
-    public var tokenCount: Int {
-        self.inputTokens + self.outputTokens
-    }
-
-    /// The series cost for `date`'s calendar day, compared as dates and not instants: a gateway in
-    /// another zone still means "today" by the day it named, so the card and magpie agree.
+    /// The series totals for `date`'s calendar day, compared as dates and not instants: a gateway in
+    /// another zone still means "today" by the day it named, so the card and magpie agree. A day the
+    /// series leaves out had no traffic.
     ///
     /// The day is read from a Gregorian calendar carrying the caller's zone: magpie writes Gregorian
     /// dates, and a user's Japanese or Buddhist calendar would number the same day differently.
-    public func cost(onDayOf date: Date, calendar: Calendar) -> Double {
+    public func totals(onDayOf date: Date, calendar: Calendar) -> MagpieUsageTotals {
         var gregorian = Calendar(identifier: .gregorian)
         gregorian.timeZone = calendar.timeZone
         let components = gregorian.dateComponents([.year, .month, .day], from: date)
-        guard let year = components.year, let month = components.month, let day = components.day else { return 0 }
+        guard let year = components.year, let month = components.month, let day = components.day else {
+            return .zero
+        }
         let key = String(format: "%04d-%02d-%02d", year, month, day)
-        return self.days.first { $0.dayKey == key }?.cost ?? 0
+        return self.days.first { $0.dayKey == key }?.totals ?? .zero
     }
 }
 
@@ -108,26 +127,34 @@ public enum MagpieUsageReader {
         }
         // A body with none of the usage fields is some other endpoint's answer (the quotas shape has
         // `data` and nothing else in common), not a usage window worth showing as zero.
-        guard response.cost != nil || response.calls != nil || response.series != nil else {
+        guard response.counts.cost != nil || response.calls != nil || response.series != nil else {
             throw MagpieQuotasReaderError.malformedUsageResponse
         }
         let days = (response.series ?? []).compactMap(\.value).compactMap { point in
             guard let time = point.time, let dayKey = Self.dayKey(time) else {
                 return nil as MagpieUsageDay?
             }
-            // magpie sends a day's cost as an integer when nothing was spent and a decimal otherwise;
-            // both decode as Double. A non-finite cost would poison every total, so the day is dropped.
-            let cost = point.cost ?? 0
-            guard cost.isFinite else { return nil }
-            return MagpieUsageDay(dayKey: dayKey, cost: cost)
+            // A non-finite cost would poison every total, so the day is dropped.
+            guard let totals = Self.totals(point.counts) else { return nil }
+            return MagpieUsageDay(dayKey: dayKey, totals: totals)
         }
         return MagpieUsageSummary(
             periodDays: Self.periodDays(response.period),
-            totalCost: response.cost.flatMap { $0.isFinite ? $0 : nil } ?? 0,
-            calls: response.calls ?? 0,
-            inputTokens: response.input ?? 0,
-            outputTokens: response.output ?? 0,
+            total: Self.totals(response.counts) ?? .zero,
             days: days)
+    }
+
+    /// magpie sends a cost as an integer when nothing was spent and a decimal otherwise; both decode
+    /// as Double. Missing counts are zero.
+    private static func totals(_ counts: Counts) -> MagpieUsageTotals? {
+        let cost = counts.cost ?? 0
+        guard cost.isFinite else { return nil }
+        return MagpieUsageTotals(
+            cost: cost,
+            inputTokens: counts.input ?? 0,
+            outputTokens: counts.output ?? 0,
+            cacheReadTokens: counts.cacheRead ?? 0,
+            cacheWriteTokens: counts.cacheWrite ?? 0)
     }
 
     /// magpie's period reads "30d"; anything unreadable falls back to the gateway's usual window.
@@ -155,17 +182,52 @@ public enum MagpieUsageReader {
 
     // MARK: - Wire format
 
-    private struct Response: Decodable {
-        let period: String?
+    /// The counts magpie writes both for the whole window and for each series day.
+    private struct Counts: Decodable {
         let cost: Double?
-        let calls: Int?
         let input: Int?
         let output: Int?
+        let cacheRead: Int?
+        let cacheWrite: Int?
+
+        enum CodingKeys: String, CodingKey {
+            case cost, input, output
+            case cacheRead = "cache_read"
+            case cacheWrite = "cache_write"
+        }
+    }
+
+    private struct Response: Decodable {
+        let period: String?
+        let calls: Int?
         let series: [Lenient<SeriesPoint>]?
+        let counts: Counts
+
+        enum CodingKeys: String, CodingKey {
+            case period, calls, series
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.period = try container.decodeIfPresent(String.self, forKey: .period)
+            self.calls = try container.decodeIfPresent(Int.self, forKey: .calls)
+            self.series = try container.decodeIfPresent([Lenient<SeriesPoint>].self, forKey: .series)
+            self.counts = try Counts(from: decoder)
+        }
     }
 
     private struct SeriesPoint: Decodable {
         let time: String?
-        let cost: Double?
+        let counts: Counts
+
+        enum CodingKeys: String, CodingKey {
+            case time
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.time = try container.decodeIfPresent(String.self, forKey: .time)
+            self.counts = try Counts(from: decoder)
+        }
     }
 }

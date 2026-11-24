@@ -2693,3 +2693,4 @@
 "Refresh this account" = "刷新此账号";
 "Updated %@ · Auto-refresh" = "更新于 %@ · 自动刷新";
 "Auto-refresh on · every %@" = "自动刷新已开启 · 每 %@";
+"%@ cached" = "缓存 %@";

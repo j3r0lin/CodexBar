@@ -2701,3 +2701,4 @@
 "Refresh this account" = "Làm mới tài khoản này";
 "Updated %@ · Auto-refresh" = "Đã cập nhật %@ · Tự động làm mới";
 "Auto-refresh on · every %@" = "Bật tự động làm mới · mỗi %@";
+"%@ cached" = "%@ từ bộ nhớ đệm";

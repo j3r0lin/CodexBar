@@ -8,12 +8,13 @@ struct MagpieUsageReaderTests {
     /// quiet day's cost arrives as `0` and a busy one's as a decimal.
     private static let usageJSON = """
     {"period":"30d","since":"2026-10-01T00:00:00+08:00","calls":125741,"errors":1688,
-     "input":233018488,"output":77983676,"cache_read":11017017596,"reasoning":20811284,
-     "cost":5193.252665556741,"unpriced":707,
+     "input":233018488,"output":77983676,"cache_read":11017017596,"cache_write":420000000,
+     "cache_write_1h":250000000,"reasoning":20811284,"cost":5193.252665556741,"unpriced":707,
      "bucket":"day","series":[
        {"label":"Oct 1","time":"2026-10-01T00:00:00+08:00","calls":0,"cost":0},
        {"label":"Oct 29","time":"2026-10-29T00:00:00+08:00","calls":4877,"cost":421.49456679999867},
-       {"label":"Oct 30","time":"2026-10-30T00:00:00+08:00","calls":65,"cost":85.1}
+       {"label":"Oct 30","time":"2026-10-30T00:00:00+08:00","calls":65,"cost":85.1,
+        "input":2000000,"output":700000,"cache_read":96000000,"cache_write":2000000}
      ]}
     """
 
@@ -35,11 +36,19 @@ struct MagpieUsageReaderTests {
             now: Self.date("2026-10-30T12:02:00+08:00"),
             calendar: Self.calendar())
 
-        #expect(model.titleText == "Usage & Spend · 30d")
-        #expect(model.totalSpendText == "$5,193.25")
-        #expect(model.todaySpendText == "$85.10")
-        #expect(model.tokenText == "311M")
-        #expect(model.callText == "126K")
+        #expect(model.titleText == "Usage & Spend")
+        // Today's tokens are that day's series entry, cache included: 2M + 0.7M + 96M read + 2M written.
+        #expect(model.today == .init(
+            labelText: "Today",
+            spendText: "$85.10",
+            tokenCountText: "101M",
+            detailText: "tokens · 96% cached"))
+        // Window tokens count the cache: 233M input + 78M output + 11.0B read + 420M written.
+        #expect(model.period == .init(
+            labelText: "30d",
+            spendText: "$5,193.25",
+            tokenCountText: "11.7B",
+            detailText: "tokens · 94% cached"))
     }
 
     @Test
@@ -52,7 +61,7 @@ struct MagpieUsageReaderTests {
             now: Self.date("2026-10-30T12:02:00-04:00"),
             calendar: Self.calendar("America/New_York"))
 
-        #expect(model.todaySpendText == "$85.10")
+        #expect(model.today.spendText == "$85.10")
     }
 
     @Test
@@ -66,7 +75,7 @@ struct MagpieUsageReaderTests {
             now: Self.date("2026-10-30T12:02:00+08:00"),
             calendar: japanese)
 
-        #expect(model.todaySpendText == "$85.10")
+        #expect(model.today.spendText == "$85.10")
     }
 
     @Test
@@ -77,8 +86,13 @@ struct MagpieUsageReaderTests {
             now: Self.date("2026-10-31T09:00:00+08:00"),
             calendar: Self.calendar())
 
-        #expect(model.todaySpendText == "$0.00")
-        #expect(model.totalSpendText == "$5,193.25")
+        // With no prompt tokens there is no hit rate to report, rather than a made-up 0%.
+        #expect(model.today == .init(
+            labelText: "Today",
+            spendText: "$0.00",
+            tokenCountText: "0",
+            detailText: "tokens"))
+        #expect(model.period.spendText == "$5,193.25")
     }
 
     @Test
@@ -86,10 +100,8 @@ struct MagpieUsageReaderTests {
         let summary = try MagpieUsageReader.usage(from: Data(Self.usageJSON.utf8))
 
         #expect(summary.days.count == 3)
-        #expect(summary.days.first?.cost == 0)
+        #expect(summary.days.first?.totals == .zero)
         #expect(summary.periodDays == 30)
-        #expect(summary.calls == 125_741)
-        #expect(summary.tokenCount == 233_018_488 + 77_983_676)
     }
 
     @Test
@@ -113,7 +125,7 @@ struct MagpieUsageReaderTests {
 
         #expect(summary.days.count == 1)
         #expect(summary.periodDays == 7)
-        #expect(summary.totalCost == 12.5)
+        #expect(summary.total.cost == 12.5)
     }
 
     @Test

@@ -2,23 +2,38 @@ import AppKit
 import CodexBarCore
 import SwiftUI
 
-/// The Overview's usage card: the gateway's 30-day spend as the headline, with today's spend, tokens,
-/// and calls as three right-aligned facts.
+/// The Overview's usage card: today's spend as the headline beside the gateway's whole window,
+/// each side carrying the same three facts so the two read against each other.
 struct OverviewUsageCardModel {
+    struct Side: Equatable {
+        let labelText: String
+        let spendText: String
+        /// The token count, drawn brighter than the rest of its line, e.g. "101M".
+        let tokenCountText: String
+        /// The rest of the line after the count, e.g. "tokens · 96% cached".
+        let detailText: String
+    }
+
+    /// Not drawn: the two sides' labels say what the numbers are. VoiceOver still opens with it.
     let titleText: String
-    let totalSpendText: String
-    let todaySpendText: String
-    let tokenText: String
-    let callText: String
+    let today: Side
+    let period: Side
 
     init(summary: MagpieUsageSummary, now: Date = Date(), calendar: Calendar = .current) {
-        self.titleText = "\(L("Usage & Spend")) · \(spendDashboardDayRangeText(summary.periodDays))"
-        self.totalSpendText = UsageFormatter.currencyString(summary.totalCost, currencyCode: "USD")
-        self.todaySpendText = UsageFormatter.currencyString(
-            summary.cost(onDayOf: now, calendar: calendar),
-            currencyCode: "USD")
-        self.tokenText = ShareStatsFormatting.compactCount(summary.tokenCount)
-        self.callText = ShareStatsFormatting.compactCount(summary.calls)
+        self.titleText = L("Usage & Spend")
+        self.today = Self.side(L("Today"), summary.totals(onDayOf: now, calendar: calendar))
+        self.period = Self.side(spendDashboardDayRangeText(summary.periodDays), summary.total)
+    }
+
+    private static func side(_ label: String, _ totals: MagpieUsageTotals) -> Side {
+        let cache = totals.cacheHitRate.map {
+            L("%@ cached", "\(Int(($0 * 100).rounded()))%")
+        }
+        return Side(
+            labelText: label,
+            spendText: UsageFormatter.currencyString(totals.cost, currencyCode: "USD"),
+            tokenCountText: ShareStatsFormatting.compactCount(totals.tokenCount),
+            detailText: [L("tokens"), cache].compactMap(\.self).joined(separator: " · "))
     }
 
     /// Every value that can change the card's height, hashed by the shared helper so the cache is
@@ -26,20 +41,27 @@ struct OverviewUsageCardModel {
     var heightFingerprint: String {
         MenuCardHeightFingerprint.join([
             MenuCardHeightFingerprint.field("title", self.titleText),
-            MenuCardHeightFingerprint.field("total", self.totalSpendText),
-            MenuCardHeightFingerprint.field("today", self.todaySpendText),
-            MenuCardHeightFingerprint.field("tokens", self.tokenText),
-            MenuCardHeightFingerprint.field("calls", self.callText),
+            MenuCardHeightFingerprint.field("todayLabel", self.today.labelText),
+            MenuCardHeightFingerprint.field("todaySpend", self.today.spendText),
+            MenuCardHeightFingerprint.field("todayTokens", self.today.tokenCountText),
+            MenuCardHeightFingerprint.field("todayDetail", self.today.detailText),
+            MenuCardHeightFingerprint.field("periodLabel", self.period.labelText),
+            MenuCardHeightFingerprint.field("periodSpend", self.period.spendText),
+            MenuCardHeightFingerprint.field("periodTokens", self.period.tokenCountText),
+            MenuCardHeightFingerprint.field("periodDetail", self.period.detailText),
         ])
     }
 
     var accessibilityText: String {
         [
             self.titleText,
-            "\(L("Today")) \(self.todaySpendText)",
-            "\(L("Tokens")) \(self.tokenText)",
-            "\(L("Calls")) \(self.callText)",
+            Self.spoken(self.today),
+            Self.spoken(self.period),
         ].joined(separator: ", ")
+    }
+
+    private static func spoken(_ side: Side) -> String {
+        "\(side.labelText) \(side.spendText), \(side.tokenCountText) \(side.detailText)"
     }
 }
 
@@ -48,25 +70,10 @@ struct OverviewUsageCardView: View {
     let width: CGFloat
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(self.model.titleText)
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.white.opacity(0.58))
-                    .lineLimit(1)
-                Text(self.model.totalSpendText)
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(Color.white.opacity(0.92))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-            }
+        HStack(alignment: .bottom, spacing: 16) {
+            self.sideView(self.model.today, spendSize: 28, alignment: .leading)
             Spacer(minLength: 0)
-            HStack(alignment: .bottom, spacing: 14) {
-                self.fact(L("Today"), self.model.todaySpendText)
-                self.fact(L("Tokens"), self.model.tokenText)
-                self.fact(L("Calls"), self.model.callText)
-            }
+            self.sideView(self.model.period, spendSize: 20, alignment: .trailing)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 13)
@@ -89,18 +96,31 @@ struct OverviewUsageCardView: View {
         .accessibilityLabel(self.model.accessibilityText)
     }
 
-    private func fact(_ label: String, _ value: String) -> some View {
-        VStack(alignment: .trailing, spacing: 1) {
-            Text(label)
-                .font(.system(size: 10))
-                .foregroundStyle(Color.white.opacity(0.38))
+    private func sideView(
+        _ side: OverviewUsageCardModel.Side,
+        spendSize: CGFloat,
+        alignment: HorizontalAlignment) -> some View
+    {
+        VStack(alignment: alignment, spacing: 3) {
+            Text(side.labelText)
+                .font(.system(size: 11))
+                .foregroundStyle(Color.white.opacity(0.58))
                 .lineLimit(1)
-            Text(value)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
+            Text(side.spendText)
+                .font(.system(size: spendSize, weight: .bold, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(Color.white.opacity(0.92))
                 .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            (Text(side.tokenCountText)
+                .fontWeight(.semibold)
+                .foregroundColor(Color.white.opacity(0.58))
+                + Text(" \(side.detailText)"))
+                .font(.system(size: 11))
+                .monospacedDigit()
+                .foregroundStyle(Color.white.opacity(0.38))
+                .lineLimit(1)
         }
-        .fixedSize()
+        .fixedSize(horizontal: true, vertical: false)
     }
 }

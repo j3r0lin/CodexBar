@@ -2668,3 +2668,4 @@
 "Refresh this account" = "이 계정 새로고침";
 "Updated %@ · Auto-refresh" = "%@에 업데이트됨 · 자동 새로 고침";
 "Auto-refresh on · every %@" = "자동 새로 고침 켜짐 · %@마다";
+"%@ cached" = "캐시 %@";

@@ -2703,3 +2703,4 @@
 "Refresh this account" = "Actualitza aquest compte";
 "Updated %@ · Auto-refresh" = "Actualitzat %@ · Actualització automàtica";
 "Auto-refresh on · every %@" = "Actualització automàtica activada · cada %@";
+"%@ cached" = "%@ en memòria cau";
